@@ -552,6 +552,14 @@
 }
 .mr-set-name { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .mr-set-cell.is-act { flex: none; display: flex; align-items: center; justify-content: flex-end; }
+/* 大小这一列：右贴、等宽数字——同一位数上下对齐，扫一眼就能比大小。
+   定宽是让长短不一的数值（1.2 MB / 13.0 MB / —）右缘落在同一条线上。 */
+.mr-set-cell.is-size {
+  flex: none; min-width: 60px; text-align: end;
+  font-size: 12px; line-height: 18px;
+  color: var(--dsw-alias-label-tertiary);
+  font-variant-numeric: tabular-nums;
+}
 .mr-set-cell.is-status {
   flex: none; display: flex; align-items: center; justify-content: flex-end; gap: 6px;
   font-size: 13px; line-height: 20px; font-variant-numeric: tabular-nums;

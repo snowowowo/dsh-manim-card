@@ -5,7 +5,7 @@
 // 下面一块是渲染时要用到的第三方库。
 //
 // **页面只留数据与控件，解释一律收进 ⓘ**（悬浮/键盘聚焦才出现）：环境那几项是重要项，
-// 每行是「名字 + ⓘ + 状态点与版本」；库清单每行是「状态点 + 名字 + 一个文字键」
+// 每行是「名字 + ⓘ + 状态点与版本」；库清单每行是「状态点 + 名字 + 大小 + 一个文字键」
 // （缓存 / 删除 / 内置）——图标要人猜，文字不用。状态点在最前面，眼睛先看到「在不在」。
 //
 // 版式是「外面一个小分组标签 + 若干张自带头部的卡片」：标题、一行说明与动作键都在卡片头部里
@@ -409,8 +409,8 @@ function PackagesCard({ t }: { t: Translate }) {
             </div>
           </header>
 
-          {/* 库行 = 状态点 + 名字 + 一个有话直说的文字键：没缓存的给「缓存」、已缓存的给「删除」、
-              随包自带的「内置」（禁用键，形状与位置跟旁边那列齐） */}
+          {/* 库行 = 状态点 + 名字 + 大小 + 一个有话直说的文字键：没缓存的给「缓存」、
+              已缓存的给「删除」、随包自带的「内置」（禁用键，形状与位置跟旁边那列齐） */}
           {inventory !== null && (
             <div className="mr-set-rows is-light">
               {shown.map((entry) => (
@@ -420,6 +420,11 @@ function PackagesCard({ t }: { t: Translate }) {
                   <span className="mr-set-cell is-name">
                     <Dot tone={pkgTone(entry.state)} label={t(pkgStateKey(entry.state))} />
                     <span className="mr-set-name">{entry.name}</span>
+                  </span>
+                  {/* 大小这一列：不在本机（还没缓存的）没得报——给个破折号。
+                      不能显示 0 B，那看着像「占了 0 字节」 */}
+                  <span className="mr-set-cell is-size">
+                    {entry.bytes === null ? '—' : formatBytes(entry.bytes)}
                   </span>
                   <span className="mr-set-cell is-act">
                     {/* 自带的那几个：用同一个键、只置灰禁用——右列才跟「缓存 / 删除」对齐
