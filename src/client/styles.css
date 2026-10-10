@@ -516,9 +516,6 @@
 }
 .mr-set-act.is-sm:hover:not(:disabled) { color: var(--dsw-alias-label-primary); }
 
-/* 随包自带的库：没有动作可做，只给一个词——比留空更清楚，也不用图标凑 */
-.mr-set-bundled { font-size: 12px; line-height: 18px; color: var(--dsw-alias-label-tertiary); }
-
 /* 行：左右内距与卡片头部同档，名字跟标题对齐；行与行之间一道最细的分隔线。
    box-sizing 必须写：没有 preflight，min-height 会算在内容盒上、再额外加上下内距，
    44px 的行高会变成 60px。 */

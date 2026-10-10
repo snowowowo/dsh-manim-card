@@ -402,7 +402,11 @@ function PackagesCard({ t }: { t: Translate }) {
                 <div key={entry.name} className="mr-set-row">
                   <span className="mr-set-cell is-name">{entry.name}</span>
                   <span className="mr-set-cell is-act">
-                    {entry.state === 'bundled' && <span className="mr-set-bundled">{t('pkgBundled')}</span>}
+                    {/* 自带的那几个：用同一个键、只置灰禁用——右列才跟「缓存 / 删除」对齐
+                        （文字标签会各宽各的，整个右列就散了） */}
+                    {entry.state === 'bundled' && (
+                      <button type="button" className="mr-set-act is-sm" disabled>{t('pkgBundled')}</button>
+                    )}
                     {entry.state === 'cached' && (
                       <Tip label={t('pkgClearHint')} align="end">
                         <button type="button" className="mr-set-act is-sm" disabled={busy !== null}
