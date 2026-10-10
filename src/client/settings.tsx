@@ -5,8 +5,8 @@
 // 下面一块是渲染时要用到的第三方库。
 //
 // **页面只留数据与控件，解释一律收进 ⓘ**（悬浮/键盘聚焦才出现）：环境那几项是重要项，
-// 每行名字后面跟一个 ⓘ；库清单只有名字与一个有话直说的文字键（缓存 / 删除 / 内置），
-// 不用图标让人猜。
+// 每行是「名字 + ⓘ + 状态点与版本」；库清单每行是「状态点 + 名字 + 一个文字键」
+// （缓存 / 删除 / 内置）——图标要人猜，文字不用。状态点在最前面，眼睛先看到「在不在」。
 //
 // 版式是「外面一个小分组标签 + 若干张自带头部的卡片」：标题、一行说明与动作键都在卡片头部里
 // （照宿主「存储」「审计中心」页），间距由卡片内边距撑起来。要往清单里补别的库，走底下那张
@@ -33,8 +33,11 @@ type Tone = 'ok' | 'warn' | 'error' | 'idle' | 'empty' | 'busy'
 /**
  * 状态点：宿主 `StateDot` 的配方抄一份——宿主 UI 包禁止 import（引了槽位会整体崩）。
  * 进行中是那只 1.5 秒一圈的环；空环（`empty`）表示「本地没有」，与灰色实心的「中性」区分开。
+ *
+ * `label` 给了就是**有语义的状态点**（读屏念得出、鼠标悬浮有原生提示）；不给就当装饰，
+ * 因为旁边已经有文字把状态说清了（环境行的版本号、库行那个键）。
  */
-function Dot({ tone }: { tone: Tone }) {
+function Dot({ tone, label }: { tone: Tone; label?: string }) {
   if (tone === 'busy') {
     return (
       <svg className="mr-set-spin" width="14" height="14" viewBox="0 0 24 24" aria-hidden="true">
@@ -45,8 +48,20 @@ function Dot({ tone }: { tone: Tone }) {
       </svg>
     )
   }
-  return <span className="mr-set-dot" data-tone={tone} aria-hidden="true" />
+  return (
+    <span className="mr-set-dot" data-tone={tone}
+      role={label === undefined ? undefined : 'img'}
+      aria-label={label}
+      aria-hidden={label === undefined ? true : undefined} />
+  )
 }
+
+/** 库的三态：已缓存在本机=绿实心；随包自带=灰实心（在，但不归这里管）；还没缓存=空心环。 */
+const pkgTone = (state: PackageState): Tone => (state === 'cached' ? 'ok' : state === 'bundled' ? 'idle' : 'empty')
+
+/** 状态点的读屏名（点的颜色与虚实是给眼睛看的，读屏得有一句话；内置那个词与键上的一致）。 */
+const pkgStateKey = (state: PackageState): string =>
+  (state === 'cached' ? 'pkgStateCached' : state === 'bundled' ? 'pkgBundled' : 'pkgStateAbsent')
 
 const envTone = (status: EnvStatus): Tone => (status === 'ok' ? 'ok' : status === 'missing' ? 'warn' : 'error')
 
@@ -394,13 +409,18 @@ function PackagesCard({ t }: { t: Translate }) {
             </div>
           </header>
 
-          {/* 库行只有名字与一个有话直说的文字键：没缓存的给「缓存」、已缓存的给「删除」、
-              随包自带的写「内置」（不用下、也删不掉）——图标要人猜，文字不用 */}
+          {/* 库行 = 状态点 + 名字 + 一个有话直说的文字键：没缓存的给「缓存」、已缓存的给「删除」、
+              随包自带的「内置」（禁用键，形状与位置跟旁边那列齐） */}
           {inventory !== null && (
             <div className="mr-set-rows is-light">
               {shown.map((entry) => (
                 <div key={entry.name} className="mr-set-row">
-                  <span className="mr-set-cell is-name">{entry.name}</span>
+                  {/* 点在最前面报状态（绿=已缓存 / 灰=内置 / 空心=还没缓存），
+                      名字单独一段好截断，后面才是那个键 */}
+                  <span className="mr-set-cell is-name">
+                    <Dot tone={pkgTone(entry.state)} label={t(pkgStateKey(entry.state))} />
+                    <span className="mr-set-name">{entry.name}</span>
+                  </span>
                   <span className="mr-set-cell is-act">
                     {/* 自带的那几个：用同一个键、只置灰禁用——右列才跟「缓存 / 删除」对齐
                         （文字标签会各宽各的，整个右列就散了） */}

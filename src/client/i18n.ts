@@ -140,6 +140,9 @@ export const DICT = {
     pkgRefresh: '刷新',
     pkgRefreshHint: '再看一次：哪些库已经在本机、各占多大。',
     pkgBundled: '内置',
+    // 库行前面那个状态点的读屏名（内置那档复用 pkgBundled）
+    pkgStateCached: '已缓存',
+    pkgStateAbsent: '未缓存',
     pkgFailed: '读不到库列表：{message}',
     pkgCache: '缓存',
     pkgCacheHint: '缓存在本机（会把它用到的其他库一起缓存），之后断网也能用。',

@@ -473,8 +473,10 @@
   background: var(--dsw-alias-settings-card-fill);
 }
 
-/* 卡片头部：标题（+ 计数）与一行说明在左，动作键贴右；按钮与标题顶端对齐 */
-.mr-set-cardhead { display: flex; align-items: flex-start; gap: 16px; padding: 14px 16px; }
+/* 卡片头部：标题（+ 计数）与一行说明在左，动作键贴右。
+   文字整块与动作键**垂直居中**：标题下面有没有那行小字，键都落在同一条水平线上
+   （按顶端对齐的话，有说明那两张卡片会被两行文字撑高、键跟着往上跑，整页就不齐了）。 */
+.mr-set-cardhead { display: flex; align-items: center; gap: 16px; padding: 14px 16px; }
 .mr-set-cardheadtext { flex: 1; min-width: 0; }
 .mr-set-cardtitle {
   margin: 0; display: flex; align-items: baseline; gap: 8px;
@@ -530,11 +532,12 @@
 .mr-set-rows.is-light .mr-set-row { min-height: 34px; padding: 4px 16px; }
 
 .mr-set-cell { flex: none; min-width: 0; }
-/* 库名占满整行、超长截断：包名是代码原文（带连字符、大小写有别），一眼跟中文分开。
-   这一格**只有文字**，所以截断的 overflow 加在格子上没问题。 */
+/* 库名这一格 = 状态点 + 名字：点在前（flex 项，不会被截断），名字占满剩下的宽度。
+   截断因此落在名字那段身上（见 .mr-set-name）。包名是代码原文（带连字符、大小写有别），
+   用等宽字，一眼跟中文分开。 */
 .mr-set-cell.is-name {
   flex: 1; min-width: 0;
-  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  display: flex; align-items: center; gap: 8px;
   font-family: var(--ds-font-family-code); font-size: 13px; line-height: 20px;
 }
 /* 检测项：这一格里有「名字 + ⓘ」，overflow 不能加在格子上——会把 ⓘ 的悬浮气泡一起剪掉。
