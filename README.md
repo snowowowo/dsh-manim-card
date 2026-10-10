@@ -6,7 +6,7 @@
 
 ## 状态
 
-**进行中**：Python 运行时（`src/core/py/`，Pyodide 执行 + manim 适配层 + 桥，自带测试）、渲染引擎（`src/client/engine/`）、KaTeX 与 Pyodide 资源路由、**聊天卡片**（AI 调 `manim_render` → 聊天流出一张卡，进入视口自动渲染、离开视口释放、可重播）、**技能**（`skills/manim-renderer/`，把可用 API、写法边界与**场景模板**讲给模型）与**Host 侧预检**（返回前用空桥干跑一遍，不通过当场回 `error`）都已就位；**随包外的 Python 库按需取**（`import pandas` 这类首次联网取一次、按 sha256 校验后落进 `~/.dsh/cache/manim-renderer/pyodide/`，之后离线命中，取的期间卡片上提示「正在加载 X…」）也已接线。
+**进行中**：Python 运行时（`src/core/py/`，Pyodide 执行 + manim 适配层 + 桥，自带测试）、渲染引擎（`src/client/engine/`）、KaTeX 与 Pyodide 资源路由、**聊天卡片**（AI 调 `manim_render` → 聊天流出一张卡，进入视口自动渲染、离开视口释放、可重播）、**技能**（`skills/manim-renderer/`，把可用 API、写法边界与**场景模板**讲给模型）与**Host 侧预检**（返回前用空桥干跑一遍，不通过当场回 `error`）都已就位；**随包外的 Python 库按需取**（`import pandas` 这类首次联网取一次、按 sha256 校验后落进 `~/.dsh/cache/manim-renderer/pyodide/`，之后离线命中，取的期间卡片上提示「正在加载 X…」）也已接线；**设置面板**里的「Manim 渲染」一节（**本机环境探测** + **包缓存清单与预缓存**）也已就位，见下。
 
 写法上除属性动画 `self.play(m.animate.x(...))`（可链的方法由探针实测 manim-web 的 animate 代理生成，不在表里的当场报错并列出可用项）外，`rate_func=` / `run_time=`、`m[i]` 取段、`m.width` 这类属性读取、`self.clear()` 也都已接线——「这个写法支不支持」的判定与真执行取同一份支持面（`src/core/py/surface.ts`），所以**预检放行的，真桥不会当场拒**。**方法改写**（`surface.ts` 的 `METHOD_REWRITES`）负责「CE 有、manim-web 换了形状」的那批：`set_stroke(color=, width=, opacity=)` → 颜色走**属性写**、`_color` 与 `strokeColor` 各写一份（渲染层读前者、回读走后者，见第六轮第 7 条）、宽 / 透明度走专属 setter——**不能**落 `setStyle`：manim-web 的 set color 存取器会把 fillColor 一起冲掉（见第四轮 (b) 的色板事故）；`set_opacity(x)` → stroke + fill 两个 setter、`put_start_and_end_on(a, b)` → Arrow 走同名方法、Line 走 `setStart` + `setEnd`。物体/动画的归类按 manim-web 的**实测原型链**定，不看 CE 把它挂在哪个模块下（CE 把 `TracedPath` / `AnimatedBoundary` 放在 `animation/` 里，两者其实是物体）；「包住一个物体」的写法（`TracedPath(dot)` / `SurroundingRectangle(text)` / `Union(a, b)` …）也走同一份构造规则。`self.add(...)` 收到动画会当场给出可读报错（校验在 Python 侧，预检也拦得住）。左侧导航「Manim 渲染」是**实验场**（见下节），既是肉眼验收台，也是支持面的计量器。
 
@@ -32,7 +32,7 @@
 manim _dev/examples/basic/01-circle.py CircleScene
 ```
 
-**为什么在包外**：这批文件是开发期的回归网（外加讲解模板的出处），不是产品功能——跟着插件发布，等于让每个用户都背上一个只有开发者才用的实验场，还要把上百条源码打进 `client.js`。所以整条链路没有「语料打包」这一步：Host 侧的语料路由（`src/host/index.js`）在**运行时**去读那个目录，正式安装里这条路径不存在，实验场自然退化成「自定义代码」。语料根可用环境变量 `MANIM_CORPUS`（绝对路径）覆盖，解析顺序与「谁在读它」都收在 `src/host/corpus.js` 一处（**不许再有第四处**）。
+**为什么在包外**：这批文件是开发期的回归网（外加讲解模板的出处），不是产品功能——跟着插件发布，等于让每个用户都背上一个只有开发者才用的实验场，还要把上百条源码打进 `client.js`。所以整条链路没有「语料打包」这一步：Host 侧的语料路由（`src/host/corpus.js`）在**运行时**去读那个目录，正式安装里这条路径不存在，实验场自然退化成「自定义代码」。语料根可用环境变量 `MANIM_CORPUS`（绝对路径）覆盖，解析顺序与「谁在读它」都收在 `src/host/corpus.js` 一处（**不许再有第四处**）。
 
 文件即元数据：docstring 第一行是标题，`@expect <一句话>` 是**预期表现**（页面展示、悬停可见），`@reject <关键词>` 标记「这条应当被当场拒绝」并钉住报错里必须出现的词，`@note` 写出处。目录即分组（目录没在 `corpus.js` 的 `GROUPS` 里登记就报错，免得新加的文件夹被静默漏掉），页面（浏览器）与自动测试（Node）读的是同一批 `.py` 文件，不存在「页面那份和测试那份不一样」。
 
@@ -130,6 +130,32 @@ manim _dev/examples/basic/01-circle.py CircleScene
 
 复核结论（23 条「疑似空白」逐条对过图）：22 条是**合法终态**——单个点本来就小（墨迹 0.02%）、结尾就是 `FadeOut` / `remove` 的、`ValueTracker` / 场景家族这类**本来就不画东西**的——已确认不是 bug。**已知上游依赖**：manim-web 的 LaTeX 光栅化（`MathTexImage`，`Matrix` 条目内部用它）靠 KaTeX CSS 布局，其 CSS 从 jsdelivr CDN 拉——插件已在页面注入随包的本地 `assets/katex/katex.min.css`（`client/index.tsx`），**断网时矩阵条目会退化**（SVG 版 `MathTex` 不受影响，走随包 MathJax）。截图脚本里把该 CDN 地址映射到了本地同一份，保证离线截图与真机一致。
 
+### 设置页：本机环境与包缓存
+
+设置面板里的「Manim 渲染」（宿主 slot `settings.section`）有两张卡片，回答两件以后会越来越要紧的事：**「导出」要靠本机真的 Manim**，而**离线可用性取决于哪些包已经在本地**。
+
+**本机环境**逐项探测 `python3` / `manim` / manim 模块（`python3 -c "import manim"`）/ `ffmpeg` / `latex` / `dvisvgm`，每项给出 ok / 缺失 / 出错三态，并配一句「为什么在意它」（导出走的是本机，不走 Pyodide——所以「能不能导出」与本机装了什么直接相关）。两个实现细节：
+
+- 走 `execFile`（不经 shell、参数写死），**自己补齐 PATH**——桌面端宿主拿到的是被裁剪过的 PATH，`/usr/local/bin` 这类常常不在里面，不补的话会「装了却说没装」。补的目录与顺序都收在 `src/host/environment.js` 一处。
+- **用户点开才跑**，逐项串行、每项各有超时（`manim` 20 秒、`import manim` 30 秒），不是启动时偷偷扫一遍机器。
+
+**包缓存**列出 `pyodide-lock.json` 里可安装的包（351 项里 wheel / zip 的那部分——`*-tests` 的 `.tar` 装不了、纯 `cpython_module` 不算），每条标出**随包 / 已缓存 / 未缓存**与本机占用字节；顶部可切「本地 / 未缓存 / 全部」、可按名字搜。点某个包上的「提前缓存」会把它的**依赖闭包**一起取下来——闭包**在客户端算**（依赖排在前面，所以中途停下来时已落地的部分是一个自洽的前缀）；卡片里还有缓存目录的完整路径（可复制，也能对着它手动清）。
+
+两条契约值得单独记住：
+
+- **面板是个可拆的组件**：`ManimSettingsPage` 只收一个 `t`（文案函数）——不读设置面板的 store、不假设自己在哪、不留「关闭」回调。注册只有一行（`client/index.tsx` 里的 `slots.register('settings.section', …)`），以后要把它搬进「学习工作台」那类聚合页，改的就是那一行，面板本身不动。
+- **视觉照抄宿主**：卡片 / 标签 / 状态点都按 `dsh-design-system` 的配方、只用 `--dsw-alias-*` 变量手写（不许 import 宿主的 UI 包），浅色深色两套都成立。
+
+Host 侧对应五条新路由，全都挂在 `/dsh-plugins/manim-renderer/` 下，成对写在 `src/host/routes.test.ts` 里：
+
+| 路由 | 方法 | 干什么 |
+|---|---|---|
+| `packages` | GET | 包清单：缓存目录、Pyodide 版本、每包的依赖 / 可 import 名 / 三态 / 字节数 |
+| `packages/cache` | POST | 按名字取包（`{ names: [...] }`，一个名字一次请求），sha256 校验后原子落盘 |
+| `cache` | POST | 清掉缓存目录里**按需取的**那部分，回删掉的文件名（随包件不动） |
+| `environment` | GET | 探测计划：有哪些项、每项跑什么命令 |
+| `environment/<id>` | GET | 跑一项，回 ok / missing / error 与原因（超时也归 error 并说清） |
+
 ## 测试与覆盖率
 
 分两层，别混：
@@ -156,13 +182,23 @@ scripts/                  探针与生成器：probe-api.mjs（三态表）、ge
 skills/manim-renderer/    AI 面向的技能：可用 API 清单 + manim-web 缺失项与替代 + 场景模板 + 纪律
 
 src/
-├── host/                 Host 半边：manim_render 工具（含干跑预检）+ 技能注册 + 使用指引 + 资源路由（katex / pyodide：随包件直发，缺的包按需回源下载、校验、落进用户缓存目录）+ Node 侧 Pyodide 加载
+├── host/                 Host 半边：manim_render 工具（含干跑预检）+ 技能注册 + 使用指引 + 资源路由 + Node 侧 Pyodide 加载
+│   ├── index.js          apply 组装：把工具 / 技能 / 指引与各条路由挂上去
+│   ├── assets.js         静态资源路由（katex：路径边界校验 + MIME 直发）
+│   ├── pyodide.js        Pyodide 资源路由（随包件直发，缺的按需回源 + sha256 校验 + 原子落盘）、包清单与预缓存、清缓存
+│   ├── environment.js    本机环境探测（python3 / manim / manim 模块 / ffmpeg / latex / dvisvgm）
+│   ├── corpus.js         实验场语料读取（包外 `_dev/examples/`；正式安装里是空表）
+│   ├── http.js           路由共用的小工具：sendJson / readJsonBody
+│   └── routes.test.ts    路由测试（含 405 / 404 / 坏正文 / sha256 不符 / 取包失败即停）
 ├── client/               浏览器半边（打包进 client.js）
-│   ├── index.tsx         入口：locale / 样式接线 + 对外服务 + slot 注册（导航项 / 整页 / 聊天卡片）
+│   ├── index.tsx         入口：locale / 样式接线 + 对外服务 + slot 注册（导航项 / 整页 / 聊天卡片 / **设置面板一节**）
 │   ├── service.ts        对外服务 `manim`：check（干跑预检）+ createSurface（一块画布）
 │   ├── definition.ts     聊天卡片的会话折叠定义（tool/call → 卡片节点）
 │   ├── components/       卡片与页面零件：card.tsx（画布 + 重播 + 查看代码，聊天与实验场共用）、code-view.tsx、segmented.tsx（视图切换，照抄宿主分段控件）、tip.tsx（悬浮提示）
 │   ├── page.tsx          实验场：语料实验场 / 自定义代码两个视图（分段切换），左栏清单 + 工具条，右栏预览
+│   ├── settings.tsx      设置面板「Manim 渲染」一节：本机环境 + 包缓存（可拆的纯组件，只收 `t`）
+│   ├── packages.ts       包清单 / 依赖闭包 / 取包 / 清缓存（设置页与实验场共用这一层）
+│   ├── environment.ts    本机环境探测的取数与响应解析
 │   ├── storage.ts        实验场状态落盘（结果 / 极速开关 / 代码 / 视图），读时逐字段校验
 │   ├── clipboard.ts      剪贴板（clipboard API + execCommand 兜底）与「已复制」反馈
 │   ├── code-highlight.ts shiki 高亮（自装，颜色走宿主 --shiki-* 变量）

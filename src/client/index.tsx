@@ -1,11 +1,12 @@
 // Client 入口：默认导出插件对象（产物包装由构建预设的 banner/footer 完成）。
 import React, { type ReactNode } from 'react'
 import { ManimPage } from './page'
+import { ManimSettingsPage } from './settings'
 import { ManimCard } from './components/card'
 import { definition, type ManimCardData } from './definition'
 import { NavIcon } from './navicon'
 import { createManimService } from './service'
-import { DICT, NS } from './i18n'
+import { DICT, NS, type Translate } from './i18n'
 import './styles.css'
 
 interface HostContext {
@@ -75,6 +76,16 @@ export default {
       { name: 'main', key: 'manim-renderer' },
       () => <SlotErrorBoundary><ManimPage t={t} /></SlotErrorBoundary>,
     ))
+
+    // 设置分区：设置面板里的一个整页（本机环境 + 包缓存）。
+    //
+    // 落座点**只在这一行**，面板本体（./settings.tsx）只收一个取词函数——不接 close、
+    // 不假设容器宽高、不读设置面板的 store。所以「这块面板摆在哪」是这里一行的事：
+    // 想搬到别处（比如以后那个把各插件摆到一起的工作台）只改这一行，面板一行都不用动。
+    // 取词命名空间沿用本插件的 NS，所以 label 与页面文案同一份词典。
+    ctx.slots.inject('settings.section', () => ctx.slots.register({
+      name: 'settings.section', id: 'manim-renderer', order: 60, label: () => t('nav'), locale: NS,
+    }, (props: { t?: Translate }) => <SlotErrorBoundary><ManimSettingsPage t={props.t ?? t} /></SlotErrorBoundary>))
 
     // 聊天卡片：manim_render 的 tool/call 折叠成一张卡（定义见 ./definition.ts）。
     // 定义的 kind 与槽位的 key 必须一致——那是渲染器认领节点的键。

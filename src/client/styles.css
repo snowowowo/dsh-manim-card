@@ -423,3 +423,193 @@
   white-space: pre-wrap; word-break: break-word;
   color: var(--dsw-alias-state-error-primary);
 }
+
+/* ---- 设置面板：本机环境 + 包缓存 ---------------------------------------- */
+
+/*
+ * 这块内容是「设置分区」的正文（宿主 settings.section 槽位）。左右留白由设置面板的内容列给
+ * （它自带 24px），这里只补纵向间隔——于是同一块面板换个容器挂上去（以后的工作台）也不用改。
+ * 数值照抄宿主成品：卡片 ui-settings-account/AccountSection.module.css，
+ * 徽章 ui-primitives/Tag.module.css，状态点 ui-primitives/StateDot.module.css。
+ */
+.mr-set {
+  display: flex; flex-direction: column; gap: 16px;
+  padding: 8px 0;
+  font-size: 13px; line-height: 22px;
+  color: var(--dsw-alias-label-primary);
+}
+
+.mr-set-card {
+  display: flex; flex-direction: column; gap: 8px;
+  padding: 12px 16px;
+  border: 0.5px solid var(--dsw-alias-settings-card-stroke);
+  border-radius: var(--dsw-radius-xl);
+  background: var(--dsw-alias-settings-card-fill);
+}
+
+/* 卡片头：标题 + 摘要（占满中间）+ 贴右的刷新键 */
+.mr-set-head { display: flex; align-items: center; gap: 8px; }
+.mr-set-title { margin: 0; font-size: 14px; line-height: 22px; font-weight: 500; }
+.mr-set-meta {
+  margin-left: auto; min-width: 0;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  font-size: 12px; line-height: 18px;
+  color: var(--dsw-alias-label-caption);
+  font-variant-numeric: tabular-nums;
+}
+
+/* 缓存目录行：路径长了截断，完整路径在悬浮提示里、也能一键复制 */
+.mr-set-path { display: flex; align-items: center; gap: 6px; min-width: 0; }
+.mr-set-pathlabel { flex: none; font-size: 12px; line-height: 18px; color: var(--dsw-alias-label-tertiary); }
+.mr-set-codepath {
+  flex: 1; min-width: 0;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  font-family: var(--ds-font-family-code);
+  font-size: 11px; line-height: 16px;
+  color: var(--dsw-alias-label-secondary);
+}
+
+/* 工具行：筛选 + 搜索 */
+.mr-set-tools { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.mr-set-search {
+  flex: 1; min-width: 120px;
+  display: flex; align-items: center; gap: 6px;
+  box-sizing: border-box; height: 32px; padding: 0 8px;
+  border: 0.5px solid var(--dsw-alias-border-l4);
+  border-radius: var(--dsw-radius-md);
+  background: var(--dsw-alias-bg-layer-1);
+  color: var(--dsw-alias-label-tertiary);
+}
+.mr-set-search:focus-within { border-color: var(--dsw-alias-state-business-primary); }
+.mr-set-searchinput {
+  flex: 1; min-width: 0;
+  border: none; outline: none; background: transparent;
+  font: inherit; font-size: 13px; line-height: 20px;
+  color: var(--dsw-alias-label-primary);
+}
+.mr-set-searchinput::placeholder { color: var(--dsw-alias-label-dimmed); }
+
+/* 行：表格形态——行间用最弱一级分隔线，数字列走等宽数字 */
+.mr-set-list { display: flex; flex-direction: column; }
+.mr-set-row {
+  display: flex; align-items: center; gap: 8px;
+  box-sizing: border-box; min-height: 32px; padding: 2px 0;
+  border-bottom: 1px solid var(--dsw-alias-border-l1);
+}
+.mr-set-list > .mr-set-row:last-child { border-bottom: none; }
+
+/* 环境行：名称定宽（左列对齐）、路径/原因占满中间、右边版本 */
+.mr-set-row[data-kind='env'] .mr-tip { flex: none; }
+.mr-set-row[data-kind='env'] .mr-set-name { flex: none; min-width: 92px; white-space: nowrap; }
+.mr-set-detail {
+  flex: 1; min-width: 0;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  font-size: 12px; line-height: 18px;
+  color: var(--dsw-alias-label-tertiary);
+}
+
+/* 包行：名称占满、版本 / 徽章 / 大小 / 动作各占定宽列，行与行对得齐 */
+.mr-set-row[data-kind='pkg'] .mr-set-name {
+  flex: 1; min-width: 0;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.mr-set-ver {
+  flex: none; width: 58px;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  font-size: 12px; line-height: 18px;
+  color: var(--dsw-alias-label-caption);
+  font-variant-numeric: tabular-nums;
+}
+.mr-set-row[data-kind='pkg'] .mr-tag { flex: none; min-width: 54px; justify-content: center; }
+.mr-set-size {
+  flex: none; width: 68px; text-align: end;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  font-size: 12px; line-height: 18px;
+  color: var(--dsw-alias-label-secondary);
+  font-variant-numeric: tabular-nums;
+}
+.mr-set-act { flex: none; width: 96px; display: flex; justify-content: flex-end; }
+
+/* 状态点：实心=有（按语义上色），空环=本地没有（基类就是空环） */
+.mr-set-dot {
+  flex: none; box-sizing: border-box; width: 8px; height: 8px;
+  border-radius: 50%;
+  border: 0.5px solid var(--dsw-alias-border-l3);
+  background: transparent;
+}
+.mr-set-dot[data-tone='ok'] {
+  border-color: var(--dsw-alias-state-success-primary);
+  background: var(--dsw-alias-state-success-primary);
+}
+.mr-set-dot[data-tone='warn'] {
+  border-color: var(--dsw-alias-state-warn-primary);
+  background: var(--dsw-alias-state-warn-primary);
+}
+.mr-set-dot[data-tone='error'] {
+  border-color: var(--dsw-alias-state-error-primary);
+  background: var(--dsw-alias-state-error-primary);
+}
+.mr-set-dot[data-tone='idle'] {
+  border-color: var(--dsw-alias-state-idle-primary);
+  background: var(--dsw-alias-state-idle-primary);
+}
+
+/* 进行中：照抄宿主 StateDot 那只环（同一个 1.5 秒周期，转圈与呼吸同步） */
+.mr-set-spin { flex: none; color: var(--dsw-alias-label-tertiary); }
+.mr-set-spin-rotor { transform-origin: center; animation: mr-set-spin 1.5s linear infinite; }
+.mr-set-spin-track, .mr-set-spin-arc {
+  fill: none; stroke: currentColor;
+  stroke-width: 2; stroke-linecap: round;
+}
+.mr-set-spin-track { opacity: 0.25; }
+.mr-set-spin-arc { stroke-dasharray: 12 150; animation: mr-set-dash 1.5s ease-in-out infinite; }
+@keyframes mr-set-spin { to { transform: rotate(360deg); } }
+@keyframes mr-set-dash {
+  0% { stroke-dasharray: 12 150; stroke-dashoffset: 0; }
+  50% { stroke-dasharray: 24 150; stroke-dashoffset: -6; }
+  100% { stroke-dasharray: 12 150; stroke-dashoffset: 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .mr-set-spin-rotor, .mr-set-spin-arc { animation: none; }
+  .mr-set-spin-arc { stroke-dasharray: 18 150; stroke-dashoffset: -3; }
+}
+
+/* 只读徽章：胶囊尺寸固定，只有配色变（照抄宿主 Tag） */
+.mr-tag {
+  display: inline-flex; align-items: center;
+  border-radius: 999px;
+  padding: 1px 8px;
+  font-size: 11px; line-height: 17px; font-weight: 500;
+  white-space: nowrap;
+}
+.mr-tag[data-tone='outline'] { border: 0.5px solid var(--dsw-alias-border-l4); color: var(--dsw-alias-label-tertiary); }
+.mr-tag[data-tone='neutral'] { background: var(--dsw-alias-bg-module-platform); color: var(--dsw-alias-label-secondary); }
+.mr-tag[data-tone='success'] {
+  background: color-mix(in srgb, var(--dsw-alias-state-success-primary) 10%, transparent);
+  color: var(--dsw-alias-state-success-primary);
+}
+
+/* 空态 / 说明 / 错误 / 还有多少条没画 */
+.mr-set-empty {
+  margin: 0; padding: 32px 0; text-align: center;
+  font-size: 13px; line-height: 20px;
+  color: var(--dsw-alias-label-tertiary);
+}
+.mr-set-note {
+  margin: 0;
+  font-size: 12px; line-height: 18px;
+  color: var(--dsw-alias-label-tertiary);
+  overflow-wrap: anywhere;
+}
+.mr-set-error {
+  margin: 0;
+  font-size: 13px; line-height: 20px;
+  color: var(--dsw-alias-state-error-primary);
+  overflow-wrap: anywhere;
+}
+.mr-set-more {
+  margin: 0; padding-top: 6px; text-align: center;
+  font-size: 12px; line-height: 18px;
+  color: var(--dsw-alias-label-tertiary);
+  font-variant-numeric: tabular-nums;
+}

@@ -9,13 +9,12 @@
  *
  * 这就是「实验场降为开发用」的落点——不是加开关，而是**语料根本不在包里**。
  *
- * 顺带把清包缓存也放这里（`POST …/cache`）：开发期要验「首次取包」就得先能清干净。
+ * 清包缓存（`POST …/cache`）搬去 ./packages.ts 了：那是包缓存的事，跟语料无关。
  */
 import { useEffect, useState } from 'react'
 import { parseCorpus, type Corpus } from '../core/py/examples.ts'
 
 const CORPUS_URL = '/dsh-plugins/manim-renderer/corpus'
-const CACHE_URL = '/dsh-plugins/manim-renderer/cache'
 
 export type CorpusState =
   /** 正在取（本机路由，正常是毫秒级）。 */
@@ -88,14 +87,4 @@ export function useCorpus(): CorpusState {
     }
   }, [])
   return state
-}
-
-/** 清掉本机缓存的按需包（Host 只删自己缓存目录里的 *.whl）。失败抛给调用方去显示。 */
-export async function clearPackageCache(): Promise<string[]> {
-  const response = await fetch(CACHE_URL, { method: 'POST' })
-  if (!response.ok) throw new Error(`HTTP ${response.status}`)
-  const body: unknown = await response.json()
-  if (body === null || typeof body !== 'object') return []
-  const removed = (body as { removed?: unknown }).removed
-  return Array.isArray(removed) ? removed.filter((name): name is string => typeof name === 'string') : []
 }
