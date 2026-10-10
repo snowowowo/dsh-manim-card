@@ -1,5 +1,5 @@
 window.__ModuleLoader__.load({
-	id: "manim-renderer",
+	id: "dsh-manim-renderer",
 	factory: (require) => {
 		var module = { exports: {} };
 		module.exports;
@@ -45,7 +45,7 @@ window.__ModuleLoader__.load({
 		let react = require("react");
 		react = __toESM(react, 1);
 		let react_jsx_runtime = require("react/jsx-runtime");
-		//#region ../node_modules/.pnpm/lucide-react@0.548.0_react@18.3.1/node_modules/lucide-react/dist/esm/shared/src/utils.js
+		//#region node_modules/.pnpm/lucide-react@0.548.0_react@18.3.1/node_modules/lucide-react/dist/esm/shared/src/utils.js
 		/**
 		* @license lucide-react v0.548.0 - ISC
 		*
@@ -65,7 +65,7 @@ window.__ModuleLoader__.load({
 			for (const prop in props) if (prop.startsWith("aria-") || prop === "role" || prop === "title") return true;
 		};
 		//#endregion
-		//#region ../node_modules/.pnpm/lucide-react@0.548.0_react@18.3.1/node_modules/lucide-react/dist/esm/defaultAttributes.js
+		//#region node_modules/.pnpm/lucide-react@0.548.0_react@18.3.1/node_modules/lucide-react/dist/esm/defaultAttributes.js
 		/**
 		* @license lucide-react v0.548.0 - ISC
 		*
@@ -84,7 +84,7 @@ window.__ModuleLoader__.load({
 			strokeLinejoin: "round"
 		};
 		//#endregion
-		//#region ../node_modules/.pnpm/lucide-react@0.548.0_react@18.3.1/node_modules/lucide-react/dist/esm/Icon.js
+		//#region node_modules/.pnpm/lucide-react@0.548.0_react@18.3.1/node_modules/lucide-react/dist/esm/Icon.js
 		/**
 		* @license lucide-react v0.548.0 - ISC
 		*
@@ -103,7 +103,7 @@ window.__ModuleLoader__.load({
 			...rest
 		}, [...iconNode.map(([tag, attrs]) => (0, react.createElement)(tag, attrs)), ...Array.isArray(children) ? children : [children]]));
 		//#endregion
-		//#region ../node_modules/.pnpm/lucide-react@0.548.0_react@18.3.1/node_modules/lucide-react/dist/esm/createLucideIcon.js
+		//#region node_modules/.pnpm/lucide-react@0.548.0_react@18.3.1/node_modules/lucide-react/dist/esm/createLucideIcon.js
 		/**
 		* @license lucide-react v0.548.0 - ISC
 		*
@@ -5667,7 +5667,7 @@ _sys.modules["manim"] = _dsh_manim
 			return scene;
 		}
 		//#endregion
-		//#region ../node_modules/.pnpm/three@0.184.0/node_modules/three/build/three.core.js
+		//#region node_modules/.pnpm/three@0.184.0/node_modules/three/build/three.core.js
 		/**
 		* @license
 		* Copyright 2010-2026 Three.js Authors
@@ -42763,7 +42763,7 @@ levels: {
 			}
 		}));
 		//#endregion
-		//#region ../node_modules/.pnpm/three@0.184.0/node_modules/three/build/three.module.js
+		//#region node_modules/.pnpm/three@0.184.0/node_modules/three/build/three.module.js
 		var three_module_exports = /* @__PURE__ */ __exportAll({
 			ACESFilmicToneMapping: () => 4,
 			AddEquation: () => 100,
@@ -53971,7 +53971,7 @@ void main() {
 			};
 		}));
 		//#endregion
-		//#region ../node_modules/.pnpm/manim-web@0.3.24_@types+node@22.20.5_react@18.3.1_typescript@7.0.2/node_modules/manim-web/dist/MathJaxBundle-xSidSV0E.js
+		//#region node_modules/.pnpm/manim-web@0.3.24_@types+node@22.20.5_react@18.3.1_typescript@7.0.2/node_modules/manim-web/dist/MathJaxBundle-xSidSV0E.js
 		var MathJaxBundle_xSidSV0E_exports = /* @__PURE__ */ __exportAll({
 			RegisterHTMLHandler: () => As$1,
 			SVG: () => ko$1,
@@ -93956,7 +93956,7 @@ void main() {
 			});
 		}));
 		//#endregion
-		//#region ../node_modules/.pnpm/manim-web@0.3.24_@types+node@22.20.5_react@18.3.1_typescript@7.0.2/node_modules/manim-web/dist/src-Cc3xTIkV.js
+		//#region node_modules/.pnpm/manim-web@0.3.24_@types+node@22.20.5_react@18.3.1_typescript@7.0.2/node_modules/manim-web/dist/src-Cc3xTIkV.js
 		function Pt(e, t, n) {
 			let r = new Nt({ preamble: [
 				`\\usepackage[${t}]{fontenc}`,
@@ -160146,7 +160146,7 @@ void main() {
 			Mw = { ...jw };
 		}));
 		//#endregion
-		//#region ../node_modules/.pnpm/manim-web@0.3.24_@types+node@22.20.5_react@18.3.1_typescript@7.0.2/node_modules/manim-web/dist/index.js
+		//#region node_modules/.pnpm/manim-web@0.3.24_@types+node@22.20.5_react@18.3.1_typescript@7.0.2/node_modules/manim-web/dist/index.js
 		var dist_exports = /* @__PURE__ */ __exportAll({
 			Add: () => _C,
 			AddTextLetterByLetter: () => Ty,
@@ -160817,7 +160817,7 @@ void main() {
 			};
 		}
 		//#endregion
-		//#region ../node_modules/.pnpm/@shikijs+types@4.5.0/node_modules/@shikijs/types/dist/index.mjs
+		//#region node_modules/.pnpm/@shikijs+types@4.5.0/node_modules/@shikijs/types/dist/index.mjs
 		var ShikiError = class extends Error {
 			constructor(message) {
 				super(message);
@@ -160825,7 +160825,7 @@ void main() {
 			}
 		};
 		//#endregion
-		//#region ../node_modules/.pnpm/@shikijs+vscode-textmate@10.0.2/node_modules/@shikijs/vscode-textmate/dist/index.js
+		//#region node_modules/.pnpm/@shikijs+vscode-textmate@10.0.2/node_modules/@shikijs/vscode-textmate/dist/index.js
 		function clone(something) {
 			return doClone(something);
 		}
@@ -163145,7 +163145,7 @@ void main() {
 		};
 		var INITIAL = StateStackImpl.NULL;
 		//#endregion
-		//#region ../node_modules/.pnpm/@shikijs+primitive@4.5.0/node_modules/@shikijs/primitive/dist/index.mjs
+		//#region node_modules/.pnpm/@shikijs+primitive@4.5.0/node_modules/@shikijs/primitive/dist/index.mjs
 		function resolveColorReplacements(theme, options) {
 			const replacements = typeof theme === "string" ? {} : { ...theme.colorReplacements };
 			const themeName = typeof theme === "string" ? theme : theme.name;
@@ -163927,7 +163927,7 @@ void main() {
 			return outThemes;
 		}
 		//#endregion
-		//#region ../node_modules/.pnpm/html-void-elements@3.0.0/node_modules/html-void-elements/index.js
+		//#region node_modules/.pnpm/html-void-elements@3.0.0/node_modules/html-void-elements/index.js
 		/**
 		* List of HTML void tag names.
 		*
@@ -163956,7 +163956,7 @@ void main() {
 			"wbr"
 		];
 		//#endregion
-		//#region ../node_modules/.pnpm/property-information@7.2.0/node_modules/property-information/lib/util/schema.js
+		//#region node_modules/.pnpm/property-information@7.2.0/node_modules/property-information/lib/util/schema.js
 		/**
 		* @import {Schema as SchemaType, Space} from 'property-information'
 		*/
@@ -163982,7 +163982,7 @@ void main() {
 		Schema.prototype.property = {};
 		Schema.prototype.space = void 0;
 		//#endregion
-		//#region ../node_modules/.pnpm/property-information@7.2.0/node_modules/property-information/lib/util/merge.js
+		//#region node_modules/.pnpm/property-information@7.2.0/node_modules/property-information/lib/util/merge.js
 		/**
 		* @import {Info, Space} from 'property-information'
 		*/
@@ -164006,7 +164006,7 @@ void main() {
 			return new Schema(property, normal, space);
 		}
 		//#endregion
-		//#region ../node_modules/.pnpm/property-information@7.2.0/node_modules/property-information/lib/normalize.js
+		//#region node_modules/.pnpm/property-information@7.2.0/node_modules/property-information/lib/normalize.js
 		/**
 		* Get the cleaned case insensitive form of an attribute or property.
 		*
@@ -164020,7 +164020,7 @@ void main() {
 			return value.toLowerCase();
 		}
 		//#endregion
-		//#region ../node_modules/.pnpm/property-information@7.2.0/node_modules/property-information/lib/util/info.js
+		//#region node_modules/.pnpm/property-information@7.2.0/node_modules/property-information/lib/util/info.js
 		/**
 		* @import {Info as InfoType} from 'property-information'
 		*/
@@ -164052,7 +164052,7 @@ void main() {
 		Info.prototype.spaceSeparated = false;
 		Info.prototype.space = void 0;
 		//#endregion
-		//#region ../node_modules/.pnpm/property-information@7.2.0/node_modules/property-information/lib/util/types.js
+		//#region node_modules/.pnpm/property-information@7.2.0/node_modules/property-information/lib/util/types.js
 		var types_exports = /* @__PURE__ */ __exportAll({
 			boolean: () => boolean,
 			booleanish: () => booleanish,
@@ -164074,7 +164074,7 @@ void main() {
 			return 2 ** ++powers;
 		}
 		//#endregion
-		//#region ../node_modules/.pnpm/property-information@7.2.0/node_modules/property-information/lib/util/defined-info.js
+		//#region node_modules/.pnpm/property-information@7.2.0/node_modules/property-information/lib/util/defined-info.js
 		/**
 		* @import {Space} from 'property-information'
 		*/
@@ -164120,7 +164120,7 @@ void main() {
 			if (value) values[key] = value;
 		}
 		//#endregion
-		//#region ../node_modules/.pnpm/property-information@7.2.0/node_modules/property-information/lib/util/create.js
+		//#region node_modules/.pnpm/property-information@7.2.0/node_modules/property-information/lib/util/create.js
 		/**
 		* @import {Info, Space} from 'property-information'
 		*/
@@ -164169,7 +164169,7 @@ void main() {
 			return new Schema(properties, normals, definition.space);
 		}
 		//#endregion
-		//#region ../node_modules/.pnpm/property-information@7.2.0/node_modules/property-information/lib/aria.js
+		//#region node_modules/.pnpm/property-information@7.2.0/node_modules/property-information/lib/aria.js
 		const aria = create({
 			properties: {
 				ariaActiveDescendant: null,
@@ -164227,7 +164227,7 @@ void main() {
 			}
 		});
 		//#endregion
-		//#region ../node_modules/.pnpm/property-information@7.2.0/node_modules/property-information/lib/util/case-sensitive-transform.js
+		//#region node_modules/.pnpm/property-information@7.2.0/node_modules/property-information/lib/util/case-sensitive-transform.js
 		/**
 		* @param {Record<string, string>} attributes
 		*   Attributes.
@@ -164240,7 +164240,7 @@ void main() {
 			return attribute in attributes ? attributes[attribute] : attribute;
 		}
 		//#endregion
-		//#region ../node_modules/.pnpm/property-information@7.2.0/node_modules/property-information/lib/util/case-insensitive-transform.js
+		//#region node_modules/.pnpm/property-information@7.2.0/node_modules/property-information/lib/util/case-insensitive-transform.js
 		/**
 		* @param {Record<string, string>} attributes
 		*   Attributes.
@@ -164253,7 +164253,7 @@ void main() {
 			return caseSensitiveTransform(attributes, property.toLowerCase());
 		}
 		//#endregion
-		//#region ../node_modules/.pnpm/property-information@7.2.0/node_modules/property-information/lib/html.js
+		//#region node_modules/.pnpm/property-information@7.2.0/node_modules/property-information/lib/html.js
 		const html$3 = create({
 			attributes: {
 				acceptcharset: "accept-charset",
@@ -164575,7 +164575,7 @@ void main() {
 			transform: caseInsensitiveTransform
 		});
 		//#endregion
-		//#region ../node_modules/.pnpm/property-information@7.2.0/node_modules/property-information/lib/svg.js
+		//#region node_modules/.pnpm/property-information@7.2.0/node_modules/property-information/lib/svg.js
 		const svg$1 = create({
 			attributes: {
 				accentHeight: "accent-height",
@@ -165135,7 +165135,7 @@ void main() {
 			transform: caseSensitiveTransform
 		});
 		//#endregion
-		//#region ../node_modules/.pnpm/property-information@7.2.0/node_modules/property-information/lib/xlink.js
+		//#region node_modules/.pnpm/property-information@7.2.0/node_modules/property-information/lib/xlink.js
 		const xlink = create({
 			properties: {
 				xLinkActuate: null,
@@ -165152,7 +165152,7 @@ void main() {
 			}
 		});
 		//#endregion
-		//#region ../node_modules/.pnpm/property-information@7.2.0/node_modules/property-information/lib/xmlns.js
+		//#region node_modules/.pnpm/property-information@7.2.0/node_modules/property-information/lib/xmlns.js
 		const xmlns = create({
 			attributes: { xmlnsxlink: "xmlns:xlink" },
 			properties: {
@@ -165163,7 +165163,7 @@ void main() {
 			transform: caseInsensitiveTransform
 		});
 		//#endregion
-		//#region ../node_modules/.pnpm/property-information@7.2.0/node_modules/property-information/lib/xml.js
+		//#region node_modules/.pnpm/property-information@7.2.0/node_modules/property-information/lib/xml.js
 		const xml = create({
 			properties: {
 				xmlBase: null,
@@ -165176,7 +165176,7 @@ void main() {
 			}
 		});
 		//#endregion
-		//#region ../node_modules/.pnpm/property-information@7.2.0/node_modules/property-information/lib/find.js
+		//#region node_modules/.pnpm/property-information@7.2.0/node_modules/property-information/lib/find.js
 		/**
 		* @import {Schema} from 'property-information'
 		*/
@@ -165253,7 +165253,7 @@ void main() {
 			return $0.charAt(1).toUpperCase();
 		}
 		//#endregion
-		//#region ../node_modules/.pnpm/property-information@7.2.0/node_modules/property-information/index.js
+		//#region node_modules/.pnpm/property-information@7.2.0/node_modules/property-information/index.js
 		const html$2 = merge([
 			aria,
 			html$3,
@@ -165269,7 +165269,7 @@ void main() {
 			xml
 		], "svg");
 		//#endregion
-		//#region ../node_modules/.pnpm/zwitch@2.0.4/node_modules/zwitch/index.js
+		//#region node_modules/.pnpm/zwitch@2.0.4/node_modules/zwitch/index.js
 		/**
 		* @callback Handler
 		*   Handle a value, with a certain ID field set to a certain value.
@@ -165374,7 +165374,7 @@ void main() {
 			return one;
 		}
 		//#endregion
-		//#region ../node_modules/.pnpm/stringify-entities@4.0.4/node_modules/stringify-entities/lib/core.js
+		//#region node_modules/.pnpm/stringify-entities@4.0.4/node_modules/stringify-entities/lib/core.js
 		/**
 		* @typedef CoreOptions
 		* @property {ReadonlyArray<string>} [subset=[]]
@@ -165451,7 +165451,7 @@ void main() {
 			return new RegExp("(?:" + groups.join("|") + ")", "g");
 		}
 		//#endregion
-		//#region ../node_modules/.pnpm/stringify-entities@4.0.4/node_modules/stringify-entities/lib/util/to-hexadecimal.js
+		//#region node_modules/.pnpm/stringify-entities@4.0.4/node_modules/stringify-entities/lib/util/to-hexadecimal.js
 		const hexadecimalRegex = /[\dA-Fa-f]/;
 		/**
 		* Configurable ways to encode characters as hexadecimal references.
@@ -165466,7 +165466,7 @@ void main() {
 			return omit && next && !hexadecimalRegex.test(String.fromCharCode(next)) ? value : value + ";";
 		}
 		//#endregion
-		//#region ../node_modules/.pnpm/stringify-entities@4.0.4/node_modules/stringify-entities/lib/util/to-decimal.js
+		//#region node_modules/.pnpm/stringify-entities@4.0.4/node_modules/stringify-entities/lib/util/to-decimal.js
 		const decimalRegex = /\d/;
 		/**
 		* Configurable ways to encode characters as decimal references.
@@ -165481,7 +165481,7 @@ void main() {
 			return omit && next && !decimalRegex.test(String.fromCharCode(next)) ? value : value + ";";
 		}
 		//#endregion
-		//#region ../node_modules/.pnpm/character-entities-legacy@3.0.0/node_modules/character-entities-legacy/index.js
+		//#region node_modules/.pnpm/character-entities-legacy@3.0.0/node_modules/character-entities-legacy/index.js
 		/**
 		* List of legacy HTML named character references that don’t need a trailing semicolon.
 		*
@@ -165596,7 +165596,7 @@ void main() {
 			"yuml"
 		];
 		//#endregion
-		//#region ../node_modules/.pnpm/character-entities-html4@2.1.0/node_modules/character-entities-html4/index.js
+		//#region node_modules/.pnpm/character-entities-html4@2.1.0/node_modules/character-entities-html4/index.js
 		/**
 		* Map of named character references from HTML 4.
 		*
@@ -165857,7 +165857,7 @@ void main() {
 			euro: "€"
 		};
 		//#endregion
-		//#region ../node_modules/.pnpm/stringify-entities@4.0.4/node_modules/stringify-entities/lib/constant/dangerous.js
+		//#region node_modules/.pnpm/stringify-entities@4.0.4/node_modules/stringify-entities/lib/constant/dangerous.js
 		/**
 		* List of legacy (that don’t need a trailing `;`) named references which could,
 		* depending on what follows them, turn into a different meaning
@@ -165875,7 +165875,7 @@ void main() {
 			"times"
 		];
 		//#endregion
-		//#region ../node_modules/.pnpm/stringify-entities@4.0.4/node_modules/stringify-entities/lib/util/to-named.js
+		//#region node_modules/.pnpm/stringify-entities@4.0.4/node_modules/stringify-entities/lib/util/to-named.js
 		const own$1 = {}.hasOwnProperty;
 		/**
 		* `characterEntitiesHtml4` but inverted.
@@ -165907,7 +165907,7 @@ void main() {
 			return "";
 		}
 		//#endregion
-		//#region ../node_modules/.pnpm/stringify-entities@4.0.4/node_modules/stringify-entities/lib/util/format-smart.js
+		//#region node_modules/.pnpm/stringify-entities@4.0.4/node_modules/stringify-entities/lib/util/format-smart.js
 		/**
 		* @typedef FormatSmartOptions
 		* @property {boolean} [useNamedReferences=false]
@@ -165944,7 +165944,7 @@ void main() {
 			return named && (!options.useShortestReferences || named.length < numeric.length) ? named : numeric;
 		}
 		//#endregion
-		//#region ../node_modules/.pnpm/stringify-entities@4.0.4/node_modules/stringify-entities/lib/index.js
+		//#region node_modules/.pnpm/stringify-entities@4.0.4/node_modules/stringify-entities/lib/index.js
 		/**
 		* @typedef {import('./core.js').CoreOptions & import('./util/format-smart.js').FormatSmartOptions} Options
 		* @typedef {import('./core.js').CoreOptions} LightOptions
@@ -165963,7 +165963,7 @@ void main() {
 			return core(value, Object.assign({ format: formatSmart }, options));
 		}
 		//#endregion
-		//#region ../node_modules/.pnpm/hast-util-to-html@9.0.5/node_modules/hast-util-to-html/lib/handle/comment.js
+		//#region node_modules/.pnpm/hast-util-to-html@9.0.5/node_modules/hast-util-to-html/lib/handle/comment.js
 		/**
 		* @import {Comment, Parents} from 'hast'
 		* @import {State} from '../index.js'
@@ -165995,7 +165995,7 @@ void main() {
 			}
 		}
 		//#endregion
-		//#region ../node_modules/.pnpm/hast-util-to-html@9.0.5/node_modules/hast-util-to-html/lib/handle/doctype.js
+		//#region node_modules/.pnpm/hast-util-to-html@9.0.5/node_modules/hast-util-to-html/lib/handle/doctype.js
 		/**
 		* @import {Doctype, Parents} from 'hast'
 		* @import {State} from '../index.js'
@@ -166018,7 +166018,7 @@ void main() {
 			return "<!" + (state.settings.upperDoctype ? "DOCTYPE" : "doctype") + (state.settings.tightDoctype ? "" : " ") + "html>";
 		}
 		//#endregion
-		//#region ../node_modules/.pnpm/ccount@2.0.1/node_modules/ccount/index.js
+		//#region node_modules/.pnpm/ccount@2.0.1/node_modules/ccount/index.js
 		/**
 		* Count how often a character (or substring) is used in a string.
 		*
@@ -166041,7 +166041,7 @@ void main() {
 			return count;
 		}
 		//#endregion
-		//#region ../node_modules/.pnpm/comma-separated-tokens@2.0.3/node_modules/comma-separated-tokens/index.js
+		//#region node_modules/.pnpm/comma-separated-tokens@2.0.3/node_modules/comma-separated-tokens/index.js
 		/**
 		* Serialize an array of strings or numbers to comma-separated tokens.
 		*
@@ -166057,7 +166057,7 @@ void main() {
 			return (values[values.length - 1] === "" ? [...values, ""] : values).join((settings.padRight ? " " : "") + "," + (settings.padLeft === false ? "" : " ")).trim();
 		}
 		//#endregion
-		//#region ../node_modules/.pnpm/space-separated-tokens@2.0.2/node_modules/space-separated-tokens/index.js
+		//#region node_modules/.pnpm/space-separated-tokens@2.0.2/node_modules/space-separated-tokens/index.js
 		/**
 		* Serialize an array of strings as space separated-tokens.
 		*
@@ -166070,7 +166070,7 @@ void main() {
 			return values.join(" ").trim();
 		}
 		//#endregion
-		//#region ../node_modules/.pnpm/hast-util-whitespace@3.0.0/node_modules/hast-util-whitespace/lib/index.js
+		//#region node_modules/.pnpm/hast-util-whitespace@3.0.0/node_modules/hast-util-whitespace/lib/index.js
 		/**
 		* @typedef {import('hast').Nodes} Nodes
 		*/
@@ -166097,7 +166097,7 @@ void main() {
 			return value.replace(re$1, "") === "";
 		}
 		//#endregion
-		//#region ../node_modules/.pnpm/hast-util-to-html@9.0.5/node_modules/hast-util-to-html/lib/omission/util/siblings.js
+		//#region node_modules/.pnpm/hast-util-to-html@9.0.5/node_modules/hast-util-to-html/lib/omission/util/siblings.js
 		/**
 		* @import {Parents, RootContent} from 'hast'
 		*/
@@ -166138,7 +166138,7 @@ void main() {
 			}
 		}
 		//#endregion
-		//#region ../node_modules/.pnpm/hast-util-to-html@9.0.5/node_modules/hast-util-to-html/lib/omission/omission.js
+		//#region node_modules/.pnpm/hast-util-to-html@9.0.5/node_modules/hast-util-to-html/lib/omission/omission.js
 		/**
 		* @import {Element, Parents} from 'hast'
 		*/
@@ -166177,7 +166177,7 @@ void main() {
 			}
 		}
 		//#endregion
-		//#region ../node_modules/.pnpm/hast-util-to-html@9.0.5/node_modules/hast-util-to-html/lib/omission/closing.js
+		//#region node_modules/.pnpm/hast-util-to-html@9.0.5/node_modules/hast-util-to-html/lib/omission/closing.js
 		/**
 		* @import {Element, Parents} from 'hast'
 		*/
@@ -166442,7 +166442,7 @@ void main() {
 			return !next || next.type === "element" && (next.tagName === "td" || next.tagName === "th");
 		}
 		//#endregion
-		//#region ../node_modules/.pnpm/hast-util-to-html@9.0.5/node_modules/hast-util-to-html/lib/omission/opening.js
+		//#region node_modules/.pnpm/hast-util-to-html@9.0.5/node_modules/hast-util-to-html/lib/omission/opening.js
 		/**
 		* @import {Element, Parents} from 'hast'
 		*/
@@ -166535,7 +166535,7 @@ void main() {
 			return Boolean(head && head.type === "element" && head.tagName === "tr");
 		}
 		//#endregion
-		//#region ../node_modules/.pnpm/hast-util-to-html@9.0.5/node_modules/hast-util-to-html/lib/handle/element.js
+		//#region node_modules/.pnpm/hast-util-to-html@9.0.5/node_modules/hast-util-to-html/lib/handle/element.js
 		/**
 		* @import {Element, Parents, Properties} from 'hast'
 		* @import {State} from '../index.js'
@@ -166652,7 +166652,7 @@ void main() {
 			return name + (result ? "=" + result : result);
 		}
 		//#endregion
-		//#region ../node_modules/.pnpm/hast-util-to-html@9.0.5/node_modules/hast-util-to-html/lib/handle/text.js
+		//#region node_modules/.pnpm/hast-util-to-html@9.0.5/node_modules/hast-util-to-html/lib/handle/text.js
 		/**
 		* @import {Parents, Text} from 'hast'
 		* @import {Raw} from 'mdast-util-to-hast'
@@ -166677,7 +166677,7 @@ void main() {
 			return parent && parent.type === "element" && (parent.tagName === "script" || parent.tagName === "style") ? node.value : stringifyEntities(node.value, Object.assign({}, state.settings.characterReferences, { subset: textEntitySubset }));
 		}
 		//#endregion
-		//#region ../node_modules/.pnpm/hast-util-to-html@9.0.5/node_modules/hast-util-to-html/lib/handle/raw.js
+		//#region node_modules/.pnpm/hast-util-to-html@9.0.5/node_modules/hast-util-to-html/lib/handle/raw.js
 		/**
 		* @import {Parents} from 'hast'
 		* @import {Raw} from 'mdast-util-to-hast'
@@ -166701,7 +166701,7 @@ void main() {
 			return state.settings.allowDangerousHtml ? node.value : text(node, index, parent, state);
 		}
 		//#endregion
-		//#region ../node_modules/.pnpm/hast-util-to-html@9.0.5/node_modules/hast-util-to-html/lib/handle/root.js
+		//#region node_modules/.pnpm/hast-util-to-html@9.0.5/node_modules/hast-util-to-html/lib/handle/root.js
 		/**
 		* @import {Parents, Root} from 'hast'
 		* @import {State} from '../index.js'
@@ -166724,7 +166724,7 @@ void main() {
 			return state.all(node);
 		}
 		//#endregion
-		//#region ../node_modules/.pnpm/hast-util-to-html@9.0.5/node_modules/hast-util-to-html/lib/handle/index.js
+		//#region node_modules/.pnpm/hast-util-to-html@9.0.5/node_modules/hast-util-to-html/lib/handle/index.js
 		/**
 		* @import {Nodes, Parents} from 'hast'
 		* @import {State} from '../index.js'
@@ -166767,7 +166767,7 @@ void main() {
 			throw new Error("Cannot compile unknown node `" + node_.type + "`");
 		}
 		//#endregion
-		//#region ../node_modules/.pnpm/hast-util-to-html@9.0.5/node_modules/hast-util-to-html/lib/index.js
+		//#region node_modules/.pnpm/hast-util-to-html@9.0.5/node_modules/hast-util-to-html/lib/index.js
 		/**
 		* @import {Nodes, Parents, RootContent} from 'hast'
 		* @import {Schema} from 'property-information'
@@ -167002,7 +167002,7 @@ void main() {
 			return results.join("");
 		}
 		//#endregion
-		//#region ../node_modules/.pnpm/@shikijs+core@4.5.0/node_modules/@shikijs/core/dist/index.mjs
+		//#region node_modules/.pnpm/@shikijs+core@4.5.0/node_modules/@shikijs/core/dist/index.mjs
 		const RE_WHITESPACE = /\s+/g;
 		/**
 		* Utility to append class to a hast node
@@ -168202,7 +168202,7 @@ void main() {
 			return theme;
 		}
 		//#endregion
-		//#region ../node_modules/.pnpm/@shikijs+engine-javascript@4.5.0/node_modules/@shikijs/engine-javascript/dist/string-TLTPtCPs.mjs
+		//#region node_modules/.pnpm/@shikijs+engine-javascript@4.5.0/node_modules/@shikijs/engine-javascript/dist/string-TLTPtCPs.mjs
 		const MAX = 4294967295;
 		function isSearchCacheable(regexp) {
 			return !regexp.sticky && !regexp.rawOptions?.strategy;
@@ -168314,7 +168314,7 @@ void main() {
 			};
 		}
 		//#endregion
-		//#region ../node_modules/.pnpm/oniguruma-parser@0.12.2/node_modules/oniguruma-parser/dist/utils.js
+		//#region node_modules/.pnpm/oniguruma-parser@0.12.2/node_modules/oniguruma-parser/dist/utils.js
 		function r$2(e) {
 			if ([...e].length !== 1) throw new Error(`Expected "${e}" to be a single code point`);
 			return e.codePointAt(0);
@@ -168344,7 +168344,7 @@ void main() {
 			return e;
 		}
 		//#endregion
-		//#region ../node_modules/.pnpm/oniguruma-parser@0.12.2/node_modules/oniguruma-parser/dist/tokenizer/tokenize.js
+		//#region node_modules/.pnpm/oniguruma-parser@0.12.2/node_modules/oniguruma-parser/dist/tokenizer/tokenize.js
 		const m$1 = o$1`\[\^?`;
 		const b$1 = `c.? | C(?:-.?)?|${o$1`[pP]\{(?:\^?[-\x20_]*[A-Za-z][-\x20\w]*\})?`}|${o$1`x[89A-Fa-f]\p{AHex}(?:\\x[89A-Fa-f]\p{AHex})*`}|${o$1`u(?:\p{AHex}{4})? | x\{[^\}]*\}? | x\p{AHex}{0,2}`}|${o$1`o\{[^\}]*\}?`}|${o$1`\d{1,3}`}`;
 		const y$1 = /[?*+][?+]?|\{(?:\d+(?:,\d*)?|,\d+)\}\??/;
@@ -168842,7 +168842,7 @@ void main() {
 			return n;
 		}
 		//#endregion
-		//#region ../node_modules/.pnpm/oniguruma-parser@0.12.2/node_modules/oniguruma-parser/dist/parser/node-utils.js
+		//#region node_modules/.pnpm/oniguruma-parser@0.12.2/node_modules/oniguruma-parser/dist/parser/node-utils.js
 		function o(e, t) {
 			if (!Array.isArray(e.body)) throw new Error("Expected node with body array");
 			if (e.body.length !== 1) return !1;
@@ -168864,7 +168864,7 @@ void main() {
 			"Subroutine"
 		]);
 		//#endregion
-		//#region ../node_modules/.pnpm/oniguruma-parser@0.12.2/node_modules/oniguruma-parser/dist/parser/parse.js
+		//#region node_modules/.pnpm/oniguruma-parser@0.12.2/node_modules/oniguruma-parser/dist/parser/parse.js
 		function J(e, r = {}) {
 			const n = {
 				flags: "",
@@ -169285,7 +169285,7 @@ void main() {
 			return u(e, "Unclosed group");
 		}
 		//#endregion
-		//#region ../node_modules/.pnpm/oniguruma-parser@0.12.2/node_modules/oniguruma-parser/dist/traverser/traverse.js
+		//#region node_modules/.pnpm/oniguruma-parser@0.12.2/node_modules/oniguruma-parser/dist/traverser/traverse.js
 		function S(a, v, N = null) {
 			function b(e, s) {
 				for (let t = 0; t < e.length; t++) {
@@ -169368,7 +169368,7 @@ void main() {
 			return a;
 		}
 		//#endregion
-		//#region ../node_modules/.pnpm/regex@6.1.0/node_modules/regex/src/utils-internals.js
+		//#region node_modules/.pnpm/regex@6.1.0/node_modules/regex/src/utils-internals.js
 		const noncapturingDelim = String.raw`\(\?(?:[:=!>A-Za-z\-]|<[=!]|\(DEFINE\))`;
 		/**
 		Updates the array in place by incrementing each value greater than or equal to the threshold.
@@ -169389,7 +169389,7 @@ void main() {
 			return str.slice(0, pos) + newValue + str.slice(pos + oldValue.length);
 		}
 		//#endregion
-		//#region ../node_modules/.pnpm/regex-utilities@2.3.0/node_modules/regex-utilities/src/index.js
+		//#region node_modules/.pnpm/regex-utilities@2.3.0/node_modules/regex-utilities/src/index.js
 		const Context = Object.freeze({
 			DEFAULT: "DEFAULT",
 			CHAR_CLASS: "CHAR_CLASS"
@@ -169534,7 +169534,7 @@ void main() {
 			return expression.slice(contentsStartPos, contentsEndPos);
 		}
 		//#endregion
-		//#region ../node_modules/.pnpm/regex@6.1.0/node_modules/regex/src/atomic.js
+		//#region node_modules/.pnpm/regex@6.1.0/node_modules/regex/src/atomic.js
 		/**
 		@import {PluginData, PluginResult} from './regex.js';
 		*/
@@ -169683,7 +169683,7 @@ void main() {
 			return { pattern: expression };
 		}
 		//#endregion
-		//#region ../node_modules/.pnpm/regex-recursion@6.0.2/node_modules/regex-recursion/src/index.js
+		//#region node_modules/.pnpm/regex-recursion@6.0.2/node_modules/regex-recursion/src/index.js
 		const r$1 = String.raw;
 		const recursiveToken = r$1`\(\?R=(?<rDepth>[^\)]+)\)|${r$1`\\g<(?<gRNameOrNum>[^>&]+)&R=(?<gRDepth>[^>]+)>`}`;
 		const namedCaptureDelim = r$1`\(\?<(?![=!])(?<captureName>[^>]+)>`;
@@ -169890,7 +169890,7 @@ void main() {
 			return captureTransfers;
 		}
 		//#endregion
-		//#region ../node_modules/.pnpm/oniguruma-to-es@4.3.6/node_modules/oniguruma-to-es/dist/esm/index.js
+		//#region node_modules/.pnpm/oniguruma-to-es@4.3.6/node_modules/oniguruma-to-es/dist/esm/index.js
 		var cp = String.fromCodePoint;
 		var r = String.raw;
 		var envFlags = {};
@@ -171310,7 +171310,7 @@ XID_Start XIDS`.split(/\s/).map((p) => [w(p), p]));
 			return details;
 		}
 		//#endregion
-		//#region ../node_modules/.pnpm/@shikijs+engine-javascript@4.5.0/node_modules/@shikijs/engine-javascript/dist/engine-compile.mjs
+		//#region node_modules/.pnpm/@shikijs+engine-javascript@4.5.0/node_modules/@shikijs/engine-javascript/dist/engine-compile.mjs
 		/**
 		* The default regex constructor for the JavaScript RegExp engine.
 		*/
@@ -173054,10 +173054,10 @@ self.play(Write(eq))
 		//#endregion
 		//#region \0plugin-css:src/client/styles.css.mjs
 		const css = "/*! tailwindcss v4.3.3 | MIT License | https://tailwindcss.com */\n@layer properties{@supports (((-webkit-hyphens:none)) and (not (margin-trim:inline))) or ((-moz-orient:inline) and (not (color:rgb(from red r g b)))){*,:before,:after,::backdrop{--tw-rotate-x:initial;--tw-rotate-y:initial;--tw-rotate-z:initial;--tw-skew-x:initial;--tw-skew-y:initial;--tw-border-style:solid;--tw-ordinal:initial;--tw-slashed-zero:initial;--tw-numeric-figure:initial;--tw-numeric-spacing:initial;--tw-numeric-fraction:initial;--tw-shadow:0 0 #0000;--tw-shadow-color:initial;--tw-shadow-alpha:100%;--tw-inset-shadow:0 0 #0000;--tw-inset-shadow-color:initial;--tw-inset-shadow-alpha:100%;--tw-ring-color:initial;--tw-ring-shadow:0 0 #0000;--tw-inset-ring-color:initial;--tw-inset-ring-shadow:0 0 #0000;--tw-ring-inset:initial;--tw-ring-offset-width:0px;--tw-ring-offset-color:#fff;--tw-ring-offset-shadow:0 0 #0000;--tw-outline-style:solid;--tw-blur:initial;--tw-brightness:initial;--tw-contrast:initial;--tw-grayscale:initial;--tw-hue-rotate:initial;--tw-invert:initial;--tw-opacity:initial;--tw-saturate:initial;--tw-sepia:initial;--tw-drop-shadow:initial;--tw-drop-shadow-color:initial;--tw-drop-shadow-alpha:100%;--tw-drop-shadow-size:initial}}}@layer theme{:root,:host{--spacing:.25rem;--default-transition-duration:.15s;--default-transition-timing-function:cubic-bezier(.4, 0, .2, 1)}}@layer utilities{.invisible{visibility:hidden}.visible{visibility:visible}.absolute{position:absolute}.fixed{position:fixed}.relative{position:relative}.static{position:static}.sticky{position:sticky}.container{width:100%;@media (width>=40rem){max-width:40rem}@media (width>=48rem){max-width:48rem}@media (width>=64rem){max-width:64rem}@media (width>=80rem){max-width:80rem}@media (width>=96rem){max-width:96rem}}.block{display:block}.contents{display:contents}.flex{display:flex}.grid{display:grid}.hidden{display:none}.inline{display:inline}.inline-block{display:inline-block}.table{display:table}.table\\!{display:table!important}.table-cell{display:table-cell}.size-1{width:var(--spacing);height:var(--spacing)}.h-40{height:calc(var(--spacing) * 40)}.h-84{height:calc(var(--spacing) * 84)}.h-120{height:calc(var(--spacing) * 120)}.flex-shrink,.shrink{flex-shrink:1}.grow{flex-grow:1}.transform{transform:var(--tw-rotate-x,) var(--tw-rotate-y,) var(--tw-rotate-z,) var(--tw-skew-x,) var(--tw-skew-y,)}.resize{resize:both}.truncate{text-overflow:ellipsis;white-space:nowrap;overflow:hidden}.rounded{border-radius:.25rem}.border{border-style:var(--tw-border-style);border-width:1px}.capitalize{text-transform:capitalize}.lowercase{text-transform:lowercase}.uppercase{text-transform:uppercase}.italic{font-style:italic}.ordinal{--tw-ordinal:ordinal;font-variant-numeric:var(--tw-ordinal,) var(--tw-slashed-zero,) var(--tw-numeric-figure,) var(--tw-numeric-spacing,) var(--tw-numeric-fraction,)}.line-through{text-decoration-line:line-through}.overline{text-decoration-line:overline}.underline{text-decoration-line:underline}.shadow{--tw-shadow:0 1px 3px 0 var(--tw-shadow-color,#0000001a), 0 1px 2px -1px var(--tw-shadow-color,#0000001a);box-shadow:var(--tw-inset-shadow), var(--tw-inset-ring-shadow), var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow)}.ring{--tw-ring-shadow:var(--tw-ring-inset,) 0 0 0 calc(1px + var(--tw-ring-offset-width)) var(--tw-ring-color,currentcolor);box-shadow:var(--tw-inset-shadow), var(--tw-inset-ring-shadow), var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow)}.outline{outline-style:var(--tw-outline-style);outline-width:1px}.blur{--tw-blur:blur(8px);filter:var(--tw-blur,) var(--tw-brightness,) var(--tw-contrast,) var(--tw-grayscale,) var(--tw-hue-rotate,) var(--tw-invert,) var(--tw-saturate,) var(--tw-sepia,) var(--tw-drop-shadow,)}.grayscale{--tw-grayscale:grayscale(100%);filter:var(--tw-blur,) var(--tw-brightness,) var(--tw-contrast,) var(--tw-grayscale,) var(--tw-hue-rotate,) var(--tw-invert,) var(--tw-saturate,) var(--tw-sepia,) var(--tw-drop-shadow,)}.invert{--tw-invert:invert(100%);filter:var(--tw-blur,) var(--tw-brightness,) var(--tw-contrast,) var(--tw-grayscale,) var(--tw-hue-rotate,) var(--tw-invert,) var(--tw-saturate,) var(--tw-sepia,) var(--tw-drop-shadow,)}.filter{filter:var(--tw-blur,) var(--tw-brightness,) var(--tw-contrast,) var(--tw-grayscale,) var(--tw-hue-rotate,) var(--tw-invert,) var(--tw-saturate,) var(--tw-sepia,) var(--tw-drop-shadow,)}.transition{transition-property:color,background-color,border-color,outline-color,text-decoration-color,fill,stroke,--tw-gradient-from,--tw-gradient-via,--tw-gradient-to,opacity,box-shadow,transform,translate,scale,rotate,filter,-webkit-backdrop-filter,backdrop-filter,display,content-visibility,overlay,pointer-events;transition-timing-function:var(--tw-ease,var(--default-transition-timing-function));transition-duration:var(--tw-duration,var(--default-transition-duration))}.\\[probe\\:pageerror\\]{probe:pageerror}}.mr-page{box-sizing:border-box;height:100%;color:var(--dsw-alias-label-primary);flex-direction:column;align-items:center;padding:0 clamp(24px,4vw,48px);display:flex;overflow:hidden}.mr-page-head,.mr-workspace{width:100%;max-width:1160px}.mr-page-head{box-sizing:border-box;flex:none;justify-content:space-between;align-items:center;gap:16px;padding-top:28px;display:flex}[data-platform=darwin] .mr-page-head{padding-top:calc(28px + var(--dsh-frame-top-clearance,0px))}.mr-head-title{align-items:center;gap:2px;min-width:0;display:flex}.mr-page-title{margin:0;font-size:20px;font-weight:500;line-height:28px}.mr-workspace{flex:1;grid-template-columns:minmax(240px,300px) minmax(0,1fr);gap:16px;min-height:0;padding:16px 0 24px;display:grid}.mr-workspace-free{grid-template-columns:minmax(300px,1fr) minmax(0,1.25fr)}.mr-side{flex-direction:column;gap:8px;min-width:0;min-height:0;display:flex}.mr-side-scroll{flex-direction:column;flex:1;gap:10px;min-height:0;padding-right:4px;display:flex;overflow:auto}.mr-main{flex-direction:column;gap:16px;min-width:0;min-height:0;padding-right:4px;display:flex;overflow:auto}.mr-preview{flex:none}.mr-empty{text-align:center;color:var(--dsw-alias-label-tertiary);margin:0;padding:48px 0;font-size:13px;line-height:20px}.mr-toolbar{z-index:5;flex-wrap:wrap;flex:none;align-items:center;gap:4px;display:flex;position:relative}.mr-toolbar-count{color:var(--dsw-alias-label-tertiary);font-variant-numeric:tabular-nums;margin-left:auto;font-size:12px;line-height:18px}.mr-tip{display:inline-flex;position:relative}.mr-tip-bubble{z-index:40;pointer-events:none;box-sizing:border-box;border-radius:var(--dsw-radius-sm);background:var(--dsw-alias-tooltip-bg);width:max-content;max-width:300px;color:var(--dsw-static-neutral-bluish-00);white-space:pre-line;overflow-wrap:break-word;opacity:0;visibility:hidden;padding:3px 7px;font-size:13px;font-weight:400;line-height:20px;position:absolute;top:calc(100% + 6px);left:50%;transform:translate(-50%)}.mr-tip[data-align=start] .mr-tip-bubble{left:0;transform:none}.mr-tip[data-align=end] .mr-tip-bubble{left:auto;right:0;transform:none}.mr-tip:hover .mr-tip-bubble,.mr-tip:focus-within .mr-tip-bubble{opacity:1;visibility:visible}.mr-seg{border-radius:var(--dsw-radius-md);background:var(--dsw-alias-interactive-bg-hover);flex:none;grid-auto-columns:1fr;grid-auto-flow:column;gap:2px;padding:4px;display:inline-grid;position:relative}.mr-seg-indicator{width:calc((100% - 8px - 2px * (var(--mr-seg-count,2) - 1)) / var(--mr-seg-count,2));border-radius:var(--dsw-radius-sm);background:var(--dsw-alias-bg-layer-1);height:calc(100% - 8px);box-shadow:var(--dsw-elevation-soft);transform:translateX(calc(var(--mr-seg-index,0) * (100% + 2px)));pointer-events:none;border:0;transition:transform .16s;position:absolute;top:4px;left:4px}.mr-seg-tab{box-sizing:border-box;z-index:1;border-radius:var(--dsw-radius-sm);height:28px;color:var(--dsw-alias-label-secondary);font:inherit;white-space:nowrap;cursor:pointer;background:0 0;border:0;padding:0 16px;font-size:13px;font-weight:500;line-height:20px;transition:color .12s;position:relative}.mr-seg-tab:hover:not(:disabled),.mr-seg-tab[aria-selected=true]{color:var(--dsw-alias-label-primary)}.mr-seg-tab:disabled{cursor:default;opacity:.4}.mr-seg-tab:focus-visible{outline:var(--dsw-focus-ring-width,2px) solid var(--dsw-alias-state-business-primary);outline-offset:-2px}@media (prefers-reduced-motion:reduce){.mr-seg-indicator,.mr-seg-tab{transition:none}}.mr-btn{box-sizing:border-box;cursor:pointer;border-radius:var(--dsw-radius-sm);height:28px;color:var(--dsw-alias-label-primary);background:0 0;border:none;justify-content:center;align-items:center;gap:4px;padding:0 10px;font-size:12px;line-height:18px;display:inline-flex}.mr-btn:disabled{cursor:not-allowed;opacity:.4}.mr-btn.primary{background:var(--dsw-alias-button-primary-fill);color:var(--dsw-alias-label-primary-foreground)}.mr-btn.primary:hover:not(:disabled){background:var(--dsw-alias-button-primary-hover)}.mr-btn:focus-visible{outline:2px solid var(--dsw-alias-state-business-primary);outline-offset:2px}.mr-iconbtn{box-sizing:border-box;border-radius:var(--dsw-radius-sm);cursor:pointer;width:24px;height:24px;color:var(--dsw-alias-label-secondary);background:0 0;border:none;flex:none;justify-content:center;align-items:center;padding:0;display:inline-flex}.mr-iconbtn-xs{width:20px;height:20px}.mr-iconbtn:hover:not(:disabled){background:var(--dsw-alias-interactive-bg-hover);color:var(--dsw-alias-label-primary)}.mr-iconbtn:disabled{cursor:not-allowed;opacity:.4}.mr-iconbtn:focus-visible{outline:2px solid var(--dsw-alias-state-business-primary);outline-offset:2px}.mr-iconbtn[aria-pressed=true]{background:var(--dsw-alias-interactive-bg-hover);color:var(--dsw-alias-state-business-primary)}.mr-code{box-sizing:border-box;resize:vertical;border:.5px solid var(--dsw-alias-border-l4);border-radius:var(--dsw-radius-md);background:var(--dsw-alias-bg-layer-1);width:100%;min-height:190px;color:var(--dsw-alias-label-primary);font-family:var(--ds-font-family-code);tab-size:2;padding:8px 10px;font-size:12px;line-height:18px;display:block}.mr-code-fill{resize:none;flex:1;min-height:0;margin:0}.mr-code:focus-visible{outline:2px solid var(--dsw-alias-state-business-primary);outline-offset:0}.mr-status{white-space:pre-wrap;font-size:13px;line-height:20px}.mr-status.ok{color:var(--dsw-alias-state-success-primary)}.mr-status.err{color:var(--dsw-alias-state-error-primary)}.mr-ground-group{flex-direction:column;gap:2px;display:flex}.mr-ground-grouphead{align-items:center;gap:2px;display:flex}.mr-ground-toggle{text-align:start;box-sizing:border-box;border-radius:var(--dsw-radius-sm);cursor:pointer;min-width:0;height:24px;color:var(--dsw-alias-label-tertiary);background:0 0;border:none;flex:1;align-items:center;gap:6px;padding:0 4px;display:flex}.mr-ground-toggle:hover{background:var(--dsw-alias-interactive-bg-hover)}.mr-ground-toggle:focus-visible{outline:2px solid var(--dsw-alias-state-business-primary);outline-offset:-2px}.mr-ground-grouptitle{font-size:12px;font-weight:500;line-height:18px}.mr-ground-gcount{font-variant-numeric:tabular-nums;margin-left:auto;font-size:11px;line-height:16px}.mr-ground-gfail{font-variant-numeric:tabular-nums;color:var(--dsw-alias-state-error-primary);font-size:11px;line-height:16px}.mr-ground-net{border:1px solid var(--dsw-alias-border-l3);border-radius:var(--dsw-radius-sm);color:var(--dsw-alias-label-secondary);flex:none;padding:0 4px;font-size:11px;line-height:16px}.mr-ground-notice{border:1px solid var(--dsw-alias-border-l3);border-radius:var(--dsw-radius-sm);background:var(--dsw-alias-bg-layer-1);color:var(--dsw-alias-label-secondary);flex:none;margin:0;padding:8px 10px;font-size:12px;line-height:18px}.mr-toolbar-note{color:var(--dsw-alias-label-secondary);font-size:12px;line-height:18px}.mr-ground-items{flex-direction:column;display:flex}.mr-ground-item{text-align:start;box-sizing:border-box;border-radius:var(--dsw-radius-sm);cursor:pointer;width:100%;height:28px;color:var(--dsw-alias-label-primary);background:0 0;border:none;align-items:center;gap:8px;padding:0 8px;display:flex}.mr-ground-item:hover,.mr-ground-item[aria-pressed=true]{background:var(--dsw-alias-interactive-bg-hover)}.mr-ground-item:focus-visible{outline:2px solid var(--dsw-alias-state-business-primary);outline-offset:-2px}.mr-ground-dot{border:.5px solid var(--dsw-alias-border-l3);background:0 0;border-radius:50%;flex:none;width:7px;height:7px}.mr-ground-item[data-state=ok] .mr-ground-dot{border-color:var(--dsw-alias-state-success-primary);background:var(--dsw-alias-state-success-primary)}.mr-ground-item[data-state=fail] .mr-ground-dot{border-color:var(--dsw-alias-state-error-primary);background:var(--dsw-alias-state-error-primary)}.mr-ground-name{flex:none;font-size:13px;line-height:20px}.mr-ground-mark{flex:none;font-size:11px;font-weight:600;line-height:16px}.mr-ground-mark.is-pass{color:var(--dsw-alias-state-success-primary)}.mr-ground-mark.is-fail{color:var(--dsw-alias-state-error-primary)}.mr-ground-id{text-overflow:ellipsis;white-space:nowrap;text-align:end;min-width:0;font-family:var(--ds-font-family-code);color:var(--dsw-alias-label-tertiary);flex:1;margin-left:auto;font-size:11px;line-height:16px;overflow:hidden}.mr-expect{box-sizing:border-box;border:1px solid var(--dsw-alias-border-l3);border-radius:var(--dsw-radius-sm);background:var(--dsw-alias-bg-layer-1);align-items:baseline;gap:8px;padding:8px 10px;display:flex}.mr-expect-label{color:var(--dsw-alias-label-secondary);cursor:help;flex:none;font-size:12px;font-weight:500;line-height:18px}.mr-expect-text{min-width:0;color:var(--dsw-alias-label-primary);overflow-wrap:break-word;flex:1;font-size:12px;line-height:18px}.mr-expect-mark{flex:none;align-items:center;gap:2px;display:inline-flex}.mr-expect-marktitle{color:var(--dsw-alias-label-tertiary);cursor:help;margin-right:4px;font-size:12px;line-height:18px}.mr-expect-mark .mr-iconbtn[data-mark=pass]{color:var(--dsw-alias-state-success-primary)}.mr-expect-mark .mr-iconbtn[data-mark=fail]{color:var(--dsw-alias-state-error-primary)}.mr-chatcard-body{margin-top:12px;position:relative}.mr-chatcard{box-sizing:border-box;border:.5px solid var(--dsw-alias-settings-card-stroke);border-radius:var(--dsw-radius-xl);background:var(--dsw-alias-settings-card-fill);color:var(--dsw-alias-label-primary);margin:6px 0;padding:10px 12px}.mr-chatcard-head{align-items:center;gap:6px;height:32px;display:flex}.mr-chatcard-label{flex:none;font-size:13px;font-weight:500;line-height:20px}.mr-chatcard-head .mr-status{white-space:nowrap;text-overflow:ellipsis;flex:1;min-width:0;overflow:hidden}.mr-stage{aspect-ratio:16/9;border:.5px solid var(--dsw-alias-border-l3);border-radius:var(--dsw-radius-md);background:var(--dsw-alias-bg-layer-1);width:100%;margin-top:12px;position:relative;overflow:hidden}.mr-chatcard-body>.mr-stage{margin-top:0}.mr-stage canvas{display:block;width:100%!important;height:100%!important}.mr-canvas-loading{z-index:2;box-sizing:border-box;pointer-events:none;justify-content:center;align-items:center;padding:12px;display:flex;position:absolute;inset:0}.mr-canvas-loading-pill{box-sizing:border-box;background:var(--dsw-alias-tooltip-bg);min-width:0;max-width:100%;color:var(--dsw-static-neutral-bluish-00);border-radius:999px;align-items:center;gap:8px;padding:6px 12px;font-size:13px;line-height:20px;display:flex}.mr-canvas-loading-text{text-overflow:ellipsis;white-space:nowrap;min-width:0;overflow:hidden}.mr-spinner{box-sizing:border-box;border:1.5px solid #ffffff40;border-top-color:currentColor;border-radius:50%;flex:none;width:14px;height:14px;animation:.8s linear infinite mr-spin}@keyframes mr-spin{to{transform:rotate(360deg)}}@media (prefers-reduced-motion:reduce){.mr-spinner{animation:none}}.mr-code-pane{border:.5px solid var(--dsw-alias-border-l3);border-radius:var(--dsw-radius-md);background:var(--dsw-alias-bg-layer-1);position:absolute;inset:0;overflow:auto}.mr-codeview{font-family:var(--ds-font-family-code);color:var(--dsw-alias-label-primary);white-space:pre-wrap;word-break:break-word;tab-size:2;margin:0;padding:10px 12px;font-size:12px;line-height:18px}.mr-codeview code{counter-reset:source-line;display:block}.mr-codeview code>.line{min-height:1lh;counter-increment:source-line;padding-inline-start:calc(var(--mr-codeview-gutter,2ch) + 12px);display:block;position:relative}.mr-codeview code>.line:before{width:var(--mr-codeview-gutter,2ch);color:var(--dsw-alias-label-tertiary);text-align:end;content:counter(source-line);user-select:none;position:absolute;inset-inline-start:0}.mr-codepane-actions{z-index:2;justify-content:flex-end;height:0;padding:6px 8px 0 0;display:flex;position:sticky;top:0}.mr-codepane-actions .mr-iconbtn{background:var(--dsw-alias-bg-layer-1);border:.5px solid var(--dsw-alias-border-l3);width:22px;height:22px}.mr-chatcard-code{border:.5px solid var(--dsw-alias-border-l4);border-radius:var(--dsw-radius-md);background:var(--dsw-alias-bg-layer-1);max-height:180px;margin-top:8px;overflow:auto}.mr-chatcard-code>.mr-codeview{padding:8px 10px}.mr-chatcard-error{white-space:pre-wrap;word-break:break-word;color:var(--dsw-alias-state-error-primary);margin:8px 0 0;font-size:13px;line-height:20px}@property --tw-rotate-x{syntax:\"*\";inherits:false}@property --tw-rotate-y{syntax:\"*\";inherits:false}@property --tw-rotate-z{syntax:\"*\";inherits:false}@property --tw-skew-x{syntax:\"*\";inherits:false}@property --tw-skew-y{syntax:\"*\";inherits:false}@property --tw-border-style{syntax:\"*\";inherits:false;initial-value:solid}@property --tw-ordinal{syntax:\"*\";inherits:false}@property --tw-slashed-zero{syntax:\"*\";inherits:false}@property --tw-numeric-figure{syntax:\"*\";inherits:false}@property --tw-numeric-spacing{syntax:\"*\";inherits:false}@property --tw-numeric-fraction{syntax:\"*\";inherits:false}@property --tw-shadow{syntax:\"*\";inherits:false;initial-value:0 0 #0000}@property --tw-shadow-color{syntax:\"*\";inherits:false}@property --tw-shadow-alpha{syntax:\"<percentage>\";inherits:false;initial-value:100%}@property --tw-inset-shadow{syntax:\"*\";inherits:false;initial-value:0 0 #0000}@property --tw-inset-shadow-color{syntax:\"*\";inherits:false}@property --tw-inset-shadow-alpha{syntax:\"<percentage>\";inherits:false;initial-value:100%}@property --tw-ring-color{syntax:\"*\";inherits:false}@property --tw-ring-shadow{syntax:\"*\";inherits:false;initial-value:0 0 #0000}@property --tw-inset-ring-color{syntax:\"*\";inherits:false}@property --tw-inset-ring-shadow{syntax:\"*\";inherits:false;initial-value:0 0 #0000}@property --tw-ring-inset{syntax:\"*\";inherits:false}@property --tw-ring-offset-width{syntax:\"<length>\";inherits:false;initial-value:0}@property --tw-ring-offset-color{syntax:\"*\";inherits:false;initial-value:#fff}@property --tw-ring-offset-shadow{syntax:\"*\";inherits:false;initial-value:0 0 #0000}@property --tw-outline-style{syntax:\"*\";inherits:false;initial-value:solid}@property --tw-blur{syntax:\"*\";inherits:false}@property --tw-brightness{syntax:\"*\";inherits:false}@property --tw-contrast{syntax:\"*\";inherits:false}@property --tw-grayscale{syntax:\"*\";inherits:false}@property --tw-hue-rotate{syntax:\"*\";inherits:false}@property --tw-invert{syntax:\"*\";inherits:false}@property --tw-opacity{syntax:\"*\";inherits:false}@property --tw-saturate{syntax:\"*\";inherits:false}@property --tw-sepia{syntax:\"*\";inherits:false}@property --tw-drop-shadow{syntax:\"*\";inherits:false}@property --tw-drop-shadow-color{syntax:\"*\";inherits:false}@property --tw-drop-shadow-alpha{syntax:\"<percentage>\";inherits:false;initial-value:100%}@property --tw-drop-shadow-size{syntax:\"*\";inherits:false}";
-		const tagId = "manim-renderer/styles.css";
+		const tagId = "dsh-manim-renderer/styles.css";
 		if (typeof document !== "undefined" && document.querySelector("style[data-plugin-css=" + JSON.stringify(tagId) + "]") === null) {
 			const tag = document.createElement("style");
-			tag.dataset.plugin = "manim-renderer";
+			tag.dataset.plugin = "dsh-manim-renderer";
 			tag.dataset.pluginCss = tagId;
 			tag.textContent = css;
 			document.head.appendChild(tag);

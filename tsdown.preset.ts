@@ -16,10 +16,11 @@
  *
  * 插件侧只写：
  *   import { clientBundle } from './tsdown.preset.ts'
- *   export default clientBundle({ id: 'my-plugin' })
+ *   export default clientBundle({ entry: 'src/client/index.tsx' })
+ * **banner 的 id 由预设从 package.json 的 name 派生，不是调用方传参**——见 packageName()。
  *
  * 前提：tsdown 的工作目录是被构建的插件包（`pnpm --filter <name> build` 即如此）
- * ——lucide-react 这类需要钉入口的依赖按该目录解析。
+ * ——包名、lucide-react 入口、CSS 的包根都按该目录解析。
  * 本文件顶层 import 了 postcss / @tailwindcss/postcss / lightningcss，
  * 所以**每个包都要声明这三个构建依赖**（即使 css: false）——这样五份预设才能逐字节一致，
  * 漂移检查才是一句 diff。
@@ -62,8 +63,6 @@ const CSS_TEXT_PREFIX = '\0plugin-css-text:'
 const NODE_BUILTINS = new Set([...builtinModules, ...builtinModules.map((id) => `node:${id}`)])
 
 export interface ClientBundleOptions {
-  /** 插件 id：与 `cordis.patch.yml` 的 id 一致；**包名另带 `dsh-` 前缀，两者是两回事**。 */
-  id: string
   /** 入口，默认 `src/client/index.tsx`。 */
   entry?: string
   /** 是否挂 tailwind CSS 管线（默认 true）；不用 tailwind 的插件关掉。 */
@@ -75,8 +74,9 @@ export interface ClientBundleOptions {
 }
 
 /** 生成插件客户端 bundle 的 tsdown 配置。 */
-export function clientBundle(options: ClientBundleOptions): UserConfig[] {
-  const { id, entry = 'src/client/index.tsx', css = true, extraExternals = [], cssText = [] } = options
+export function clientBundle(options: ClientBundleOptions = {}): UserConfig[] {
+  const { entry = 'src/client/index.tsx', css = true, extraExternals = [], cssText = [] } = options
+  const id = packageName()
   const externals: readonly string[] = [...PLATFORM_MODULES, ...extraExternals]
   const alias = lucideAlias()
 
@@ -111,6 +111,36 @@ export function clientBundle(options: ClientBundleOptions): UserConfig[] {
       },
     },
   ]
+}
+
+/**
+ * 客户端 bundle 注册的 id **必须等于包名**，所以从 `package.json` 派生，不给调用方传参。
+ *
+ * 依据：dsh 源码 `packages/client/modules/src/client/manifest.ts` 的 `BootModuleRow`
+ * ——`id` 的注释就是「Entry name == package name」；加载器在 `client/system.ts` 的
+ * `arrive()` 里拿 `__ModuleLoader__.load({ id })` 的 id 与 boot 行的 `row.id` 比对，
+ * 对不上就判「loaded without registering」→ 退回单文件 URL 重跑 → 第二次执行又注册同一个
+ * id，报「duplicate factory registration」，整包加载失败。包名加 `dsh-` 前缀而这里没跟上，
+ * 就是 2026-10-10 那次 4 个插件集体加载失败的成因。
+ *
+ * 顺带把工作目录也守住：没声明 `dsh.client` 的包不该构建 client bundle，
+ * 在包根之外跑构建会当场报错，而不是产出一个 id 错的产物。
+ */
+function packageName(): string {
+  const manifest = JSON.parse(readFileSync(join(process.cwd(), 'package.json'), 'utf8')) as {
+    name?: unknown
+    dsh?: { client?: unknown }
+  }
+  if (typeof manifest.name !== 'string' || manifest.name.length === 0) {
+    throw new Error('client bundle: package.json 缺 name —— 模块表的键无从确定')
+  }
+  if (manifest.dsh?.client === undefined) {
+    throw new Error(
+      `client bundle: "${manifest.name}" 未声明 dsh.client —— 不是客户端包，不该构建 client bundle`
+      + '（tsdown 的工作目录是包根吗？）',
+    )
+  }
+  return manifest.name
 }
 
 /**

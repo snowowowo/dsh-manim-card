@@ -7,11 +7,8 @@
  */
 import { clientBundle } from './tsdown.preset.ts'
 
-/** 插件 id：与 cordis.patch.yml 的 id 一致；**包名另带 `dsh-` 前缀，两者是两回事**。 */
-const PLUGIN_ID = 'manim-renderer'
-
 export default [
-  ...clientBundle({ id: PLUGIN_ID, entry: 'src/client/index.tsx' }),
+  ...clientBundle({ entry: 'src/client/index.tsx' }),
   {
     // Host 免构建只对 JS 成立：两端共用的 TS 运行时要单独编成 host 可执行的 ESM。
     // Pyodide 不在这里——它由 host/index.js 在运行时从 assets/pyodide 动态 import，
