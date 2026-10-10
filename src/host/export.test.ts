@@ -15,7 +15,7 @@
  * 不在单元测试里——那是 `MANIM_EXPORT=1` 的联网/本机档（见文件末尾）。
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { chmodSync, existsSync, mkdirSync, mkdtempSync, readdirSync, rmSync, writeFileSync } from 'node:fs'
+import { chmodSync, existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { basename, join } from 'node:path'
 import {
@@ -166,10 +166,16 @@ describe('就绪门', () => {
 
 describe('真导出（假 manim 脚本）', () => {
   let work = ''
+  let scratch = ''
   let fakeManim = ''
 
   beforeEach(() => {
     work = mkdtempSync(join(tmpdir(), 'manim-export-case-'))
+    // 注入的暂存根：导出把源码与 media 都落在它下面。
+    // 为什么不直接扫全局临时目录去断言「清理干净」——那样会跟任何同时在跑的导出撞车
+    // （开发时手工跑一次验收，就能让这一格红给你看，实测发生过）。
+    scratch = join(work, 'scratch')
+    mkdirSync(scratch, { recursive: true })
     mkdirSync(join(work, 'bin'))
     fakeManim = join(work, 'bin', 'manim')
   })
@@ -178,8 +184,21 @@ describe('真导出（假 manim 脚本）', () => {
     rmSync(work, { recursive: true, force: true })
   })
 
-  /** 假 manim：把参数里的 media 目录找出来，往里写一个 mp4（或按 FAIL 的指示退出非零）。 */
-  function installFakeManim(behavior: 'ok' | 'fail' | 'silent' = 'ok'): void {
+  /**
+   * 假 manim：按 `--media_dir` 往 media 目录里写产物。
+   *  - `ok`          → 碎片 + 成片都写（真 manim 开着缓存时就是这样）
+   *  - `partialOnly` → 只留碎片、没拼成片（导出必须报错）
+   *  - `fail`        → 非零退出并把报错写进 stderr
+   *  - `silent`      → 正常退出但什么都不写
+   */
+  function installFakeManim(behavior: 'ok' | 'fail' | 'silent' | 'partialOnly' = 'ok'): void {
+    const head = [
+      '#!/usr/bin/env node',
+      'const args = process.argv.slice(2)',
+      'const mdir = args[args.indexOf("--media_dir") + 1]',
+      'const fs = require("node:fs")',
+      'const dir = mdir + "/videos/scene/1080p60"',
+    ]
     const script = behavior === 'fail'
       ? [
           '#!/usr/bin/env node',
@@ -188,19 +207,22 @@ describe('真导出（假 manim 脚本）', () => {
           'process.exit(1)',
         ]
       : behavior === 'silent'
-        ? [
-            '#!/usr/bin/env node',
-            'const args = process.argv.slice(2)',
-            'const mdir = args[args.indexOf("--media_dir") + 1]',
-            'require("node:fs").mkdirSync(mdir + "/videos/scene/1080p60", { recursive: true })',
-          ]
-        : [
-            '#!/usr/bin/env node',
-            'const args = process.argv.slice(2)',
-            'const mdir = args[args.indexOf("--media_dir") + 1]',
-            'require("node:fs").mkdirSync(mdir + "/videos/scene/1080p60", { recursive: true })',
-            'require("node:fs").writeFileSync(mdir + "/videos/scene/1080p60/Demo.mp4", "mp4-bytes")',
-          ]
+        ? [...head, 'fs.mkdirSync(dir, { recursive: true })']
+        : behavior === 'partialOnly'
+          ? [
+              ...head,
+              'fs.mkdirSync(dir + "/partial_movie_files/Demo", { recursive: true })',
+              'fs.writeFileSync(dir + "/partial_movie_files/Demo/aaa.mp4", "fragment")',
+            ]
+          : [
+              ...head,
+              // 真 manim 就是这样：碎片留在 partial_movie_files 里，成片在它外面那一层。
+              // 碎片路径按字典序排在成片**之后**——曾经的挑选逻辑正是被这一点骗了，
+              // 拷走的是一段一秒的碎片，用户看到的是「动画不完整」。
+              'fs.mkdirSync(dir + "/partial_movie_files/Demo", { recursive: true })',
+              'fs.writeFileSync(dir + "/partial_movie_files/Demo/zzz-fragment.mp4", "fragment")',
+              'fs.writeFileSync(dir + "/Demo.mp4", "full-cut")',
+            ]
     writeFileSync(fakeManim, script.join('\n') + '\n')
     chmodSync(fakeManim, 0o755)
   }
@@ -213,18 +235,18 @@ describe('真导出（假 manim 脚本）', () => {
     const savedPath = process.env.PATH
     process.env.PATH = `${join(work, 'bin')}:${savedPath}`
     try {
-      const result = await exportVideo({ python: FULL_FILE })
+      const result = await exportVideo({ python: FULL_FILE, workRoot: scratch })
       expect(result.ok).toBe(true)
       if (!result.ok) return
       expect(result.file.startsWith(join(FAKE_HOME, 'Downloads'))).toBe(true)
       expect(basename(result.file)).toMatch(/^manim-Demo-\d{8}T\d{6}\.mp4$/u)
       expect(result.quality).toBe('h')
       expect(existsSync(result.file)).toBe(true)
-      // 工作目录清干净：os.tmpdir() 下不该再留导出过程目录（本用例自己的 case 目录与替身 HOME 除外）
-      const leftovers = readdirSync(tmpdir()).filter(
-        (name) => /^manim-export-(?!case-|home-)/u.test(name),
-      )
-      expect(leftovers).toEqual([])
+      // 拿到的必须是**成片**而不是碎片：同目录里那份碎片按字典序排在后面，
+      // 曾经的「排序取最后一个」正是这样把一秒的碎片当成了整片
+      expect(readFileSync(result.file, 'utf8')).toBe('full-cut')
+      // 暂存根清干净：导出的一次性目录不许留下
+      expect(readdirSync(scratch)).toEqual([])
     } finally {
       process.env.PATH = savedPath
     }
@@ -256,6 +278,21 @@ describe('真导出（假 manim 脚本）', () => {
       expect(result).toMatchObject({ ok: false, reason: 'render' })
       if (result.ok) return
       expect(result.error).toContain('没有产出视频')
+    } finally {
+      process.env.PATH = savedPath
+    }
+  })
+
+  it('只剩碎片、没拼成成片：如实报错，绝不拿碎片充数', async () => {
+    installFakeManim('partialOnly')
+    probeAs(READY)
+    const savedPath = process.env.PATH
+    process.env.PATH = `${join(work, 'bin')}:${savedPath}`
+    try {
+      const result = await exportVideo({ python: FULL_FILE })
+      expect(result).toMatchObject({ ok: false, reason: 'render' })
+      if (result.ok) return
+      expect(result.error).toContain('碎片')
     } finally {
       process.env.PATH = savedPath
     }

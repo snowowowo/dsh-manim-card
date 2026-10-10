@@ -13,9 +13,10 @@
 // 后期要对外提供这个服务，也以这一层为界——只依赖本机 CLI 与文件系统，不碰任何 UI。
 
 import { execFile } from 'node:child_process';
+import { statSync } from 'node:fs';
 import { copyFile, mkdir, mkdtemp, readdir, realpath, rm, writeFile } from 'node:fs/promises';
 import { homedir, tmpdir } from 'node:os';
-import { dirname, join, sep } from 'node:path';
+import { basename, dirname, join, sep } from 'node:path';
 import { probeCheck, resolveExecutable } from './environment.js';
 import { sendJson } from './http.js';
 
@@ -149,8 +150,19 @@ function tail(text, keep = 6) {
   return lines.slice(-keep).join('\n').slice(0, 2000);
 }
 
-/** 递归找 media_dir 下最新的 mp4（manim 的产物在 media/videos/<文件名>/<质量档>/ 里）。 */
-async function findVideos(root) {
+/**
+ * manim 分段渲染的碎片目录。开着缓存（默认）时它会在成片旁边留下**每一段动画**的小 mp4，
+ * 成片则是同一层那个 `<场景名>.mp4`。挑选产物时必须把碎片排除掉——踩过一次：
+ * 按路径排序取「最后一个」，而 `partial_movie_files`（小写 p）排在 `SecantToTangent.mp4`
+ * （大写 S）之后，于是导出的是一段一秒的碎片，用户看到的是「动画不完整」。
+ */
+const PARTIAL_DIR = 'partial_movie_files';
+
+/**
+ * 递归找 mp4。`includePartial` 只给报错信息用：成片找不到时，要能说清
+ * 「是碎片还在但没拼成片」还是「压根没产出」，这两件事用户能做的事不一样。
+ */
+async function findVideos(root, { includePartial = false } = {}) {
   const found = [];
   const walk = async (dir) => {
     let entries;
@@ -161,8 +173,10 @@ async function findVideos(root) {
     }
     for (const entry of entries) {
       const path = join(dir, entry.name);
-      if (entry.isDirectory()) await walk(path);
-      else if (entry.isFile() && entry.name.endsWith('.mp4')) found.push(path);
+      if (entry.isDirectory()) {
+        if (!includePartial && entry.name === PARTIAL_DIR) continue;
+        await walk(path);
+      } else if (entry.isFile() && entry.name.endsWith('.mp4')) found.push(path);
     }
   };
   await walk(root);
@@ -170,11 +184,37 @@ async function findVideos(root) {
 }
 
 /**
+ * 从候选里挑成片：名字就是场景名的那份优先；实在认不出（用户自己改了输出名之类），
+ * 退而取**最大**的那个——manim 的正片永远比任何单段碎片大。
+ */
+function pickFinalVideo(candidates, sceneName) {
+  const named = candidates.find((path) => basename(path) === `${sceneName}.mp4`);
+  if (named !== undefined) return named;
+  let best = candidates[0];
+  let bestSize = -1;
+  for (const path of candidates) {
+    try {
+      const size = statSync(path).size;
+      if (size > bestSize) {
+        bestSize = size;
+        best = path;
+      }
+    } catch {
+      // 读不到大小就跳过（清理当中/权限问题），别的候选继续
+    }
+  }
+  return best;
+}
+
+/**
  * 导出一段 Manim Python 为 mp4。
+ * @param workRoot 暂存根目录（缺省系统临时目录）。源码与 manim 的 media 都落在它下面的
+ *   一次性目录里，渲染完只把 mp4 拷走、整目录删掉。可注入是为了**测试能确定地断言清理**——
+ *   断言全局临时目录会跟任何同时在跑的导出（比如开发时手工验收）撞车。
  * @returns `{ ok: true, file, quality }` 或 `{ ok: false, reason, error?, missing? }`；
  *   `reason`：`input`（源码为空）/ `environment`（必要条件没备齐）/ `render`（manim 跑了但失败）。
  */
-export async function exportVideo({ python, quality = DEFAULT_QUALITY, timeoutMs = EXPORT_TIMEOUT_MS } = {}) {
+export async function exportVideo({ python, quality = DEFAULT_QUALITY, timeoutMs = EXPORT_TIMEOUT_MS, workRoot = tmpdir() } = {}) {
   if (typeof python !== 'string' || python.trim().length === 0) {
     return { ok: false, reason: 'input', error: 'python 不能为空' };
   }
@@ -196,7 +236,7 @@ export async function exportVideo({ python, quality = DEFAULT_QUALITY, timeoutMs
   const className = sceneName ?? 'ManimExportScene';
 
   // 临时工作目录：源码与 media 都落在这里，渲染完只把 mp4 拷走，整目录删掉
-  const workDir = await mkdtemp(join(tmpdir(), 'manim-export-'));
+  const workDir = await mkdtemp(join(workRoot, 'manim-export-'));
   const mediaDir = join(workDir, 'media');
   const sourceFile = join(workDir, 'scene.py');
   await writeFile(sourceFile, source, 'utf8');
@@ -210,9 +250,17 @@ export async function exportVideo({ python, quality = DEFAULT_QUALITY, timeoutMs
     }
     const videos = await findVideos(mediaDir);
     if (videos.length === 0) {
-      return { ok: false, reason: 'render', error: 'manim 跑完了，但没有产出视频文件' };
+      const partials = await findVideos(mediaDir, { includePartial: true });
+      return {
+        ok: false,
+        reason: 'render',
+        error: partials.length > 0
+          ? `manim 只留下了 ${partials.length} 段渲染碎片，没有拼成成片`
+          : 'manim 跑完了，但没有产出视频文件',
+      };
     }
-    const produced = videos.sort().at(-1);
+    // 成片优先，绝不拿碎片充数（碎片目录已在 findVideos 里排除）
+    const produced = pickFinalVideo(videos, className);
     const stamp = new Date().toISOString().replace(/[-:]/gu, '').replace(/\..+$/u, '');
     const target = join(await exportDir(), `manim-${className}-${stamp}.mp4`);
     await copyFile(produced, target);
