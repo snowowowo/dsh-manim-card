@@ -23,14 +23,14 @@
  * `MANIM_NET=1` 的联网组（挑最小的包，几 KB）。
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs'
+import { chmodSync, existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, realpathSync, rmSync, symlinkSync, writeFileSync } from 'node:fs'
 import { createHash } from 'node:crypto'
 import { tmpdir } from 'node:os'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { Writable } from 'node:stream'
 import { apply } from './index.js'
-import { resolveExecutable } from './environment.js'
+import { pythonBesideExecutable, resolveExecutable } from './environment.js'
 import { CATALOG } from './pyodide.js'
 // 上面那份替身里的函数要在测试里直接驱动（断言被调用、改返回值）——vi.mock 会被提升，顺序无所谓
 import { runPython, setPyodideLoader } from '../../core.js'
@@ -55,6 +55,7 @@ const KATEX_PATH = '/dsh-plugins/manim-renderer/katex'
 const PYODIDE_PATH = '/dsh-plugins/manim-renderer/pyodide'
 const PACKAGES_PATH = '/dsh-plugins/manim-renderer/packages'
 const ENV_PATH = '/dsh-plugins/manim-renderer/environment'
+const EXPORT_PATH = '/dsh-plugins/manim-renderer/export'
 
 interface Handler {
   (request: { method: string; url: string }, response: unknown): Promise<void>
@@ -212,13 +213,13 @@ afterEach(() => {
 })
 
 describe('apply 接线', () => {
-  it('注册了工具 / 技能 / 常驻指引，以及四条路由', () => {
+  it('注册了工具 / 技能 / 常驻指引，以及五条路由', () => {
     apply(fakeCtx())
     expect(captured.tools).toHaveLength(1)
     expect(captured.skills).toHaveLength(1)
     expect(captured.sections).toHaveLength(1)
     expect(captured.routes.map((route) => route.path)).toEqual(
-      expect.arrayContaining([KATEX_PATH, PYODIDE_PATH, CORPUS_PATH, CACHE_PATH]),
+      expect.arrayContaining([KATEX_PATH, PYODIDE_PATH, CORPUS_PATH, CACHE_PATH, ENV_PATH, EXPORT_PATH]),
     )
   })
 
@@ -830,6 +831,42 @@ describe('本机环境探测路由', () => {
   it('非 GET 一律 405', async () => {
     apply(fakeCtx())
     expect((await call(routeAt(ENV_PATH), 'POST', ENV_PATH)).statusCode).toBe(405)
+  })
+})
+
+describe('pythonBesideExecutable（「manim 库」跟着命令走）', () => {
+  let root = ''
+
+  beforeEach(() => {
+    root = mkdtempSync(join(tmpdir(), 'manim-beside-'))
+  })
+
+  afterEach(() => {
+    rmSync(root, { recursive: true, force: true })
+  })
+
+  it('venv 布局：软链入口解到 venv 里，解释器取同层 bin/python3', () => {
+    mkdirSync(join(root, 'venv', 'bin'), { recursive: true })
+    writeFileSync(join(root, 'venv', 'bin', 'manim'), '#!/bin/sh\n')
+    writeFileSync(join(root, 'venv', 'bin', 'python3'), '#!/bin/sh\n')
+    chmodSync(join(root, 'venv', 'bin', 'manim'), 0o755)
+    chmodSync(join(root, 'venv', 'bin', 'python3'), 0o755)
+    mkdirSync(join(root, 'link'))
+    symlinkSync(join(root, 'venv', 'bin', 'manim'), join(root, 'link', 'manim'))
+    // ~/.local/bin/manim 这类入口正是这种软链——不解开就找不到 venv。
+    // macOS 的 /var 是 /private/var 的软链，两边都先 realpath 再比，别让系统的链搅进来。
+    expect(pythonBesideExecutable(join(root, 'link', 'manim'))).toBe(realpathSync(join(root, 'venv', 'bin', 'python3')))
+  })
+
+  it('非 venv 布局（裸脚本）：找不到同层解释器回 null，退回原兜底', () => {
+    mkdirSync(join(root, 'usr', 'bin'), { recursive: true })
+    writeFileSync(join(root, 'usr', 'bin', 'manim'), '#!/bin/sh\n')
+    chmodSync(join(root, 'usr', 'bin', 'manim'), 0o755)
+    expect(pythonBesideExecutable(join(root, 'usr', 'bin', 'manim'))).toBeNull()
+  })
+
+  it('文件不存在：不抛，回 null', () => {
+    expect(pythonBesideExecutable(join(root, 'nope', 'manim'))).toBeNull()
   })
 })
 

@@ -11,9 +11,9 @@
 //  ② **不用 shell**：一律 execFile + 写死的参数，用户输入不进命令行，注入无从谈起。
 
 import { execFile } from 'node:child_process';
-import { accessSync, constants, statSync } from 'node:fs';
+import { accessSync, constants, realpathSync, statSync } from 'node:fs';
 import { homedir } from 'node:os';
-import { delimiter, join } from 'node:path';
+import { delimiter, dirname, join } from 'node:path';
 import { sendJson } from './http.js';
 
 const ENVIRONMENT_PATH = '/dsh-plugins/manim-renderer/environment';
@@ -29,7 +29,8 @@ const DEFAULT_TIMEOUT_MS = 6000;
 const CHECKS = [
   { id: 'python3', tool: 'python3', args: ['-V'] },
   { id: 'manim', tool: 'manim', args: ['--version'], timeoutMs: 20000 },
-  { id: 'manimModule', tool: 'python3', args: ['-c', 'import manim; print(manim.__version__)'], timeoutMs: 30000, missingOnFailure: true },
+  // interpreterFrom：不问 PATH 第一个的 python3，问 manim 命令自己用的那个解释器（见上）
+  { id: 'manimModule', tool: 'python3', args: ['-c', 'import manim; print(manim.__version__)'], timeoutMs: 30000, missingOnFailure: true, interpreterFrom: 'manim' },
   { id: 'ffmpeg', tool: 'ffmpeg', args: ['-version'] },
   { id: 'latex', tool: 'latex', args: ['--version'] },
   { id: 'dvisvgm', tool: 'dvisvgm', args: ['--version'] },
@@ -59,6 +60,34 @@ function searchPath() {
     '/usr/bin',
     '/bin',
   ])];
+}
+
+/**
+ * 「manim 库」那项的问法：**跟着 manim 命令走**，别盯着 PATH 第一个的 python3。
+ *
+ * 教训是真实发生的：用户把 Manim 装在自己的 venv（`~/.venvs/manim`），再把命令软链到
+ * `~/.local/bin`——`manim --version` 一切正常，但 `python3 -c "import manim"` 跑的是
+ * 另一个 Python（应用自带的那个），必然 `ModuleNotFoundError`，设置页于是常年红一行「未安装」。
+ * 命令能用、库却判成没装，比探测缺项更伤信任。
+ *
+ * venv / pipx 的布局都是 `<env>/bin/manim`（Windows 是 `<env>\Scripts\manim.exe`），
+ * 解释器就躺在同一层：`<env>/bin/python3`。软链要先解开——`~/.local/bin/manim` 这类入口
+ * 链到 venv 里，不解开就找不到那个 venv。
+ */
+export function pythonBesideExecutable(file) {
+  try {
+    const real = realpathSync(file);
+    const dir = dirname(real);
+    const candidate = process.platform === 'win32'
+      ? join(dir, '..', 'Scripts', 'python.exe')
+      : join(dir, '..', 'bin', 'python3');
+    statSync(candidate);
+    accessSync(candidate, constants.X_OK);
+    return candidate;
+  } catch {
+    // 不是 venv 布局（比如 brew / 系统包管理器装的裸脚本），退回调用方自己的兜底
+    return null;
+  }
 }
 
 /** 在 PATH 里找出可执行文件的绝对路径；找不到回 null。 */
@@ -139,9 +168,16 @@ export function probePlan() {
 export async function probeCheck(id) {
   const check = CHECKS.find((item) => item.id === id);
   if (check === undefined) return null;
-  const file = resolveExecutable(check.tool);
+  let file = resolveExecutable(check.tool);
   if (file === null) {
     return { id, status: 'missing', path: null, version: '', detail: `PATH 里找不到 ${check.tool}` };
+  }
+  // 「库在不在」要问对解释器：manim 命令若是 venv/pipx 布局，用它同层的 python3；
+  // 找不到同层解释器（非 venv 布局）才退回 PATH 上的 python3。
+  if (check.interpreterFrom !== undefined) {
+    const cli = resolveExecutable(check.interpreterFrom);
+    const beside = cli === null ? null : pythonBesideExecutable(cli);
+    if (beside !== null) file = beside;
   }
   const timeoutMs = check.timeoutMs ?? DEFAULT_TIMEOUT_MS;
   const outcome = await runCommand(file, check.args, timeoutMs);
