@@ -13,14 +13,13 @@
  */
 import { useEffect, useState } from 'react'
 import { parseCorpus, type Corpus } from '../core/py/examples.ts'
-
-const CORPUS_URL = '/dsh-plugins/manim-renderer/corpus'
+import { CORPUS_ROUTE, SHOTS_ROUTE } from '../core/routes.ts'
 
 /**
- * 语料截图的静态资源前缀：与 Host 注册的那条 `assetRoute(shotsRoot(), …)` 一一对应。
- * 每条语料的图就是 `${SHOTS_URL}/${example.shot}`（`shot` 由 Host 只在文件真在时才带上）。
+ * 语料截图的静态资源前缀（真源在 `core/routes.ts`，与 Host 注册的是同一个值）。
+ * 每条语料的图就是 `${SHOTS_ROUTE}/${example.shot}`（`shot` 由 Host 只在文件真在时才带上）。
  */
-export const SHOTS_URL = '/dsh-plugins/manim-renderer/shots'
+export const SHOTS_URL = SHOTS_ROUTE
 
 export type CorpusState =
   /** 正在取（本机路由，正常是毫秒级）。 */
@@ -55,7 +54,7 @@ export function corpusStateFrom(status: number, payload: unknown): CorpusState {
 export async function loadCorpus(): Promise<CorpusState> {
   let response: Response
   try {
-    response = await fetch(CORPUS_URL)
+    response = await fetch(CORPUS_ROUTE)
   } catch (error) {
     // 本机路由都连不上：多半是 Host 没起来或插件没加载
     console.error('[manim-renderer] 取语料失败:', error)

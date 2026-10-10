@@ -50,3 +50,4 @@ export {
   type ManimNamespace,
   type ManimWebBridgeOptions,
 } from './py/manim-bridge.ts'
+export { CORPUS_ROUTE, SHOTS_ROUTE } from './routes.ts'

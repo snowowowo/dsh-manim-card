@@ -13,7 +13,7 @@
 import { readFileSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { createDryRunBridge, runPython } from '../../core.js'
+import { createDryRunBridge, CORPUS_ROUTE, runPython, SHOTS_ROUTE } from '../../core.js'
 import { assetRoute } from './assets.js'
 import { collectCorpus, shotsRoot } from './corpus.js'
 import { environmentRoute } from './environment.js'
@@ -26,8 +26,10 @@ export const inject = ['tools', 'systemPrompt', 'webServer'];
 const PLUGIN_DIR = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
 const KATEX_DIR = join(PLUGIN_DIR, 'assets', 'katex');
 const KATEX_PATH = '/dsh-plugins/manim-renderer/katex';
-const CORPUS_PATH = '/dsh-plugins/manim-renderer/corpus';
-const SHOTS_PATH = '/dsh-plugins/manim-renderer/shots';
+// 两条路由的真源在 src/core/routes.ts（随 core.js 发）——Client 的 fetch / <img> 用同一个值，
+// 改一边忘一边的 404 从根上堵死。
+const CORPUS_PATH = CORPUS_ROUTE;
+const SHOTS_PATH = SHOTS_ROUTE;
 const SKILL_DIR = join(PLUGIN_DIR, 'skills', 'manim-renderer');
 
 const GUIDE = [

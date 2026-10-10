@@ -172989,6 +172989,21 @@ XID_Start XIDS`.split(/\s/).map((p) => [w(p), p]));
 			};
 		}
 		//#endregion
+		//#region src/core/routes.ts
+		/**
+		* Host 与 Client 共用的 HTTP 路由常量——**唯一真源**。
+		*
+		* 为什么要在 core：同一条路径此前在 Host（注册路由）与 Client（fetch / 拼 <img> 地址）
+		* 各写一遍，改一边忘一边就是 404，且 TS 编译器帮不上忙（两边都是普通字符串）。
+		* core 是两端共用的那一段（client 打进 bundle、host 走 core.js），常量放这里，
+		* 「注册的路由」与「请求的路由」就永远是同一个值。
+		*
+		* 前缀 `/dsh-plugins/manim-renderer` 是插件容器给本插件分发的命名空间（与宿主的
+		* 路由分发约定一致），不是本包能单独决定的——改前缀要连宿主一起改。
+		*/
+		/** 实验场语料清单：Host `register` 它，Client `fetch` 它。 */
+		const CORPUS_ROUTE = "/dsh-plugins/manim-renderer/corpus";
+		//#endregion
 		//#region src/client/corpus.ts
 		/**
 		* 实验场语料的取用：**运行时向 Host 取**，不从产物里读。
@@ -173003,10 +173018,9 @@ XID_Start XIDS`.split(/\s/).map((p) => [w(p), p]));
 		*
 		* 清包缓存（`POST …/cache`）搬去 ./packages.ts 了：那是包缓存的事，跟语料无关。
 		*/
-		const CORPUS_URL = "/dsh-plugins/manim-renderer/corpus";
 		/**
-		* 语料截图的静态资源前缀：与 Host 注册的那条 `assetRoute(shotsRoot(), …)` 一一对应。
-		* 每条语料的图就是 `${SHOTS_URL}/${example.shot}`（`shot` 由 Host 只在文件真在时才带上）。
+		* 语料截图的静态资源前缀（真源在 `core/routes.ts`，与 Host 注册的是同一个值）。
+		* 每条语料的图就是 `${SHOTS_ROUTE}/${example.shot}`（`shot` 由 Host 只在文件真在时才带上）。
 		*/
 		const SHOTS_URL = "/dsh-plugins/manim-renderer/shots";
 		/** 模块级缓存 + 单飞：切视图 / 重挂页面都不再重取。 */
@@ -173037,7 +173051,7 @@ XID_Start XIDS`.split(/\s/).map((p) => [w(p), p]));
 		async function loadCorpus() {
 			let response;
 			try {
-				response = await fetch(CORPUS_URL);
+				response = await fetch(CORPUS_ROUTE);
 			} catch (error) {
 				console.error("[manim-renderer] 取语料失败:", error);
 				return {
