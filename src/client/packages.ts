@@ -101,6 +101,31 @@ export function findPackage(entries: readonly PackageEntry[], name: string): Pac
   return entries.find((entry) => canonicalPackageName(entry.name) === wanted)
 }
 
+/** 输入框补全用的候选：完整名字 + 界面上要接在光标后面的那一段。 */
+export interface Completion {
+  name: string
+  suffix: string
+}
+
+/**
+ * 输入框的「虚影」补全：按**名字前缀**（不分大小写）找第一个能接上的库。
+ *
+ * 只做前缀匹配，不做模糊/包含匹配：补全要能一眼看出「接上之后是什么」，前缀才是可预期的
+ * ——打成 `illow` 被补成 `pillow` 那种（往中间插）在虚影上没法表达，宁可不补。
+ * 清单是按名字排好序发过来的，所以「第一个」就是字典序第一个，同一份输入永远同一个结果。
+ *
+ * @returns 完整名字与后缀；输入为空、或已经是个完整名字时回 null（界面上就没有虚影）。
+ */
+export function completionFor(entries: readonly PackageEntry[], input: string): Completion | null {
+  // 用**原样的**输入去比、也按原样算后缀：虚影是照输入框里的字往后接的，
+  // 中间先 trim 一道会让它对不齐（比如前面多打了个空格）。
+  const typed = input.toLowerCase()
+  if (typed.length === 0) return null
+  const match = entries.find((entry) => entry.name.toLowerCase().startsWith(typed))
+  if (match === undefined || match.name.length === typed.length) return null
+  return { name: match.name, suffix: match.name.slice(typed.length) }
+}
+
 /**
  * 取一个包要连哪些一起取：它自己的依赖闭包，**依赖排在前面**。
  *
@@ -202,11 +227,6 @@ export function formatBytes(bytes: number): string {
     unit += 1
   }
   return `${value >= 100 ? Math.round(value) : value.toFixed(1)} ${units[unit]}`
-}
-
-/** 包状态对应的文案键（随包 / 已缓存 / 未缓存）。 */
-export function stateKey(state: PackageState): string {
-  return state === 'bundled' ? 'pkgBundled' : state === 'cached' ? 'pkgCached' : 'pkgAbsent'
 }
 
 /**

@@ -90,6 +90,8 @@
 .mr-tip[data-align='end'] .mr-tip-bubble { left: auto; right: 0; transform: none; }
 .mr-tip:hover .mr-tip-bubble,
 .mr-tip:focus-within .mr-tip-bubble { opacity: 1; visibility: visible; }
+/* 成段的长说明（ⓘ 收进去的那些）放宽一档，一行能装下一句完整的话 */
+.mr-tip-bubble.is-wide { max-width: 440px; }
 
 /* ---- 分段控件（视图切换；照抄宿主 SegmentedControl）---- */
 
@@ -141,6 +143,9 @@
 .mr-btn.primary { background: var(--dsw-alias-button-primary-fill); color: var(--dsw-alias-label-primary-foreground); }
 .mr-btn.primary:hover:not(:disabled) { background: var(--dsw-alias-button-primary-hover); }
 .mr-btn:focus-visible { outline: 2px solid var(--dsw-alias-state-business-primary); outline-offset: 2px; }
+
+/* 跟 36px 的输入框同高：矮一截的键放在旁边，整行就立不住 */
+.mr-btn.tall { height: 36px; padding: 0 16px; font-size: 14px; line-height: 22px; border-radius: var(--dsw-radius-md); }
 
 /* 图标按钮：透明底、hover 才亮，键位焦点环照宿主。 */
 .mr-iconbtn {
@@ -424,58 +429,143 @@
   color: var(--dsw-alias-state-error-primary);
 }
 
-/* ---- 设置面板：本机环境 + 包缓存 ---------------------------------------- */
+/* ---- 设置面板：本机环境 + Python 库 ---------------------------------------- */
 
 /*
- * 这块内容是「设置分区」的正文（宿主 settings.section 槽位）。左右留白由设置面板的内容列给
- * （它自带 24px），这里只补纵向间隔——于是同一块面板换个容器挂上去（以后的工作台）也不用改。
- * 数值照抄宿主成品：卡片 ui-settings-account/AccountSection.module.css，
- * 徽章 ui-primitives/Tag.module.css，状态点 ui-primitives/StateDot.module.css。
+ * 这块内容是「设置分区」的正文（宿主 settings.section 槽位）。设置面板的内容列自带
+ * 24px 左右留白与滚动（ui-settings-general/SettingsRoot.module.css 的 .options），
+ * 所以这里只管纵向节奏——同一块面板换个容器挂上去（以后的学习工作台）也不用改。
+ *
+ * **版式照宿主「存储」「审计中心」这类页**：外面只留一个小分组标签（纯粹用来分组），
+ * 每块内容都是一张**自带头部的卡片**——标题在左、一行说明在标题下面、动作键在头部右侧；
+ * 卡片里面才是清单（行与行之间一道最细的线）。间距由卡片自己的内边距统一撑起来，
+ * 于是不会出现「上一块贴在下一块上」的塌陷，动作键也不用挤进标题行里。
+ *
+ * **轻重有别**：环境那几项是重点（导出真要用它们），行高一档 44px；库清单只是备料，
+ * 行高压到 34px 一档，整块看着轻。
+ *
+ * **界面文案不许出现底层技术名词**（Pyodide / 依赖闭包 / PATH…）：用户关心的是
+ * 「能不能用、要不要联网、占多大、怎么删掉」——术语一律翻成日常说法，
+ * 说明性长文案进悬浮提示，不铺在每一行里。
  */
 .mr-set {
-  display: flex; flex-direction: column; gap: 16px;
-  padding: 8px 0;
-  font-size: 13px; line-height: 22px;
+  display: flex; flex-direction: column; gap: 32px;
+  max-width: 760px;
   color: var(--dsw-alias-label-primary);
 }
 
+/* 分组：外面只有一个小标签，真正的标题在卡片头部里 */
+.mr-set-group { display: flex; flex-direction: column; gap: 10px; }
+.mr-set-groupname {
+  margin: 0; font-size: 13px; line-height: 20px; font-weight: 500;
+  color: var(--dsw-alias-label-secondary);
+}
+/* 一组里的卡片（清单 + 补库）：同组卡片之间 16px */
+.mr-set-stack { display: flex; flex-direction: column; gap: 16px; }
+
+/* 卡片：宿主设置卡片的配方（settings-card-fill / -stroke + radius-xl）。
+   头部与行自身透明、底色就是卡片的底色，所以不用 overflow 裁圆角——
+   裁了会把贴着挂的悬浮提示气泡一起裁掉。 */
 .mr-set-card {
-  display: flex; flex-direction: column; gap: 8px;
-  padding: 12px 16px;
+  display: flex; flex-direction: column;
   border: 0.5px solid var(--dsw-alias-settings-card-stroke);
   border-radius: var(--dsw-radius-xl);
   background: var(--dsw-alias-settings-card-fill);
 }
 
-/* 卡片头：标题 + 摘要（占满中间）+ 贴右的刷新键 */
-.mr-set-head { display: flex; align-items: center; gap: 8px; }
-.mr-set-title { margin: 0; font-size: 14px; line-height: 22px; font-weight: 500; }
-.mr-set-meta {
-  margin-left: auto; min-width: 0;
-  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
-  font-size: 12px; line-height: 18px;
-  color: var(--dsw-alias-label-caption);
+/* 卡片头部：标题（+ 计数）与一行说明在左，动作键贴右；按钮与标题顶端对齐 */
+.mr-set-cardhead { display: flex; align-items: flex-start; gap: 16px; padding: 14px 16px; }
+.mr-set-cardheadtext { flex: 1; min-width: 0; }
+.mr-set-cardtitle {
+  margin: 0; display: flex; align-items: baseline; gap: 8px;
+  font-size: 14px; line-height: 22px; font-weight: 500;
+}
+.mr-set-cardcount {
+  font-size: 12px; line-height: 18px; font-weight: 400;
+  color: var(--dsw-alias-label-tertiary);
   font-variant-numeric: tabular-nums;
 }
-
-/* 缓存目录行：路径长了截断，完整路径在悬浮提示里、也能一键复制 */
-.mr-set-path { display: flex; align-items: center; gap: 6px; min-width: 0; }
-.mr-set-pathlabel { flex: none; font-size: 12px; line-height: 18px; color: var(--dsw-alias-label-tertiary); }
-.mr-set-codepath {
-  flex: 1; min-width: 0;
+/* 头部那一行说明：常态放「状态 / 路径」这类数据；长了截断（路径旁边有复制键） */
+.mr-set-cardsub {
+  margin: 2px 0 0;
   overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
-  font-family: var(--ds-font-family-code);
-  font-size: 11px; line-height: 16px;
-  color: var(--dsw-alias-label-secondary);
+  font-size: 12px; line-height: 18px;
+  color: var(--dsw-alias-label-tertiary);
+}
+.mr-set-cardsub.is-path { font-family: var(--ds-font-family-code); }
+.mr-set-cardsub.is-error { color: var(--dsw-alias-state-error-primary); }
+/* 头部动作键：描边的文字键（宿主 outline 配方）——比挤在一起的小图标好按也好认 */
+.mr-set-cardacts { flex: none; display: flex; align-items: center; gap: 8px; }
+
+.mr-set-act {
+  box-sizing: border-box; display: inline-flex; align-items: center; justify-content: center;
+  gap: 6px; height: 30px; padding: 0 12px; cursor: pointer;
+  border: 0.5px solid var(--dsw-alias-border-l2);
+  border-radius: var(--dsw-radius-md);
+  background: transparent;
+  font: inherit; font-size: 13px; line-height: 18px;
+  color: var(--dsw-alias-label-primary);
+}
+.mr-set-act:hover:not(:disabled) { background: var(--dsw-alias-interactive-bg-hover); }
+.mr-set-act:disabled { cursor: not-allowed; opacity: 0.4; }
+.mr-set-act:focus-visible { outline: 2px solid var(--dsw-alias-state-business-primary); outline-offset: 2px; }
+
+/* 行：左右内距与卡片头部同档，名字跟标题对齐；行与行之间一道最细的分隔线。
+   box-sizing 必须写：没有 preflight，min-height 会算在内容盒上、再额外加上下内距，
+   44px 的行高会变成 60px。 */
+.mr-set-rows { display: flex; flex-direction: column; border-top: 0.5px solid var(--dsw-alias-border-l2); }
+.mr-set-row {
+  box-sizing: border-box;
+  display: flex; align-items: center; gap: 16px; min-height: 44px; padding: 8px 16px;
+}
+.mr-set-row + .mr-set-row { border-top: 0.5px solid var(--dsw-alias-border-l2); }
+/* 库清单要轻：这一档行高压到 34px（环境那几项才是重点，保持上面 44px） */
+.mr-set-rows.is-light .mr-set-row { min-height: 34px; padding: 5px 16px; }
+
+.mr-set-cell { flex: none; min-width: 0; }
+/* 库名 / 检测项占满整行：包名是代码原文（带连字符、大小写有别），一眼跟中文分开 */
+.mr-set-cell.is-name, .mr-set-cell.is-check {
+  flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  font-family: var(--ds-font-family-code); font-size: 13px; line-height: 20px;
+}
+/* 检测项是普通名词不是代码，走正文字体 */
+.mr-set-cell.is-check { font-family: inherit; }
+.mr-set-cell.is-act { flex: none; display: flex; justify-content: flex-end; }
+.mr-set-cell.is-status {
+  flex: none; display: flex; align-items: center; justify-content: flex-end; gap: 6px;
+  font-size: 13px; line-height: 20px; font-variant-numeric: tabular-nums;
 }
 
-/* 工具行：筛选 + 搜索 */
-/* 工具条：一个自由输入框 + 一个按钮（手动指定要提前取哪个包） */
-.mr-set-tools { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+/* ⓘ：说明的收口。页面上只留数据，为什么看这项 / 找到哪儿了这些解释
+   全部收进这个图标，悬浮或键盘聚焦才出现（宿主设置表单的 helpButton 同款位置）。 */
+.mr-set-info {
+  flex: none; display: inline-flex; align-items: center;
+  margin-left: 5px;
+  padding: 0; border: none; background: none; cursor: help;
+  color: var(--dsw-alias-label-tertiary);
+}
+.mr-set-info:hover, .mr-set-info:focus-visible { color: var(--dsw-alias-label-secondary); }
+.mr-set-info:focus-visible { outline: 2px solid var(--dsw-alias-state-business-primary); outline-offset: 1px; border-radius: var(--dsw-radius-sm); }
+
+/* 卡片脚：临时状态行（正在下载 / 刚删掉什么）——有事才出现，贴在卡片最下面。
+   常态的卡片高度由头部与清单定，状态行只在这件事发生时多出一行，不来回顶。 */
+.mr-set-cardfoot {
+  margin: 0; padding: 0 16px 14px;
+  font-size: 12px; line-height: 18px;
+  color: var(--dsw-alias-label-tertiary);
+  overflow-wrap: anywhere;
+}
+/* 清单下面接状态行时留一点上距；补库卡片的状态行紧跟输入行，不用再加 */
+.mr-set-rows + .mr-set-cardfoot { padding-top: 10px; }
+
+/* 补库：输入框在前、按钮在后，都在卡片里（宽度跟着整行走——虚影才有地方往后接） */
+.mr-set-addrow { display: flex; align-items: center; gap: 8px; padding: 0 16px 14px; }
+/* 输入框照 ui-primitives/Input，叠一层补全虚影 */
 .mr-set-field {
-  flex: 1; min-width: 120px;
+  position: relative; /* 补全虚影那层要定位在这上面 */
+  flex: 1; min-width: 0;
   display: flex; align-items: center; gap: 6px;
-  box-sizing: border-box; height: 32px; padding: 0 8px;
+  box-sizing: border-box; height: 36px; padding: 0 12px;
   border: 0.5px solid var(--dsw-alias-border-l4);
   border-radius: var(--dsw-radius-md);
   background: var(--dsw-alias-bg-layer-1);
@@ -483,53 +573,32 @@
 }
 .mr-set-field:focus-within { border-color: var(--dsw-alias-state-business-primary); }
 .mr-set-fieldinput {
+  position: relative; /* 压在虚影层上面，字才不会被虚影盖住 */
+  z-index: 1;
   flex: 1; min-width: 0;
+  /* padding / margin 必须清零：浏览器给 input 的默认内距（约 1px 2px）会把字推右，
+     而虚影层是按外框 8px 对齐的——差这 2px 就看得出来。 */
+  padding: 0; margin: 0;
   border: none; outline: none; background: transparent;
-  font: inherit; font-size: 13px; line-height: 20px;
+  font: inherit; font-size: 14px; line-height: 22px;
   color: var(--dsw-alias-label-primary);
 }
 .mr-set-fieldinput::placeholder { color: var(--dsw-alias-label-dimmed); }
 
-/* 行：表格形态——行间用最弱一级分隔线，数字列走等宽数字 */
-.mr-set-list { display: flex; flex-direction: column; }
-.mr-set-row {
-  display: flex; align-items: center; gap: 8px;
-  box-sizing: border-box; min-height: 32px; padding: 2px 0;
-  border-bottom: 1px solid var(--dsw-alias-border-l1);
+/* 补全虚影：镜像层盖在整格上，前半段（已输入的字）不可见、后半段是淡字——
+   看着就像光标后面接着一段灰字。**必须与输入框同字体、同字号、同内距**，
+   否则那截虚影的位置会偏。 */
+.mr-set-mirror {
+  position: absolute; inset: 0;
+  display: flex; align-items: center;
+  padding: 0 12px;
+  font-size: 14px; line-height: 22px;
+  white-space: pre;
+  overflow: hidden;
+  pointer-events: none;
 }
-.mr-set-list > .mr-set-row:last-child { border-bottom: none; }
-
-/* 环境行：名称定宽（左列对齐）、路径/原因占满中间、右边版本 */
-.mr-set-row[data-kind='env'] .mr-tip { flex: none; }
-.mr-set-row[data-kind='env'] .mr-set-name { flex: none; min-width: 92px; white-space: nowrap; }
-.mr-set-detail {
-  flex: 1; min-width: 0;
-  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
-  font-size: 12px; line-height: 18px;
-  color: var(--dsw-alias-label-tertiary);
-}
-
-/* 包行：名称占满、版本 / 徽章 / 大小 / 动作各占定宽列，行与行对得齐 */
-.mr-set-row[data-kind='pkg'] .mr-set-name {
-  flex: 1; min-width: 0;
-  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
-}
-.mr-set-ver {
-  flex: none; width: 58px;
-  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
-  font-size: 12px; line-height: 18px;
-  color: var(--dsw-alias-label-caption);
-  font-variant-numeric: tabular-nums;
-}
-.mr-set-row[data-kind='pkg'] .mr-tag { flex: none; min-width: 54px; justify-content: center; }
-.mr-set-size {
-  flex: none; width: 68px; text-align: end;
-  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
-  font-size: 12px; line-height: 18px;
-  color: var(--dsw-alias-label-secondary);
-  font-variant-numeric: tabular-nums;
-}
-.mr-set-act { flex: none; width: 96px; display: flex; justify-content: flex-end; }
+.mr-set-typed { visibility: hidden; }
+.mr-set-ghost { color: var(--dsw-alias-label-dimmed); }
 
 /* 状态点：实心=有（按语义上色），空环=本地没有（基类就是空环） */
 .mr-set-dot {
@@ -573,45 +642,4 @@
 @media (prefers-reduced-motion: reduce) {
   .mr-set-spin-rotor, .mr-set-spin-arc { animation: none; }
   .mr-set-spin-arc { stroke-dasharray: 18 150; stroke-dashoffset: -3; }
-}
-
-/* 只读徽章：胶囊尺寸固定，只有配色变（照抄宿主 Tag） */
-.mr-tag {
-  display: inline-flex; align-items: center;
-  border-radius: 999px;
-  padding: 1px 8px;
-  font-size: 11px; line-height: 17px; font-weight: 500;
-  white-space: nowrap;
-}
-.mr-tag[data-tone='outline'] { border: 0.5px solid var(--dsw-alias-border-l4); color: var(--dsw-alias-label-tertiary); }
-.mr-tag[data-tone='neutral'] { background: var(--dsw-alias-bg-module-platform); color: var(--dsw-alias-label-secondary); }
-.mr-tag[data-tone='success'] {
-  background: color-mix(in srgb, var(--dsw-alias-state-success-primary) 10%, transparent);
-  color: var(--dsw-alias-state-success-primary);
-}
-
-/* 空态 / 说明 / 错误 / 还有多少条没画 */
-.mr-set-empty {
-  margin: 0; padding: 32px 0; text-align: center;
-  font-size: 13px; line-height: 20px;
-  color: var(--dsw-alias-label-tertiary);
-}
-.mr-set-note {
-  margin: 0;
-  font-size: 12px; line-height: 18px;
-  color: var(--dsw-alias-label-tertiary);
-  overflow-wrap: anywhere;
-}
-.mr-set-error {
-  margin: 0;
-  font-size: 13px; line-height: 20px;
-  color: var(--dsw-alias-state-error-primary);
-  overflow-wrap: anywhere;
-}
-/* 清单下面那行小字：说明「还能写别的包名」，不是错误也不是结果 */
-.mr-set-hint {
-  margin: 0; padding-top: 2px;
-  font-size: 12px; line-height: 18px;
-  color: var(--dsw-alias-label-tertiary);
-  overflow-wrap: anywhere;
 }

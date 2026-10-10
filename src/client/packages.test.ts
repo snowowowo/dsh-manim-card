@@ -10,10 +10,9 @@ import { readFileSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import {
-  cachePackage, clearPackage, clearPackageCache, COMMON_PACKAGES, findPackage, formatBytes, parseInventory,
-  prefetchPlan, stateKey, type PackageEntry,
+  cachePackage, clearPackage, clearPackageCache, COMMON_PACKAGES, completionFor, findPackage, formatBytes, parseInventory,
+  prefetchPlan, type PackageEntry,
 } from './packages'
-import { DICT } from './i18n'
 
 const PLUGIN_DIR = join(dirname(fileURLToPath(import.meta.url)), '..', '..')
 
@@ -97,6 +96,46 @@ describe('依赖闭包', () => {
   })
 })
 
+describe('输入框补全（虚影）', () => {
+  const entries = [entry('pandas'), entry('pillow'), entry('pytz'), entry('scikit-learn')]
+
+  it('按前缀补：给出完整名字与要接上去的那一段', () => {
+    expect(completionFor(entries, 'pan')).toEqual({ name: 'pandas', suffix: 'das' })
+    expect(completionFor(entries, 'sci')).toEqual({ name: 'scikit-learn', suffix: 'kit-learn' })
+  })
+
+  it('不分大小写（用户可能大写开头）', () => {
+    expect(completionFor(entries, 'PAN')?.name).toBe('pandas')
+    // 大写打字时补出来的是规范名字，采纳后输入框里就是规范写法
+    expect(completionFor(entries, 'Pand')).toEqual({ name: 'pandas', suffix: 'as' })
+  })
+
+  it('已经是个完整名字就不补（否则会一直挂着一截空虚影）', () => {
+    expect(completionFor(entries, 'pandas')).toBeNull()
+    expect(completionFor(entries, 'PANDAS')).toBeNull()
+  })
+
+  it('空输入、或谁都对不上时都不补', () => {
+    expect(completionFor(entries, '')).toBeNull()
+    expect(completionFor(entries, 'seaborn')).toBeNull()
+  })
+
+  it('只做前缀匹配，不做包含匹配：`illow` 不该被补成中间的 pillow', () => {
+    // 往中间插的那种补全在虚影上没法表达，宁可不补
+    expect(completionFor(entries, 'illow')).toBeNull()
+    expect(completionFor(entries, 'learn')).toBeNull()
+  })
+
+  it('前面多打了空格就不补——虚影是按输入框里的字往后接的，trim 过就对不齐了', () => {
+    expect(completionFor(entries, ' pandas')).toBeNull()
+  })
+
+  it('候选多个时取字典序第一个：同一份输入永远同一个结果', () => {
+    // 清单本来就是按名字排序发过来的
+    expect(completionFor(entries, 'p')?.name).toBe('pandas')
+  })
+})
+
 describe('按名字找一条记录', () => {
   it('大写 / 下划线 / 点号写法都能对上', () => {
     const entries = [entry('pillow'), entry('astropy-iers-data'), entry('python-dateutil')]
@@ -152,14 +191,6 @@ describe('字节数成人话', () => {
     expect(formatBytes(1024)).toBe('1.0 KB')
     expect(formatBytes(9 * 1024 * 1024 + 900 * 1024)).toBe('9.9 MB')
     expect(formatBytes(2.5 * 1024 ** 3)).toBe('2.5 GB')
-  })
-})
-
-describe('文案键', () => {
-  it('状态键真的在词典里——拼错一个键就是界面上少一句话', () => {
-    for (const state of ['bundled', 'cached', 'absent'] as const) {
-      expect(DICT.zh).toHaveProperty(stateKey(state))
-    }
   })
 })
 

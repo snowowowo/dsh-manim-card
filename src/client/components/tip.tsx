@@ -8,16 +8,18 @@ import type { ReactNode } from 'react'
  * 包住一个控件、给它一段悬浮说明。
  * @param align 气泡的水平对齐：`center` 居中于控件；`start` 贴控件左缘、`end` 贴控件右缘
  *   （贴边的按钮用，免得气泡出界）。
+ * @param wide 成段的长说明用：气泡放宽到 440px（默认 300px 是给一句话的）。
  */
-export function Tip({ label, children, align = 'center' }: {
+export function Tip({ label, children, align = 'center', wide = false }: {
   label: string
   children: ReactNode
   align?: 'center' | 'start' | 'end'
+  wide?: boolean
 }) {
   return (
     <span className="mr-tip" data-align={align}>
       {children}
-      <span className="mr-tip-bubble" role="tooltip">{label}</span>
+      <span className={wide ? 'mr-tip-bubble is-wide' : 'mr-tip-bubble'} role="tooltip">{label}</span>
     </span>
   )
 }

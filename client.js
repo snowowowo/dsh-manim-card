@@ -227,6 +227,26 @@ window.__ModuleLoader__.load({
 		* This source code is licensed under the ISC license.
 		* See the LICENSE file in the root directory of this source tree.
 		*/
+		const Download = createLucideIcon("download", [
+			["path", {
+				d: "M12 15V3",
+				key: "m9g1x1"
+			}],
+			["path", {
+				d: "M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4",
+				key: "ih7n3h"
+			}],
+			["path", {
+				d: "m7 10 5 5 5-5",
+				key: "brsn70"
+			}]
+		]);
+		/**
+		* @license lucide-react v0.548.0 - ISC
+		*
+		* This source code is licensed under the ISC license.
+		* See the LICENSE file in the root directory of this source tree.
+		*/
 		const Eraser = createLucideIcon("eraser", [["path", {
 			d: "M21 21H8a2 2 0 0 1-1.42-.587l-3.994-3.999a2 2 0 0 1 0-2.828l10-10a2 2 0 0 1 2.829 0l5.999 6a2 2 0 0 1 0 2.828L12.834 21",
 			key: "g5wo59"
@@ -240,7 +260,7 @@ window.__ModuleLoader__.load({
 		* This source code is licensed under the ISC license.
 		* See the LICENSE file in the root directory of this source tree.
 		*/
-		const Info$1 = createLucideIcon("info", [
+		const Info$2 = createLucideIcon("info", [
 			["circle", {
 				cx: "12",
 				cy: "12",
@@ -164049,7 +164069,7 @@ void main() {
 		* @import {Info as InfoType} from 'property-information'
 		*/
 		/** @type {InfoType} */
-		var Info = class {
+		var Info$1 = class {
 			/**
 			* @param {string} property
 			*   Property.
@@ -164063,18 +164083,18 @@ void main() {
 				this.property = property;
 			}
 		};
-		Info.prototype.attribute = "";
-		Info.prototype.booleanish = false;
-		Info.prototype.boolean = false;
-		Info.prototype.commaOrSpaceSeparated = false;
-		Info.prototype.commaSeparated = false;
-		Info.prototype.defined = false;
-		Info.prototype.mustUseProperty = false;
-		Info.prototype.number = false;
-		Info.prototype.overloadedBoolean = false;
-		Info.prototype.property = "";
-		Info.prototype.spaceSeparated = false;
-		Info.prototype.space = void 0;
+		Info$1.prototype.attribute = "";
+		Info$1.prototype.booleanish = false;
+		Info$1.prototype.boolean = false;
+		Info$1.prototype.commaOrSpaceSeparated = false;
+		Info$1.prototype.commaSeparated = false;
+		Info$1.prototype.defined = false;
+		Info$1.prototype.mustUseProperty = false;
+		Info$1.prototype.number = false;
+		Info$1.prototype.overloadedBoolean = false;
+		Info$1.prototype.property = "";
+		Info$1.prototype.spaceSeparated = false;
+		Info$1.prototype.space = void 0;
 		//#endregion
 		//#region node_modules/.pnpm/property-information@7.2.0/node_modules/property-information/lib/util/types.js
 		var types_exports = /* @__PURE__ */ __exportAll({
@@ -164103,7 +164123,7 @@ void main() {
 		* @import {Space} from 'property-information'
 		*/
 		const checks = Object.keys(types_exports);
-		var DefinedInfo = class extends Info {
+		var DefinedInfo = class extends Info$1 {
 			/**
 			* @constructor
 			* @param {string} property
@@ -165240,7 +165260,7 @@ void main() {
 		function find(schema, value) {
 			const normal = normalize(value);
 			let property = value;
-			let Type = Info;
+			let Type = Info$1;
 			if (normal in schema.normal) return schema.property[schema.normal[normal]];
 			if (normal.length > 4 && normal.slice(0, 4) === "data" && valid.test(value)) {
 				if (value.charAt(4) === "-") {
@@ -171797,13 +171817,14 @@ XID_Start XIDS`.split(/\s/).map((p) => [w(p), p]));
 		* 包住一个控件、给它一段悬浮说明。
 		* @param align 气泡的水平对齐：`center` 居中于控件；`start` 贴控件左缘、`end` 贴控件右缘
 		*   （贴边的按钮用，免得气泡出界）。
+		* @param wide 成段的长说明用：气泡放宽到 440px（默认 300px 是给一句话的）。
 		*/
-		function Tip({ label, children, align = "center" }) {
+		function Tip({ label, children, align = "center", wide = false }) {
 			return /* @__PURE__ */ (0, react_jsx_runtime.jsxs)("span", {
 				className: "mr-tip",
 				"data-align": align,
 				children: [children, /* @__PURE__ */ (0, react_jsx_runtime.jsx)("span", {
-					className: "mr-tip-bubble",
+					className: wide ? "mr-tip-bubble is-wide" : "mr-tip-bubble",
 					role: "tooltip",
 					children: label
 				})]
@@ -172045,6 +172066,25 @@ XID_Start XIDS`.split(/\s/).map((p) => [w(p), p]));
 			return entries.find((entry) => canonicalPackageName(entry.name) === wanted);
 		}
 		/**
+		* 输入框的「虚影」补全：按**名字前缀**（不分大小写）找第一个能接上的库。
+		*
+		* 只做前缀匹配，不做模糊/包含匹配：补全要能一眼看出「接上之后是什么」，前缀才是可预期的
+		* ——打成 `illow` 被补成 `pillow` 那种（往中间插）在虚影上没法表达，宁可不补。
+		* 清单是按名字排好序发过来的，所以「第一个」就是字典序第一个，同一份输入永远同一个结果。
+		*
+		* @returns 完整名字与后缀；输入为空、或已经是个完整名字时回 null（界面上就没有虚影）。
+		*/
+		function completionFor(entries, input) {
+			const typed = input.toLowerCase();
+			if (typed.length === 0) return null;
+			const match = entries.find((entry) => entry.name.toLowerCase().startsWith(typed));
+			if (match === void 0 || match.name.length === typed.length) return null;
+			return {
+				name: match.name,
+				suffix: match.name.slice(typed.length)
+			};
+		}
+		/**
 		* 取一个包要连哪些一起取：它自己的依赖闭包，**依赖排在前面**。
 		*
 		* 两个细节：
@@ -172165,10 +172205,6 @@ XID_Start XIDS`.split(/\s/).map((p) => [w(p), p]));
 				unit += 1;
 			}
 			return `${value >= 100 ? Math.round(value) : value.toFixed(1)} ${units[unit]}`;
-		}
-		/** 包状态对应的文案键（随包 / 已缓存 / 未缓存）。 */
-		function stateKey(state) {
-			return state === "bundled" ? "pkgBundled" : state === "cached" ? "pkgCached" : "pkgAbsent";
 		}
 		/**
 		* 设置页上摆出来的**常用包**（画图 / 数值 / 数据这条线上最常被 import 的十一个）。
@@ -172732,7 +172768,7 @@ self.play(Write(eq))
 								className: "mr-iconbtn",
 								type: "button",
 								"aria-label": t("lead"),
-								children: /* @__PURE__ */ (0, react_jsx_runtime.jsx)(Info$1, {
+								children: /* @__PURE__ */ (0, react_jsx_runtime.jsx)(Info$2, {
 									size: 15,
 									strokeWidth: 1.6
 								})
@@ -173000,7 +173036,7 @@ self.play(Write(eq))
 											className: "mr-iconbtn",
 											type: "button",
 											"aria-label": t("sourceHint"),
-											children: /* @__PURE__ */ (0, react_jsx_runtime.jsx)(Info$1, {
+											children: /* @__PURE__ */ (0, react_jsx_runtime.jsx)(Info$2, {
 												size: 15,
 												strokeWidth: 1.6
 											})
@@ -173121,21 +173157,6 @@ self.play(Write(eq))
 				"aria-hidden": "true"
 			});
 		}
-		/** 只读徽章：宿主 `Tag` 的配方（胶囊、11px/17px、tone 决定底色与字色）。 */
-		function Tag({ tone, children }) {
-			return /* @__PURE__ */ (0, react_jsx_runtime.jsx)("span", {
-				className: "mr-tag",
-				"data-tone": tone,
-				children
-			});
-		}
-		/** 一个包该画什么点：取回来的绿、随包的灰、没缓存的空环。 */
-		function packageTone(state) {
-			return state === "cached" ? "ok" : state === "bundled" ? "idle" : "empty";
-		}
-		function packageTagTone(state) {
-			return state === "cached" ? "success" : state === "bundled" ? "neutral" : "outline";
-		}
 		const envTone = (status) => status === "ok" ? "ok" : status === "missing" ? "warn" : "error";
 		/**
 		* 探测项 id → 文案键。**写死这张表**是为了不去拼键名（拼出来的键查不到就成了空白文案）。
@@ -173177,6 +173198,7 @@ self.play(Write(eq))
 		/**
 		* 本机环境卡片：逐项探测，逐行亮起来。
 		*
+		* 头部左侧报「几项就绪」（正在检测 / 拿不到计划时换成当时的状态），右上是「重新检测」。
 		* 探测顺序就是 Host 给的顺序（python3 → manim → manim 包 → ffmpeg → latex → dvisvgm），
 		* 一项失败标记那一行、继续下一项——一项超时不该让整块卡住。
 		*/
@@ -173232,107 +173254,104 @@ self.play(Write(eq))
 			}, [load]);
 			const ready = Object.values(results).filter((result) => result.status === "ok").length;
 			const total = plan?.checks.length ?? 0;
-			return /* @__PURE__ */ (0, react_jsx_runtime.jsxs)("div", {
-				className: "mr-set-card",
-				children: [
-					/* @__PURE__ */ (0, react_jsx_runtime.jsxs)("div", {
-						className: "mr-set-head",
-						children: [
-							/* @__PURE__ */ (0, react_jsx_runtime.jsx)("h2", {
-								className: "mr-set-title",
-								children: t("envTitle")
-							}),
-							/* @__PURE__ */ (0, react_jsx_runtime.jsx)("span", {
-								className: "mr-set-meta",
-								children: plan === null ? t("loading") : t("envReady", {
-									ready,
-									total
-								})
-							}),
-							/* @__PURE__ */ (0, react_jsx_runtime.jsx)(Tip, {
-								label: t("envRerunHint"),
-								align: "end",
-								children: /* @__PURE__ */ (0, react_jsx_runtime.jsx)("button", {
-									type: "button",
-									className: "mr-iconbtn mr-iconbtn-xs",
-									disabled: running,
-									"aria-label": t("envRerun"),
-									onClick: () => {
-										load();
-									},
-									children: /* @__PURE__ */ (0, react_jsx_runtime.jsx)(RefreshCw, { size: 13 })
-								})
-							})
-						]
-					}),
-					failure !== null && /* @__PURE__ */ (0, react_jsx_runtime.jsx)("p", {
-						className: "mr-set-error",
-						role: "status",
-						children: t("envPlanFailed", { message: failure })
-					}),
-					failure === null && plan === null && /* @__PURE__ */ (0, react_jsx_runtime.jsx)("p", {
-						className: "mr-set-empty",
-						role: "status",
-						children: t("envProbing")
-					}),
-					plan !== null && /* @__PURE__ */ (0, react_jsx_runtime.jsx)("div", {
-						className: "mr-set-list",
-						children: plan.checks.map((check) => {
-							const result = results[check.id];
-							const tone = result === void 0 ? "busy" : envTone(result.status);
-							return /* @__PURE__ */ (0, react_jsx_runtime.jsxs)("div", {
-								className: "mr-set-row",
-								"data-kind": "env",
-								"data-tone": tone,
-								children: [
-									/* @__PURE__ */ (0, react_jsx_runtime.jsx)(Dot, { tone }),
-									/* @__PURE__ */ (0, react_jsx_runtime.jsx)(Tip, {
-										label: envHint(t, check, result),
-										align: "start",
-										children: /* @__PURE__ */ (0, react_jsx_runtime.jsx)("span", {
-											className: "mr-set-name",
-											children: t(envTitleKey(check.id))
-										})
-									}),
-									/* @__PURE__ */ (0, react_jsx_runtime.jsx)("span", {
-										className: "mr-set-detail",
-										children: envDetail(t, result)
-									}),
-									/* @__PURE__ */ (0, react_jsx_runtime.jsx)("span", {
-										className: "mr-set-size",
-										children: result === void 0 ? "" : envValue(t, result)
+			const subline = failure !== null ? t("envPlanFailed", { message: failure }) : plan === null ? t("envProbing") : t("envReady", {
+				ready,
+				total
+			});
+			return /* @__PURE__ */ (0, react_jsx_runtime.jsxs)("section", {
+				className: "mr-set-group",
+				"aria-label": t("envTitle"),
+				children: [/* @__PURE__ */ (0, react_jsx_runtime.jsx)("h2", {
+					className: "mr-set-groupname",
+					children: t("envGroup")
+				}), /* @__PURE__ */ (0, react_jsx_runtime.jsx)("div", {
+					className: "mr-set-stack",
+					children: /* @__PURE__ */ (0, react_jsx_runtime.jsxs)("section", {
+						className: "mr-set-card",
+						children: [/* @__PURE__ */ (0, react_jsx_runtime.jsxs)("header", {
+							className: "mr-set-cardhead",
+							children: [/* @__PURE__ */ (0, react_jsx_runtime.jsxs)("div", {
+								className: "mr-set-cardheadtext",
+								children: [/* @__PURE__ */ (0, react_jsx_runtime.jsx)("h3", {
+									className: "mr-set-cardtitle",
+									children: t("envTitle")
+								}), /* @__PURE__ */ (0, react_jsx_runtime.jsx)("p", {
+									className: failure !== null ? "mr-set-cardsub is-error" : "mr-set-cardsub",
+									title: failure !== null ? subline : void 0,
+									role: "status",
+									children: subline
+								})]
+							}), /* @__PURE__ */ (0, react_jsx_runtime.jsx)("div", {
+								className: "mr-set-cardacts",
+								children: /* @__PURE__ */ (0, react_jsx_runtime.jsx)(Tip, {
+									label: t("envRerunHint"),
+									align: "end",
+									children: /* @__PURE__ */ (0, react_jsx_runtime.jsxs)("button", {
+										type: "button",
+										className: "mr-set-act",
+										disabled: running,
+										onClick: () => {
+											load();
+										},
+										children: [/* @__PURE__ */ (0, react_jsx_runtime.jsx)(RefreshCw, { size: 14 }), t("envRerun")]
 									})
-								]
-							}, check.id);
-						})
-					}),
-					plan !== null && /* @__PURE__ */ (0, react_jsx_runtime.jsx)(Tip, {
-						label: plan.path,
-						align: "start",
-						children: /* @__PURE__ */ (0, react_jsx_runtime.jsx)("span", {
-							className: "mr-set-note",
-							children: t("envPathNote")
-						})
+								})
+							})]
+						}), plan !== null && /* @__PURE__ */ (0, react_jsx_runtime.jsx)("div", {
+							className: "mr-set-rows",
+							children: plan.checks.map((check) => {
+								const result = results[check.id];
+								const tone = result === void 0 ? "busy" : envTone(result.status);
+								return /* @__PURE__ */ (0, react_jsx_runtime.jsxs)("div", {
+									className: "mr-set-row",
+									children: [/* @__PURE__ */ (0, react_jsx_runtime.jsxs)("span", {
+										className: "mr-set-cell is-check",
+										children: [/* @__PURE__ */ (0, react_jsx_runtime.jsx)("span", { children: t(envTitleKey(check.id)) }), /* @__PURE__ */ (0, react_jsx_runtime.jsx)(Info, {
+											name: t(envTitleKey(check.id)),
+											text: envInfo(t, check, result)
+										})]
+									}), /* @__PURE__ */ (0, react_jsx_runtime.jsxs)("span", {
+										className: "mr-set-cell is-status",
+										children: [/* @__PURE__ */ (0, react_jsx_runtime.jsx)(Dot, { tone }), result !== void 0 && /* @__PURE__ */ (0, react_jsx_runtime.jsx)("span", { children: envValue(t, result) })]
+									})]
+								}, check.id);
+							})
+						})]
 					})
-				]
+				})]
 			});
 		}
-		/** 环境行的悬浮说明：为什么看这一项（+ 实际跑过哪条命令，让「到底测了什么」不是个谜）。 */
-		function envHint(t, check, result) {
-			const lines = [t(envWhyKey(check.id)), t("envRan", { command: check.command })];
-			if (result !== void 0 && result.status !== "ok" && result.detail.length > 0) lines.push(result.detail);
+		/**
+		* 环境项的 ⓘ：为什么看这项、找到了哪儿、实际跑的什么——页面上只留「名字 + 状态」，
+		* 这些解释性内容全部收在这里，悬浮/键盘聚焦才出现。
+		*/
+		function envInfo(t, check, result) {
+			const lines = [t(envWhyKey(check.id))];
+			if (result === void 0) lines.push(t("envProbing"));
+			else if (result.status === "ok") lines.push(t("envFoundAt", { path: result.path ?? "" }));
+			else lines.push(result.detail.length > 0 ? result.detail : t("envMissing"));
+			lines.push(t("envRan", { command: check.command }));
 			return lines.join("\n");
 		}
-		/** 环境行的中列：找到了给路径，否则给原因。 */
-		function envDetail(t, result) {
-			if (result === void 0) return t("envProbing");
-			if (result.status === "ok") return result.path ?? "";
-			return result.detail.length > 0 ? result.detail : t("envMissing");
+		/** ⓘ 图标：说明的收口。可聚焦（聚焦即出说明），点了没有动作——它只是个「看解释」的入口。 */
+		function Info({ name, text }) {
+			return /* @__PURE__ */ (0, react_jsx_runtime.jsx)(Tip, {
+				label: text,
+				align: "start",
+				wide: true,
+				children: /* @__PURE__ */ (0, react_jsx_runtime.jsx)("button", {
+					type: "button",
+					className: "mr-set-info",
+					"aria-label": `${name}：${text}`,
+					children: /* @__PURE__ */ (0, react_jsx_runtime.jsx)(Info$2, { size: 13 })
+				})
+			});
 		}
 		/**
-		* 包缓存卡片：一张常用包短清单 + 一个手动输入框，外加「按行清理」。
+		* Python 库：**两张卡片**——上面一张是「已缓存的库」清单（头部右上是复制路径与刷新），
+		* 下面一张是「下载其他库」（头部标题 + 一行短说明，输入框与按钮在卡片身体里）。
 		*
-		* 为什么不是全表：lock 里有近三百条，绝大多数人一辈子用不到——把常用的摆出来，
+		* 清单为什么不是全表：lock 里有近三百条，绝大多数人一辈子用不到——把常用的摆出来，
 		* 比让人在一个长列表里筛要快。**列表不是白名单**：清单里没有的包，直接写上名字就能取，
 		* 走的是同一条预缓存通道（也照样连依赖一起取）。手输过的包会留在表里，
 		* 于是「取回来了、想再清掉」这条路也在同一张表上闭环。
@@ -173343,11 +173362,14 @@ self.play(Write(eq))
 			const [inventory, setInventory] = (0, react.useState)(null);
 			const [failure, setFailure] = (0, react.useState)(null);
 			const [manual, setManual] = (0, react.useState)("");
+			const [composing, setComposing] = (0, react.useState)(false);
 			const [extra, setExtra] = (0, react.useState)([]);
 			const [busy, setBusy] = (0, react.useState)(null);
 			const [note, setNote] = (0, react.useState)(null);
+			const [formNote, setFormNote] = (0, react.useState)(null);
 			const [copied, copy] = useCopied();
 			const alive = (0, react.useRef)(true);
+			const manualId = (0, react.useId)();
 			(0, react.useEffect)(() => () => {
 				alive.current = false;
 			}, []);
@@ -173401,6 +173423,33 @@ self.play(Write(eq))
 					bytes
 				};
 			}, [entries]);
+			/**
+			* 输入框的补全虚影（按名字前缀）。
+			*
+			* 两个「不显示」的判断：
+			*  - 中文输入法组字期间不显示——组字中的字还没定型，虚影会跟着跳；
+			*  - 「已输入 + 要补的」整段太长时不显示：虚影是按输入框里的字往后接的，
+			*    一旦输入框内部滚动就对不上了。40 是照输入框实际宽度（内容列 564px 减去按钮，
+			*    13px 字号）能稳稳放下的字数取的——宁可长名字不给虚影，也不能给一截错位的。
+			*/
+			const ghost = (0, react.useMemo)(() => {
+				if (composing || manual.length === 0) return null;
+				const completion = completionFor(entries, manual);
+				if (completion === null || manual.length + completion.suffix.length > 40) return null;
+				return completion;
+			}, [
+				composing,
+				entries,
+				manual
+			]);
+			/** Tab / → 采纳虚影。只在真有虚影、且光标在末尾时接管，其余情况让默认行为照常走。 */
+			const acceptGhost = (event) => {
+				if (ghost === null) return;
+				if (event.key !== "Tab" && event.key !== "ArrowRight") return;
+				if (event.currentTarget.selectionStart !== manual.length) return;
+				event.preventDefault();
+				setManual(ghost.name);
+			};
 			/** 把它摆到表上（手输过的包留在表里，便于回头清理）。 */
 			const surface = (name) => {
 				setExtra((previous) => previous.includes(name) ? previous : [...previous, name]);
@@ -173408,18 +173457,21 @@ self.play(Write(eq))
 			/**
 			* 取一个包（连依赖）：先算闭包，再一个一个取，进度落在按钮上。
 			* 名字不认识 / 已经在本机都当场说清楚，不去发无谓的请求。
+			*
+			* `fromForm` 只决定回执报在哪张卡片的脚注（补库卡片 vs 清单卡片），不改变取法。
 			*/
-			const fetchPackages = async (name, clearInput = false) => {
+			const fetchPackages = async (name, fromForm = false) => {
+				const say = fromForm ? setFormNote : setNote;
 				if (name.length === 0 || busy !== null) return;
-				setNote(null);
+				say(null);
 				if (findPackage(entries, name) === void 0) {
-					setNote(t("pkgUnknown", { name }));
+					say(t("pkgUnknown", { name }));
 					return;
 				}
 				surface(name);
 				const plan = prefetchPlan(entries, name);
 				if (plan.length === 0) {
-					setNote(t("pkgNothingToFetch", { name }));
+					say(t("pkgNothingToFetch", { name }));
 					return;
 				}
 				setBusy({
@@ -173431,7 +173483,7 @@ self.play(Write(eq))
 					const outcome = await cachePackage(target);
 					if (!alive.current) return;
 					if (!outcome.ok) {
-						setNote(t("pkgFetchFailed", {
+						say(t("pkgFetchFailed", {
 							name: target,
 							error: outcome.error
 						}));
@@ -173444,10 +173496,15 @@ self.play(Write(eq))
 						done: index + 1,
 						total: plan.length
 					});
+					say(t("pkgFetchingNote", {
+						name,
+						done: index + 1,
+						total: plan.length
+					}));
 				}
 				setBusy(null);
-				setNote(t("pkgFetched", { count: plan.length }));
-				if (clearInput) setManual("");
+				say(t("pkgFetched", { count: plan.length }));
+				if (fromForm) setManual("");
 				await refresh();
 			};
 			/** 清掉某个包的本机缓存：它下次被用到会重新取一次。 */
@@ -173474,176 +173531,189 @@ self.play(Write(eq))
 				setBusy(null);
 				await refresh();
 			};
-			return /* @__PURE__ */ (0, react_jsx_runtime.jsxs)("div", {
-				className: "mr-set-card",
-				children: [
-					/* @__PURE__ */ (0, react_jsx_runtime.jsxs)("div", {
-						className: "mr-set-head",
+			const subline = failure !== null ? /* @__PURE__ */ (0, react_jsx_runtime.jsx)("p", {
+				className: "mr-set-cardsub is-error",
+				title: t("pkgFailed", { message: failure }),
+				role: "status",
+				children: t("pkgFailed", { message: failure })
+			}) : inventory === null ? /* @__PURE__ */ (0, react_jsx_runtime.jsx)("p", {
+				className: "mr-set-cardsub",
+				role: "status",
+				children: t("loading")
+			}) : /* @__PURE__ */ (0, react_jsx_runtime.jsx)("p", {
+				className: "mr-set-cardsub is-path",
+				title: inventory.cacheDir,
+				children: inventory.cacheDir
+			});
+			return /* @__PURE__ */ (0, react_jsx_runtime.jsxs)("section", {
+				className: "mr-set-group",
+				"aria-label": t("pkgTitle"),
+				children: [/* @__PURE__ */ (0, react_jsx_runtime.jsx)("h2", {
+					className: "mr-set-groupname",
+					children: t("pkgTitle")
+				}), /* @__PURE__ */ (0, react_jsx_runtime.jsxs)("div", {
+					className: "mr-set-stack",
+					children: [/* @__PURE__ */ (0, react_jsx_runtime.jsxs)("section", {
+						className: "mr-set-card",
 						children: [
-							/* @__PURE__ */ (0, react_jsx_runtime.jsx)("h2", {
-								className: "mr-set-title",
-								children: t("pkgTitle")
-							}),
-							/* @__PURE__ */ (0, react_jsx_runtime.jsx)("span", {
-								className: "mr-set-meta",
-								children: t("pkgCounts", {
-									cached: counts.cached,
-									bundled: counts.bundled,
-									bytes: formatBytes(counts.bytes)
-								})
-							}),
-							/* @__PURE__ */ (0, react_jsx_runtime.jsx)(Tip, {
-								label: t("pkgRefreshHint"),
-								align: "end",
-								children: /* @__PURE__ */ (0, react_jsx_runtime.jsx)("button", {
-									type: "button",
-									className: "mr-iconbtn mr-iconbtn-xs",
-									disabled: busy !== null,
-									"aria-label": t("pkgRefresh"),
-									onClick: () => {
-										refresh();
-									},
-									children: /* @__PURE__ */ (0, react_jsx_runtime.jsx)(RefreshCw, { size: 13 })
-								})
-							})
-						]
-					}),
-					inventory !== null && /* @__PURE__ */ (0, react_jsx_runtime.jsxs)("div", {
-						className: "mr-set-path",
-						children: [
-							/* @__PURE__ */ (0, react_jsx_runtime.jsx)("span", {
-								className: "mr-set-pathlabel",
-								children: t("pkgDir")
-							}),
-							/* @__PURE__ */ (0, react_jsx_runtime.jsx)("code", {
-								className: "mr-set-codepath",
-								title: inventory.cacheDir,
-								children: inventory.cacheDir
-							}),
-							/* @__PURE__ */ (0, react_jsx_runtime.jsx)(Tip, {
-								label: copied ? t("pkgDirCopied") : t("pkgDirCopy"),
-								align: "end",
-								children: /* @__PURE__ */ (0, react_jsx_runtime.jsx)("button", {
-									type: "button",
-									className: "mr-iconbtn mr-iconbtn-xs",
-									"aria-label": t("pkgDirCopy"),
-									onClick: () => copy(inventory.cacheDir),
-									children: copied ? /* @__PURE__ */ (0, react_jsx_runtime.jsx)(Check, { size: 13 }) : /* @__PURE__ */ (0, react_jsx_runtime.jsx)(Copy, { size: 13 })
-								})
-							})
-						]
-					}),
-					failure !== null && /* @__PURE__ */ (0, react_jsx_runtime.jsx)("p", {
-						className: "mr-set-error",
-						role: "status",
-						children: t("pkgFailed", { message: failure })
-					}),
-					failure === null && inventory === null && /* @__PURE__ */ (0, react_jsx_runtime.jsx)("p", {
-						className: "mr-set-empty",
-						role: "status",
-						children: t("loading")
-					}),
-					inventory !== null && /* @__PURE__ */ (0, react_jsx_runtime.jsxs)(react_jsx_runtime.Fragment, { children: [
-						/* @__PURE__ */ (0, react_jsx_runtime.jsx)("div", {
-							className: "mr-set-list",
-							children: shown.map((entry) => /* @__PURE__ */ (0, react_jsx_runtime.jsxs)("div", {
-								className: "mr-set-row",
-								"data-kind": "pkg",
-								"data-tone": packageTone(entry.state),
-								children: [
-									/* @__PURE__ */ (0, react_jsx_runtime.jsx)(Dot, { tone: packageTone(entry.state) }),
-									/* @__PURE__ */ (0, react_jsx_runtime.jsx)("span", {
-										className: "mr-set-name",
-										children: entry.name
-									}),
-									/* @__PURE__ */ (0, react_jsx_runtime.jsx)("span", {
-										className: "mr-set-ver",
-										children: entry.version
-									}),
-									/* @__PURE__ */ (0, react_jsx_runtime.jsx)(Tag, {
-										tone: packageTagTone(entry.state),
-										children: t(stateKey(entry.state))
-									}),
-									/* @__PURE__ */ (0, react_jsx_runtime.jsx)("span", {
-										className: "mr-set-size",
-										children: entry.bytes === null ? "—" : formatBytes(entry.bytes)
-									}),
-									/* @__PURE__ */ (0, react_jsx_runtime.jsxs)("span", {
-										className: "mr-set-act",
-										children: [entry.state === "absent" && /* @__PURE__ */ (0, react_jsx_runtime.jsx)(Tip, {
-											label: t("pkgCacheHint"),
-											align: "end",
-											children: /* @__PURE__ */ (0, react_jsx_runtime.jsx)("button", {
-												type: "button",
-												className: "mr-btn",
-												disabled: busy !== null,
-												onClick: () => {
-													fetchPackages(entry.name);
-												},
-												children: busy !== null && busy.name === entry.name && busy.total > 1 ? t("pkgFetching", {
-													done: busy.done,
-													total: busy.total
-												}) : t("pkgCache")
-											})
-										}), entry.state === "cached" && /* @__PURE__ */ (0, react_jsx_runtime.jsx)(Tip, {
-											label: t("pkgClearHint"),
-											align: "end",
-											children: /* @__PURE__ */ (0, react_jsx_runtime.jsx)("button", {
-												type: "button",
-												className: "mr-btn",
-												disabled: busy !== null,
-												onClick: () => {
-													clearOne(entry.name);
-												},
-												children: t("pkgClear")
+							/* @__PURE__ */ (0, react_jsx_runtime.jsxs)("header", {
+								className: "mr-set-cardhead",
+								children: [/* @__PURE__ */ (0, react_jsx_runtime.jsxs)("div", {
+									className: "mr-set-cardheadtext",
+									children: [/* @__PURE__ */ (0, react_jsx_runtime.jsxs)("h3", {
+										className: "mr-set-cardtitle",
+										children: [t("pkgCardTitle"), inventory !== null && /* @__PURE__ */ (0, react_jsx_runtime.jsx)("span", {
+											className: "mr-set-cardcount",
+											children: t("pkgCountsShort", {
+												cached: counts.cached,
+												bytes: formatBytes(counts.bytes)
 											})
 										})]
-									})
-								]
-							}, entry.name))
-						}),
-						/* @__PURE__ */ (0, react_jsx_runtime.jsxs)("form", {
-							className: "mr-set-tools",
-							onSubmit: (event) => {
-								event.preventDefault();
-								fetchPackages(manual.trim(), true);
-							},
-							children: [/* @__PURE__ */ (0, react_jsx_runtime.jsx)(Tip, {
-								label: t("pkgManualHint"),
-								align: "start",
-								children: /* @__PURE__ */ (0, react_jsx_runtime.jsx)("label", {
+									}), subline]
+								}), /* @__PURE__ */ (0, react_jsx_runtime.jsxs)("div", {
+									className: "mr-set-cardacts",
+									children: [/* @__PURE__ */ (0, react_jsx_runtime.jsxs)("button", {
+										type: "button",
+										className: "mr-set-act",
+										disabled: inventory === null,
+										onClick: () => {
+											if (inventory !== null) copy(inventory.cacheDir);
+										},
+										children: [copied ? /* @__PURE__ */ (0, react_jsx_runtime.jsx)(Check, { size: 14 }) : /* @__PURE__ */ (0, react_jsx_runtime.jsx)(Copy, { size: 14 }), copied ? t("pkgDirCopied") : t("pkgDirCopy")]
+									}), /* @__PURE__ */ (0, react_jsx_runtime.jsx)(Tip, {
+										label: t("pkgRefreshHint"),
+										align: "end",
+										children: /* @__PURE__ */ (0, react_jsx_runtime.jsxs)("button", {
+											type: "button",
+											className: "mr-set-act",
+											disabled: busy !== null,
+											onClick: () => {
+												refresh();
+											},
+											children: [/* @__PURE__ */ (0, react_jsx_runtime.jsx)(RefreshCw, { size: 14 }), t("pkgRefresh")]
+										})
+									})]
+								})]
+							}),
+							inventory !== null && /* @__PURE__ */ (0, react_jsx_runtime.jsx)("div", {
+								className: "mr-set-rows is-light",
+								children: shown.map((entry) => {
+									const working = busy !== null && busy.name === entry.name;
+									return /* @__PURE__ */ (0, react_jsx_runtime.jsxs)("div", {
+										className: "mr-set-row",
+										children: [/* @__PURE__ */ (0, react_jsx_runtime.jsx)("span", {
+											className: "mr-set-cell is-name",
+											children: entry.name
+										}), /* @__PURE__ */ (0, react_jsx_runtime.jsxs)("span", {
+											className: "mr-set-cell is-act",
+											children: [entry.state === "absent" && /* @__PURE__ */ (0, react_jsx_runtime.jsx)(Tip, {
+												label: working ? t("pkgFetching", {
+													done: busy.done,
+													total: busy.total
+												}) : t("pkgCacheHint"),
+												align: "end",
+												children: /* @__PURE__ */ (0, react_jsx_runtime.jsx)("button", {
+													type: "button",
+													className: "mr-iconbtn",
+													disabled: busy !== null,
+													"aria-label": t("pkgCache"),
+													onClick: () => {
+														fetchPackages(entry.name);
+													},
+													children: working ? /* @__PURE__ */ (0, react_jsx_runtime.jsx)(Dot, { tone: "busy" }) : /* @__PURE__ */ (0, react_jsx_runtime.jsx)(Download, { size: 15 })
+												})
+											}), entry.state === "cached" && /* @__PURE__ */ (0, react_jsx_runtime.jsx)(Tip, {
+												label: working ? t("pkgClearing", { name: entry.name }) : t("pkgClearHint"),
+												align: "end",
+												children: /* @__PURE__ */ (0, react_jsx_runtime.jsx)("button", {
+													type: "button",
+													className: "mr-iconbtn",
+													disabled: busy !== null,
+													"aria-label": t("pkgClear"),
+													onClick: () => {
+														clearOne(entry.name);
+													},
+													children: working ? /* @__PURE__ */ (0, react_jsx_runtime.jsx)(Dot, { tone: "busy" }) : /* @__PURE__ */ (0, react_jsx_runtime.jsx)(Trash2, { size: 15 })
+												})
+											})]
+										})]
+									}, entry.name);
+								})
+							}),
+							note !== null && /* @__PURE__ */ (0, react_jsx_runtime.jsx)("p", {
+								className: "mr-set-cardfoot",
+								role: "status",
+								children: note
+							})
+						]
+					}), /* @__PURE__ */ (0, react_jsx_runtime.jsxs)("section", {
+						className: "mr-set-card",
+						children: [
+							/* @__PURE__ */ (0, react_jsx_runtime.jsx)("header", {
+								className: "mr-set-cardhead",
+								children: /* @__PURE__ */ (0, react_jsx_runtime.jsxs)("div", {
+									className: "mr-set-cardheadtext",
+									children: [/* @__PURE__ */ (0, react_jsx_runtime.jsx)("h3", {
+										className: "mr-set-cardtitle",
+										children: t("pkgAddTitle")
+									}), /* @__PURE__ */ (0, react_jsx_runtime.jsx)("p", {
+										className: "mr-set-cardsub",
+										children: t("pkgAddHint")
+									})]
+								})
+							}),
+							/* @__PURE__ */ (0, react_jsx_runtime.jsxs)("form", {
+								className: "mr-set-addrow",
+								onSubmit: (event) => {
+									event.preventDefault();
+									fetchPackages(manual.trim(), true);
+								},
+								children: [/* @__PURE__ */ (0, react_jsx_runtime.jsxs)("span", {
 									className: "mr-set-field",
-									children: /* @__PURE__ */ (0, react_jsx_runtime.jsx)("input", {
+									children: [ghost !== null && /* @__PURE__ */ (0, react_jsx_runtime.jsxs)("span", {
+										className: "mr-set-mirror",
+										"aria-hidden": "true",
+										children: [/* @__PURE__ */ (0, react_jsx_runtime.jsx)("span", {
+											className: "mr-set-typed",
+											children: manual
+										}), /* @__PURE__ */ (0, react_jsx_runtime.jsx)("span", {
+											className: "mr-set-ghost",
+											children: ghost.suffix
+										})]
+									}), /* @__PURE__ */ (0, react_jsx_runtime.jsx)("input", {
+										id: manualId,
 										className: "mr-set-fieldinput",
 										type: "text",
 										value: manual,
 										spellCheck: false,
 										placeholder: t("pkgManual"),
 										"aria-label": t("pkgManualLabel"),
-										onChange: (event) => setManual(event.target.value)
-									})
-								})
-							}), /* @__PURE__ */ (0, react_jsx_runtime.jsx)("button", {
-								type: "submit",
-								className: "mr-btn primary",
-								disabled: busy !== null || manual.trim().length === 0,
-								children: t("pkgCache")
-							})]
-						}),
-						/* @__PURE__ */ (0, react_jsx_runtime.jsx)("p", {
-							className: "mr-set-hint",
-							children: t("pkgListHint")
-						})
-					] }),
-					note !== null && /* @__PURE__ */ (0, react_jsx_runtime.jsx)("p", {
-						className: "mr-set-note",
-						role: "status",
-						children: note
-					})
-				]
+										autoComplete: "off",
+										autoCapitalize: "off",
+										autoCorrect: "off",
+										onChange: (event) => setManual(event.target.value),
+										onCompositionStart: () => setComposing(true),
+										onCompositionEnd: () => setComposing(false),
+										onKeyDown: acceptGhost
+									})]
+								}), /* @__PURE__ */ (0, react_jsx_runtime.jsx)("button", {
+									type: "submit",
+									className: "mr-btn primary tall",
+									disabled: busy !== null || manual.trim().length === 0,
+									children: t("pkgCache")
+								})]
+							}),
+							formNote !== null && /* @__PURE__ */ (0, react_jsx_runtime.jsx)("p", {
+								className: "mr-set-cardfoot",
+								role: "status",
+								children: formNote
+							})
+						]
+					})]
+				})]
 			});
 		}
-		/** 设置页正文：两块卡片，样式与留白由外层设置面板给（这里只管内容）。 */
+		/** 设置页正文：两块内容，样式与留白由外层设置面板给（这里只管内容）。 */
 		function ManimSettingsPage({ t }) {
 			return /* @__PURE__ */ (0, react_jsx_runtime.jsxs)("section", {
 				className: "mr-set",
@@ -173867,9 +173937,9 @@ self.play(Write(eq))
 			corpusLoading: "正在读取语料…",
 			corpusDevOnly: "这台机器上没有语料——它是开发期的回归网，放在插件仓 _dev/examples/（不随插件发布），所以实验场只在开发机可用。下面是「自定义代码」，照样能提交并渲染 Manim Python。",
 			corpusError: "读取语料失败：{message}",
-			clearCache: "清除包缓存",
-			clearCacheHint: "删掉本机缓存的按需取回的第三方包（~/.dsh/cache/manim-renderer/pyodide）。想再看一次「首次取包」、或让某个包重新联网取，就用它；已经加载进当前页面的包要刷新页面才会卸掉。",
-			cacheCleared: "已清掉 {count} 个包缓存",
+			clearCache: "清除已下载的库",
+			clearCacheHint: "把本机已经下载的第三方库删掉。想再看一次「首次下载」的过程、或让某个库重新联网下载时用它；已经加载进当前页面的库要刷新页面才会卸掉。",
+			cacheCleared: "已删掉 {count} 个库",
 			cacheClearFailed: "清除失败：{message}",
 			renderAll: "全部渲染",
 			renderAllHint: "依次渲染尚未通过的语料（已通过的跳过）。批量一律走极速——不等 run_time 与 wait，否则一套上百条要几分钟。中途点「停止」会停下，进度已经存下来了。",
@@ -173922,7 +173992,7 @@ self.play(Write(eq))
 			ok: "渲染完成",
 			fail: "渲染失败",
 			loadingPackages: "正在加载 {names}…",
-			loadingPackagesHint: "这段代码 import 了随包之外的库（{names}），正在取一次。首次用到需要联网，取到后缓存在本机、之后离线也能用；下一次不会再等。",
+			loadingPackagesHint: "这段代码用到了需要额外下载的库（{names}），正在下载。首次用到需要联网，下载后存在本机、之后断网也能用；下一次就不用等了。",
 			cardLabel: "Manim 动画",
 			replay: "重新播放",
 			showCode: "查看代码",
@@ -173932,58 +174002,58 @@ self.play(Write(eq))
 			badCard: "卡片数据不完整（缺少 python 源码）",
 			rejected: "代码未通过预检，未渲染",
 			loading: "正在读取…",
+			envGroup: "环境",
 			envTitle: "本机环境",
 			envReady: "{ready} / {total} 就绪",
 			envRerun: "重新检测",
-			envRerunHint: "再跑一遍全部探测。manim --version 要 import 整个 Manim，可能要十几秒。",
+			envRerunHint: "再检查一遍。其中 Manim 那一项比较慢（要把它本身跑起来），可能要十几秒。",
 			envProbing: "正在检测…",
-			envPlanFailed: "拿不到探测计划：{message}",
+			envPlanFailed: "拿不到检测计划：{message}",
 			envMissing: "未安装",
 			envError: "出错",
-			envPathNote: "命令是在这台机器的 PATH 上找的（宿主还补了几个常见安装目录）。",
+			envFoundAt: "找到的位置：{path}",
 			envRan: "实际跑的命令：{command}",
 			envPython3: "Python 3",
-			envPython3Why: "Manim 是 Python 包；导出时要拿本机的 Python 去跑它。",
+			envPython3Why: "Manim 是 Python 写的；导出时要拿你电脑上的 Python 去跑它。",
 			envManim: "Manim CLI",
-			envManimWhy: "manim 命令本身能不能跑 —— 本机渲染与导出的入口。",
-			envManimModule: "manim 包",
-			envManimModuleWhy: "本机的 Python 里到底装没装 manim。命令有、包没有这种情况真的存在，所以跟上面一项分开看。",
+			envManimWhy: "manim 这个命令本身能不能跑 —— 本机渲染与导出的入口。",
+			envManimModule: "manim 库",
+			envManimModuleWhy: "你电脑的 Python 里到底装没装 manim。命令能用、Python 里却没装——这种情况真的存在，所以跟上面一项分开看。",
 			envFfmpeg: "FFmpeg",
 			envFfmpegWhy: "Manim 出视频（mp4 / gif）要靠它；缺了只能出一张张静态图片。",
 			envLatex: "LaTeX",
 			envLatexWhy: "MathTex / Tex 用它排版公式；缺了这些写法会直接报错。",
 			envDvisvgm: "dvisvgm",
 			envDvisvgmWhy: "LaTeX 转 SVG 的那一步 —— Manim 渲染公式的第二半。",
-			pkgTitle: "Pyodide 包缓存",
-			pkgCounts: "已取回 {cached} 个（{bytes}）· 随包 {bundled} 个",
+			pkgTitle: "Python 库",
+			pkgCardTitle: "已缓存的库",
+			pkgCountsShort: "{cached} 个 · {bytes}",
 			pkgRefresh: "刷新",
-			pkgRefreshHint: "重问一次宿主：哪些包在本地、各占多少。",
-			pkgDir: "缓存目录",
+			pkgRefreshHint: "再看一次：哪些库已经在本机、各占多大。",
 			pkgDirCopy: "复制路径",
 			pkgDirCopied: "已复制",
-			pkgFailed: "拿不到包清单：{message}",
-			pkgBundled: "随包",
-			pkgCached: "已缓存",
-			pkgAbsent: "未缓存",
-			pkgCache: "缓存",
-			pkgCacheHint: "取到本机（连它依赖的包一起），之后离线也能用。",
+			pkgFailed: "读不到库列表：{message}",
+			pkgCache: "下载",
+			pkgCacheHint: "下载到本机（会把它用到的其他库一起下载），之后断网也能用。",
 			pkgFetching: "{done}/{total}",
-			pkgFetched: "已取回 {count} 个包",
-			pkgFetchFailed: "取 {name} 失败：{error}",
+			pkgFetchingNote: "正在下载 {name}…（{done}/{total}）",
+			pkgFetched: "已下载 {count} 个库",
+			pkgFetchFailed: "下载 {name} 失败：{error}",
 			pkgNothingToFetch: "{name} 已经在本机了",
-			pkgUnknown: "Pyodide 目录里没有这个包名：{name}",
-			pkgClear: "清理",
-			pkgClearHint: "从本机缓存里删掉它（下次用到会重新联网取一次）。随包的那几个不占这份缓存，不受影响。",
-			pkgCleared: "已清理 {name}",
-			pkgClearFailed: "清理 {name} 失败：{error}",
-			pkgListHint: "只列了常用的几个。要提前取别的包，在上面的框里写上包名——Pyodide 目录里有的都能取，会连依赖一起取回来；取过的会留在表里，随时能清理。",
-			pkgManual: "输入包名，如 scipy",
-			pkgManualLabel: "包名",
-			pkgManualHint: "列表里没有的包直接写名字。要写 Pyodide 目录里的包名（多数与 import 的名字相同，少数不同：pillow 而非 PIL、scikit-learn 而非 sklearn）。"
+			pkgUnknown: "找不到这个库：{name}",
+			pkgClear: "删除",
+			pkgClearing: "正在删除 {name}…",
+			pkgClearHint: "从本机删掉它（下次用到会重新联网下载）。自带的几个不占这份空间，不受影响。",
+			pkgCleared: "已删除 {name}",
+			pkgClearFailed: "删除 {name} 失败：{error}",
+			pkgAddTitle: "下载其他库",
+			pkgAddHint: "写上库的名字就行；输入时会有提示，按 Tab 或 → 采纳。",
+			pkgManual: "库名，如 pandas",
+			pkgManualLabel: "库名"
 		} };
 		//#endregion
 		//#region \0plugin-css:src/client/styles.css.mjs
-		const css = "/*! tailwindcss v4.3.3 | MIT License | https://tailwindcss.com */\n@layer properties{@supports (((-webkit-hyphens:none)) and (not (margin-trim:inline))) or ((-moz-orient:inline) and (not (color:rgb(from red r g b)))){*,:before,:after,::backdrop{--tw-rotate-x:initial;--tw-rotate-y:initial;--tw-rotate-z:initial;--tw-skew-x:initial;--tw-skew-y:initial;--tw-border-style:solid;--tw-ordinal:initial;--tw-slashed-zero:initial;--tw-numeric-figure:initial;--tw-numeric-spacing:initial;--tw-numeric-fraction:initial;--tw-shadow:0 0 #0000;--tw-shadow-color:initial;--tw-shadow-alpha:100%;--tw-inset-shadow:0 0 #0000;--tw-inset-shadow-color:initial;--tw-inset-shadow-alpha:100%;--tw-ring-color:initial;--tw-ring-shadow:0 0 #0000;--tw-inset-ring-color:initial;--tw-inset-ring-shadow:0 0 #0000;--tw-ring-inset:initial;--tw-ring-offset-width:0px;--tw-ring-offset-color:#fff;--tw-ring-offset-shadow:0 0 #0000;--tw-outline-style:solid;--tw-blur:initial;--tw-brightness:initial;--tw-contrast:initial;--tw-grayscale:initial;--tw-hue-rotate:initial;--tw-invert:initial;--tw-opacity:initial;--tw-saturate:initial;--tw-sepia:initial;--tw-drop-shadow:initial;--tw-drop-shadow-color:initial;--tw-drop-shadow-alpha:100%;--tw-drop-shadow-size:initial;--tw-ease:initial}}}@layer theme{:root,:host{--spacing:.25rem;--ease-in-out:cubic-bezier(.4, 0, .2, 1);--default-transition-duration:.15s;--default-transition-timing-function:cubic-bezier(.4, 0, .2, 1)}}@layer utilities{.invisible{visibility:hidden}.visible{visibility:visible}.absolute{position:absolute}.fixed{position:fixed}.relative{position:relative}.static{position:static}.sticky{position:sticky}.container{width:100%;@media (width>=40rem){max-width:40rem}@media (width>=48rem){max-width:48rem}@media (width>=64rem){max-width:64rem}@media (width>=80rem){max-width:80rem}@media (width>=96rem){max-width:96rem}}.block{display:block}.contents{display:contents}.flex{display:flex}.grid{display:grid}.hidden{display:none}.inline{display:inline}.inline-block{display:inline-block}.table{display:table}.table\\!{display:table!important}.table-cell{display:table-cell}.size-1{width:var(--spacing);height:var(--spacing)}.h-40{height:calc(var(--spacing) * 40)}.h-84{height:calc(var(--spacing) * 84)}.h-120{height:calc(var(--spacing) * 120)}.flex-shrink,.shrink{flex-shrink:1}.grow{flex-grow:1}.transform{transform:var(--tw-rotate-x,) var(--tw-rotate-y,) var(--tw-rotate-z,) var(--tw-skew-x,) var(--tw-skew-y,)}.resize{resize:both}.truncate{text-overflow:ellipsis;white-space:nowrap;overflow:hidden}.rounded{border-radius:.25rem}.border{border-style:var(--tw-border-style);border-width:1px}.capitalize{text-transform:capitalize}.lowercase{text-transform:lowercase}.uppercase{text-transform:uppercase}.italic{font-style:italic}.ordinal{--tw-ordinal:ordinal;font-variant-numeric:var(--tw-ordinal,) var(--tw-slashed-zero,) var(--tw-numeric-figure,) var(--tw-numeric-spacing,) var(--tw-numeric-fraction,)}.line-through{text-decoration-line:line-through}.overline{text-decoration-line:overline}.underline{text-decoration-line:underline}.shadow{--tw-shadow:0 1px 3px 0 var(--tw-shadow-color,#0000001a), 0 1px 2px -1px var(--tw-shadow-color,#0000001a);box-shadow:var(--tw-inset-shadow), var(--tw-inset-ring-shadow), var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow)}.ring{--tw-ring-shadow:var(--tw-ring-inset,) 0 0 0 calc(1px + var(--tw-ring-offset-width)) var(--tw-ring-color,currentcolor);box-shadow:var(--tw-inset-shadow), var(--tw-inset-ring-shadow), var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow)}.outline{outline-style:var(--tw-outline-style);outline-width:1px}.blur{--tw-blur:blur(8px);filter:var(--tw-blur,) var(--tw-brightness,) var(--tw-contrast,) var(--tw-grayscale,) var(--tw-hue-rotate,) var(--tw-invert,) var(--tw-saturate,) var(--tw-sepia,) var(--tw-drop-shadow,)}.grayscale{--tw-grayscale:grayscale(100%);filter:var(--tw-blur,) var(--tw-brightness,) var(--tw-contrast,) var(--tw-grayscale,) var(--tw-hue-rotate,) var(--tw-invert,) var(--tw-saturate,) var(--tw-sepia,) var(--tw-drop-shadow,)}.invert{--tw-invert:invert(100%);filter:var(--tw-blur,) var(--tw-brightness,) var(--tw-contrast,) var(--tw-grayscale,) var(--tw-hue-rotate,) var(--tw-invert,) var(--tw-saturate,) var(--tw-sepia,) var(--tw-drop-shadow,)}.filter{filter:var(--tw-blur,) var(--tw-brightness,) var(--tw-contrast,) var(--tw-grayscale,) var(--tw-hue-rotate,) var(--tw-invert,) var(--tw-saturate,) var(--tw-sepia,) var(--tw-drop-shadow,)}.transition{transition-property:color,background-color,border-color,outline-color,text-decoration-color,fill,stroke,--tw-gradient-from,--tw-gradient-via,--tw-gradient-to,opacity,box-shadow,transform,translate,scale,rotate,filter,-webkit-backdrop-filter,backdrop-filter,display,content-visibility,overlay,pointer-events;transition-timing-function:var(--tw-ease,var(--default-transition-timing-function));transition-duration:var(--tw-duration,var(--default-transition-duration))}.ease-in-out{--tw-ease:var(--ease-in-out);transition-timing-function:var(--ease-in-out)}.\\[probe\\:pageerror\\]{probe:pageerror}}.mr-page{box-sizing:border-box;height:100%;color:var(--dsw-alias-label-primary);flex-direction:column;align-items:center;padding:0 clamp(24px,4vw,48px);display:flex;overflow:hidden}.mr-page-head,.mr-workspace{width:100%;max-width:1160px}.mr-page-head{box-sizing:border-box;flex:none;justify-content:space-between;align-items:center;gap:16px;padding-top:28px;display:flex}[data-platform=darwin] .mr-page-head{padding-top:calc(28px + var(--dsh-frame-top-clearance,0px))}.mr-head-title{align-items:center;gap:2px;min-width:0;display:flex}.mr-page-title{margin:0;font-size:20px;font-weight:500;line-height:28px}.mr-workspace{flex:1;grid-template-columns:minmax(240px,300px) minmax(0,1fr);gap:16px;min-height:0;padding:16px 0 24px;display:grid}.mr-workspace-free{grid-template-columns:minmax(300px,1fr) minmax(0,1.25fr)}.mr-side{flex-direction:column;gap:8px;min-width:0;min-height:0;display:flex}.mr-side-scroll{flex-direction:column;flex:1;gap:10px;min-height:0;padding-right:4px;display:flex;overflow:auto}.mr-main{flex-direction:column;gap:16px;min-width:0;min-height:0;padding-right:4px;display:flex;overflow:auto}.mr-preview{flex:none}.mr-empty{text-align:center;color:var(--dsw-alias-label-tertiary);margin:0;padding:48px 0;font-size:13px;line-height:20px}.mr-toolbar{z-index:5;flex-wrap:wrap;flex:none;align-items:center;gap:4px;display:flex;position:relative}.mr-toolbar-count{color:var(--dsw-alias-label-tertiary);font-variant-numeric:tabular-nums;margin-left:auto;font-size:12px;line-height:18px}.mr-tip{display:inline-flex;position:relative}.mr-tip-bubble{z-index:40;pointer-events:none;box-sizing:border-box;border-radius:var(--dsw-radius-sm);background:var(--dsw-alias-tooltip-bg);width:max-content;max-width:300px;color:var(--dsw-static-neutral-bluish-00);white-space:pre-line;overflow-wrap:break-word;opacity:0;visibility:hidden;padding:3px 7px;font-size:13px;font-weight:400;line-height:20px;position:absolute;top:calc(100% + 6px);left:50%;transform:translate(-50%)}.mr-tip[data-align=start] .mr-tip-bubble{left:0;transform:none}.mr-tip[data-align=end] .mr-tip-bubble{left:auto;right:0;transform:none}.mr-tip:hover .mr-tip-bubble,.mr-tip:focus-within .mr-tip-bubble{opacity:1;visibility:visible}.mr-seg{border-radius:var(--dsw-radius-md);background:var(--dsw-alias-interactive-bg-hover);flex:none;grid-auto-columns:1fr;grid-auto-flow:column;gap:2px;padding:4px;display:inline-grid;position:relative}.mr-seg-indicator{width:calc((100% - 8px - 2px * (var(--mr-seg-count,2) - 1)) / var(--mr-seg-count,2));border-radius:var(--dsw-radius-sm);background:var(--dsw-alias-bg-layer-1);height:calc(100% - 8px);box-shadow:var(--dsw-elevation-soft);transform:translateX(calc(var(--mr-seg-index,0) * (100% + 2px)));pointer-events:none;border:0;transition:transform .16s;position:absolute;top:4px;left:4px}.mr-seg-tab{box-sizing:border-box;z-index:1;border-radius:var(--dsw-radius-sm);height:28px;color:var(--dsw-alias-label-secondary);font:inherit;white-space:nowrap;cursor:pointer;background:0 0;border:0;padding:0 16px;font-size:13px;font-weight:500;line-height:20px;transition:color .12s;position:relative}.mr-seg-tab:hover:not(:disabled),.mr-seg-tab[aria-selected=true]{color:var(--dsw-alias-label-primary)}.mr-seg-tab:disabled{cursor:default;opacity:.4}.mr-seg-tab:focus-visible{outline:var(--dsw-focus-ring-width,2px) solid var(--dsw-alias-state-business-primary);outline-offset:-2px}@media (prefers-reduced-motion:reduce){.mr-seg-indicator,.mr-seg-tab{transition:none}}.mr-btn{box-sizing:border-box;cursor:pointer;border-radius:var(--dsw-radius-sm);height:28px;color:var(--dsw-alias-label-primary);background:0 0;border:none;justify-content:center;align-items:center;gap:4px;padding:0 10px;font-size:12px;line-height:18px;display:inline-flex}.mr-btn:disabled{cursor:not-allowed;opacity:.4}.mr-btn.primary{background:var(--dsw-alias-button-primary-fill);color:var(--dsw-alias-label-primary-foreground)}.mr-btn.primary:hover:not(:disabled){background:var(--dsw-alias-button-primary-hover)}.mr-btn:focus-visible{outline:2px solid var(--dsw-alias-state-business-primary);outline-offset:2px}.mr-iconbtn{box-sizing:border-box;border-radius:var(--dsw-radius-sm);cursor:pointer;width:24px;height:24px;color:var(--dsw-alias-label-secondary);background:0 0;border:none;flex:none;justify-content:center;align-items:center;padding:0;display:inline-flex}.mr-iconbtn-xs{width:20px;height:20px}.mr-iconbtn:hover:not(:disabled){background:var(--dsw-alias-interactive-bg-hover);color:var(--dsw-alias-label-primary)}.mr-iconbtn:disabled{cursor:not-allowed;opacity:.4}.mr-iconbtn:focus-visible{outline:2px solid var(--dsw-alias-state-business-primary);outline-offset:2px}.mr-iconbtn[aria-pressed=true]{background:var(--dsw-alias-interactive-bg-hover);color:var(--dsw-alias-state-business-primary)}.mr-code{box-sizing:border-box;resize:vertical;border:.5px solid var(--dsw-alias-border-l4);border-radius:var(--dsw-radius-md);background:var(--dsw-alias-bg-layer-1);width:100%;min-height:190px;color:var(--dsw-alias-label-primary);font-family:var(--ds-font-family-code);tab-size:2;padding:8px 10px;font-size:12px;line-height:18px;display:block}.mr-code-fill{resize:none;flex:1;min-height:0;margin:0}.mr-code:focus-visible{outline:2px solid var(--dsw-alias-state-business-primary);outline-offset:0}.mr-status{white-space:pre-wrap;font-size:13px;line-height:20px}.mr-status.ok{color:var(--dsw-alias-state-success-primary)}.mr-status.err{color:var(--dsw-alias-state-error-primary)}.mr-ground-group{flex-direction:column;gap:2px;display:flex}.mr-ground-grouphead{align-items:center;gap:2px;display:flex}.mr-ground-toggle{text-align:start;box-sizing:border-box;border-radius:var(--dsw-radius-sm);cursor:pointer;min-width:0;height:24px;color:var(--dsw-alias-label-tertiary);background:0 0;border:none;flex:1;align-items:center;gap:6px;padding:0 4px;display:flex}.mr-ground-toggle:hover{background:var(--dsw-alias-interactive-bg-hover)}.mr-ground-toggle:focus-visible{outline:2px solid var(--dsw-alias-state-business-primary);outline-offset:-2px}.mr-ground-grouptitle{font-size:12px;font-weight:500;line-height:18px}.mr-ground-gcount{font-variant-numeric:tabular-nums;margin-left:auto;font-size:11px;line-height:16px}.mr-ground-gfail{font-variant-numeric:tabular-nums;color:var(--dsw-alias-state-error-primary);font-size:11px;line-height:16px}.mr-ground-net{border:1px solid var(--dsw-alias-border-l3);border-radius:var(--dsw-radius-sm);color:var(--dsw-alias-label-secondary);flex:none;padding:0 4px;font-size:11px;line-height:16px}.mr-ground-notice{border:1px solid var(--dsw-alias-border-l3);border-radius:var(--dsw-radius-sm);background:var(--dsw-alias-bg-layer-1);color:var(--dsw-alias-label-secondary);flex:none;margin:0;padding:8px 10px;font-size:12px;line-height:18px}.mr-toolbar-note{color:var(--dsw-alias-label-secondary);font-size:12px;line-height:18px}.mr-ground-items{flex-direction:column;display:flex}.mr-ground-item{text-align:start;box-sizing:border-box;border-radius:var(--dsw-radius-sm);cursor:pointer;width:100%;height:28px;color:var(--dsw-alias-label-primary);background:0 0;border:none;align-items:center;gap:8px;padding:0 8px;display:flex}.mr-ground-item:hover,.mr-ground-item[aria-pressed=true]{background:var(--dsw-alias-interactive-bg-hover)}.mr-ground-item:focus-visible{outline:2px solid var(--dsw-alias-state-business-primary);outline-offset:-2px}.mr-ground-dot{border:.5px solid var(--dsw-alias-border-l3);background:0 0;border-radius:50%;flex:none;width:7px;height:7px}.mr-ground-item[data-state=ok] .mr-ground-dot{border-color:var(--dsw-alias-state-success-primary);background:var(--dsw-alias-state-success-primary)}.mr-ground-item[data-state=fail] .mr-ground-dot{border-color:var(--dsw-alias-state-error-primary);background:var(--dsw-alias-state-error-primary)}.mr-ground-name{flex:none;font-size:13px;line-height:20px}.mr-ground-mark{flex:none;font-size:11px;font-weight:600;line-height:16px}.mr-ground-mark.is-pass{color:var(--dsw-alias-state-success-primary)}.mr-ground-mark.is-fail{color:var(--dsw-alias-state-error-primary)}.mr-ground-id{text-overflow:ellipsis;white-space:nowrap;text-align:end;min-width:0;font-family:var(--ds-font-family-code);color:var(--dsw-alias-label-tertiary);flex:1;margin-left:auto;font-size:11px;line-height:16px;overflow:hidden}.mr-expect{box-sizing:border-box;border:1px solid var(--dsw-alias-border-l3);border-radius:var(--dsw-radius-sm);background:var(--dsw-alias-bg-layer-1);align-items:baseline;gap:8px;padding:8px 10px;display:flex}.mr-expect-label{color:var(--dsw-alias-label-secondary);cursor:help;flex:none;font-size:12px;font-weight:500;line-height:18px}.mr-expect-text{min-width:0;color:var(--dsw-alias-label-primary);overflow-wrap:break-word;flex:1;font-size:12px;line-height:18px}.mr-expect-mark{flex:none;align-items:center;gap:2px;display:inline-flex}.mr-expect-marktitle{color:var(--dsw-alias-label-tertiary);cursor:help;margin-right:4px;font-size:12px;line-height:18px}.mr-expect-mark .mr-iconbtn[data-mark=pass]{color:var(--dsw-alias-state-success-primary)}.mr-expect-mark .mr-iconbtn[data-mark=fail]{color:var(--dsw-alias-state-error-primary)}.mr-chatcard-body{margin-top:12px;position:relative}.mr-chatcard{box-sizing:border-box;border:.5px solid var(--dsw-alias-settings-card-stroke);border-radius:var(--dsw-radius-xl);background:var(--dsw-alias-settings-card-fill);color:var(--dsw-alias-label-primary);margin:6px 0;padding:10px 12px}.mr-chatcard-head{align-items:center;gap:6px;height:32px;display:flex}.mr-chatcard-label{flex:none;font-size:13px;font-weight:500;line-height:20px}.mr-chatcard-head .mr-status{white-space:nowrap;text-overflow:ellipsis;flex:1;min-width:0;overflow:hidden}.mr-stage{aspect-ratio:16/9;border:.5px solid var(--dsw-alias-border-l3);border-radius:var(--dsw-radius-md);background:var(--dsw-alias-bg-layer-1);width:100%;margin-top:12px;position:relative;overflow:hidden}.mr-chatcard-body>.mr-stage{margin-top:0}.mr-stage canvas{display:block;width:100%!important;height:100%!important}.mr-canvas-loading{z-index:2;box-sizing:border-box;pointer-events:none;justify-content:center;align-items:center;padding:12px;display:flex;position:absolute;inset:0}.mr-canvas-loading-pill{box-sizing:border-box;background:var(--dsw-alias-tooltip-bg);min-width:0;max-width:100%;color:var(--dsw-static-neutral-bluish-00);border-radius:999px;align-items:center;gap:8px;padding:6px 12px;font-size:13px;line-height:20px;display:flex}.mr-canvas-loading-text{text-overflow:ellipsis;white-space:nowrap;min-width:0;overflow:hidden}.mr-spinner{box-sizing:border-box;border:1.5px solid #ffffff40;border-top-color:currentColor;border-radius:50%;flex:none;width:14px;height:14px;animation:.8s linear infinite mr-spin}@keyframes mr-spin{to{transform:rotate(360deg)}}@media (prefers-reduced-motion:reduce){.mr-spinner{animation:none}}.mr-code-pane{border:.5px solid var(--dsw-alias-border-l3);border-radius:var(--dsw-radius-md);background:var(--dsw-alias-bg-layer-1);position:absolute;inset:0;overflow:auto}.mr-codeview{font-family:var(--ds-font-family-code);color:var(--dsw-alias-label-primary);white-space:pre-wrap;word-break:break-word;tab-size:2;margin:0;padding:10px 12px;font-size:12px;line-height:18px}.mr-codeview code{counter-reset:source-line;display:block}.mr-codeview code>.line{min-height:1lh;counter-increment:source-line;padding-inline-start:calc(var(--mr-codeview-gutter,2ch) + 12px);display:block;position:relative}.mr-codeview code>.line:before{width:var(--mr-codeview-gutter,2ch);color:var(--dsw-alias-label-tertiary);text-align:end;content:counter(source-line);user-select:none;position:absolute;inset-inline-start:0}.mr-codepane-actions{z-index:2;justify-content:flex-end;height:0;padding:6px 8px 0 0;display:flex;position:sticky;top:0}.mr-codepane-actions .mr-iconbtn{background:var(--dsw-alias-bg-layer-1);border:.5px solid var(--dsw-alias-border-l3);width:22px;height:22px}.mr-chatcard-code{border:.5px solid var(--dsw-alias-border-l4);border-radius:var(--dsw-radius-md);background:var(--dsw-alias-bg-layer-1);max-height:180px;margin-top:8px;overflow:auto}.mr-chatcard-code>.mr-codeview{padding:8px 10px}.mr-chatcard-error{white-space:pre-wrap;word-break:break-word;color:var(--dsw-alias-state-error-primary);margin:8px 0 0;font-size:13px;line-height:20px}.mr-set{color:var(--dsw-alias-label-primary);flex-direction:column;gap:16px;padding:8px 0;font-size:13px;line-height:22px;display:flex}.mr-set-card{border:.5px solid var(--dsw-alias-settings-card-stroke);border-radius:var(--dsw-radius-xl);background:var(--dsw-alias-settings-card-fill);flex-direction:column;gap:8px;padding:12px 16px;display:flex}.mr-set-head{align-items:center;gap:8px;display:flex}.mr-set-title{margin:0;font-size:14px;font-weight:500;line-height:22px}.mr-set-meta{text-overflow:ellipsis;white-space:nowrap;min-width:0;color:var(--dsw-alias-label-caption);font-variant-numeric:tabular-nums;margin-left:auto;font-size:12px;line-height:18px;overflow:hidden}.mr-set-path{align-items:center;gap:6px;min-width:0;display:flex}.mr-set-pathlabel{color:var(--dsw-alias-label-tertiary);flex:none;font-size:12px;line-height:18px}.mr-set-codepath{text-overflow:ellipsis;white-space:nowrap;min-width:0;font-family:var(--ds-font-family-code);color:var(--dsw-alias-label-secondary);flex:1;font-size:11px;line-height:16px;overflow:hidden}.mr-set-tools{flex-wrap:wrap;align-items:center;gap:8px;display:flex}.mr-set-field{box-sizing:border-box;border:.5px solid var(--dsw-alias-border-l4);border-radius:var(--dsw-radius-md);background:var(--dsw-alias-bg-layer-1);min-width:120px;height:32px;color:var(--dsw-alias-label-tertiary);flex:1;align-items:center;gap:6px;padding:0 8px;display:flex}.mr-set-field:focus-within{border-color:var(--dsw-alias-state-business-primary)}.mr-set-fieldinput{min-width:0;font:inherit;color:var(--dsw-alias-label-primary);background:0 0;border:none;outline:none;flex:1;font-size:13px;line-height:20px}.mr-set-fieldinput::placeholder{color:var(--dsw-alias-label-dimmed)}.mr-set-list{flex-direction:column;display:flex}.mr-set-row{box-sizing:border-box;border-bottom:1px solid var(--dsw-alias-border-l1);align-items:center;gap:8px;min-height:32px;padding:2px 0;display:flex}.mr-set-list>.mr-set-row:last-child{border-bottom:none}.mr-set-row[data-kind=env] .mr-tip{flex:none}.mr-set-row[data-kind=env] .mr-set-name{white-space:nowrap;flex:none;min-width:92px}.mr-set-detail{text-overflow:ellipsis;white-space:nowrap;min-width:0;color:var(--dsw-alias-label-tertiary);flex:1;font-size:12px;line-height:18px;overflow:hidden}.mr-set-row[data-kind=pkg] .mr-set-name{text-overflow:ellipsis;white-space:nowrap;flex:1;min-width:0;overflow:hidden}.mr-set-ver{text-overflow:ellipsis;white-space:nowrap;width:58px;color:var(--dsw-alias-label-caption);font-variant-numeric:tabular-nums;flex:none;font-size:12px;line-height:18px;overflow:hidden}.mr-set-row[data-kind=pkg] .mr-tag{flex:none;justify-content:center;min-width:54px}.mr-set-size{text-align:end;text-overflow:ellipsis;white-space:nowrap;width:68px;color:var(--dsw-alias-label-secondary);font-variant-numeric:tabular-nums;flex:none;font-size:12px;line-height:18px;overflow:hidden}.mr-set-act{flex:none;justify-content:flex-end;width:96px;display:flex}.mr-set-dot{box-sizing:border-box;border:.5px solid var(--dsw-alias-border-l3);background:0 0;border-radius:50%;flex:none;width:8px;height:8px}.mr-set-dot[data-tone=ok]{border-color:var(--dsw-alias-state-success-primary);background:var(--dsw-alias-state-success-primary)}.mr-set-dot[data-tone=warn]{border-color:var(--dsw-alias-state-warn-primary);background:var(--dsw-alias-state-warn-primary)}.mr-set-dot[data-tone=error]{border-color:var(--dsw-alias-state-error-primary);background:var(--dsw-alias-state-error-primary)}.mr-set-dot[data-tone=idle]{border-color:var(--dsw-alias-state-idle-primary);background:var(--dsw-alias-state-idle-primary)}.mr-set-spin{color:var(--dsw-alias-label-tertiary);flex:none}.mr-set-spin-rotor{transform-origin:50%;animation:1.5s linear infinite mr-set-spin}.mr-set-spin-track,.mr-set-spin-arc{fill:none;stroke:currentColor;stroke-width:2px;stroke-linecap:round}.mr-set-spin-track{opacity:.25}.mr-set-spin-arc{stroke-dasharray:12 150;animation:1.5s ease-in-out infinite mr-set-dash}@keyframes mr-set-spin{to{transform:rotate(360deg)}}@keyframes mr-set-dash{0%{stroke-dasharray:12 150;stroke-dashoffset:0}50%{stroke-dasharray:24 150;stroke-dashoffset:-6px}to{stroke-dasharray:12 150;stroke-dashoffset:0}}@media (prefers-reduced-motion:reduce){.mr-set-spin-rotor,.mr-set-spin-arc{animation:none}.mr-set-spin-arc{stroke-dasharray:18 150;stroke-dashoffset:-3px}}.mr-tag{white-space:nowrap;border-radius:999px;align-items:center;padding:1px 8px;font-size:11px;font-weight:500;line-height:17px;display:inline-flex}.mr-tag[data-tone=outline]{border:.5px solid var(--dsw-alias-border-l4);color:var(--dsw-alias-label-tertiary)}.mr-tag[data-tone=neutral]{background:var(--dsw-alias-bg-module-platform);color:var(--dsw-alias-label-secondary)}.mr-tag[data-tone=success]{background:var(--dsw-alias-state-success-primary);@supports (color:color-mix(in lab, red, red)){background:color-mix(in srgb, var(--dsw-alias-state-success-primary) 10%, transparent)}color:var(--dsw-alias-state-success-primary)}.mr-set-empty{text-align:center;color:var(--dsw-alias-label-tertiary);margin:0;padding:32px 0;font-size:13px;line-height:20px}.mr-set-note{color:var(--dsw-alias-label-tertiary);overflow-wrap:anywhere;margin:0;font-size:12px;line-height:18px}.mr-set-error{color:var(--dsw-alias-state-error-primary);overflow-wrap:anywhere;margin:0;font-size:13px;line-height:20px}.mr-set-hint{color:var(--dsw-alias-label-tertiary);overflow-wrap:anywhere;margin:0;padding-top:2px;font-size:12px;line-height:18px}@property --tw-rotate-x{syntax:\"*\";inherits:false}@property --tw-rotate-y{syntax:\"*\";inherits:false}@property --tw-rotate-z{syntax:\"*\";inherits:false}@property --tw-skew-x{syntax:\"*\";inherits:false}@property --tw-skew-y{syntax:\"*\";inherits:false}@property --tw-border-style{syntax:\"*\";inherits:false;initial-value:solid}@property --tw-ordinal{syntax:\"*\";inherits:false}@property --tw-slashed-zero{syntax:\"*\";inherits:false}@property --tw-numeric-figure{syntax:\"*\";inherits:false}@property --tw-numeric-spacing{syntax:\"*\";inherits:false}@property --tw-numeric-fraction{syntax:\"*\";inherits:false}@property --tw-shadow{syntax:\"*\";inherits:false;initial-value:0 0 #0000}@property --tw-shadow-color{syntax:\"*\";inherits:false}@property --tw-shadow-alpha{syntax:\"<percentage>\";inherits:false;initial-value:100%}@property --tw-inset-shadow{syntax:\"*\";inherits:false;initial-value:0 0 #0000}@property --tw-inset-shadow-color{syntax:\"*\";inherits:false}@property --tw-inset-shadow-alpha{syntax:\"<percentage>\";inherits:false;initial-value:100%}@property --tw-ring-color{syntax:\"*\";inherits:false}@property --tw-ring-shadow{syntax:\"*\";inherits:false;initial-value:0 0 #0000}@property --tw-inset-ring-color{syntax:\"*\";inherits:false}@property --tw-inset-ring-shadow{syntax:\"*\";inherits:false;initial-value:0 0 #0000}@property --tw-ring-inset{syntax:\"*\";inherits:false}@property --tw-ring-offset-width{syntax:\"<length>\";inherits:false;initial-value:0}@property --tw-ring-offset-color{syntax:\"*\";inherits:false;initial-value:#fff}@property --tw-ring-offset-shadow{syntax:\"*\";inherits:false;initial-value:0 0 #0000}@property --tw-outline-style{syntax:\"*\";inherits:false;initial-value:solid}@property --tw-blur{syntax:\"*\";inherits:false}@property --tw-brightness{syntax:\"*\";inherits:false}@property --tw-contrast{syntax:\"*\";inherits:false}@property --tw-grayscale{syntax:\"*\";inherits:false}@property --tw-hue-rotate{syntax:\"*\";inherits:false}@property --tw-invert{syntax:\"*\";inherits:false}@property --tw-opacity{syntax:\"*\";inherits:false}@property --tw-saturate{syntax:\"*\";inherits:false}@property --tw-sepia{syntax:\"*\";inherits:false}@property --tw-drop-shadow{syntax:\"*\";inherits:false}@property --tw-drop-shadow-color{syntax:\"*\";inherits:false}@property --tw-drop-shadow-alpha{syntax:\"<percentage>\";inherits:false;initial-value:100%}@property --tw-drop-shadow-size{syntax:\"*\";inherits:false}@property --tw-ease{syntax:\"*\";inherits:false}";
+		const css = "/*! tailwindcss v4.3.3 | MIT License | https://tailwindcss.com */\n@layer properties{@supports (((-webkit-hyphens:none)) and (not (margin-trim:inline))) or ((-moz-orient:inline) and (not (color:rgb(from red r g b)))){*,:before,:after,::backdrop{--tw-rotate-x:initial;--tw-rotate-y:initial;--tw-rotate-z:initial;--tw-skew-x:initial;--tw-skew-y:initial;--tw-border-style:solid;--tw-ordinal:initial;--tw-slashed-zero:initial;--tw-numeric-figure:initial;--tw-numeric-spacing:initial;--tw-numeric-fraction:initial;--tw-shadow:0 0 #0000;--tw-shadow-color:initial;--tw-shadow-alpha:100%;--tw-inset-shadow:0 0 #0000;--tw-inset-shadow-color:initial;--tw-inset-shadow-alpha:100%;--tw-ring-color:initial;--tw-ring-shadow:0 0 #0000;--tw-inset-ring-color:initial;--tw-inset-ring-shadow:0 0 #0000;--tw-ring-inset:initial;--tw-ring-offset-width:0px;--tw-ring-offset-color:#fff;--tw-ring-offset-shadow:0 0 #0000;--tw-outline-style:solid;--tw-blur:initial;--tw-brightness:initial;--tw-contrast:initial;--tw-grayscale:initial;--tw-hue-rotate:initial;--tw-invert:initial;--tw-opacity:initial;--tw-saturate:initial;--tw-sepia:initial;--tw-drop-shadow:initial;--tw-drop-shadow-color:initial;--tw-drop-shadow-alpha:100%;--tw-drop-shadow-size:initial;--tw-ease:initial}}}@layer theme{:root,:host{--spacing:.25rem;--ease-in-out:cubic-bezier(.4, 0, .2, 1);--default-transition-duration:.15s;--default-transition-timing-function:cubic-bezier(.4, 0, .2, 1)}}@layer utilities{.invisible{visibility:hidden}.visible{visibility:visible}.absolute{position:absolute}.fixed{position:fixed}.relative{position:relative}.static{position:static}.sticky{position:sticky}.container{width:100%;@media (width>=40rem){max-width:40rem}@media (width>=48rem){max-width:48rem}@media (width>=64rem){max-width:64rem}@media (width>=80rem){max-width:80rem}@media (width>=96rem){max-width:96rem}}.block{display:block}.contents{display:contents}.flex{display:flex}.grid{display:grid}.hidden{display:none}.inline{display:inline}.inline-block{display:inline-block}.table{display:table}.table\\!{display:table!important}.table-cell{display:table-cell}.size-1{width:var(--spacing);height:var(--spacing)}.h-40{height:calc(var(--spacing) * 40)}.h-84{height:calc(var(--spacing) * 84)}.h-120{height:calc(var(--spacing) * 120)}.flex-shrink,.shrink{flex-shrink:1}.grow{flex-grow:1}.transform{transform:var(--tw-rotate-x,) var(--tw-rotate-y,) var(--tw-rotate-z,) var(--tw-skew-x,) var(--tw-skew-y,)}.resize{resize:both}.truncate{text-overflow:ellipsis;white-space:nowrap;overflow:hidden}.rounded{border-radius:.25rem}.border{border-style:var(--tw-border-style);border-width:1px}.capitalize{text-transform:capitalize}.lowercase{text-transform:lowercase}.uppercase{text-transform:uppercase}.italic{font-style:italic}.ordinal{--tw-ordinal:ordinal;font-variant-numeric:var(--tw-ordinal,) var(--tw-slashed-zero,) var(--tw-numeric-figure,) var(--tw-numeric-spacing,) var(--tw-numeric-fraction,)}.line-through{text-decoration-line:line-through}.overline{text-decoration-line:overline}.underline{text-decoration-line:underline}.shadow{--tw-shadow:0 1px 3px 0 var(--tw-shadow-color,#0000001a), 0 1px 2px -1px var(--tw-shadow-color,#0000001a);box-shadow:var(--tw-inset-shadow), var(--tw-inset-ring-shadow), var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow)}.ring{--tw-ring-shadow:var(--tw-ring-inset,) 0 0 0 calc(1px + var(--tw-ring-offset-width)) var(--tw-ring-color,currentcolor);box-shadow:var(--tw-inset-shadow), var(--tw-inset-ring-shadow), var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow)}.outline{outline-style:var(--tw-outline-style);outline-width:1px}.blur{--tw-blur:blur(8px);filter:var(--tw-blur,) var(--tw-brightness,) var(--tw-contrast,) var(--tw-grayscale,) var(--tw-hue-rotate,) var(--tw-invert,) var(--tw-saturate,) var(--tw-sepia,) var(--tw-drop-shadow,)}.grayscale{--tw-grayscale:grayscale(100%);filter:var(--tw-blur,) var(--tw-brightness,) var(--tw-contrast,) var(--tw-grayscale,) var(--tw-hue-rotate,) var(--tw-invert,) var(--tw-saturate,) var(--tw-sepia,) var(--tw-drop-shadow,)}.invert{--tw-invert:invert(100%);filter:var(--tw-blur,) var(--tw-brightness,) var(--tw-contrast,) var(--tw-grayscale,) var(--tw-hue-rotate,) var(--tw-invert,) var(--tw-saturate,) var(--tw-sepia,) var(--tw-drop-shadow,)}.filter{filter:var(--tw-blur,) var(--tw-brightness,) var(--tw-contrast,) var(--tw-grayscale,) var(--tw-hue-rotate,) var(--tw-invert,) var(--tw-saturate,) var(--tw-sepia,) var(--tw-drop-shadow,)}.transition{transition-property:color,background-color,border-color,outline-color,text-decoration-color,fill,stroke,--tw-gradient-from,--tw-gradient-via,--tw-gradient-to,opacity,box-shadow,transform,translate,scale,rotate,filter,-webkit-backdrop-filter,backdrop-filter,display,content-visibility,overlay,pointer-events;transition-timing-function:var(--tw-ease,var(--default-transition-timing-function));transition-duration:var(--tw-duration,var(--default-transition-duration))}.ease-in-out{--tw-ease:var(--ease-in-out);transition-timing-function:var(--ease-in-out)}.\\[probe\\:pageerror\\]{probe:pageerror}}.mr-page{box-sizing:border-box;height:100%;color:var(--dsw-alias-label-primary);flex-direction:column;align-items:center;padding:0 clamp(24px,4vw,48px);display:flex;overflow:hidden}.mr-page-head,.mr-workspace{width:100%;max-width:1160px}.mr-page-head{box-sizing:border-box;flex:none;justify-content:space-between;align-items:center;gap:16px;padding-top:28px;display:flex}[data-platform=darwin] .mr-page-head{padding-top:calc(28px + var(--dsh-frame-top-clearance,0px))}.mr-head-title{align-items:center;gap:2px;min-width:0;display:flex}.mr-page-title{margin:0;font-size:20px;font-weight:500;line-height:28px}.mr-workspace{flex:1;grid-template-columns:minmax(240px,300px) minmax(0,1fr);gap:16px;min-height:0;padding:16px 0 24px;display:grid}.mr-workspace-free{grid-template-columns:minmax(300px,1fr) minmax(0,1.25fr)}.mr-side{flex-direction:column;gap:8px;min-width:0;min-height:0;display:flex}.mr-side-scroll{flex-direction:column;flex:1;gap:10px;min-height:0;padding-right:4px;display:flex;overflow:auto}.mr-main{flex-direction:column;gap:16px;min-width:0;min-height:0;padding-right:4px;display:flex;overflow:auto}.mr-preview{flex:none}.mr-empty{text-align:center;color:var(--dsw-alias-label-tertiary);margin:0;padding:48px 0;font-size:13px;line-height:20px}.mr-toolbar{z-index:5;flex-wrap:wrap;flex:none;align-items:center;gap:4px;display:flex;position:relative}.mr-toolbar-count{color:var(--dsw-alias-label-tertiary);font-variant-numeric:tabular-nums;margin-left:auto;font-size:12px;line-height:18px}.mr-tip{display:inline-flex;position:relative}.mr-tip-bubble{z-index:40;pointer-events:none;box-sizing:border-box;border-radius:var(--dsw-radius-sm);background:var(--dsw-alias-tooltip-bg);width:max-content;max-width:300px;color:var(--dsw-static-neutral-bluish-00);white-space:pre-line;overflow-wrap:break-word;opacity:0;visibility:hidden;padding:3px 7px;font-size:13px;font-weight:400;line-height:20px;position:absolute;top:calc(100% + 6px);left:50%;transform:translate(-50%)}.mr-tip[data-align=start] .mr-tip-bubble{left:0;transform:none}.mr-tip[data-align=end] .mr-tip-bubble{left:auto;right:0;transform:none}.mr-tip:hover .mr-tip-bubble,.mr-tip:focus-within .mr-tip-bubble{opacity:1;visibility:visible}.mr-tip-bubble.is-wide{max-width:440px}.mr-seg{border-radius:var(--dsw-radius-md);background:var(--dsw-alias-interactive-bg-hover);flex:none;grid-auto-columns:1fr;grid-auto-flow:column;gap:2px;padding:4px;display:inline-grid;position:relative}.mr-seg-indicator{width:calc((100% - 8px - 2px * (var(--mr-seg-count,2) - 1)) / var(--mr-seg-count,2));border-radius:var(--dsw-radius-sm);background:var(--dsw-alias-bg-layer-1);height:calc(100% - 8px);box-shadow:var(--dsw-elevation-soft);transform:translateX(calc(var(--mr-seg-index,0) * (100% + 2px)));pointer-events:none;border:0;transition:transform .16s;position:absolute;top:4px;left:4px}.mr-seg-tab{box-sizing:border-box;z-index:1;border-radius:var(--dsw-radius-sm);height:28px;color:var(--dsw-alias-label-secondary);font:inherit;white-space:nowrap;cursor:pointer;background:0 0;border:0;padding:0 16px;font-size:13px;font-weight:500;line-height:20px;transition:color .12s;position:relative}.mr-seg-tab:hover:not(:disabled),.mr-seg-tab[aria-selected=true]{color:var(--dsw-alias-label-primary)}.mr-seg-tab:disabled{cursor:default;opacity:.4}.mr-seg-tab:focus-visible{outline:var(--dsw-focus-ring-width,2px) solid var(--dsw-alias-state-business-primary);outline-offset:-2px}@media (prefers-reduced-motion:reduce){.mr-seg-indicator,.mr-seg-tab{transition:none}}.mr-btn{box-sizing:border-box;cursor:pointer;border-radius:var(--dsw-radius-sm);height:28px;color:var(--dsw-alias-label-primary);background:0 0;border:none;justify-content:center;align-items:center;gap:4px;padding:0 10px;font-size:12px;line-height:18px;display:inline-flex}.mr-btn:disabled{cursor:not-allowed;opacity:.4}.mr-btn.primary{background:var(--dsw-alias-button-primary-fill);color:var(--dsw-alias-label-primary-foreground)}.mr-btn.primary:hover:not(:disabled){background:var(--dsw-alias-button-primary-hover)}.mr-btn:focus-visible{outline:2px solid var(--dsw-alias-state-business-primary);outline-offset:2px}.mr-btn.tall{border-radius:var(--dsw-radius-md);height:36px;padding:0 16px;font-size:14px;line-height:22px}.mr-iconbtn{box-sizing:border-box;border-radius:var(--dsw-radius-sm);cursor:pointer;width:24px;height:24px;color:var(--dsw-alias-label-secondary);background:0 0;border:none;flex:none;justify-content:center;align-items:center;padding:0;display:inline-flex}.mr-iconbtn-xs{width:20px;height:20px}.mr-iconbtn:hover:not(:disabled){background:var(--dsw-alias-interactive-bg-hover);color:var(--dsw-alias-label-primary)}.mr-iconbtn:disabled{cursor:not-allowed;opacity:.4}.mr-iconbtn:focus-visible{outline:2px solid var(--dsw-alias-state-business-primary);outline-offset:2px}.mr-iconbtn[aria-pressed=true]{background:var(--dsw-alias-interactive-bg-hover);color:var(--dsw-alias-state-business-primary)}.mr-code{box-sizing:border-box;resize:vertical;border:.5px solid var(--dsw-alias-border-l4);border-radius:var(--dsw-radius-md);background:var(--dsw-alias-bg-layer-1);width:100%;min-height:190px;color:var(--dsw-alias-label-primary);font-family:var(--ds-font-family-code);tab-size:2;padding:8px 10px;font-size:12px;line-height:18px;display:block}.mr-code-fill{resize:none;flex:1;min-height:0;margin:0}.mr-code:focus-visible{outline:2px solid var(--dsw-alias-state-business-primary);outline-offset:0}.mr-status{white-space:pre-wrap;font-size:13px;line-height:20px}.mr-status.ok{color:var(--dsw-alias-state-success-primary)}.mr-status.err{color:var(--dsw-alias-state-error-primary)}.mr-ground-group{flex-direction:column;gap:2px;display:flex}.mr-ground-grouphead{align-items:center;gap:2px;display:flex}.mr-ground-toggle{text-align:start;box-sizing:border-box;border-radius:var(--dsw-radius-sm);cursor:pointer;min-width:0;height:24px;color:var(--dsw-alias-label-tertiary);background:0 0;border:none;flex:1;align-items:center;gap:6px;padding:0 4px;display:flex}.mr-ground-toggle:hover{background:var(--dsw-alias-interactive-bg-hover)}.mr-ground-toggle:focus-visible{outline:2px solid var(--dsw-alias-state-business-primary);outline-offset:-2px}.mr-ground-grouptitle{font-size:12px;font-weight:500;line-height:18px}.mr-ground-gcount{font-variant-numeric:tabular-nums;margin-left:auto;font-size:11px;line-height:16px}.mr-ground-gfail{font-variant-numeric:tabular-nums;color:var(--dsw-alias-state-error-primary);font-size:11px;line-height:16px}.mr-ground-net{border:1px solid var(--dsw-alias-border-l3);border-radius:var(--dsw-radius-sm);color:var(--dsw-alias-label-secondary);flex:none;padding:0 4px;font-size:11px;line-height:16px}.mr-ground-notice{border:1px solid var(--dsw-alias-border-l3);border-radius:var(--dsw-radius-sm);background:var(--dsw-alias-bg-layer-1);color:var(--dsw-alias-label-secondary);flex:none;margin:0;padding:8px 10px;font-size:12px;line-height:18px}.mr-toolbar-note{color:var(--dsw-alias-label-secondary);font-size:12px;line-height:18px}.mr-ground-items{flex-direction:column;display:flex}.mr-ground-item{text-align:start;box-sizing:border-box;border-radius:var(--dsw-radius-sm);cursor:pointer;width:100%;height:28px;color:var(--dsw-alias-label-primary);background:0 0;border:none;align-items:center;gap:8px;padding:0 8px;display:flex}.mr-ground-item:hover,.mr-ground-item[aria-pressed=true]{background:var(--dsw-alias-interactive-bg-hover)}.mr-ground-item:focus-visible{outline:2px solid var(--dsw-alias-state-business-primary);outline-offset:-2px}.mr-ground-dot{border:.5px solid var(--dsw-alias-border-l3);background:0 0;border-radius:50%;flex:none;width:7px;height:7px}.mr-ground-item[data-state=ok] .mr-ground-dot{border-color:var(--dsw-alias-state-success-primary);background:var(--dsw-alias-state-success-primary)}.mr-ground-item[data-state=fail] .mr-ground-dot{border-color:var(--dsw-alias-state-error-primary);background:var(--dsw-alias-state-error-primary)}.mr-ground-name{flex:none;font-size:13px;line-height:20px}.mr-ground-mark{flex:none;font-size:11px;font-weight:600;line-height:16px}.mr-ground-mark.is-pass{color:var(--dsw-alias-state-success-primary)}.mr-ground-mark.is-fail{color:var(--dsw-alias-state-error-primary)}.mr-ground-id{text-overflow:ellipsis;white-space:nowrap;text-align:end;min-width:0;font-family:var(--ds-font-family-code);color:var(--dsw-alias-label-tertiary);flex:1;margin-left:auto;font-size:11px;line-height:16px;overflow:hidden}.mr-expect{box-sizing:border-box;border:1px solid var(--dsw-alias-border-l3);border-radius:var(--dsw-radius-sm);background:var(--dsw-alias-bg-layer-1);align-items:baseline;gap:8px;padding:8px 10px;display:flex}.mr-expect-label{color:var(--dsw-alias-label-secondary);cursor:help;flex:none;font-size:12px;font-weight:500;line-height:18px}.mr-expect-text{min-width:0;color:var(--dsw-alias-label-primary);overflow-wrap:break-word;flex:1;font-size:12px;line-height:18px}.mr-expect-mark{flex:none;align-items:center;gap:2px;display:inline-flex}.mr-expect-marktitle{color:var(--dsw-alias-label-tertiary);cursor:help;margin-right:4px;font-size:12px;line-height:18px}.mr-expect-mark .mr-iconbtn[data-mark=pass]{color:var(--dsw-alias-state-success-primary)}.mr-expect-mark .mr-iconbtn[data-mark=fail]{color:var(--dsw-alias-state-error-primary)}.mr-chatcard-body{margin-top:12px;position:relative}.mr-chatcard{box-sizing:border-box;border:.5px solid var(--dsw-alias-settings-card-stroke);border-radius:var(--dsw-radius-xl);background:var(--dsw-alias-settings-card-fill);color:var(--dsw-alias-label-primary);margin:6px 0;padding:10px 12px}.mr-chatcard-head{align-items:center;gap:6px;height:32px;display:flex}.mr-chatcard-label{flex:none;font-size:13px;font-weight:500;line-height:20px}.mr-chatcard-head .mr-status{white-space:nowrap;text-overflow:ellipsis;flex:1;min-width:0;overflow:hidden}.mr-stage{aspect-ratio:16/9;border:.5px solid var(--dsw-alias-border-l3);border-radius:var(--dsw-radius-md);background:var(--dsw-alias-bg-layer-1);width:100%;margin-top:12px;position:relative;overflow:hidden}.mr-chatcard-body>.mr-stage{margin-top:0}.mr-stage canvas{display:block;width:100%!important;height:100%!important}.mr-canvas-loading{z-index:2;box-sizing:border-box;pointer-events:none;justify-content:center;align-items:center;padding:12px;display:flex;position:absolute;inset:0}.mr-canvas-loading-pill{box-sizing:border-box;background:var(--dsw-alias-tooltip-bg);min-width:0;max-width:100%;color:var(--dsw-static-neutral-bluish-00);border-radius:999px;align-items:center;gap:8px;padding:6px 12px;font-size:13px;line-height:20px;display:flex}.mr-canvas-loading-text{text-overflow:ellipsis;white-space:nowrap;min-width:0;overflow:hidden}.mr-spinner{box-sizing:border-box;border:1.5px solid #ffffff40;border-top-color:currentColor;border-radius:50%;flex:none;width:14px;height:14px;animation:.8s linear infinite mr-spin}@keyframes mr-spin{to{transform:rotate(360deg)}}@media (prefers-reduced-motion:reduce){.mr-spinner{animation:none}}.mr-code-pane{border:.5px solid var(--dsw-alias-border-l3);border-radius:var(--dsw-radius-md);background:var(--dsw-alias-bg-layer-1);position:absolute;inset:0;overflow:auto}.mr-codeview{font-family:var(--ds-font-family-code);color:var(--dsw-alias-label-primary);white-space:pre-wrap;word-break:break-word;tab-size:2;margin:0;padding:10px 12px;font-size:12px;line-height:18px}.mr-codeview code{counter-reset:source-line;display:block}.mr-codeview code>.line{min-height:1lh;counter-increment:source-line;padding-inline-start:calc(var(--mr-codeview-gutter,2ch) + 12px);display:block;position:relative}.mr-codeview code>.line:before{width:var(--mr-codeview-gutter,2ch);color:var(--dsw-alias-label-tertiary);text-align:end;content:counter(source-line);user-select:none;position:absolute;inset-inline-start:0}.mr-codepane-actions{z-index:2;justify-content:flex-end;height:0;padding:6px 8px 0 0;display:flex;position:sticky;top:0}.mr-codepane-actions .mr-iconbtn{background:var(--dsw-alias-bg-layer-1);border:.5px solid var(--dsw-alias-border-l3);width:22px;height:22px}.mr-chatcard-code{border:.5px solid var(--dsw-alias-border-l4);border-radius:var(--dsw-radius-md);background:var(--dsw-alias-bg-layer-1);max-height:180px;margin-top:8px;overflow:auto}.mr-chatcard-code>.mr-codeview{padding:8px 10px}.mr-chatcard-error{white-space:pre-wrap;word-break:break-word;color:var(--dsw-alias-state-error-primary);margin:8px 0 0;font-size:13px;line-height:20px}.mr-set{max-width:760px;color:var(--dsw-alias-label-primary);flex-direction:column;gap:32px;display:flex}.mr-set-group{flex-direction:column;gap:10px;display:flex}.mr-set-groupname{color:var(--dsw-alias-label-secondary);margin:0;font-size:13px;font-weight:500;line-height:20px}.mr-set-stack{flex-direction:column;gap:16px;display:flex}.mr-set-card{border:.5px solid var(--dsw-alias-settings-card-stroke);border-radius:var(--dsw-radius-xl);background:var(--dsw-alias-settings-card-fill);flex-direction:column;display:flex}.mr-set-cardhead{align-items:flex-start;gap:16px;padding:14px 16px;display:flex}.mr-set-cardheadtext{flex:1;min-width:0}.mr-set-cardtitle{align-items:baseline;gap:8px;margin:0;font-size:14px;font-weight:500;line-height:22px;display:flex}.mr-set-cardcount{color:var(--dsw-alias-label-tertiary);font-variant-numeric:tabular-nums;font-size:12px;font-weight:400;line-height:18px}.mr-set-cardsub{text-overflow:ellipsis;white-space:nowrap;color:var(--dsw-alias-label-tertiary);margin:2px 0 0;font-size:12px;line-height:18px;overflow:hidden}.mr-set-cardsub.is-path{font-family:var(--ds-font-family-code)}.mr-set-cardsub.is-error{color:var(--dsw-alias-state-error-primary)}.mr-set-cardacts{flex:none;align-items:center;gap:8px;display:flex}.mr-set-act{box-sizing:border-box;cursor:pointer;border:.5px solid var(--dsw-alias-border-l2);border-radius:var(--dsw-radius-md);height:30px;font:inherit;color:var(--dsw-alias-label-primary);background:0 0;justify-content:center;align-items:center;gap:6px;padding:0 12px;font-size:13px;line-height:18px;display:inline-flex}.mr-set-act:hover:not(:disabled){background:var(--dsw-alias-interactive-bg-hover)}.mr-set-act:disabled{cursor:not-allowed;opacity:.4}.mr-set-act:focus-visible{outline:2px solid var(--dsw-alias-state-business-primary);outline-offset:2px}.mr-set-rows{border-top:.5px solid var(--dsw-alias-border-l2);flex-direction:column;display:flex}.mr-set-row{box-sizing:border-box;align-items:center;gap:16px;min-height:44px;padding:8px 16px;display:flex}.mr-set-row+.mr-set-row{border-top:.5px solid var(--dsw-alias-border-l2)}.mr-set-rows.is-light .mr-set-row{min-height:34px;padding:5px 16px}.mr-set-cell{flex:none;min-width:0}.mr-set-cell.is-name,.mr-set-cell.is-check{text-overflow:ellipsis;white-space:nowrap;font-family:var(--ds-font-family-code);flex:1;font-size:13px;line-height:20px;overflow:hidden}.mr-set-cell.is-check{font-family:inherit}.mr-set-cell.is-act{flex:none;justify-content:flex-end;display:flex}.mr-set-cell.is-status{font-variant-numeric:tabular-nums;flex:none;justify-content:flex-end;align-items:center;gap:6px;font-size:13px;line-height:20px;display:flex}.mr-set-info{cursor:help;color:var(--dsw-alias-label-tertiary);background:0 0;border:none;flex:none;align-items:center;margin-left:5px;padding:0;display:inline-flex}.mr-set-info:hover,.mr-set-info:focus-visible{color:var(--dsw-alias-label-secondary)}.mr-set-info:focus-visible{outline:2px solid var(--dsw-alias-state-business-primary);outline-offset:1px;border-radius:var(--dsw-radius-sm)}.mr-set-cardfoot{color:var(--dsw-alias-label-tertiary);overflow-wrap:anywhere;margin:0;padding:0 16px 14px;font-size:12px;line-height:18px}.mr-set-rows+.mr-set-cardfoot{padding-top:10px}.mr-set-addrow{align-items:center;gap:8px;padding:0 16px 14px;display:flex}.mr-set-field{box-sizing:border-box;border:.5px solid var(--dsw-alias-border-l4);border-radius:var(--dsw-radius-md);background:var(--dsw-alias-bg-layer-1);min-width:0;height:36px;color:var(--dsw-alias-label-tertiary);flex:1;align-items:center;gap:6px;padding:0 12px;display:flex;position:relative}.mr-set-field:focus-within{border-color:var(--dsw-alias-state-business-primary)}.mr-set-fieldinput{z-index:1;min-width:0;font:inherit;color:var(--dsw-alias-label-primary);background:0 0;border:none;outline:none;flex:1;margin:0;padding:0;font-size:14px;line-height:22px;position:relative}.mr-set-fieldinput::placeholder{color:var(--dsw-alias-label-dimmed)}.mr-set-mirror{white-space:pre;pointer-events:none;align-items:center;padding:0 12px;font-size:14px;line-height:22px;display:flex;position:absolute;inset:0;overflow:hidden}.mr-set-typed{visibility:hidden}.mr-set-ghost{color:var(--dsw-alias-label-dimmed)}.mr-set-dot{box-sizing:border-box;border:.5px solid var(--dsw-alias-border-l3);background:0 0;border-radius:50%;flex:none;width:8px;height:8px}.mr-set-dot[data-tone=ok]{border-color:var(--dsw-alias-state-success-primary);background:var(--dsw-alias-state-success-primary)}.mr-set-dot[data-tone=warn]{border-color:var(--dsw-alias-state-warn-primary);background:var(--dsw-alias-state-warn-primary)}.mr-set-dot[data-tone=error]{border-color:var(--dsw-alias-state-error-primary);background:var(--dsw-alias-state-error-primary)}.mr-set-dot[data-tone=idle]{border-color:var(--dsw-alias-state-idle-primary);background:var(--dsw-alias-state-idle-primary)}.mr-set-spin{color:var(--dsw-alias-label-tertiary);flex:none}.mr-set-spin-rotor{transform-origin:50%;animation:1.5s linear infinite mr-set-spin}.mr-set-spin-track,.mr-set-spin-arc{fill:none;stroke:currentColor;stroke-width:2px;stroke-linecap:round}.mr-set-spin-track{opacity:.25}.mr-set-spin-arc{stroke-dasharray:12 150;animation:1.5s ease-in-out infinite mr-set-dash}@keyframes mr-set-spin{to{transform:rotate(360deg)}}@keyframes mr-set-dash{0%{stroke-dasharray:12 150;stroke-dashoffset:0}50%{stroke-dasharray:24 150;stroke-dashoffset:-6px}to{stroke-dasharray:12 150;stroke-dashoffset:0}}@media (prefers-reduced-motion:reduce){.mr-set-spin-rotor,.mr-set-spin-arc{animation:none}.mr-set-spin-arc{stroke-dasharray:18 150;stroke-dashoffset:-3px}}@property --tw-rotate-x{syntax:\"*\";inherits:false}@property --tw-rotate-y{syntax:\"*\";inherits:false}@property --tw-rotate-z{syntax:\"*\";inherits:false}@property --tw-skew-x{syntax:\"*\";inherits:false}@property --tw-skew-y{syntax:\"*\";inherits:false}@property --tw-border-style{syntax:\"*\";inherits:false;initial-value:solid}@property --tw-ordinal{syntax:\"*\";inherits:false}@property --tw-slashed-zero{syntax:\"*\";inherits:false}@property --tw-numeric-figure{syntax:\"*\";inherits:false}@property --tw-numeric-spacing{syntax:\"*\";inherits:false}@property --tw-numeric-fraction{syntax:\"*\";inherits:false}@property --tw-shadow{syntax:\"*\";inherits:false;initial-value:0 0 #0000}@property --tw-shadow-color{syntax:\"*\";inherits:false}@property --tw-shadow-alpha{syntax:\"<percentage>\";inherits:false;initial-value:100%}@property --tw-inset-shadow{syntax:\"*\";inherits:false;initial-value:0 0 #0000}@property --tw-inset-shadow-color{syntax:\"*\";inherits:false}@property --tw-inset-shadow-alpha{syntax:\"<percentage>\";inherits:false;initial-value:100%}@property --tw-ring-color{syntax:\"*\";inherits:false}@property --tw-ring-shadow{syntax:\"*\";inherits:false;initial-value:0 0 #0000}@property --tw-inset-ring-color{syntax:\"*\";inherits:false}@property --tw-inset-ring-shadow{syntax:\"*\";inherits:false;initial-value:0 0 #0000}@property --tw-ring-inset{syntax:\"*\";inherits:false}@property --tw-ring-offset-width{syntax:\"<length>\";inherits:false;initial-value:0}@property --tw-ring-offset-color{syntax:\"*\";inherits:false;initial-value:#fff}@property --tw-ring-offset-shadow{syntax:\"*\";inherits:false;initial-value:0 0 #0000}@property --tw-outline-style{syntax:\"*\";inherits:false;initial-value:solid}@property --tw-blur{syntax:\"*\";inherits:false}@property --tw-brightness{syntax:\"*\";inherits:false}@property --tw-contrast{syntax:\"*\";inherits:false}@property --tw-grayscale{syntax:\"*\";inherits:false}@property --tw-hue-rotate{syntax:\"*\";inherits:false}@property --tw-invert{syntax:\"*\";inherits:false}@property --tw-opacity{syntax:\"*\";inherits:false}@property --tw-saturate{syntax:\"*\";inherits:false}@property --tw-sepia{syntax:\"*\";inherits:false}@property --tw-drop-shadow{syntax:\"*\";inherits:false}@property --tw-drop-shadow-color{syntax:\"*\";inherits:false}@property --tw-drop-shadow-alpha{syntax:\"<percentage>\";inherits:false;initial-value:100%}@property --tw-drop-shadow-size{syntax:\"*\";inherits:false}@property --tw-ease{syntax:\"*\";inherits:false}";
 		const tagId = "dsh-manim-renderer/styles.css";
 		if (typeof document !== "undefined" && document.querySelector("style[data-plugin-css=" + JSON.stringify(tagId) + "]") === null) {
 			const tag = document.createElement("style");

@@ -11,9 +11,11 @@ lib/
 # 覆盖率输出（vitest --coverage 的产物，随时可重跑）
 coverage/
 
-# 开发期临时产物（`scripts/shot-corpus.mjs` 的截图等，用完即清）
+# 开发期临时产物（截图自查页 _tmp/selfcheck、脚本截图等，用完即清）
+# 两种前缀都堵上：_tmp/ 目录、_tmp_* 与 _tmp-* 散件（上次只写了下划线版，横线版漏网进了库）
 _tmp/
 _tmp_*
+_tmp-*
 
 # 探针的构建期 Python 环境（scripts/probe-requirements.txt 用）
 .venv-probe/

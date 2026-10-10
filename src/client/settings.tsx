@@ -1,21 +1,29 @@
-// 设置页：本机环境 + Pyodide 包缓存。
+// 设置页：本机环境 + Python 库（第三方库按需下载）。
 //
 // 两件事放一页，因为它们回答的是同一个问题——「要真的用起来，这台机器还缺什么」：
-// 上面一块是本机装的 Manim / FFmpeg / LaTeX（**导出**要走它们，桥里的 Pyodide 没有这些），
-// 下面一块是桥要用的 Python 包（渲染时按需取，现在能看到、也能提前取回来）。
+// 上面一块是本机装的 Manim / FFmpeg / LaTeX（**导出**要走它们，桥里的运行时没有这些），
+// 下面一块是渲染时要用到的第三方库。
 //
-// 取数一律**逐项来**（环境一项一个请求、预缓存一个包一个请求），所以界面是逐行亮起来的，
-// 中途失败只影响那一行；同时只允许一个预缓存任务在跑（下载是重活，别叠着来）。
+// **页面只留数据与控件，解释一律收进 ⓘ**（悬浮/键盘聚焦才出现）：环境那几项是重要项，
+// 每行名字后面跟一个 ⓘ；库清单只有名字与一个动作图标——能下载的给下载键、能删的给删除键，
+// 状态不用文字再描述一遍。
 //
-// 样式只用宿主 `--dsw-alias-*` token（明暗双主题自动成立），类名统一 `mr-` 前缀；
-// 说明性长文案一律进悬浮提示（`Tip`），页面上只留控件与数值。
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { Check, Copy, RefreshCw } from 'lucide-react'
+// 版式是「外面一个小分组标签 + 若干张自带头部的卡片」：标题、一行说明与动作键都在卡片头部里
+// （照宿主「存储」「审计中心」页），间距由卡片内边距撑起来。要往清单里补别的库，走底下那张
+// 「下载其他库」卡片——头部标题 + 一行短说明，输入框与按钮在卡片身体里。
+//
+// 取数一律**逐项来**（环境一项一个请求、下载一个库一个请求），所以界面是逐行亮起来的，
+// 中途失败只影响那一行；同时只允许一个下载任务在跑（下载是重活，别叠着来）。
+//
+// 样式只用宿主 `--dsw-alias-*` token（明暗双主题自动成立），类名统一 `mr-` 前缀。
+import { useCallback, useEffect, useId, useMemo, useRef, useState, type KeyboardEvent } from 'react'
+// ⓘ 图标取名 InfoIcon：本文件自己的 Info 组件（说明的收口）占了这个名字。
+import { Check, Copy, Download, Info as InfoIcon, RefreshCw, Trash2 } from 'lucide-react'
 import { Tip } from './components/tip'
 import { useCopied } from './clipboard'
 import { loadEnvPlan, probeEnv, type EnvCheck, type EnvPlan, type EnvResult, type EnvStatus } from './environment'
 import {
-  cachePackage, clearPackage, COMMON_PACKAGES, findPackage, formatBytes, loadPackages, prefetchPlan, stateKey,
+  cachePackage, clearPackage, COMMON_PACKAGES, completionFor, findPackage, formatBytes, loadPackages, prefetchPlan,
   type PackageEntry, type PackageInventory, type PackageState,
 } from './packages'
 import type { Translate } from './i18n'
@@ -39,20 +47,6 @@ function Dot({ tone }: { tone: Tone }) {
     )
   }
   return <span className="mr-set-dot" data-tone={tone} aria-hidden="true" />
-}
-
-/** 只读徽章：宿主 `Tag` 的配方（胶囊、11px/17px、tone 决定底色与字色）。 */
-function Tag({ tone, children }: { tone: 'outline' | 'neutral' | 'success'; children: string }) {
-  return <span className="mr-tag" data-tone={tone}>{children}</span>
-}
-
-/** 一个包该画什么点：取回来的绿、随包的灰、没缓存的空环。 */
-function packageTone(state: PackageState): Tone {
-  return state === 'cached' ? 'ok' : state === 'bundled' ? 'idle' : 'empty'
-}
-
-function packageTagTone(state: PackageState): 'outline' | 'neutral' | 'success' {
-  return state === 'cached' ? 'success' : state === 'bundled' ? 'neutral' : 'outline'
 }
 
 const envTone = (status: EnvStatus): Tone => (status === 'ok' ? 'ok' : status === 'missing' ? 'warn' : 'error')
@@ -84,6 +78,7 @@ function envValue(t: Translate, result: EnvResult): string {
 /**
  * 本机环境卡片：逐项探测，逐行亮起来。
  *
+ * 头部左侧报「几项就绪」（正在检测 / 拿不到计划时换成当时的状态），右上是「重新检测」。
  * 探测顺序就是 Host 给的顺序（python3 → manim → manim 包 → ffmpeg → latex → dvisvgm），
  * 一项失败标记那一行、继续下一项——一项超时不该让整块卡住。
  */
@@ -131,77 +126,92 @@ function EnvCard({ t }: { t: Translate }) {
 
   const ready = Object.values(results).filter((result) => result.status === 'ok').length
   const total = plan?.checks.length ?? 0
+  // 头部那一行说明：常态报「几项就绪」，正在检测 / 拿不到计划时换成当时的状态——
+  // 位置固定，所以卡片不会因为这句来去而忽高忽低。
+  const subline = failure !== null
+    ? t('envPlanFailed', { message: failure })
+    : plan === null ? t('envProbing') : t('envReady', { ready, total })
 
   return (
-    <div className="mr-set-card">
-      <div className="mr-set-head">
-        <h2 className="mr-set-title">{t('envTitle')}</h2>
-        <span className="mr-set-meta">
-          {plan === null ? t('loading') : t('envReady', { ready, total })}
-        </span>
-        <Tip label={t('envRerunHint')} align="end">
-          <button type="button" className="mr-iconbtn mr-iconbtn-xs" disabled={running}
-            aria-label={t('envRerun')} onClick={() => { void load() }}>
-            <RefreshCw size={13} />
-          </button>
-        </Tip>
+    <section className="mr-set-group" aria-label={t('envTitle')}>
+      <h2 className="mr-set-groupname">{t('envGroup')}</h2>
+      <div className="mr-set-stack">
+        <section className="mr-set-card">
+          <header className="mr-set-cardhead">
+            <div className="mr-set-cardheadtext">
+              <h3 className="mr-set-cardtitle">{t('envTitle')}</h3>
+              <p className={failure !== null ? 'mr-set-cardsub is-error' : 'mr-set-cardsub'}
+                title={failure !== null ? subline : undefined} role="status">
+                {subline}
+              </p>
+            </div>
+            <div className="mr-set-cardacts">
+              <Tip label={t('envRerunHint')} align="end">
+                <button type="button" className="mr-set-act" disabled={running} onClick={() => { void load() }}>
+                  <RefreshCw size={14} />
+                  {t('envRerun')}
+                </button>
+              </Tip>
+            </div>
+          </header>
+
+          {plan !== null && (
+            <div className="mr-set-rows">
+              {plan.checks.map((check) => {
+                const result = results[check.id]
+                const tone: Tone = result === undefined ? 'busy' : envTone(result.status)
+                return (
+                  <div key={check.id} className="mr-set-row">
+                    <span className="mr-set-cell is-check">
+                      <span>{t(envTitleKey(check.id))}</span>
+                      <Info name={t(envTitleKey(check.id))} text={envInfo(t, check, result)} />
+                    </span>
+                    <span className="mr-set-cell is-status">
+                      <Dot tone={tone} />
+                      {result !== undefined && <span>{envValue(t, result)}</span>}
+                    </span>
+                  </div>
+                )
+              })}
+            </div>
+          )}
+        </section>
       </div>
-
-      {failure !== null && (
-        <p className="mr-set-error" role="status">{t('envPlanFailed', { message: failure })}</p>
-      )}
-      {failure === null && plan === null && (
-        <p className="mr-set-empty" role="status">{t('envProbing')}</p>
-      )}
-
-      {plan !== null && (
-        <div className="mr-set-list">
-          {plan.checks.map((check) => {
-            const result = results[check.id]
-            const tone: Tone = result === undefined ? 'busy' : envTone(result.status)
-            return (
-              <div key={check.id} className="mr-set-row" data-kind="env" data-tone={tone}>
-                <Dot tone={tone} />
-                <Tip label={envHint(t, check, result)} align="start">
-                  <span className="mr-set-name">{t(envTitleKey(check.id))}</span>
-                </Tip>
-                <span className="mr-set-detail">{envDetail(t, result)}</span>
-                <span className="mr-set-size">{result === undefined ? '' : envValue(t, result)}</span>
-              </div>
-            )
-          })}
-        </div>
-      )}
-
-      {plan !== null && (
-        <Tip label={plan.path} align="start">
-          <span className="mr-set-note">{t('envPathNote')}</span>
-        </Tip>
-      )}
-    </div>
+    </section>
   )
 }
 
-/** 环境行的悬浮说明：为什么看这一项（+ 实际跑过哪条命令，让「到底测了什么」不是个谜）。 */
-function envHint(t: Translate, check: EnvCheck, result: EnvResult | undefined): string {
-  const lines = [t(envWhyKey(check.id)), t('envRan', { command: check.command })]
-  if (result !== undefined && result.status !== 'ok' && result.detail.length > 0) lines.push(result.detail)
+/**
+ * 环境项的 ⓘ：为什么看这项、找到了哪儿、实际跑的什么——页面上只留「名字 + 状态」，
+ * 这些解释性内容全部收在这里，悬浮/键盘聚焦才出现。
+ */
+function envInfo(t: Translate, check: EnvCheck, result: EnvResult | undefined): string {
+  const lines = [t(envWhyKey(check.id))]
+  if (result === undefined) lines.push(t('envProbing'))
+  else if (result.status === 'ok') lines.push(t('envFoundAt', { path: result.path ?? '' }))
+  else lines.push(result.detail.length > 0 ? result.detail : t('envMissing'))
+  lines.push(t('envRan', { command: check.command }))
   return lines.join('\n')
 }
 
-/** 环境行的中列：找到了给路径，否则给原因。 */
-function envDetail(t: Translate, result: EnvResult | undefined): string {
-  if (result === undefined) return t('envProbing')
-  if (result.status === 'ok') return result.path ?? ''
-  return result.detail.length > 0 ? result.detail : t('envMissing')
+/** ⓘ 图标：说明的收口。可聚焦（聚焦即出说明），点了没有动作——它只是个「看解释」的入口。 */
+function Info({ name, text }: { name: string; text: string }) {
+  return (
+    <Tip label={text} align="start" wide>
+      <button type="button" className="mr-set-info" aria-label={`${name}：${text}`}>
+        <InfoIcon size={13} />
+      </button>
+    </Tip>
+  )
 }
 
 // ---------------------------------------------------------------- 包缓存
 
 /**
- * 包缓存卡片：一张常用包短清单 + 一个手动输入框，外加「按行清理」。
+ * Python 库：**两张卡片**——上面一张是「已缓存的库」清单（头部右上是复制路径与刷新），
+ * 下面一张是「下载其他库」（头部标题 + 一行短说明，输入框与按钮在卡片身体里）。
  *
- * 为什么不是全表：lock 里有近三百条，绝大多数人一辈子用不到——把常用的摆出来，
+ * 清单为什么不是全表：lock 里有近三百条，绝大多数人一辈子用不到——把常用的摆出来，
  * 比让人在一个长列表里筛要快。**列表不是白名单**：清单里没有的包，直接写上名字就能取，
  * 走的是同一条预缓存通道（也照样连依赖一起取）。手输过的包会留在表里，
  * 于是「取回来了、想再清掉」这条路也在同一张表上闭环。
@@ -212,11 +222,16 @@ function PackagesCard({ t }: { t: Translate }) {
   const [inventory, setInventory] = useState<PackageInventory | null>(null)
   const [failure, setFailure] = useState<string | null>(null)
   const [manual, setManual] = useState('')
+  const [composing, setComposing] = useState(false)
   const [extra, setExtra] = useState<string[]>([])
   const [busy, setBusy] = useState<{ name: string; done: number; total: number } | null>(null)
+  // 两处动作各报各的：清单行上的动作报在清单卡片的脚注，补库卡片里的动作报在补库卡片的脚注——
+  // 回执就出现在动手的地方，不用跑到别处找。
   const [note, setNote] = useState<string | null>(null)
+  const [formNote, setFormNote] = useState<string | null>(null)
   const [copied, copy] = useCopied()
   const alive = useRef(true)
+  const manualId = useId()
 
   useEffect(() => () => { alive.current = false }, [])
 
@@ -262,6 +277,32 @@ function PackagesCard({ t }: { t: Translate }) {
     return { bundled, cached, bytes }
   }, [entries])
 
+  /**
+   * 输入框的补全虚影（按名字前缀）。
+   *
+   * 两个「不显示」的判断：
+   *  - 中文输入法组字期间不显示——组字中的字还没定型，虚影会跟着跳；
+   *  - 「已输入 + 要补的」整段太长时不显示：虚影是按输入框里的字往后接的，
+   *    一旦输入框内部滚动就对不上了。40 是照输入框实际宽度（内容列 564px 减去按钮，
+   *    13px 字号）能稳稳放下的字数取的——宁可长名字不给虚影，也不能给一截错位的。
+   */
+  const ghost = useMemo(() => {
+    if (composing || manual.length === 0) return null
+    const completion = completionFor(entries, manual)
+    if (completion === null || manual.length + completion.suffix.length > 40) return null
+    return completion
+  }, [composing, entries, manual])
+
+  /** Tab / → 采纳虚影。只在真有虚影、且光标在末尾时接管，其余情况让默认行为照常走。 */
+  const acceptGhost = (event: KeyboardEvent<HTMLInputElement>): void => {
+    if (ghost === null) return
+    if (event.key !== 'Tab' && event.key !== 'ArrowRight') return
+    // 光标在中间时 Tab 该去下一格、→ 该移光标，别在这儿把人截住
+    if (event.currentTarget.selectionStart !== manual.length) return
+    event.preventDefault()
+    setManual(ghost.name)
+  }
+
   /** 把它摆到表上（手输过的包留在表里，便于回头清理）。 */
   const surface = (name: string): void => {
     setExtra((previous) => (previous.includes(name) ? previous : [...previous, name]))
@@ -270,18 +311,21 @@ function PackagesCard({ t }: { t: Translate }) {
   /**
    * 取一个包（连依赖）：先算闭包，再一个一个取，进度落在按钮上。
    * 名字不认识 / 已经在本机都当场说清楚，不去发无谓的请求。
+   *
+   * `fromForm` 只决定回执报在哪张卡片的脚注（补库卡片 vs 清单卡片），不改变取法。
    */
-  const fetchPackages = async (name: string, clearInput = false): Promise<void> => {
+  const fetchPackages = async (name: string, fromForm = false): Promise<void> => {
+    const say = fromForm ? setFormNote : setNote
     if (name.length === 0 || busy !== null) return
-    setNote(null)
+    say(null)
     if (findPackage(entries, name) === undefined) {
-      setNote(t('pkgUnknown', { name }))
+      say(t('pkgUnknown', { name }))
       return
     }
     surface(name)
     const plan = prefetchPlan(entries, name)
     if (plan.length === 0) {
-      setNote(t('pkgNothingToFetch', { name }))
+      say(t('pkgNothingToFetch', { name }))
       return
     }
     setBusy({ name, done: 0, total: plan.length })
@@ -289,16 +333,18 @@ function PackagesCard({ t }: { t: Translate }) {
       const outcome = await cachePackage(target)
       if (!alive.current) return
       if (!outcome.ok) {
-        setNote(t('pkgFetchFailed', { name: target, error: outcome.error }))
+        say(t('pkgFetchFailed', { name: target, error: outcome.error }))
         setBusy(null)
         void refresh()
         return
       }
+      // 动作列只剩图标，进度就落到卡片脚注那行小字上（图标上只有悬浮提示）
       setBusy({ name, done: index + 1, total: plan.length })
+      say(t('pkgFetchingNote', { name, done: index + 1, total: plan.length }))
     }
     setBusy(null)
-    setNote(t('pkgFetched', { count: plan.length }))
-    if (clearInput) setManual('')
+    say(t('pkgFetched', { count: plan.length }))
+    if (fromForm) setManual('')
     await refresh()
   }
 
@@ -320,94 +366,122 @@ function PackagesCard({ t }: { t: Translate }) {
     await refresh()
   }
 
+  // 清单卡片的头部说明：读不到清单就报错、还在读就报进度、读到了就把存放路径摆出来
+  // （路径是数据不是说明，放这儿比单独一行省地方；旁边的「复制路径」能拿走全文）
+  const subline = failure !== null
+    ? <p className="mr-set-cardsub is-error" title={t('pkgFailed', { message: failure })} role="status">{t('pkgFailed', { message: failure })}</p>
+    : inventory === null
+      ? <p className="mr-set-cardsub" role="status">{t('loading')}</p>
+      : <p className="mr-set-cardsub is-path" title={inventory.cacheDir}>{inventory.cacheDir}</p>
+
   return (
-    <div className="mr-set-card">
-      <div className="mr-set-head">
-        <h2 className="mr-set-title">{t('pkgTitle')}</h2>
-        <span className="mr-set-meta">{t('pkgCounts', { cached: counts.cached, bundled: counts.bundled, bytes: formatBytes(counts.bytes) })}</span>
-        <Tip label={t('pkgRefreshHint')} align="end">
-          <button type="button" className="mr-iconbtn mr-iconbtn-xs" disabled={busy !== null}
-            aria-label={t('pkgRefresh')} onClick={() => { void refresh() }}>
-            <RefreshCw size={13} />
-          </button>
-        </Tip>
-      </div>
+    <section className="mr-set-group" aria-label={t('pkgTitle')}>
+      <h2 className="mr-set-groupname">{t('pkgTitle')}</h2>
+      <div className="mr-set-stack">
+        <section className="mr-set-card">
+          <header className="mr-set-cardhead">
+            <div className="mr-set-cardheadtext">
+              <h3 className="mr-set-cardtitle">
+                {t('pkgCardTitle')}
+                {inventory !== null && (
+                  <span className="mr-set-cardcount">
+                    {t('pkgCountsShort', { cached: counts.cached, bytes: formatBytes(counts.bytes) })}
+                  </span>
+                )}
+              </h3>
+              {subline}
+            </div>
+            <div className="mr-set-cardacts">
+              <button type="button" className="mr-set-act" disabled={inventory === null}
+                onClick={() => { if (inventory !== null) copy(inventory.cacheDir) }}>
+                {copied ? <Check size={14} /> : <Copy size={14} />}
+                {copied ? t('pkgDirCopied') : t('pkgDirCopy')}
+              </button>
+              <Tip label={t('pkgRefreshHint')} align="end">
+                <button type="button" className="mr-set-act" disabled={busy !== null} onClick={() => { void refresh() }}>
+                  <RefreshCw size={14} />
+                  {t('pkgRefresh')}
+                </button>
+              </Tip>
+            </div>
+          </header>
 
-      {inventory !== null && (
-        <div className="mr-set-path">
-          <span className="mr-set-pathlabel">{t('pkgDir')}</span>
-          {/* 路径被截断时靠原生 title 给全文（这里给的是数据不是说明文案，且旁边的复制键能拿走完整路径） */}
-          <code className="mr-set-codepath" title={inventory.cacheDir}>{inventory.cacheDir}</code>
-          <Tip label={copied ? t('pkgDirCopied') : t('pkgDirCopy')} align="end">
-            <button type="button" className="mr-iconbtn mr-iconbtn-xs" aria-label={t('pkgDirCopy')}
-              onClick={() => copy(inventory.cacheDir)}>
-              {copied ? <Check size={13} /> : <Copy size={13} />}
-            </button>
-          </Tip>
-        </div>
-      )}
+          {/* 库行只有名字与一个动作图标：能下载的给下载键、能删的给删除键，
+              随包自带的没有动作（不用下、也删不掉）——状态不用文字再描述一遍。 */}
+          {inventory !== null && (
+            <div className="mr-set-rows is-light">
+              {shown.map((entry) => {
+                const working = busy !== null && busy.name === entry.name
+                return (
+                  <div key={entry.name} className="mr-set-row">
+                    <span className="mr-set-cell is-name">{entry.name}</span>
+                    <span className="mr-set-cell is-act">
+                      {entry.state === 'absent' && (
+                        <Tip label={working ? t('pkgFetching', { done: busy.done, total: busy.total }) : t('pkgCacheHint')} align="end">
+                          <button type="button" className="mr-iconbtn" disabled={busy !== null}
+                            aria-label={t('pkgCache')} onClick={() => { void fetchPackages(entry.name) }}>
+                            {working ? <Dot tone="busy" /> : <Download size={15} />}
+                          </button>
+                        </Tip>
+                      )}
+                      {entry.state === 'cached' && (
+                        <Tip label={working ? t('pkgClearing', { name: entry.name }) : t('pkgClearHint')} align="end">
+                          <button type="button" className="mr-iconbtn" disabled={busy !== null}
+                            aria-label={t('pkgClear')} onClick={() => { void clearOne(entry.name) }}>
+                            {working ? <Dot tone="busy" /> : <Trash2 size={15} />}
+                          </button>
+                        </Tip>
+                      )}
+                    </span>
+                  </div>
+                )
+              })}
+            </div>
+          )}
 
-      {failure !== null && <p className="mr-set-error" role="status">{t('pkgFailed', { message: failure })}</p>}
+          {note !== null && <p className="mr-set-cardfoot" role="status">{note}</p>}
+        </section>
 
-      {failure === null && inventory === null && <p className="mr-set-empty" role="status">{t('loading')}</p>}
+        {/* 补库也是一张卡片：头部给标题与一行短说明，输入框与按钮进卡片身体 */}
+        <section className="mr-set-card">
+          <header className="mr-set-cardhead">
+            <div className="mr-set-cardheadtext">
+              <h3 className="mr-set-cardtitle">{t('pkgAddTitle')}</h3>
+              <p className="mr-set-cardsub">{t('pkgAddHint')}</p>
+            </div>
+          </header>
 
-      {inventory !== null && (
-        <>
-          <div className="mr-set-list">
-            {shown.map((entry) => (
-              <div key={entry.name} className="mr-set-row" data-kind="pkg" data-tone={packageTone(entry.state)}>
-                <Dot tone={packageTone(entry.state)} />
-                <span className="mr-set-name">{entry.name}</span>
-                <span className="mr-set-ver">{entry.version}</span>
-                <Tag tone={packageTagTone(entry.state)}>{t(stateKey(entry.state))}</Tag>
-                <span className="mr-set-size">{entry.bytes === null ? '—' : formatBytes(entry.bytes)}</span>
-                <span className="mr-set-act">
-                  {entry.state === 'absent' && (
-                    <Tip label={t('pkgCacheHint')} align="end">
-                      <button type="button" className="mr-btn" disabled={busy !== null}
-                        onClick={() => { void fetchPackages(entry.name) }}>
-                        {busy !== null && busy.name === entry.name && busy.total > 1
-                          ? t('pkgFetching', { done: busy.done, total: busy.total })
-                          : t('pkgCache')}
-                      </button>
-                    </Tip>
-                  )}
-                  {entry.state === 'cached' && (
-                    <Tip label={t('pkgClearHint')} align="end">
-                      <button type="button" className="mr-btn" disabled={busy !== null}
-                        onClick={() => { void clearOne(entry.name) }}>
-                        {t('pkgClear')}
-                      </button>
-                    </Tip>
-                  )}
+          <form className="mr-set-addrow" onSubmit={(event) => { event.preventDefault(); void fetchPackages(manual.trim(), true) }}>
+            {/* 补全虚影：镜像层在输入框底下，前半段不可见、后半段是淡字——
+                看着就像光标后面接着一段灰字。键盘焦点与取值都在 input 上。 */}
+            <span className="mr-set-field">
+              {ghost !== null && (
+                <span className="mr-set-mirror" aria-hidden="true">
+                  <span className="mr-set-typed">{manual}</span>
+                  <span className="mr-set-ghost">{ghost.suffix}</span>
                 </span>
-              </div>
-            ))}
-          </div>
-
-          <form className="mr-set-tools" onSubmit={(event) => { event.preventDefault(); void fetchPackages(manual.trim(), true) }}>
-            <Tip label={t('pkgManualHint')} align="start">
-              <label className="mr-set-field">
-                <input className="mr-set-fieldinput" type="text" value={manual} spellCheck={false}
-                  placeholder={t('pkgManual')} aria-label={t('pkgManualLabel')}
-                  onChange={(event) => setManual(event.target.value)} />
-              </label>
-            </Tip>
-            <button type="submit" className="mr-btn primary" disabled={busy !== null || manual.trim().length === 0}>
+              )}
+              <input id={manualId} className="mr-set-fieldinput" type="text" value={manual} spellCheck={false}
+                placeholder={t('pkgManual')} aria-label={t('pkgManualLabel')}
+                autoComplete="off" autoCapitalize="off" autoCorrect="off"
+                onChange={(event) => setManual(event.target.value)}
+                onCompositionStart={() => setComposing(true)}
+                onCompositionEnd={() => setComposing(false)}
+                onKeyDown={acceptGhost} />
+            </span>
+            <button type="submit" className="mr-btn primary tall" disabled={busy !== null || manual.trim().length === 0}>
               {t('pkgCache')}
             </button>
           </form>
 
-          <p className="mr-set-hint">{t('pkgListHint')}</p>
-        </>
-      )}
-
-      {note !== null && <p className="mr-set-note" role="status">{note}</p>}
-    </div>
+          {formNote !== null && <p className="mr-set-cardfoot" role="status">{formNote}</p>}
+        </section>
+      </div>
+    </section>
   )
 }
 
-/** 设置页正文：两块卡片，样式与留白由外层设置面板给（这里只管内容）。 */
+/** 设置页正文：两块内容，样式与留白由外层设置面板给（这里只管内容）。 */
 export function ManimSettingsPage({ t }: { t: Translate }) {
   return (
     <section className="mr-set" aria-label={t('nav')}>
