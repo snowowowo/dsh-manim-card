@@ -6,7 +6,7 @@
 
 ## 状态
 
-**进行中**：Python 运行时（`src/core/py/`，Pyodide 执行 + manim 适配层 + 桥，自带测试）、渲染引擎（`src/client/engine/`）、KaTeX 与 Pyodide 资源路由、**聊天卡片**（AI 调 `manim_render` → 聊天流出一张卡，进入视口才渲染、离开视口释放、可重播；**自动播只发生在「刚生成的那张」**——收录时回合还开着才正常播一遍，之后重挂载的一律极速落末帧，老会话里的卡根本不跑，全页共用一条 Python 队列，不会两张卡抢同一个解释器）、**技能**（`skills/manim-renderer/`，把可用 API、写法边界与**场景模板**讲给模型）与**Host 侧预检**（返回前用空桥干跑一遍，不通过当场回 `error`）都已就位；**随包外的 Python 库按需取**（`import pandas` 这类首次联网取一次、按 sha256 校验后落进 `~/.dsh/cache/manim-renderer/pyodide/`，之后离线命中，取的期间卡片上提示「正在加载 X…」）也已接线；**设置面板**里的「Manim 渲染」一节（**本机环境探测** + **包缓存清单与预缓存**）也已就位，见下。
+**进行中**：Python 运行时（`src/core/py/`，Pyodide 执行 + manim 适配层 + 桥，自带测试）、渲染引擎（`src/client/engine/`）、KaTeX 与 Pyodide 资源路由、**聊天卡片**（AI 调 `manim_render` → 聊天流出一张卡，进入视口才渲染、离开视口释放、可重播；**自动播只发生在「刚生成的那张」**——它第一次进视口正常播一遍，之后重挂载的一律极速落末帧，老会话里的卡根本不跑，全页共用一条 Python 队列，不会两张卡抢同一个解释器）、**技能**（`skills/manim-renderer/`，把可用 API、写法边界与**场景模板**讲给模型）与**Host 侧预检**（返回前用空桥干跑一遍，不通过当场回 `error`）都已就位；**随包外的 Python 库按需取**（`import pandas` 这类首次联网取一次、按 sha256 校验后落进 `~/.dsh/cache/manim-renderer/pyodide/`，之后离线命中，取的期间卡片上提示「正在加载 X…」）也已接线；**设置面板**里的「Manim 渲染」一节（**本机环境探测** + **包缓存清单与预缓存**）也已就位，见下。
 
 写法上除属性动画 `self.play(m.animate.x(...))`（可链的方法由探针实测 manim-web 的 animate 代理生成，不在表里的当场报错并列出可用项）外，`rate_func=` / `run_time=`、`m[i]` 取段、`m.width` 这类属性读取、`self.clear()` 也都已接线——「这个写法支不支持」的判定与真执行取同一份支持面（`src/core/py/surface.ts`），所以**预检放行的，真桥不会当场拒**。**方法改写**（`surface.ts` 的 `METHOD_REWRITES`）负责「CE 有、manim-web 换了形状」的那批：`set_stroke(color=, width=, opacity=)` → 颜色走**属性写**、`_color` 与 `strokeColor` 各写一份（渲染层读前者、回读走后者，见第六轮第 7 条）、宽 / 透明度走专属 setter——**不能**落 `setStyle`：manim-web 的 set color 存取器会把 fillColor 一起冲掉（见第四轮 (b) 的色板事故）；`set_opacity(x)` → stroke + fill 两个 setter、`put_start_and_end_on(a, b)` → Arrow 走同名方法、Line 走 `setStart` + `setEnd`。物体/动画的归类按 manim-web 的**实测原型链**定，不看 CE 把它挂在哪个模块下（CE 把 `TracedPath` / `AnimatedBoundary` 放在 `animation/` 里，两者其实是物体）；「包住一个物体」的写法（`TracedPath(dot)` / `SurroundingRectangle(text)` / `Union(a, b)` …）也走同一份构造规则。`self.add(...)` 收到动画会当场给出可读报错（校验在 Python 侧，预检也拦得住）。左侧导航「Manim 渲染」是**实验场**（见下节），既是肉眼验收台，也是支持面的计量器。
 
@@ -130,6 +130,18 @@ manim _dev/examples/basic/01-circle.py CircleScene
 
 复核结论（23 条「疑似空白」逐条对过图）：22 条是**合法终态**——单个点本来就小（墨迹 0.02%）、结尾就是 `FadeOut` / `remove` 的、`ValueTracker` / 场景家族这类**本来就不画东西**的——已确认不是 bug。**已知上游依赖**：manim-web 的 LaTeX 光栅化（`MathTexImage`，`Matrix` 条目内部用它）靠 KaTeX CSS 布局，其 CSS 从 jsdelivr CDN 拉——插件已在页面注入随包的本地 `assets/katex/katex.min.css`（`client/index.tsx`），**断网时矩阵条目会退化**（SVG 版 `MathTex` 不受影响，走随包 MathJax）。截图脚本里把该 CDN 地址映射到了本地同一份，保证离线截图与真机一致。
 
+### 第七轮：两条真机轨迹——播放规则会「翻面」、同一个 MathTex 连 morph 两次会炸
+
+两条都来自真实会话轨迹，也都不是「某一行写错了」，而是**采样时机**与**上游记账**两个层面的问题。
+
+**(a) 播放规则翻面。** 用户原话：「刚刚渲染的时候，它直接用了 fast。后面过来时，它用慢慢播放，后面又用了 fast。」同一张卡在三种待遇之间来回跳，而**所有单测都是绿的**——因为 `decidePlay` 本身没错，错的是喂给它的 `live` 在**反复重放**里会翻面。定位手段是把真实事件流灌进宿主的**真** conversation assembler：同一张卡上 `start()` 跑了 5 次，最后一次 `turn.status` 从 `open` 翻成 `closed`；`assembler.ts` 里那句「调 `start()` 之前 `context.state = undefined`」是这次的关键线索——它堵死了「靠上次结果记」这条路，只能自己记。修法两条：`definition.ts` 的 `bornLive` **只加不减**（见过一次 `open` 就永久成立），`card.tsx` 把记账从「画布立起来之后」提前到「决定那一刻」（`spent`）。细节与用户口径见上节「聊天卡片」第 2 条。
+
+**(b) `alignVmobjectPair` 报的不是点数，是记账。** 第二张卡报 `第 6 行：pyodide.ffi.JsException: Error: alignVmobjectPair(source): subpath lengths sum (74) does not match point count (72)`。这类错误在 Node 里**一条都复现不出来**（`headless.test.ts` / `upstream-fixes.test.ts` 里同样的 morph 全绿——KaTeX 在 Node 里不走同一条 SVG 路径，坏不掉那套记账），所以先搭了一台**真渲染**复现台（真 Pyodide + 真 manim-web browser 构建 + 真 WebGL + 真 KaTeX），把那张卡的源码原样跑，**一字不差复现出同一条报错**；再按行二分到第 38 行 `play(Transform(coarse, fine))`，最后用最小对照锁定元凶：**同一个 `MathTex` 被连续 morph 两次**（`Transform(n4,n8)` 后紧跟 `Transform(n4,n20)`）→ 炸；中间换个物体（`coarse→mid→fine`）或只 morph 一次 → 都通过。
+
+根因是上游的**子路径记账**：`MathTex` 有两套「子路径长度」——`_baseSubpathLengths`（物体自己的结构）与 `_transformSubpathLengths`（morph 期间被改写成**目标**那套），生效值是**后者 ?? 前者**；morph 收尾时未必把点数摆回与记账同一套，两边一对不上，上游 `alignVmobjectPair` 的第一道对账就抛。两处细节值得记：① **坏的是子物不是顶层**——顶层 `VGroup` 自己压根没有记账（探针只看到 `undefined`），坏的是内部的字形子物，只在顶层查会一路放行；② `VGroup` 对会**跳过 `canMorph` 探针**（那条路认为「按子物配对」必然安全），于是这条路上没有任何一道关拦它——真机上就是这么被骗过去的：预检放行，进去之后才炸。
+
+修法是新模块 `src/core/py/subpath-bookkeeping.ts`，两手都要：**跑之前查**（`subpathTreeConsistent` **走子物**拦——对不上就不 morph、退回交叉淡入淡出），**跑完治**（`healSubpathBookkeeping`——先退回物体自己的基准记账；基准也对不上就**两套一起清**，让上游走 `alignPoints` 兜底。只清基准不够：生效值的 `??` 左边还挂着）。**不能只躲不治**：坏物体还留在场景里，渲染时算子路径朝向用的是同一份记账，照样会抛。回归网分两层：`subpath-bookkeeping.test.ts` 钉**判据本身**（什么时候算对不上、什么时候该治、治完必须自洽），真机验收靠那台真浏览器复现台（最小对照 `w2` 与第二张卡原文都从报错变成正常出画面）。
+
 ### 设置页：本机环境与包缓存
 
 设置面板里的「Manim 渲染」（宿主 slot `settings.section`）有两张卡片，回答两件以后会越来越要紧的事：**「导出」要靠本机真的 Manim**，而**离线可用性取决于哪些包已经在本地**。
@@ -174,7 +186,10 @@ Host 侧对应五条新路由，全都挂在 `/dsh-plugins/manim-renderer/` 下�
 - **导出成功的路径本身就是入口**：悬浮出「在文件夹中显示」的气泡，点击由 Host 调系统文件浏览器选中该文件（macOS `open -R` / Windows `explorer /select,` / Linux 开所在目录）。旁边不放「复制 / 打开文件夹」的图标键——那是同一个动作的第三、第四个说法，悬停已经说清楚了。这个动作会代替用户去操作系统，而路径是从页面来的，所以 Host **只认导出目录里的文件**（软链解掉再比，越界一律拒绝、一条命令都不跑）——通路收窄到「自己刚导出的那份」。
 - **导出记录要持久**：卡片滚出视口就被卸载、滚回来是全新挂载，组件里的状态活不过那一趟。所以导出成功后把 `{ callId → 文件路径 }` 记进 localStorage（上限 50 条，时间戳**单调递增**——同一毫秒连写多条时「谁更新」才有确定答案，否则「保留最近 50 条」会间歇性裁错）。挂载时捡回来先只当线索：顺手问一下 Host 文件还在不在（`checkOnly`，不跑任何系统命令），不在了就把那条回执降级成「上次导出的文件已经不在了」——拿一条早已失效的路径当真，比不显示更糟。
 - **这次调用被中断了，要认出来**：回合被停止时，已派发的调用回 `Error: tool call aborted`、同一步还没派发的由 `appendSkippedToolCall` 事后补一条 `aborted before dispatch`——**一次取消产生两条 abort**，不是中断了两次（曾据此误判成「用户按了停止」，穷举后确认全仓发 `kind:'user'` 只有 UI 停止按钮 / Esc Esc、goal 暂停、归档带 `stopActivity`、ACP cancel 四个出口）。判定用「`message.isError === true` 且回执不是我们自己的 JSON」——我们自己的失败回执也是 `isError`，但里面带 `ok:false`，靠这个把它们分开（`definition.ts` 的 `readInterrupted`）。认出来之后卡片**不替你自动渲染**（代码本身是完整的，没人验证过而已），底栏出一条警告说明情况，想看点「播放」——所以这个按钮在中断卡上叫「播放」而不是「重播」。
-- **自动播一次，且只播第一次**（`card.tsx` 的 `decidePlay`，规则是纯函数、单测直接钉）：一条会话里连着好几张卡时，若每张挂载都真播一遍，用户要等的内容是「最后一张」，前面的全是白等。于是「刚生成的那张」正常播一遍（`live` 由**收录时回合还开着**判定——`location.turn.status === 'open'`，不需要拿时钟去猜），之后**任何一次重挂载都极速落末帧**；老会话（回合早已关闭）里的卡一律不播，直接出终态画面。至于「视口」这层：**不在屏幕里根本不跑**——聊天流滚出即卸载、滚回才新挂载，配 `IntersectionObserver`（`rootMargin: '240px'`）绑画布生命周期；一条会话里几十张卡也不会同时开跑。手动永远是例外：点了「重播」就真播，跟上面所有规则无关。已播过的卡记在模块级 `Set` 里（内存、跨挂载、不落 localStorage——刷新页面后再看一遍末帧本来就够）。顺带一处：滚出视口时正在跑的那次运行会作废，这**不算渲染失败**，不往界面上报错。
+- **自动播一次，且只播第一次**（`decidePlay` 是纯函数、单测直接钉）：一条会话里连着好几张卡时，若每张挂载都真播一遍，用户要等的内容是「最后一张」，前面的全是白等。于是「刚生成的那张」正常播一遍，之后**任何一次重挂载都极速落末帧**；老会话（回合早已关闭）里的卡一律不播，直接出终态画面。
+  - **「刚生成」不能现算，只能记住**（第七轮的真 bug）：`live` 一开始是拿 `location.turn.status === 'open'` 当场读的，看似「不需要拿时钟去猜」，实则**这个位置会被反复重放**——流式期间每次事件都折一遍，回合结束后还有一次，而最后那一次 `turn.status` 已经翻成 `closed`。于是同一张卡的 `live` 从真变假，用户看到的正是「先极速、再慢播、又极速」这种翻来覆去，而所有单测都是绿的（`decidePlay` 本身没错，错的是喂进去的输入）。引擎又在调 `start()` 之前把 `context.state` 清空（`assembler.ts`），借不到上一次的结果——所以判定归 `definition.ts` 的模块级 `bornLive`：**见过一次 `open` 就永久成立**，只加不减。老会话整窗重折时那一轮早已 `closed`，一张都记不上，「老会话不播」由构造保证、不靠额外分支。
+  - **机会用掉就是用了**：`card.tsx` 的 `spent` 记的不是「播完了」而是「决定播了」——**决定即记账**，写在造画布之前。否则「进视口 → 立刻滚出（拆画布）→ 再滚回来」这条路上，同一张卡会前一次来不及播、后一次却能播；反过来也会出现「播一半被打断、回来直接跳末帧」，同一张卡两种待遇。用户口径明确：**播到一半被打断也算它播过了**，不补。唯一把机会还回去的例外是「排在队列里、压根没轮到就被拆了」（`cancelled`）——一个字都没跑、用户什么都没看到，跟播一半被打断不是一回事。
+  - 至于「视口」这层：**不在屏幕里根本不跑**——聊天流滚出即卸载、滚回才新挂载，配 `IntersectionObserver`（`rootMargin: '240px'`）绑画布生命周期；一条会话里几十张卡也不会同时开跑。手动永远是例外：点了「重播」就真播，跟上面所有规则无关。`bornLive` 与 `spent` 都是模块级 `Set`（内存、跨挂载、不落 localStorage——刷新页面后再看一遍末帧本来就够）。顺带一处：滚出视口时正在跑的那次运行会作废，这**不算渲染失败**，不往界面上报错。
 - **状态统一收在底部状态栏**（`FootRow`，四种音色：成功绿勾 / 报错红叉 / 进行中转圈 / **中断三角警告**）：顶栏是「这张卡是什么」——标签与动作键，高度要稳；「现在怎么样了」是随时在变的一层，压在顶栏会把标签挤掉。于是**渲染成功不出条**（画面本身就是回执），只有渲染失败（叉号 + manim 的原话）、预检失败、**这次调用被中断**、导出进行中/成功/失败才在底部出一条，同在时上下多行。卡片的明暗两套与几何（顶栏 32px、报错行 20px 起、路径截断不撑破卡片）用 `_tmp/selfcheck/shot.mjs` 的 `#card` 模式量化核对。
 
 ## 测试与覆盖率
@@ -182,7 +197,7 @@ Host 侧对应五条新路由，全都挂在 `/dsh-plugins/manim-renderer/` 下�
 分两层，别混：
 
 - **语料回归**（覆盖「API 与场景」）：`pnpm --filter manim-renderer test src/core/py/examples.test.ts` 把实验场那批**离线**语料逐条过真管线（真 Pyodide + 真 manim-web；`Scene` 换假画布，只验「收不收、炸不炸」）。**需联网**的那 15 条（`net` 第三方包 / `combo` 多库协同）默认不跑：`MANIM_NET=1 pnpm --filter manim-renderer test:net`（首次会下载几十 MB）。`syntax`（语法综合）与 `api`（API 点名）只用 manim + 随包的 numpy，是离线的，随默认套件跑。
-- **Vitest 逻辑覆盖率**（覆盖「代码」）：`pnpm --filter manim-renderer coverage`。**不测 UI**（`.tsx` 与浏览器渲染胶水不计入分母），只要求**逻辑（非 `.tsx`）语句覆盖 ≥ 80%**——当前实测 **88.2%（1717/1946 语句；同一批文件按行是 90.0%，1492/1657）**；含 UI 的全部文件是 68.1%（行，1497/2197）。UI 改动以真机看几何为准，不写类名 / DOM 形态测试。
+- **Vitest 逻辑覆盖率**（覆盖「代码」）：`pnpm --filter manim-renderer coverage`。**不测 UI**（`.tsx` 与浏览器渲染胶水不计入分母），只要求**逻辑（非 `.tsx`）语句覆盖 ≥ 80%**——当前实测 **88.5%（1770/2000 语句；同一批文件按行是 90.3%，1533/1698）**；含 UI 的全部文件是 68.7%（行，1538/2238）。UI 改动以真机看几何为准，不写类名 / DOM 形态测试。
 
 小费：`coverage` 每次要清自己上一轮的 `coverage/` 输出，本机的安全删除拦截会挡下来，前缀 `CODEBUDDY_SAFE_DELETE_ENABLED=0` 即可（只影响 vitest 的产物目录）。清除「按需取」的三方包缓存不必手删——实验场工具条有「清除缓存」，走 Host 的 `clear-cache` 路由，删的是 `~/.dsh/cache/manim-renderer/pyodide/` 里按需下载的那部分（随包件不在其中）。
 
@@ -214,8 +229,8 @@ src/
 ├── client/               浏览器半边（打包进 client.js）
 │   ├── index.tsx         入口：locale / 样式接线 + 对外服务 + slot 注册（导航项 / 整页 / 聊天卡片 / **设置面板一节**）
 │   ├── service.ts        对外服务 `manim`：check（干跑预检）+ createSurface（一块画布）
-│   ├── definition.ts     聊天卡片的会话折叠定义（tool/call → 卡片节点；顺带读 `live`＝收录时回合还开着、`interrupted`＝这次调用被中断）
-│   ├── components/       卡片与页面零件：card.tsx（画布 + 重播 + 查看代码，聊天与实验场共用；`decidePlay` 钉播放规则 + card.rules.test.ts）、code-view.tsx、segmented.tsx（视图切换，照抄宿主分段控件）、tip.tsx（悬浮提示）
+│   ├── definition.ts     聊天卡片的会话折叠定义（tool/call → 卡片节点；顺带读 `live`＝这张卡刚生成出来的、`interrupted`＝这次调用被中断——`live` 靠模块级 `bornLive` 记住「见过一次 `open`」，见第七轮 (a)）
+│   ├── components/       卡片与页面零件：card.tsx（画布 + 重播 + 查看代码，聊天与实验场共用；`decidePlay` 钉播放规则 + `spent` 记「机会用掉没有」+ card.rules.test.ts）、code-view.tsx、segmented.tsx（视图切换，照抄宿主分段控件）、tip.tsx（悬浮提示）
 │   ├── page.tsx          实验场：语料实验场 / 自定义代码两个视图（分段切换），左栏清单 + 工具条，右栏预览
 │   ├── settings.tsx      设置面板「Manim 渲染」一节：本机环境 + 包缓存（可拆的纯组件，只收 `t`）
 │   ├── packages.ts       包清单 / 依赖闭包 / 取包 / 清缓存（设置页与实验场共用这一层）
@@ -236,6 +251,7 @@ src/
     │   ├── bridge.ts     Python 适配层 ↔ 桥实现的契约（ManimBridge / AnimationSpec / 线格式）
     │   ├── surface.ts    支持面 SSOT：三态表 + 构造规则 + 判定（plan*）——预检与真桥的唯一同源
     │   ├── manim-bridge.ts  真桥：动作落到真 manim-web 对象（含极速模式：压缩时长 + 推进 updater）
+    │   ├── subpath-bookkeeping.ts  子路径记账的自检与治疗（上游 morph 会留下坏记账：同一个 MathTex 连 morph 两次必炸，见第七轮 (b)）+ subpath-bookkeeping.test.ts
     │   ├── dry-run-bridge.ts Host 预检用空桥：只查缺失项、不渲染
     │   ├── examples.ts   语料**接口**（类型 + `parseCorpus` 边界校验）；本体是 `_dev/examples/` 下的 .py，运行时由 Host 路由读取
     │   ├── examples.test.ts  语料回归：逐条过真管线（离线全跑，联网组见 MANIM_NET）
@@ -272,3 +288,5 @@ Pyodide 与随包 wheel 放在 `assets/pyodide/`：Client 走 Host 的 prefix �
 - 规范见工作区仓 `dsh-plugins` 的 `AGENTS.md`；机制 / 安装 / 验证见技能 `cordis-plugin-development`；视觉见 `dsh-design-system`；踩坑见 `important-thing`。
 - 基座模块（React 等）只来自宿主，不要把 react / react-dom 打进产物。
 - 独立运行是硬要求：模块表里没有黑板 / 播放内核 / tts 时，仍能提交一段 manim Python 并在聊天流里看到可看、可重跑的卡片。
+- **有一类 bug 只在真浏览器里存在**：KaTeX 的字形路径、真 WebGL、真 DOM 缺一不可。第七轮的 `alignVmobjectPair` 记账就是这种（连 `headless.test.ts` 的真场景也验不到——KaTeX 在 Node 里不走同一条 SVG 路径）。这类改动**不能只看 `pnpm test` 绿**：Node 侧钉的是判据，真机验收得走一遍真渲染复现台。
+- **验收是三层，越往下越贵**：假画布语料（收没收到、炸不炸）→ 真场景 headless（动画 / updater 到底跑没跑、终态落在哪）→ 真浏览器（画得对不对、上游记账坏没坏）。每层只能拦自己那一类，不要拿上一层的绿去推断下一层。

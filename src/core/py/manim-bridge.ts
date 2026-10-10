@@ -17,6 +17,7 @@ import {
   type AnimationTarget,
   type ManimBridge,
 } from './bridge.ts'
+import { healSubpathBookkeeping, subpathTreeConsistent } from './subpath-bookkeeping.ts'
 import {
   angleFromPoints,
   animateCallArgs,
@@ -595,6 +596,9 @@ export function createManimWebBridge(options: ManimWebBridgeOptions): ManimBridg
       const crossFade = (source: unknown, target: unknown, options: Record<string, unknown>): AnimationLike =>
         factoryOf('AnimationGroup')([factoryOf('FadeOut')(source), factoryOf('FadeIn')(target)], options)
 
+      /** 这一趟真跑过 morph 的配对：跑完要顺手治一遍记账（见 healSubpathBookkeeping）。 */
+      const morphPairs: [unknown, unknown][] = []
+
       /**
        * 「点数对齐」型动画能不能在**这一对**上跑：拿复制品试跑一次 `begin()`。
        *
@@ -624,8 +628,7 @@ export function createManimWebBridge(options: ManimWebBridgeOptions): ManimBridg
         }
       }
 
-      const build = (spec: AnimationSpec): AnimationLike => {
-        if (spec.kind === ANIMATE_KIND) return buildAnimate(spec)
+      const build = (spec: AnimationSpec): AnimationLike => {        if (spec.kind === ANIMATE_KIND) return buildAnimate(spec)
         // 调谁、怎么调、传什么选项：判定给（表实测 manim-web 的工厂/类形状，见支持面 SSOT）
         const plan = planAnimation(spec.kind, spec.targets, spec.kwargs)
         // 位置参数用判定改写过的（顺序/打包与 CE 不同的那几个），没改写就是原样。
@@ -645,20 +648,29 @@ export function createManimWebBridge(options: ManimWebBridgeOptions): ManimBridg
         const morph = plan.pointMorph
         if (morph !== undefined && args.length >= 2 && isMobject(args[0]) && isMobject(args[1])) {
           const [source, target] = args
+          // 记账已经对不上的（含子物，见 healSubpathBookkeeping）必然抛在第一道对账上——这一关先拦掉。
+          const sound = subpathTreeConsistent(source) && subpathTreeConsistent(target)
           // 两端都是 VGroup 且这支「按子物配对」⇒ 与点数无关，直接走真动画（也就免了复制 VGroup 里的文字）。
           const groupPair = source instanceof manim.VGroup && target instanceof manim.VGroup
-          if (!(morph.vgroupSafe && groupPair) && !canMorph(make, source, target)) {
+          if (!sound || (!(morph.vgroupSafe && groupPair) && !canMorph(make, source, target))) {
             return applyOptions(crossFade(source, target, options))
           }
+          morphPairs.push([source, target])
         }
         return applyOptions(make(args))
       }
 
       const built = animations.map(build)
       await target.play(...built)
-      // 两处上游补丁（见 settleRateTerminal / adoptOrphanFadeIns）——改过就补一帧渲染，
-      // 否则最后一帧还停在 play 结束时渲染循环留下的样子。
+      // 三处上游补丁（settleRateTerminal / adoptOrphanFadeIns / healSubpathBookkeeping）——
+      // 改过就补一帧渲染，否则最后一帧还停在 play 结束时渲染循环留下的样子。
+      let healed = false
+      for (const [source, target_] of morphPairs) {
+        healed = healSubpathBookkeeping(source) || healed
+        healed = healSubpathBookkeeping(target_) || healed
+      }
       const patched =
+        healed ||
         built.some(settleRateTerminal) ||
         built.some((animation) => adoptOrphanFadeIns(animation, target))
       if (patched) {

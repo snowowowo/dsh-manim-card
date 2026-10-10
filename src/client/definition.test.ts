@@ -168,13 +168,22 @@ describe('buildViewNode：锚点与数据', () => {
   })
 })
 
-describe('live：这张卡是不是刚出炉的', () => {
-  const at = (location: unknown) => ({ event: callEvent(), role: 'start', location }) as never
+describe('live：这张卡是不是刚生成出来的', () => {
+  // 每个用例换一个 callId：`bornLive` 是模块级、跨用例共享的（它就是「这一页的真相」），
+  // 共用一个 id 会让「先看过 open」从上一个用例漏到下一个用例里。
+  let n = 0
+  const at = (location: unknown, callId = `live-${++n}`) => ({
+    event: callEvent({ data: { name: 'manim_render', arguments: '{}', callId } }),
+    role: 'start',
+    location,
+  }) as never
+  const open = { kind: 'step', turn: { status: 'open' }, step: {} }
+  const closed = { kind: 'step', turn: { status: 'closed' }, step: {} }
 
   it('收录时所在那一轮还开着 → live（只有这种卡会被自动播一次）', () => {
     expect(definition.start({} as never, at({ kind: 'turn', turn: { status: 'open' } })).live).toBe(true)
     // 调用落在 step 上：location 是 step 级，但 turn 那一层照样在
-    expect(definition.start({} as never, at({ kind: 'step', turn: { status: 'open' }, step: {} })).live).toBe(true)
+    expect(definition.start({} as never, at(open)).live).toBe(true)
   })
 
   it('那一轮已经关了 → 不置位（老会话回填，一律落末帧）', () => {
@@ -185,6 +194,26 @@ describe('live：这张卡是不是刚出炉的', () => {
     for (const location of [undefined, {}, { kind: 'session' }, { kind: 'turn' }, { kind: 'turn', turn: {} }, 42, 'open']) {
       expect(definition.start({} as never, at(location)).live, JSON.stringify(location)).toBeUndefined()
     }
+  })
+
+  /**
+   * 这条是「第一张卡莫名其妙跳到末帧」的回归线。
+   *
+   * 引擎会在流式过程中反复重放 start()（实测同一张卡跑 5 次），最后一次发生在 `turn/end` 之后，
+   * location 那时已经变成 closed。若每次现算，「这张卡算不算刚生成」就取决于**它什么时候被挂载**，
+   * 同一张卡会有时正常播、有时直接落末帧。所以口径是：见过 open 就一直算。
+   */
+  it('同一张卡先看到 open、重放时变成 closed —— 仍算刚生成', () => {
+    const callId = 'live-flip'
+    expect(definition.start({} as never, at(open, callId)).live).toBe(true)
+    expect(definition.start({} as never, at(closed, callId)).live).toBe(true)
+    expect(definition.start({} as never, at(closed, callId)).live).toBe(true)
+  })
+
+  it('从没见过 open 的卡，重放多少次都不会变成 live', () => {
+    const callId = 'live-never'
+    expect(definition.start({} as never, at(closed, callId)).live).toBeUndefined()
+    expect(definition.start({} as never, at(closed, callId)).live).toBeUndefined()
   })
 })
 

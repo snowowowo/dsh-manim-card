@@ -13,9 +13,10 @@ export interface ManimCardData {
   /** Host 侧预检回执；缺省 = 尚未回执（仍按可渲染处理）。 */
   feedback?: ManimFeedback
   /**
-   * 这是一张**刚出炉**的卡，值得自动放一次动画——而不是打开老会话时回填出来的历史卡。
+   * 这是一张**刚生成出来的**卡，值得自动放一次动画——而不是打开老会话时回填出来的历史卡。
    *
-   * 聊天里由「收录这张卡时，它所在的那一轮还开着」判定（`location.turn.status`）；
+   * 聊天里由「收录这张卡时，它所在的那一轮还开着」判定（`location.turn.status`）——
+   * **见过一次 open 就永久成立**（理由见 `bornLive`：这个位置会被反复重放，现算会翻面）；
    * 实验场里凡用户点了渲染的那一条就是（它本来就刚被要求）。不置位的卡一律直接落末帧。
    */
   live?: true
@@ -76,16 +77,14 @@ function receiptText(event: FoldEvent): string | undefined {
   return typeof text === 'string' ? text : undefined
 }
 
-/** 从回执文本里读出 Host 预检回执；读不出就按"未回执"处理。 */
-function readFeedback(text: string | undefined, log: boolean): ManimFeedback | undefined {
+/** 从回执文本里读出 Host 预检回执；读不出就按"未回执"处理（不当错误，见 update 里的分寸）。 */
+function readFeedback(text: string | undefined): ManimFeedback | undefined {
   if (text === undefined) return undefined
   try {
     const value = JSON.parse(text) as { ok?: unknown; error?: unknown }
     if (typeof value?.ok !== 'boolean') return undefined
     return { ok: value.ok, ...(typeof value.error === 'string' ? { error: value.error } : {}) }
-  } catch (error) {
-    // 中断收尾（`Error: tool call aborted`）本来就不是 JSON，不当噪音打日志
-    if (log) console.error('[manim-renderer] 工具回执不是 JSON:', error)
+  } catch {
     return undefined
   }
 }
@@ -102,12 +101,30 @@ function readFeedback(text: string | undefined, log: boolean): ManimFeedback | u
  */
 function readInterrupted(event: FoldEvent): boolean {
   if (event.data?.message?.isError !== true) return false
-  return readFeedback(receiptText(event), false) === undefined
+  return readFeedback(receiptText(event)) === undefined
 }
 
-/** 收录这张卡时它所在的那一轮还开着没有；读不出就不算（宁可静态，也不要乱播一遍）。 */
+/**
+ * 「这张卡是刚出炉的」——**见过一次就是真的**，此后不再翻面。
+ *
+ * 为什么不能每次现算：`start()` 在流式过程中会被引擎反复重放。拿真事件流实测（用宿主自己的
+ * assembler 灌一条真实会话），同一张卡在流式期间跑了 4 次、`turn/end` 之后又跑第 5 次——
+ * 而第 5 次时那张卡所在的一轮已经关闭，`location.turn.status` 从 `open` 变成了 `closed`。
+ * 也就是说「这张卡算不算刚生成」会随重放翻面，于是同一张卡有时正常播、有时直接落末帧，
+ * 差别只取决于**它什么时候被挂载**。用户看到的就是「第一张莫名其妙跳到了末帧」。
+ *
+ * 于是把「见过 open」记在模块里，只加不减；引擎给的状态在 `start()` 之前就被清空了
+ * （`assembler.ts` 里 `context.state = undefined` 紧挨着调用），借不到上一次的结果，只能自己记。
+ *
+ * 打开老会话时整窗重折、那一轮早就 closed，一张都记不上——「老会话不播」由构造保证，
+ * 不必再依赖「采样时机恰好赶上 open」这种运气。
+ */
+const bornLive = new Set<string>()
+
 function readLive(match: FoldMatch): boolean {
-  return match.location?.turn?.status === 'open'
+  const callId = String(match.event.data?.callId ?? '')
+  if (match.location?.turn?.status === 'open') bornLive.add(callId)
+  return callId !== '' && bornLive.has(callId)
 }
 
 export const definition = {
@@ -136,9 +153,14 @@ export const definition = {
   },
   update: (context: FoldContext, match: FoldMatch): ManimCardData => {
     if (match.event.type !== 'tool/result') return context.state
-    const feedback = readFeedback(receiptText(match.event), true)
+    const text = receiptText(match.event)
+    const feedback = readFeedback(text, false)
     if (feedback !== undefined) return { ...context.state, feedback }
-    return readInterrupted(match.event) ? { ...context.state, interrupted: true } : context.state
+    // 中断收尾（宿主说这次没跑成）：认出来就走 interrupted，不打日志——那不是「怪数据」。
+    if (readInterrupted(match.event)) return { ...context.state, interrupted: true }
+    // 其余认不出的回执才留一条：宿主哪天换了收尾格式，能从这儿查出来。
+    if (text !== undefined) console.error('[manim-renderer] 工具回执认不出:', text.slice(0, 200))
+    return context.state
   },
   buildViewNode: (context: FoldContext) => {
     if (context.start === undefined) return null

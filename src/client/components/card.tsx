@@ -56,7 +56,7 @@ function FootRow({ tone, role, children }: { tone: 'ok' | 'error' | 'busy' | 'wa
 }
 
 /**
- * 「这张卡在本页已经播过一次」。
+ * 「这张卡在本页的自动播机会已经用掉了」。
  *
  * 为什么是模块级的：卡片滚出视口就被卸载、滚回来是**全新挂载**，组件里的状态活不过那一趟；
  * 而这条账要跨挂载——不然滚回来又是一条好汉、从头再播一遍。
@@ -64,22 +64,22 @@ function FootRow({ tone, role, children }: { tone: 'ok' | 'error' | 'busy' | 'wa
  * 为什么只记在内存、不落 localStorage：这是「这一页看过没有」。刷新之后画布本来就没了，
  * 重来一次自然重算（也符合直觉）；落盘反而会让这张卡在之后的每一天都永远是静默的。
  */
-const played = new Set<string>()
+const spent = new Set<string>()
 
 /**
  * 这一次进视口该「放动画」还是「直接落末帧」。
  *
- * 只有一种情况值得放：**这张卡是刚出炉的（`live`），而且这一页还没放过它**。
+ * 只有一种情况值得放：**这张卡是刚生成出来的（`live`），而且这一页还没放过它**。
  * 其余一律落末帧——重挂、滚回来、以及打开老会话时回填的整屏卡：
  * 老会话里几十张卡各播一遍，谁也等不起，而且那些画面用户早就看过了。
  * 想看从头播，点重播键就是（那条路永远真播）。
  *
  * 抽成纯函数是为了它能被单测钉住：这是产品规则，不该埋在 effect 里靠跑界面验证。
  */
-export function decidePlay(input: { live: boolean; played: boolean; manual: boolean; fast: boolean }): boolean {
+export function decidePlay(input: { live: boolean; spent: boolean; manual: boolean; fast: boolean }): boolean {
   if (input.manual) return true
   if (input.fast) return false
-  if (input.played) return false
+  if (input.spent) return false
   return input.live
 }
 
@@ -249,7 +249,7 @@ export function ManimCard({ data, t, label, onResult, autoStart, fast }: {
     /** 这一次进视口该「放动画」还是「直接落末帧」（规则与理由见 decidePlay）。 */
     const shouldPlay = (): boolean => decidePlay({
       live: data.live === true,
-      played: played.has(data.callId),
+      spent: spent.has(data.callId),
       manual: replayKey > 0,
       fast: fast === true,
     })
@@ -259,6 +259,11 @@ export function ManimCard({ data, t, label, onResult, autoStart, fast }: {
     const start = async (): Promise<void> => {
       if (disposed || surface !== null) return
       const play = shouldPlay()
+      // **决定即记账**：这一次机会用掉了，之后再进视口不再重新抽签。
+      // 否则「进视口 → 立刻滚出（拆画布）→ 再滚回来」这条路上，同一张卡前一次来不及播、
+      // 后一次却能播，同一张卡两种待遇；反过来也会出现「播到一半被打断，回来直接跳末帧」。
+      // 用户口径：被打断就算它播过（一次机会用掉不补）。
+      if (play) spent.add(data.callId)
       setBusy(true)
       try {
         const created = await createSurface(stage, { fast: fast === true || !play })
@@ -267,8 +272,6 @@ export function ManimCard({ data, t, label, onResult, autoStart, fast }: {
           return
         }
         surface = created
-        // 画布立起来了才算「播过」——上面那两个出口是「还没轮到就滚走了」，那时什么都没发生。
-        if (play) played.add(data.callId)
         const result = await created.run(data.python, {
           onLoading: (names) => {
             if (!disposed) setLoading(names.length === 0 ? null : names)
@@ -278,7 +281,9 @@ export function ManimCard({ data, t, label, onResult, autoStart, fast }: {
         // cancelled = 轮到它之前画布就被拆了（一个字都没跑）；disposed/不可见 = 跑的过程中被我们自己拆了。
         // 真正的渲染错误（代码写错、桥报错）照报。
         if (result.cancelled === true) {
-          played.delete(data.callId) // 队没轮上就拆了，不算播过——下次进视口还该播
+          // 唯一一次「不算播过」的例外：它排在队里、压根没轮到就被拆了——一个字都没跑，
+          // 用户什么都没看到。这跟「播到一半被打断」不是一回事，所以这次机会还给他。
+          spent.delete(data.callId)
           return
         }
         if (disposed || !visible) return

@@ -5023,6 +5023,61 @@ function canonicalPackageName(name) {
 	return name.trim().toLowerCase().replace(/[-_.]+/gu, "-");
 }
 //#endregion
+//#region src/core/py/subpath-bookkeeping.ts
+/** 往子物里走的深度上限：字形树也就两三层，超过这个数的多半是环或异常结构。 */
+const MAX_DEPTH = 8;
+/** 这一个物体的子路径记账与点数是否自洽（压根没有记账也算自洽——上游会走 `alignPoints`）。 */
+function subpathsConsistent(mobject) {
+	if (mobject === null || typeof mobject !== "object") return true;
+	const view = mobject;
+	const lengths = view.getEffectiveSubpathLengths?.();
+	if (lengths === void 0 || lengths.length === 0) return true;
+	const points = view.getLocalPoints?.();
+	if (points === void 0) return true;
+	let sum = 0;
+	for (const length of lengths) sum += length;
+	return sum === points.length;
+}
+/**
+* 遍历一棵物体树（含子物）。
+* @returns `visit` 是否曾返回 true（true 即提前收工）。
+*/
+function walk(mobject, visit, depth) {
+	if (depth > MAX_DEPTH || mobject === null || typeof mobject !== "object") return false;
+	if (visit(mobject)) return true;
+	const children = mobject.children;
+	if (!Array.isArray(children)) return false;
+	for (const child of children) if (walk(child, visit, depth + 1)) return true;
+	return false;
+}
+/** 这一棵物体树（含子物）的记账是否都自洽——morph 前的准入判据。 */
+function subpathTreeConsistent(mobject) {
+	return !walk(mobject, (candidate) => !subpathsConsistent(candidate), 0);
+}
+/**
+* 治好一棵树上「记账与点数对不上」的节点：先退回物体自己的基准记账；基准也对不上就两套都清空
+* （上游于是走 `alignPoints` 兜底——几何仍在，只是不再假装知道子路径怎么分）。
+*
+* @returns 是否真的改过（调用方据此补一帧渲染）。
+*/
+function healSubpathBookkeeping(mobject) {
+	let healed = false;
+	walk(mobject, (candidate) => {
+		if (subpathsConsistent(candidate)) return false;
+		const view = candidate;
+		try {
+			view.setTransformSubpathLengths?.(view.getSubpathLengths?.());
+			if (!subpathsConsistent(candidate)) {
+				view.setTransformSubpathLengths?.(void 0);
+				view.setBaseSubpathLengths?.(void 0);
+			}
+			healed = true;
+		} catch {}
+		return false;
+	});
+	return healed;
+}
+//#endregion
 //#region src/core/py/manim-bridge.ts
 /**
 * 桥的真实现：把 manim 适配层发来的动作落到 manim-web 的真对象上。
@@ -5414,6 +5469,8 @@ function createManimWebBridge(options) {
 			};
 			/** 交叉淡入淡出：源淡出、目标淡入——「点数对不齐、morph 不了」时的兜底，全程不碰点数。 */
 			const crossFade = (source, target, options) => factoryOf("AnimationGroup")([factoryOf("FadeOut")(source), factoryOf("FadeIn")(target)], options);
+			/** 这一趟真跑过 morph 的配对：跑完要顺手治一遍记账（见 healSubpathBookkeeping）。 */
+			const morphPairs = [];
 			/**
 			* 「点数对齐」型动画能不能在**这一对**上跑：拿复制品试跑一次 `begin()`。
 			*
@@ -5453,14 +5510,21 @@ function createManimWebBridge(options) {
 				const morph = plan.pointMorph;
 				if (morph !== void 0 && args.length >= 2 && isMobject(args[0]) && isMobject(args[1])) {
 					const [source, target] = args;
+					const sound = subpathTreeConsistent(source) && subpathTreeConsistent(target);
 					const groupPair = source instanceof manim.VGroup && target instanceof manim.VGroup;
-					if (!(morph.vgroupSafe && groupPair) && !canMorph(make, source, target)) return applyOptions(crossFade(source, target, options));
+					if (!sound || !(morph.vgroupSafe && groupPair) && !canMorph(make, source, target)) return applyOptions(crossFade(source, target, options));
+					morphPairs.push([source, target]);
 				}
 				return applyOptions(make(args));
 			};
 			const built = animations.map(build);
 			await target.play(...built);
-			if (built.some(settleRateTerminal) || built.some((animation) => adoptOrphanFadeIns(animation, target))) target.render?.();
+			let healed = false;
+			for (const [source, target_] of morphPairs) {
+				healed = healSubpathBookkeeping(source) || healed;
+				healed = healSubpathBookkeeping(target_) || healed;
+			}
+			if (healed || built.some(settleRateTerminal) || built.some((animation) => adoptOrphanFadeIns(animation, target))) target.render?.();
 		},
 		async wait(handle, duration) {
 			const target = deref(handle);

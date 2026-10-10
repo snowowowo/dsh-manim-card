@@ -5334,6 +5334,61 @@ _sys.modules["manim"] = _dsh_manim
 			return new PyRuntimeError(summarize(text), line);
 		}
 		//#endregion
+		//#region src/core/py/subpath-bookkeeping.ts
+		/** 往子物里走的深度上限：字形树也就两三层，超过这个数的多半是环或异常结构。 */
+		const MAX_DEPTH = 8;
+		/** 这一个物体的子路径记账与点数是否自洽（压根没有记账也算自洽——上游会走 `alignPoints`）。 */
+		function subpathsConsistent(mobject) {
+			if (mobject === null || typeof mobject !== "object") return true;
+			const view = mobject;
+			const lengths = view.getEffectiveSubpathLengths?.();
+			if (lengths === void 0 || lengths.length === 0) return true;
+			const points = view.getLocalPoints?.();
+			if (points === void 0) return true;
+			let sum = 0;
+			for (const length of lengths) sum += length;
+			return sum === points.length;
+		}
+		/**
+		* 遍历一棵物体树（含子物）。
+		* @returns `visit` 是否曾返回 true（true 即提前收工）。
+		*/
+		function walk$1(mobject, visit, depth) {
+			if (depth > MAX_DEPTH || mobject === null || typeof mobject !== "object") return false;
+			if (visit(mobject)) return true;
+			const children = mobject.children;
+			if (!Array.isArray(children)) return false;
+			for (const child of children) if (walk$1(child, visit, depth + 1)) return true;
+			return false;
+		}
+		/** 这一棵物体树（含子物）的记账是否都自洽——morph 前的准入判据。 */
+		function subpathTreeConsistent(mobject) {
+			return !walk$1(mobject, (candidate) => !subpathsConsistent(candidate), 0);
+		}
+		/**
+		* 治好一棵树上「记账与点数对不上」的节点：先退回物体自己的基准记账；基准也对不上就两套都清空
+		* （上游于是走 `alignPoints` 兜底——几何仍在，只是不再假装知道子路径怎么分）。
+		*
+		* @returns 是否真的改过（调用方据此补一帧渲染）。
+		*/
+		function healSubpathBookkeeping(mobject) {
+			let healed = false;
+			walk$1(mobject, (candidate) => {
+				if (subpathsConsistent(candidate)) return false;
+				const view = candidate;
+				try {
+					view.setTransformSubpathLengths?.(view.getSubpathLengths?.());
+					if (!subpathsConsistent(candidate)) {
+						view.setTransformSubpathLengths?.(void 0);
+						view.setBaseSubpathLengths?.(void 0);
+					}
+					healed = true;
+				} catch {}
+				return false;
+			});
+			return healed;
+		}
+		//#endregion
 		//#region src/core/py/manim-bridge.ts
 		/**
 		* 桥的真实现：把 manim 适配层发来的动作落到 manim-web 的真对象上。
@@ -5725,6 +5780,8 @@ _sys.modules["manim"] = _dsh_manim
 					};
 					/** 交叉淡入淡出：源淡出、目标淡入——「点数对不齐、morph 不了」时的兜底，全程不碰点数。 */
 					const crossFade = (source, target, options) => factoryOf("AnimationGroup")([factoryOf("FadeOut")(source), factoryOf("FadeIn")(target)], options);
+					/** 这一趟真跑过 morph 的配对：跑完要顺手治一遍记账（见 healSubpathBookkeeping）。 */
+					const morphPairs = [];
 					/**
 					* 「点数对齐」型动画能不能在**这一对**上跑：拿复制品试跑一次 `begin()`。
 					*
@@ -5764,14 +5821,21 @@ _sys.modules["manim"] = _dsh_manim
 						const morph = plan.pointMorph;
 						if (morph !== void 0 && args.length >= 2 && isMobject(args[0]) && isMobject(args[1])) {
 							const [source, target] = args;
+							const sound = subpathTreeConsistent(source) && subpathTreeConsistent(target);
 							const groupPair = source instanceof manim.VGroup && target instanceof manim.VGroup;
-							if (!(morph.vgroupSafe && groupPair) && !canMorph(make, source, target)) return applyOptions(crossFade(source, target, options));
+							if (!sound || !(morph.vgroupSafe && groupPair) && !canMorph(make, source, target)) return applyOptions(crossFade(source, target, options));
+							morphPairs.push([source, target]);
 						}
 						return applyOptions(make(args));
 					};
 					const built = animations.map(build);
 					await target.play(...built);
-					if (built.some(settleRateTerminal) || built.some((animation) => adoptOrphanFadeIns(animation, target))) target.render?.();
+					let healed = false;
+					for (const [source, target_] of morphPairs) {
+						healed = healSubpathBookkeeping(source) || healed;
+						healed = healSubpathBookkeeping(target_) || healed;
+					}
+					if (healed || built.some(settleRateTerminal) || built.some((animation) => adoptOrphanFadeIns(animation, target))) target.render?.();
 				},
 				async wait(handle, duration) {
 					const target = deref(handle);
@@ -171917,7 +171981,7 @@ XID_Start XIDS`.split(/\s/).map((p) => [w(p), p]));
 			});
 		}
 		/**
-		* 「这张卡在本页已经播过一次」。
+		* 「这张卡在本页的自动播机会已经用掉了」。
 		*
 		* 为什么是模块级的：卡片滚出视口就被卸载、滚回来是**全新挂载**，组件里的状态活不过那一趟；
 		* 而这条账要跨挂载——不然滚回来又是一条好汉、从头再播一遍。
@@ -171925,11 +171989,11 @@ XID_Start XIDS`.split(/\s/).map((p) => [w(p), p]));
 		* 为什么只记在内存、不落 localStorage：这是「这一页看过没有」。刷新之后画布本来就没了，
 		* 重来一次自然重算（也符合直觉）；落盘反而会让这张卡在之后的每一天都永远是静默的。
 		*/
-		const played = /* @__PURE__ */ new Set();
+		const spent = /* @__PURE__ */ new Set();
 		/**
 		* 这一次进视口该「放动画」还是「直接落末帧」。
 		*
-		* 只有一种情况值得放：**这张卡是刚出炉的（`live`），而且这一页还没放过它**。
+		* 只有一种情况值得放：**这张卡是刚生成出来的（`live`），而且这一页还没放过它**。
 		* 其余一律落末帧——重挂、滚回来、以及打开老会话时回填的整屏卡：
 		* 老会话里几十张卡各播一遍，谁也等不起，而且那些画面用户早就看过了。
 		* 想看从头播，点重播键就是（那条路永远真播）。
@@ -171939,7 +172003,7 @@ XID_Start XIDS`.split(/\s/).map((p) => [w(p), p]));
 		function decidePlay(input) {
 			if (input.manual) return true;
 			if (input.fast) return false;
-			if (input.played) return false;
+			if (input.spent) return false;
 			return input.live;
 		}
 		/**
@@ -172082,13 +172146,14 @@ XID_Start XIDS`.split(/\s/).map((p) => [w(p), p]));
 				/** 这一次进视口该「放动画」还是「直接落末帧」（规则与理由见 decidePlay）。 */
 				const shouldPlay = () => decidePlay({
 					live: data.live === true,
-					played: played.has(data.callId),
+					spent: spent.has(data.callId),
 					manual: replayKey > 0,
 					fast: fast === true
 				});
 				const start = async () => {
 					if (disposed || surface !== null) return;
 					const play = shouldPlay();
+					if (play) spent.add(data.callId);
 					setBusy(true);
 					try {
 						const created = await createSurface(stage, { fast: fast === true || !play });
@@ -172097,12 +172162,11 @@ XID_Start XIDS`.split(/\s/).map((p) => [w(p), p]));
 							return;
 						}
 						surface = created;
-						if (play) played.add(data.callId);
 						const result = await created.run(data.python, { onLoading: (names) => {
 							if (!disposed) setLoading(names.length === 0 ? null : names);
 						} });
 						if (result.cancelled === true) {
-							played.delete(data.callId);
+							spent.delete(data.callId);
 							return;
 						}
 						if (disposed || !visible) return;
@@ -174224,8 +174288,8 @@ self.play(Write(eq))
 			const text = event.data?.message?.content?.find((item) => item?.type === "text")?.text;
 			return typeof text === "string" ? text : void 0;
 		}
-		/** 从回执文本里读出 Host 预检回执；读不出就按"未回执"处理。 */
-		function readFeedback(text, log) {
+		/** 从回执文本里读出 Host 预检回执；读不出就按"未回执"处理（不当错误，见 update 里的分寸）。 */
+		function readFeedback(text) {
 			if (text === void 0) return void 0;
 			try {
 				const value = JSON.parse(text);
@@ -174234,8 +174298,7 @@ self.play(Write(eq))
 					ok: value.ok,
 					...typeof value.error === "string" ? { error: value.error } : {}
 				};
-			} catch (error) {
-				if (log) console.error("[manim-renderer] 工具回执不是 JSON:", error);
+			} catch {
 				return;
 			}
 		}
@@ -174251,11 +174314,28 @@ self.play(Write(eq))
 		*/
 		function readInterrupted(event) {
 			if (event.data?.message?.isError !== true) return false;
-			return readFeedback(receiptText(event), false) === void 0;
+			return readFeedback(receiptText(event)) === void 0;
 		}
-		/** 收录这张卡时它所在的那一轮还开着没有；读不出就不算（宁可静态，也不要乱播一遍）。 */
+		/**
+		* 「这张卡是刚出炉的」——**见过一次就是真的**，此后不再翻面。
+		*
+		* 为什么不能每次现算：`start()` 在流式过程中会被引擎反复重放。拿真事件流实测（用宿主自己的
+		* assembler 灌一条真实会话），同一张卡在流式期间跑了 4 次、`turn/end` 之后又跑第 5 次——
+		* 而第 5 次时那张卡所在的一轮已经关闭，`location.turn.status` 从 `open` 变成了 `closed`。
+		* 也就是说「这张卡算不算刚生成」会随重放翻面，于是同一张卡有时正常播、有时直接落末帧，
+		* 差别只取决于**它什么时候被挂载**。用户看到的就是「第一张莫名其妙跳到了末帧」。
+		*
+		* 于是把「见过 open」记在模块里，只加不减；引擎给的状态在 `start()` 之前就被清空了
+		* （`assembler.ts` 里 `context.state = undefined` 紧挨着调用），借不到上一次的结果，只能自己记。
+		*
+		* 打开老会话时整窗重折、那一轮早就 closed，一张都记不上——「老会话不播」由构造保证，
+		* 不必再依赖「采样时机恰好赶上 open」这种运气。
+		*/
+		const bornLive = /* @__PURE__ */ new Set();
 		function readLive(match) {
-			return match.location?.turn?.status === "open";
+			const callId = String(match.event.data?.callId ?? "");
+			if (match.location?.turn?.status === "open") bornLive.add(callId);
+			return callId !== "" && bornLive.has(callId);
 		}
 		const definition = {
 			kind: "manim-render",
@@ -174288,15 +174368,18 @@ self.play(Write(eq))
 			},
 			update: (context, match) => {
 				if (match.event.type !== "tool/result") return context.state;
-				const feedback = readFeedback(receiptText(match.event), true);
+				const text = receiptText(match.event);
+				const feedback = readFeedback(text, false);
 				if (feedback !== void 0) return {
 					...context.state,
 					feedback
 				};
-				return readInterrupted(match.event) ? {
+				if (readInterrupted(match.event)) return {
 					...context.state,
 					interrupted: true
-				} : context.state;
+				};
+				if (text !== void 0) console.error("[manim-renderer] 工具回执认不出:", text.slice(0, 200));
+				return context.state;
 			},
 			buildViewNode: (context) => {
 				if (context.start === void 0) return null;
