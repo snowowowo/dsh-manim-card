@@ -432,6 +432,17 @@
   color: var(--dsw-alias-state-error-primary);
 }
 
+/* 导出视频的回执：绿色一行，路径可能很长——截断展示（悬停看全），复制键收在右边 */
+.mr-chatcard-export {
+  display: flex; align-items: center; gap: 4px;
+  margin: 8px 0 0; font-size: 13px; line-height: 20px;
+  color: var(--dsw-alias-state-success-primary);
+}
+.mr-chatcard-exporttext {
+  flex: 1; min-width: 0;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+
 /* ---- 设置面板：本机环境 + Python 库 ---------------------------------------- */
 
 /*

@@ -102,6 +102,18 @@ export const DICT = {
     badCard: '卡片数据不完整（缺少 python 源码）',
     rejected: '代码未通过预检，未渲染',
 
+    // ---- 卡片：导出视频（本机 manim CLI 真渲染成 mp4，存「下载」文件夹）----
+    // 按钮亮不亮由环境必要条件决定（Python / manim / manim 库 / FFmpeg）；灰着的时候悬停要说清缺什么。
+    exportVideo: '导出视频',
+    exportReadyHint: '用本机安装的 Manim 渲染成 mp4（1080p），存到「下载」文件夹。',
+    exportChecking: '正在检查本机环境，稍等…',
+    exportMissingHint: '暂时不能导出，本机还缺：{missing}。到 设置 → Manim 渲染 里查看详情。',
+    exportUnknownHint: '本机环境暂时检查不了，不能导出。',
+    exportBusy: '正在用本机 Manim 渲染并导出…要真跑一遍，可能得等一会儿',
+    exportDone: '已导出到 {path}',
+    exportFailed: '导出失败：{error}',
+    copyPath: '复制路径',
+
     // ---- 设置页：本机环境 ----
     // 探测项的标题与「为什么看它」按 id 查（见 settings.tsx 的 ENV_COPY）；
     // 这些命令都读本机 —— 桥里的 Pyodide 是 WebAssembly，跟本机的 Manim 完全是两套东西。
@@ -122,7 +134,7 @@ export const DICT = {
     envManim: 'Manim CLI',
     envManimWhy: 'manim 这个命令本身能不能跑 —— 本机渲染与导出的入口。',
     envManimModule: 'manim 库',
-    envManimModuleWhy: '你电脑的 Python 里到底装没装 manim。命令能用、Python 里却没装——这种情况真的存在，所以跟上面一项分开看。',
+    envManimModuleWhy: 'manim 命令所用的那个 Python 里，到底装没装 manim 库。命令能用、库里没有——这种情况真的存在（比如命令是软链到某个 venv 的），所以跟上面一项分开看；探测会跟着 manim 命令找到它真正的解释器。',
     envFfmpeg: 'FFmpeg',
     envFfmpegWhy: 'Manim 出视频（mp4 / gif）要靠它；缺了只能出一张张静态图片。',
     envLatex: 'LaTeX',

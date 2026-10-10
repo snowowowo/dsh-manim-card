@@ -1,9 +1,10 @@
 // Host 半边（apply 组装）。根目录 index.js 仅 re-export 本模块。
-// 五件事：① manim_render 工具——AI 写一段 Manim Python，聊天流出现渲染卡片；
+// 六件事：① manim_render 工具——AI 写一段 Manim Python，聊天流出现渲染卡片；
 // ② 技能注册——把写法边界与 API 清单讲给模型听（不动手写代码，模型不知道边界在哪）；
 // ③ KaTeX 静态资源路由——MathTex 在浏览器里渲染成 KaTeX HTML；
 // ④ Pyodide 本体、按需取包、包缓存清单与预缓存——整块在 ./pyodide.js；静态资源那层在 ./assets.js；
-// ⑤ 实验场语料路由（GET，见 ./corpus.js）与本机环境探测（见 ./environment.js）。
+// ⑤ 实验场语料路由（GET，见 ./corpus.js）与本机环境探测（见 ./environment.js）；
+// ⑥ 导出视频路由（见 ./export.js）——本机 CLI 真渲染出 mp4，落「下载」文件夹。
 // 工具返回前先干跑一遍（core.js，与 Client 侧同一个 Python 运行时）：
 // 语法错 / 未定义名 / manim-web 实测缺失项当场回给模型，同一回合自我修正；
 // 渲染期错误仍由卡片回显。
@@ -15,6 +16,7 @@ import { createDryRunBridge, runPython } from '../../core.js'
 import { assetRoute } from './assets.js'
 import { collectCorpus } from './corpus.js'
 import { environmentRoute } from './environment.js'
+import { exportRoute } from './export.js'
 import { clearCacheRoute, installPyodideLoader, packagesRoute, pyodideRoute, resolveCacheDir } from './pyodide.js'
 
 export const name = 'manim-renderer';
@@ -166,6 +168,12 @@ export function apply(ctx) {
   ctx.effect(
     () => ctx.webServer.register(environmentRoute()),
     'manim-renderer: environment route',
+  );
+
+  // 导出视频：本机 manim CLI 真渲染出 mp4。就绪结论（GET /ready）与真渲染（POST）都在这条路由里。
+  ctx.effect(
+    () => ctx.webServer.register(exportRoute()),
+    'manim-renderer: export route',
   );
 
   // 实验场那两条：语料（包外的开发语料，正式安装里是空表）与清包缓存。
