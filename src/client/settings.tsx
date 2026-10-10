@@ -5,8 +5,8 @@
 // 下面一块是渲染时要用到的第三方库。
 //
 // **页面只留数据与控件，解释一律收进 ⓘ**（悬浮/键盘聚焦才出现）：环境那几项是重要项，
-// 每行名字后面跟一个 ⓘ；库清单只有名字与一个动作图标——能下载的给下载键、能删的给删除键，
-// 状态不用文字再描述一遍。
+// 每行名字后面跟一个 ⓘ；库清单只有名字与一个有话直说的文字键（缓存 / 删除 / 内置），
+// 不用图标让人猜。
 //
 // 版式是「外面一个小分组标签 + 若干张自带头部的卡片」：标题、一行说明与动作键都在卡片头部里
 // （照宿主「存储」「审计中心」页），间距由卡片内边距撑起来。要往清单里补别的库，走底下那张
@@ -18,9 +18,8 @@
 // 样式只用宿主 `--dsw-alias-*` token（明暗双主题自动成立），类名统一 `mr-` 前缀。
 import { useCallback, useEffect, useId, useMemo, useRef, useState, type KeyboardEvent } from 'react'
 // ⓘ 图标取名 InfoIcon：本文件自己的 Info 组件（说明的收口）占了这个名字。
-import { Check, Copy, Download, Info as InfoIcon, RefreshCw, Trash2 } from 'lucide-react'
+import { Info as InfoIcon, RefreshCw } from 'lucide-react'
 import { Tip } from './components/tip'
-import { useCopied } from './clipboard'
 import { loadEnvPlan, probeEnv, type EnvCheck, type EnvPlan, type EnvResult, type EnvStatus } from './environment'
 import {
   cachePackage, clearPackage, COMMON_PACKAGES, completionFor, findPackage, formatBytes, loadPackages, prefetchPlan,
@@ -163,7 +162,9 @@ function EnvCard({ t }: { t: Translate }) {
                 return (
                   <div key={check.id} className="mr-set-row">
                     <span className="mr-set-cell is-check">
-                      <span>{t(envTitleKey(check.id))}</span>
+                      {/* 名字单独包一层：截断的 overflow 只加在它身上，
+                          ⓘ 留在裁切框外——否则悬浮气泡会被一起剪掉 */}
+                      <span className="mr-set-name">{t(envTitleKey(check.id))}</span>
                       <Info name={t(envTitleKey(check.id))} text={envInfo(t, check, result)} />
                     </span>
                     <span className="mr-set-cell is-status">
@@ -208,8 +209,8 @@ function Info({ name, text }: { name: string; text: string }) {
 // ---------------------------------------------------------------- 包缓存
 
 /**
- * Python 库：**两张卡片**——上面一张是「已缓存的库」清单（头部右上是复制路径与刷新），
- * 下面一张是「下载其他库」（头部标题 + 一行短说明，输入框与按钮在卡片身体里）。
+ * Python 库：**两张卡片**——上面一张是「已缓存的库」清单（头部右上是刷新），
+ * 下面一张是「缓存其他库」（头部标题 + 一行短说明，输入框与按钮在卡片身体里）。
  *
  * 清单为什么不是全表：lock 里有近三百条，绝大多数人一辈子用不到——把常用的摆出来，
  * 比让人在一个长列表里筛要快。**列表不是白名单**：清单里没有的包，直接写上名字就能取，
@@ -229,7 +230,6 @@ function PackagesCard({ t }: { t: Translate }) {
   // 回执就出现在动手的地方，不用跑到别处找。
   const [note, setNote] = useState<string | null>(null)
   const [formNote, setFormNote] = useState<string | null>(null)
-  const [copied, copy] = useCopied()
   const alive = useRef(true)
   const manualId = useId()
 
@@ -366,19 +366,13 @@ function PackagesCard({ t }: { t: Translate }) {
     await refresh()
   }
 
-  // 清单卡片的头部说明：读不到清单就报错、还在读就报进度、读到了就把存放路径摆出来
-  // （路径是数据不是说明，放这儿比单独一行省地方；旁边的「复制路径」能拿走全文）
-  const subline = failure !== null
-    ? <p className="mr-set-cardsub is-error" title={t('pkgFailed', { message: failure })} role="status">{t('pkgFailed', { message: failure })}</p>
-    : inventory === null
-      ? <p className="mr-set-cardsub" role="status">{t('loading')}</p>
-      : <p className="mr-set-cardsub is-path" title={inventory.cacheDir}>{inventory.cacheDir}</p>
-
   return (
     <section className="mr-set-group" aria-label={t('pkgTitle')}>
       <h2 className="mr-set-groupname">{t('pkgTitle')}</h2>
       <div className="mr-set-stack">
         <section className="mr-set-card">
+          {/* 头部只放标题（+ 计数）与刷新：存放路径不在页面上摆（它是实现细节，
+              要知道在哪儿看 README 就够了），读取出错才在卡片脚注里说一句 */}
           <header className="mr-set-cardhead">
             <div className="mr-set-cardheadtext">
               <h3 className="mr-set-cardtitle">
@@ -389,14 +383,8 @@ function PackagesCard({ t }: { t: Translate }) {
                   </span>
                 )}
               </h3>
-              {subline}
             </div>
             <div className="mr-set-cardacts">
-              <button type="button" className="mr-set-act" disabled={inventory === null}
-                onClick={() => { if (inventory !== null) copy(inventory.cacheDir) }}>
-                {copied ? <Check size={14} /> : <Copy size={14} />}
-                {copied ? t('pkgDirCopied') : t('pkgDirCopy')}
-              </button>
               <Tip label={t('pkgRefreshHint')} align="end">
                 <button type="button" className="mr-set-act" disabled={busy !== null} onClick={() => { void refresh() }}>
                   <RefreshCw size={14} />
@@ -406,39 +394,40 @@ function PackagesCard({ t }: { t: Translate }) {
             </div>
           </header>
 
-          {/* 库行只有名字与一个动作图标：能下载的给下载键、能删的给删除键，
-              随包自带的没有动作（不用下、也删不掉）——状态不用文字再描述一遍。 */}
+          {/* 库行只有名字与一个有话直说的文字键：没缓存的给「缓存」、已缓存的给「删除」、
+              随包自带的写「内置」（不用下、也删不掉）——图标要人猜，文字不用 */}
           {inventory !== null && (
             <div className="mr-set-rows is-light">
-              {shown.map((entry) => {
-                const working = busy !== null && busy.name === entry.name
-                return (
-                  <div key={entry.name} className="mr-set-row">
-                    <span className="mr-set-cell is-name">{entry.name}</span>
-                    <span className="mr-set-cell is-act">
-                      {entry.state === 'absent' && (
-                        <Tip label={working ? t('pkgFetching', { done: busy.done, total: busy.total }) : t('pkgCacheHint')} align="end">
-                          <button type="button" className="mr-iconbtn" disabled={busy !== null}
-                            aria-label={t('pkgCache')} onClick={() => { void fetchPackages(entry.name) }}>
-                            {working ? <Dot tone="busy" /> : <Download size={15} />}
-                          </button>
-                        </Tip>
-                      )}
-                      {entry.state === 'cached' && (
-                        <Tip label={working ? t('pkgClearing', { name: entry.name }) : t('pkgClearHint')} align="end">
-                          <button type="button" className="mr-iconbtn" disabled={busy !== null}
-                            aria-label={t('pkgClear')} onClick={() => { void clearOne(entry.name) }}>
-                            {working ? <Dot tone="busy" /> : <Trash2 size={15} />}
-                          </button>
-                        </Tip>
-                      )}
-                    </span>
-                  </div>
-                )
-              })}
+              {shown.map((entry) => (
+                <div key={entry.name} className="mr-set-row">
+                  <span className="mr-set-cell is-name">{entry.name}</span>
+                  <span className="mr-set-cell is-act">
+                    {entry.state === 'bundled' && <span className="mr-set-bundled">{t('pkgBundled')}</span>}
+                    {entry.state === 'cached' && (
+                      <Tip label={t('pkgClearHint')} align="end">
+                        <button type="button" className="mr-set-act is-sm" disabled={busy !== null}
+                          onClick={() => { void clearOne(entry.name) }}>
+                          {t('pkgClear')}
+                        </button>
+                      </Tip>
+                    )}
+                    {entry.state === 'absent' && (
+                      <Tip label={t('pkgCacheHint')} align="end">
+                        <button type="button" className="mr-set-act is-sm" disabled={busy !== null}
+                          onClick={() => { void fetchPackages(entry.name) }}>
+                          {t('pkgCache')}
+                        </button>
+                      </Tip>
+                    )}
+                  </span>
+                </div>
+              ))}
             </div>
           )}
 
+          {failure !== null && (
+            <p className="mr-set-cardfoot is-error" role="status">{t('pkgFailed', { message: failure })}</p>
+          )}
           {note !== null && <p className="mr-set-cardfoot" role="status">{note}</p>}
         </section>
 

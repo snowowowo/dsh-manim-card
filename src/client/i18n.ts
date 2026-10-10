@@ -105,7 +105,6 @@ export const DICT = {
     // ---- 设置页：本机环境 ----
     // 探测项的标题与「为什么看它」按 id 查（见 settings.tsx 的 ENV_COPY）；
     // 这些命令都读本机 —— 桥里的 Pyodide 是 WebAssembly，跟本机的 Manim 完全是两套东西。
-    loading: '正在读取…',
     // 分组标签（只在卡片外面用来分组）与卡片标题分开：外面是「环境」，卡片里才是「本机环境」
     envGroup: '环境',
     envTitle: '本机环境',
@@ -131,30 +130,29 @@ export const DICT = {
     envDvisvgm: 'dvisvgm',
     envDvisvgmWhy: 'LaTeX 转 SVG 的那一步 —— Manim 渲染公式的第二半。',
 
-    // ---- 设置页：Python 库（第三方库按需下载） ----
+    // ---- 设置页：Python 库（第三方库按需缓存） ----
     // 分组标签用 pkgTitle；卡片标题另有其名（pkgCardTitle / pkgAddTitle）
+    // 用词一律「缓存」不用「下载」：这些包本来就是运行时联网取的，这里做的是「提前存到本机」，
+    // 说「缓存」跟「之后断网也能用」是同一件事。
     pkgTitle: 'Python 库',
     pkgCardTitle: '已缓存的库',
     pkgCountsShort: '{cached} 个 · {bytes}',
     pkgRefresh: '刷新',
     pkgRefreshHint: '再看一次：哪些库已经在本机、各占多大。',
-    pkgDirCopy: '复制路径',
-    pkgDirCopied: '已复制',
+    pkgBundled: '内置',
     pkgFailed: '读不到库列表：{message}',
-    pkgCache: '下载',
-    pkgCacheHint: '下载到本机（会把它用到的其他库一起下载），之后断网也能用。',
-    pkgFetching: '{done}/{total}',
-    pkgFetchingNote: '正在下载 {name}…（{done}/{total}）',
-    pkgFetched: '已下载 {count} 个库',
-    pkgFetchFailed: '下载 {name} 失败：{error}',
+    pkgCache: '缓存',
+    pkgCacheHint: '缓存在本机（会把它用到的其他库一起缓存），之后断网也能用。',
+    pkgFetchingNote: '正在缓存 {name}…（{done}/{total}）',
+    pkgFetched: '已缓存 {count} 个库',
+    pkgFetchFailed: '缓存 {name} 失败：{error}',
     pkgNothingToFetch: '{name} 已经在本机了',
     pkgUnknown: '找不到这个库：{name}',
     pkgClear: '删除',
-    pkgClearing: '正在删除 {name}…',
-    pkgClearHint: '从本机删掉它（下次用到会重新联网下载）。自带的几个不占这份空间，不受影响。',
+    pkgClearHint: '从本机删掉它（下次用到会重新联网缓存一次）。自带的几个不占这份空间，不受影响。',
     pkgCleared: '已删除 {name}',
     pkgClearFailed: '删除 {name} 失败：{error}',
-    pkgAddTitle: '下载其他库',
+    pkgAddTitle: '缓存其他库',
     pkgAddHint: '写上库的名字就行；输入时会有提示，按 Tab 或 → 采纳。',
     pkgManual: '库名，如 pandas',
     pkgManualLabel: '库名',

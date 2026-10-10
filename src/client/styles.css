@@ -485,14 +485,13 @@
   color: var(--dsw-alias-label-tertiary);
   font-variant-numeric: tabular-nums;
 }
-/* 头部那一行说明：常态放「状态 / 路径」这类数据；长了截断（路径旁边有复制键） */
+/* 头部那一行说明：放「几项就绪」这类状态；长了截断 */
 .mr-set-cardsub {
   margin: 2px 0 0;
   overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
   font-size: 12px; line-height: 18px;
   color: var(--dsw-alias-label-tertiary);
 }
-.mr-set-cardsub.is-path { font-family: var(--ds-font-family-code); }
 .mr-set-cardsub.is-error { color: var(--dsw-alias-state-error-primary); }
 /* 头部动作键：描边的文字键（宿主 outline 配方）——比挤在一起的小图标好按也好认 */
 .mr-set-cardacts { flex: none; display: flex; align-items: center; gap: 8px; }
@@ -509,6 +508,16 @@
 .mr-set-act:hover:not(:disabled) { background: var(--dsw-alias-interactive-bg-hover); }
 .mr-set-act:disabled { cursor: not-allowed; opacity: 0.4; }
 .mr-set-act:focus-visible { outline: 2px solid var(--dsw-alias-state-business-primary); outline-offset: 2px; }
+/* 清单行里的动作键：矮一档（26px）配 34px 的行高——文字键，不是图标键 */
+.mr-set-act.is-sm {
+  height: 26px; padding: 0 10px;
+  font-size: 12px; line-height: 18px;
+  color: var(--dsw-alias-label-secondary);
+}
+.mr-set-act.is-sm:hover:not(:disabled) { color: var(--dsw-alias-label-primary); }
+
+/* 随包自带的库：没有动作可做，只给一个词——比留空更清楚，也不用图标凑 */
+.mr-set-bundled { font-size: 12px; line-height: 18px; color: var(--dsw-alias-label-tertiary); }
 
 /* 行：左右内距与卡片头部同档，名字跟标题对齐；行与行之间一道最细的分隔线。
    box-sizing 必须写：没有 preflight，min-height 会算在内容盒上、再额外加上下内距，
@@ -519,18 +528,27 @@
   display: flex; align-items: center; gap: 16px; min-height: 44px; padding: 8px 16px;
 }
 .mr-set-row + .mr-set-row { border-top: 0.5px solid var(--dsw-alias-border-l2); }
-/* 库清单要轻：这一档行高压到 34px（环境那几项才是重点，保持上面 44px） */
-.mr-set-rows.is-light .mr-set-row { min-height: 34px; padding: 5px 16px; }
+/* 库清单要轻：这一档行高压到 34px（环境那几项才是重点，保持上面 44px）。
+   内距 4px 是配 26px 的文字键算的：26 + 4×2 = 34，行高不再被按钮顶起来。 */
+.mr-set-rows.is-light .mr-set-row { min-height: 34px; padding: 4px 16px; }
 
 .mr-set-cell { flex: none; min-width: 0; }
-/* 库名 / 检测项占满整行：包名是代码原文（带连字符、大小写有别），一眼跟中文分开 */
-.mr-set-cell.is-name, .mr-set-cell.is-check {
-  flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+/* 库名占满整行、超长截断：包名是代码原文（带连字符、大小写有别），一眼跟中文分开。
+   这一格**只有文字**，所以截断的 overflow 加在格子上没问题。 */
+.mr-set-cell.is-name {
+  flex: 1; min-width: 0;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
   font-family: var(--ds-font-family-code); font-size: 13px; line-height: 20px;
 }
-/* 检测项是普通名词不是代码，走正文字体 */
-.mr-set-cell.is-check { font-family: inherit; }
-.mr-set-cell.is-act { flex: none; display: flex; justify-content: flex-end; }
+/* 检测项：这一格里有「名字 + ⓘ」，overflow 不能加在格子上——会把 ⓘ 的悬浮气泡一起剪掉。
+   只让名字那段自己截断（见 .mr-set-name）。检测项是普通名词不是代码，走正文字体。 */
+.mr-set-cell.is-check {
+  flex: 1; min-width: 0;
+  display: flex; align-items: center;
+  font-size: 13px; line-height: 20px;
+}
+.mr-set-name { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.mr-set-cell.is-act { flex: none; display: flex; align-items: center; justify-content: flex-end; }
 .mr-set-cell.is-status {
   flex: none; display: flex; align-items: center; justify-content: flex-end; gap: 6px;
   font-size: 13px; line-height: 20px; font-variant-numeric: tabular-nums;
@@ -555,6 +573,7 @@
   color: var(--dsw-alias-label-tertiary);
   overflow-wrap: anywhere;
 }
+.mr-set-cardfoot.is-error { color: var(--dsw-alias-state-error-primary); }
 /* 清单下面接状态行时留一点上距；补库卡片的状态行紧跟输入行，不用再加 */
 .mr-set-rows + .mr-set-cardfoot { padding-top: 10px; }
 
