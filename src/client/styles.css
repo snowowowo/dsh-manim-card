@@ -88,8 +88,11 @@
 }
 .mr-tip[data-align='start'] .mr-tip-bubble { left: 0; transform: none; }
 .mr-tip[data-align='end'] .mr-tip-bubble { left: auto; right: 0; transform: none; }
+/* 只有「鼠标悬浮」与「键盘聚焦」两种触发。
+   不能用 :focus-within —— 鼠标点一下也算聚焦，气泡就赖在页面上不走了；
+   :focus-visible 只认键盘那一路（Tab 进来），点鼠标不会命中。 */
 .mr-tip:hover .mr-tip-bubble,
-.mr-tip:focus-within .mr-tip-bubble { opacity: 1; visibility: visible; }
+.mr-tip > :focus-visible ~ .mr-tip-bubble { opacity: 1; visibility: visible; }
 /* 成段的长说明（ⓘ 收进去的那些）放宽一档，一行能装下一句完整的话 */
 .mr-tip-bubble.is-wide { max-width: 440px; }
 
@@ -555,11 +558,12 @@
 }
 
 /* ⓘ：说明的收口。页面上只留数据，为什么看这项 / 找到哪儿了这些解释
-   全部收进这个图标，悬浮或键盘聚焦才出现（宿主设置表单的 helpButton 同款位置）。 */
+   全部收进这个图标，悬浮或键盘聚焦才出现（宿主设置表单的 helpButton 同款位置）。
+   光标用默认箭头：它是「看解释」的入口，不是按钮，不给 cursor:help 那个问号。 */
 .mr-set-info {
   flex: none; display: inline-flex; align-items: center;
   margin-left: 5px;
-  padding: 0; border: none; background: none; cursor: help;
+  padding: 0; border: none; background: none; cursor: default;
   color: var(--dsw-alias-label-tertiary);
 }
 .mr-set-info:hover, .mr-set-info:focus-visible { color: var(--dsw-alias-label-secondary); }
