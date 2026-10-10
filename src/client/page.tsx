@@ -8,10 +8,10 @@
 // 落 localStorage，中途崩了或刷新了不用从头再来。
 //
 // **语料是运行时向 Host 取的**（见 ./corpus），不在这份产物里：语料本体是开发期的回归网，
-// 放在包外的插件仓 `_dev/`，正式安装里取到空表 —— 那时本页只剩「自定义代码」。
+// 放在包外（核心包 `manim-live` 的 `_dev/`），正式安装里取到空表 —— 那时本页只剩「自定义代码」。
 import { useEffect, useRef, useState } from 'react'
 import { Check, ChevronDown, ChevronRight, ClipboardCopy, Eraser, Info, Play, Square, Trash2, Undo2, X, Zap } from 'lucide-react'
-import type { ManimExample } from '../core/py/examples.ts'
+import type { ManimExample } from 'manim-live'
 import { ManimCard, type CardResult } from './components/card'
 import { Segmented } from './components/segmented'
 import { Tip } from './components/tip'
@@ -221,7 +221,7 @@ export function ManimPage({ t }: { t: Translate }) {
       const removed = await clearPackageCache()
       setCacheNote(t('cacheCleared', { count: removed.length }))
     } catch (error) {
-      console.error('[manim-renderer] 清包缓存失败:', error)
+      console.error('[manim-live] 清包缓存失败:', error)
       setCacheNote(t('cacheClearFailed', { message: error instanceof Error ? error.message : String(error) }))
     } finally {
       setClearing(false)

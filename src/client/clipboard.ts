@@ -16,10 +16,10 @@ export async function copyText(text: string): Promise<boolean> {
       area.select()
       const ok = document.execCommand('copy')
       area.remove()
-      if (!ok) console.error('[manim-renderer] execCommand 复制失败:', error)
+      if (!ok) console.error('[manim-live] execCommand 复制失败:', error)
       return ok
     } catch (fallbackError) {
-      console.error('[manim-renderer] copy failed:', fallbackError)
+      console.error('[manim-live] copy failed:', fallbackError)
       return false
     }
   }

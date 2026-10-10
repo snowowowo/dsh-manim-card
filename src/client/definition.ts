@@ -191,7 +191,7 @@ export const definition = {
     // 中断收尾（宿主说这次没跑成）：认出来就走 interrupted，不打日志——那不是「怪数据」。
     if (readInterrupted(match.event)) return { ...context.state, interrupted: true }
     // 其余认不出的回执才留一条：宿主哪天换了收尾格式，能从这儿查出来。
-    if (text !== undefined) console.error('[manim-renderer] 工具回执认不出:', text.slice(0, 200))
+    if (text !== undefined) console.error('[manim-live] 工具回执认不出:', text.slice(0, 200))
     return context.state
   },
   buildViewNode: (context: FoldContext) => {

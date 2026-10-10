@@ -3,17 +3,22 @@
 //
 // 运行：node scripts/gen-skill.mjs（在本包目录下）
 // 约定：**改表 / 重跑探针后紧接着跑本脚本**。SKILL.md 由 Host 运行时读盘注册（不进构建产物），
-//       所以不需要重建 client.js / core.js。
+//       所以不需要重建 client.js。
 //
 // 只生成「清单类」内容——写法叙述、示例、纪律、改写建议都是人写的，不在这里。
+//
+// 跨仓取数（顶层设计 §10 方案 A）：三态表、支持面、语料**都不是本仓的**，它们在核心包
+// `manim-live` 里。本脚本按模块解析拿它的包根（`PACKAGE_ROOT` 由核心包自己算），再按路径读源码——
+// 与「语料在包外、正式安装里读不到」完全同构，不新增概念。核心包改目录结构时这里会当场报错，
+// 不会静默生成一份过期的技能。
 import { readFileSync, writeFileSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { collectCorpus } from '../src/host/corpus.js'
+import { PACKAGE_ROOT as CORE_ROOT, collectCorpus } from 'manim-live/node'
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..')
-const mapPath = join(root, 'src/core/py/api-map.generated.ts')
-const skillPath = join(root, 'skills/manim-renderer/SKILL.md')
+const mapPath = join(CORE_ROOT, 'src/py/api-map.generated.ts')
+const skillPath = join(root, 'skills/manim-live/SKILL.md')
 
 const source = readFileSync(mapPath, 'utf8')
 const match = source.match(/PY_API_MAP: Record<string, PyApiEntry> = (\{[\s\S]*?\n\})\n/)
@@ -27,7 +32,7 @@ const animateMethods = JSON.parse(animateMatch[1])
 // animate 链的改写表在支持面（surface.ts）里——代理上没有、要换成 manim-web 真名的那些
 // （如 ValueTracker 的 set_value → animateTo），也要进技能文档的可用清单，否则模型不敢用。
 // 这张表是**手写 TS**（单引号、无引号键名），不是生成物，所以按条目正则读，不走 JSON.parse。
-const surfacePath = join(root, 'src/core/py/surface.ts')
+const surfacePath = join(CORE_ROOT, 'src/py/surface.ts')
 const rewriteBlock = readFileSync(surfacePath, 'utf8').match(
   /ANIMATE_REWRITES: Record<string, string> = \{([\s\S]*?)\n\}/,
 )
@@ -115,8 +120,8 @@ function animateMethodList() {
  * 为什么内联而不是让模型自己去读文件：技能是整段正文注册的，模型一次就拿到全部，
  * 不必再赌它有文件访问权。这些文件同时是实验场的语料（回归跑过 + 真浏览器截过图），
  * 所以内联的是**验过的**写法。
- * 语料本体在插件仓 `_dev/`（**包外**，语料位置与解析见 src/host/corpus.js）——所以这一步只能在
- * 仓库检出里跑，正式安装里没有这条路径。
+ * 语料本体在**核心包**仓的 `_dev/`（**包外**，位置与解析见核心包的 `src/testbench/corpus.ts`）——
+ * 所以这一步只能在两个仓都检出的开发机上跑，正式安装里没有这条路径。
  */
 function templatesSection() {
   const { groups, examples } = collectCorpus()

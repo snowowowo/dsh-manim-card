@@ -6,9 +6,9 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { clearGround, clearMarks, loadExports, loadGround, loadMarks, rememberExport, saveGround, saveMarks } from './storage'
 
-const KEY = 'manim-renderer.ground.v1'
-const MARKS_KEY = 'manim-renderer.marks.v1'
-const EXPORTS_KEY = 'manim-renderer.exports.v1'
+const KEY = 'manim-live.ground.v1'
+const MARKS_KEY = 'manim-live.marks.v1'
+const EXPORTS_KEY = 'manim-live.exports.v1'
 
 function fakeStorage(initial: Record<string, string> = {}) {
   const map = new Map(Object.entries(initial))

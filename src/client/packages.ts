@@ -5,13 +5,15 @@
  * 而依赖关系是 lock 里的静态数据（跟着清单一起发过来）。算在客户端，取的时候就能**一个一个来**——
  * 进度、失败、停下来都在这一层看得见，而不是让 Host 闷头取完一大串才回话。
  *
- * 名字一律过 `canonicalPackageName` 再比：lock 里包名有三种写法（见 core/py/pkg-names.ts），
- * 用户也会按自己记得的样子打字（`Pillow` / `scikit_learn`），归一化之后这些都能落到同一个包上。
+ * 名字一律过 `canonicalPackageName` 再比：lock 里包名有三种写法（见核心包 `manim-live` 的
+ * `src/py/pkg-names.ts`），用户也会按自己记得的样子打字（`Pillow` / `scikit_learn`），
+ * 归一化之后这些都能落到同一个包上。
  */
-import { canonicalPackageName } from '../core/py/pkg-names.ts'
+import { canonicalPackageName } from 'manim-live'
+import { CACHE_ROUTE, PACKAGES_ROUTE } from '../routes.js'
 
-const PACKAGES_URL = '/dsh-plugins/manim-renderer/packages'
-const CACHE_URL = '/dsh-plugins/manim-renderer/cache'
+const PACKAGES_URL = PACKAGES_ROUTE
+const CACHE_URL = CACHE_ROUTE
 
 /** 一个包在本地的三种状态：随包来 / 本机取回来的 / 要用得联网。 */
 export type PackageState = 'bundled' | 'cached' | 'absent'
@@ -170,11 +172,11 @@ export async function cachePackage(name: string): Promise<PrefetchOutcome> {
       body: JSON.stringify({ names: [name] }),
     })
   } catch (error) {
-    console.error(`[manim-renderer] 取包失败（${name}）：`, error)
+    console.error(`[manim-live] 取包失败（${name}）：`, error)
     return { ok: false, bytes: 0, error: error instanceof Error ? error.message : String(error) }
   }
   if (!response.ok) {
-    console.error(`[manim-renderer] 取包失败（${name}）：HTTP ${response.status}`)
+    console.error(`[manim-live] 取包失败（${name}）：HTTP ${response.status}`)
     return { ok: false, bytes: 0, error: `HTTP ${response.status}` }
   }
   const body = (await response.json()) as { results?: unknown }
@@ -182,7 +184,7 @@ export async function cachePackage(name: string): Promise<PrefetchOutcome> {
   if (first === null || typeof first !== 'object') return { ok: false, bytes: 0, error: 'Host 没有回报结果' }
   const result = first as { state?: unknown; bytes?: unknown; error?: unknown }
   if (typeof result.error === 'string' && result.error.length > 0) {
-    console.error(`[manim-renderer] 取包失败（${name}）：${result.error}`)
+    console.error(`[manim-live] 取包失败（${name}）：${result.error}`)
     return { ok: false, bytes: 0, error: result.error }
   }
   return { ok: true, bytes: typeof result.bytes === 'number' ? result.bytes : 0, error: '' }

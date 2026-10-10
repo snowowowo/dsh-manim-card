@@ -9,7 +9,7 @@
  */
 import type { CardResult } from './components/card'
 
-const KEY = 'manim-renderer.ground.v1'
+const KEY = 'manim-live.ground.v1'
 
 export type GroundMode = 'examples' | 'free'
 
@@ -50,7 +50,7 @@ export function loadGround(): Partial<GroundState> {
     if (bag.mode === 'examples' || bag.mode === 'free') out.mode = bag.mode
     return out
   } catch (error) {
-    console.error('[manim-renderer] 读取实验场记录失败:', error)
+    console.error('[manim-live] 读取实验场记录失败:', error)
     return {}
   }
 }
@@ -59,7 +59,7 @@ export function saveGround(state: GroundState): void {
   try {
     window.localStorage.setItem(KEY, JSON.stringify(state))
   } catch (error) {
-    console.error('[manim-renderer] 保存实验场记录失败:', error)
+    console.error('[manim-live] 保存实验场记录失败:', error)
   }
 }
 
@@ -67,7 +67,7 @@ export function clearGround(): void {
   try {
     window.localStorage.removeItem(KEY)
   } catch (error) {
-    console.error('[manim-renderer] 清除实验场记录失败:', error)
+    console.error('[manim-live] 清除实验场记录失败:', error)
   }
 }
 
@@ -79,7 +79,7 @@ export function clearGround(): void {
  */
 export type ManualMark = 'pass' | 'fail'
 
-const MARKS_KEY = 'manim-renderer.marks.v1'
+const MARKS_KEY = 'manim-live.marks.v1'
 
 export function loadMarks(): Record<string, ManualMark> {
   try {
@@ -93,7 +93,7 @@ export function loadMarks(): Record<string, ManualMark> {
     }
     return out
   } catch (error) {
-    console.error('[manim-renderer] 读取人工标注失败:', error)
+    console.error('[manim-live] 读取人工标注失败:', error)
     return {}
   }
 }
@@ -102,7 +102,7 @@ export function saveMarks(marks: Record<string, ManualMark>): void {
   try {
     window.localStorage.setItem(MARKS_KEY, JSON.stringify(marks))
   } catch (error) {
-    console.error('[manim-renderer] 保存人工标注失败:', error)
+    console.error('[manim-live] 保存人工标注失败:', error)
   }
 }
 
@@ -111,7 +111,7 @@ export function clearMarks(): void {
   try {
     window.localStorage.removeItem(MARKS_KEY)
   } catch (error) {
-    console.error('[manim-renderer] 清除人工标注失败:', error)
+    console.error('[manim-live] 清除人工标注失败:', error)
   }
 }
 
@@ -130,7 +130,7 @@ export interface ExportRecord {
   at: number
 }
 
-const EXPORTS_KEY = 'manim-renderer.exports.v1'
+const EXPORTS_KEY = 'manim-live.exports.v1'
 /** 记录条数上限：够回过头找最近导出的一批，又不会在实验场里越长越肥。 */
 const EXPORTS_LIMIT = 50
 
@@ -151,7 +151,7 @@ export function loadExports(): Record<string, ExportRecord> {
     }
     return out
   } catch (error) {
-    console.error('[manim-renderer] 读取导出记录失败:', error)
+    console.error('[manim-live] 读取导出记录失败:', error)
     return {}
   }
 }
@@ -176,6 +176,6 @@ export function rememberExport(callId: string, file: string): void {
       .slice(0, EXPORTS_LIMIT)
     window.localStorage.setItem(EXPORTS_KEY, JSON.stringify(Object.fromEntries(kept)))
   } catch (error) {
-    console.error('[manim-renderer] 保存导出记录失败:', error)
+    console.error('[manim-live] 保存导出记录失败:', error)
   }
 }

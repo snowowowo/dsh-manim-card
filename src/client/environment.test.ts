@@ -88,7 +88,7 @@ describe('loadEnvPlan：取计划这条 I/O', () => {
   it('就是 GET 一次那条路由', async () => {
     const spy = respond({ checks: [{ id: 'manim' }] })
     await loadEnvPlan()
-    expect(spy.mock.calls[0]![0]).toBe('/dsh-plugins/manim-renderer/environment')
+    expect(spy.mock.calls[0]![0]).toBe('/dsh-plugins/manim-live/environment')
   })
 
   it('拿到计划就是计划', async () => {
@@ -111,7 +111,7 @@ describe('probeEnv：一项一项问', () => {
   it('按 id 拼 URL 并转义（id 是外来的，不能直接拼进路径）', async () => {
     const spy = respond({ id: 'a b', status: 'ok' })
     await probeEnv('a b')
-    expect(spy.mock.calls[0]![0]).toBe('/dsh-plugins/manim-renderer/environment/a%20b')
+    expect(spy.mock.calls[0]![0]).toBe('/dsh-plugins/manim-live/environment/a%20b')
   })
 
   it('ok 带版本行', async () => {

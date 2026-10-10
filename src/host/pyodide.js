@@ -1,6 +1,6 @@
 // Pyodide：本体的静态路由、按需取包，以及给设置页用的「清单 + 预缓存」两条接口。
 //
-// 三件事都围着同一个目录转（`<dsh home>/cache/manim-renderer/pyodide`），所以放一个文件里：
+// 三件事都围着同一个目录转（`<dsh home>/cache/manim-live/pyodide`），所以放一个文件里：
 //   ① `/pyodide` 静态路由——随包目录 → 缓存目录 → 回源下载（按 lock 的 sha256 校验）；
 //   ② `/cache` 清缓存——只删自己缓存目录里的包文件（实验场验「首次取包」要用）；
 //   ③ `/packages` 清单与预缓存——设置页看得到哪些包在本地、能提前取回来（之后离线可用）。
@@ -14,15 +14,16 @@ import { copyFile, link, mkdir, rename, unlink, writeFile } from 'node:fs/promis
 import { homedir } from 'node:os'
 import { dirname, extname, join, resolve } from 'node:path'
 import { fileURLToPath, pathToFileURL } from 'node:url'
-import { setPyodideLoader, canonicalPackageName } from '../../core.js'
+import { setPyodideLoader, canonicalPackageName } from 'manim-live/node'
+import { CACHE_ROUTE, PACKAGES_ROUTE, PYODIDE_ROUTE } from '../routes.js'
 import { MIME, serveAsset } from './assets.js'
 import { BadRequest, readJsonBody, sendJson } from './http.js'
 
 const PLUGIN_DIR = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
 const PYODIDE_DIR = join(PLUGIN_DIR, 'assets', 'pyodide');
-const PYODIDE_PATH = '/dsh-plugins/manim-renderer/pyodide';
-const CACHE_PATH = '/dsh-plugins/manim-renderer/cache';
-export const PACKAGES_PATH = '/dsh-plugins/manim-renderer/packages';
+const PYODIDE_PATH = PYODIDE_ROUTE;
+const CACHE_PATH = CACHE_ROUTE;
+export const PACKAGES_PATH = PACKAGES_ROUTE;
 
 const PYODIDE_LOCK = JSON.parse(readFileSync(join(PYODIDE_DIR, 'pyodide-lock.json'), 'utf8'));
 const PYODIDE_CDN = `https://cdn.jsdelivr.net/pyodide/v${PYODIDE_LOCK.info.version}/full/`;
@@ -49,7 +50,7 @@ const DOWNLOADABLE = Object.entries(PYODIDE_LOCK.packages)
 
 /**
  * 归一化名 → lock 键。依赖引用与用户输入都先过这里，再落到目录里的 `name` 上。
- * 归一化规则见 core 的 `canonicalPackageName`（两端同一份），原因也写在那一处。
+ * 归一化规则见核心包 `manim-live/node` 的 `canonicalPackageName`（两端同一份），原因也写在那一处。
  */
 const KEY_BY_CANONICAL = new Map(DOWNLOADABLE.map(([key]) => [canonicalPackageName(key), key]));
 
@@ -80,9 +81,9 @@ const CATALOG_BY_NAME = new Map(CATALOG.map((entry) => [canonicalPackageName(ent
  */
 export function resolveCacheDir(ctx) {
   const dshHomePath = ctx.get('dshHomePath');
-  if (typeof dshHomePath === 'function') return join(dshHomePath('cache', 'manim-renderer'), 'pyodide');
+  if (typeof dshHomePath === 'function') return join(dshHomePath('cache', 'manim-live'), 'pyodide');
   const configured = process.env.DSH_HOME?.trim();
-  return join(configured ? resolve(configured) : join(homedir(), '.dsh'), 'cache', 'manim-renderer', 'pyodide');
+  return join(configured ? resolve(configured) : join(homedir(), '.dsh'), 'cache', 'manim-live', 'pyodide');
 }
 
 /**
@@ -98,14 +99,14 @@ async function seedBundledPackages(cacheDir) {
   try {
     names = readdirSync(PYODIDE_DIR).filter((name) => name.endsWith('.whl'));
   } catch (error) {
-    console.error('[manim-renderer] 读取随包 wheel 失败：', error);
+    console.error('[manim-live] 读取随包 wheel 失败：', error);
     return;
   }
   if (names.length === 0) return;
   try {
     await mkdir(cacheDir, { recursive: true });
   } catch (error) {
-    console.error(`[manim-renderer] 建缓存目录失败（${cacheDir}）：`, error);
+    console.error(`[manim-live] 建缓存目录失败（${cacheDir}）：`, error);
     return;
   }
   for (const name of names) {
@@ -117,7 +118,7 @@ async function seedBundledPackages(cacheDir) {
       try {
         await copyFile(join(PYODIDE_DIR, name), target);
       } catch (error) {
-        console.error(`[manim-renderer] 随包件就位失败（${name}）：`, error);
+        console.error(`[manim-live] 随包件就位失败（${name}）：`, error);
       }
     }
   }
@@ -125,7 +126,7 @@ async function seedBundledPackages(cacheDir) {
 
 /**
  * Host 预检也用真 Python：Node 侧直接从 vendored 目录加载 Pyodide。
- * 用 pathToFileURL + 动态 import，让 pyodide.mjs 留在文件系统上、不进 core.js 产物。
+ * 用 pathToFileURL + 动态 import，让 pyodide.mjs 留在文件系统上、不进任何产物。
  *
  * ⚠️ packageCacheDir 必须显式给：默认值就是 indexURL，不给时下载的 wheel 会写进随包的
  * assets/pyodide/（本轮真机事故：跑一次按需加载就多出 6 个 whl、约 21 MB）。
@@ -153,7 +154,7 @@ async function downloadPackage(fileName, sha256, cacheDir) {
   // 先写临时名再改名：中途失败不会留下半截文件冒充「已缓存」。
   await writeFile(`${target}.part`, bytes);
   await rename(`${target}.part`, target);
-  console.info(`[manim-renderer] 已缓存 ${fileName}（${(bytes.length / 1048576).toFixed(1)} MB）`);
+  console.info(`[manim-live] 已缓存 ${fileName}（${(bytes.length / 1048576).toFixed(1)} MB）`);
   return bytes;
 }
 
@@ -203,7 +204,7 @@ export function pyodideRoute(cacheDir) {
         response.setHeader('content-type', MIME[extname(name)] ?? 'application/octet-stream');
         response.end(bytes);
       } catch (error) {
-        console.error(`[manim-renderer] pyodide asset failed (${request.url}):`, error);
+        console.error(`[manim-live] pyodide asset failed (${request.url}):`, error);
         response.statusCode = 502;
         response.end();
       }
@@ -248,15 +249,15 @@ export function clearCacheRoute(cacheDir) {
             await unlink(join(cacheDir, name));
             removed.push(name);
           } catch (error) {
-            console.error(`[manim-renderer] 清缓存失败（${name}）：`, error);
+            console.error(`[manim-live] 清缓存失败（${name}）：`, error);
           }
         }
-        console.info(`[manim-renderer] 已清掉包缓存 ${removed.length} 个（${cacheDir}）`);
+        console.info(`[manim-live] 已清掉包缓存 ${removed.length} 个（${cacheDir}）`);
         sendJson(response, 200, { removed });
       } catch (error) {
         // 坏正文是请求的错（400），别报成插件故障
         const bad = error instanceof BadRequest;
-        if (!bad) console.error('[manim-renderer] 清缓存失败：', error);
+        if (!bad) console.error('[manim-live] 清缓存失败：', error);
         sendJson(response, bad ? 400 : 500, { error: error instanceof Error ? error.message : String(error) });
       }
     },
@@ -308,7 +309,7 @@ function readCacheFiles(cacheDir) {
       const stat = statSync(join(cacheDir, name));
       if (stat.isFile()) sizes.set(name, stat.size);
     } catch (error) {
-      console.error(`[manim-renderer] 读缓存文件失败（${name}）：`, error);
+      console.error(`[manim-live] 读缓存文件失败（${name}）：`, error);
     }
   }
   return sizes;
@@ -319,7 +320,7 @@ function readBundledNames() {
   try {
     return new Set(readdirSync(PYODIDE_DIR));
   } catch (error) {
-    console.error('[manim-renderer] 读随包目录失败：', error);
+    console.error('[manim-live] 读随包目录失败：', error);
     return new Set();
   }
 }
@@ -376,7 +377,7 @@ async function cachePackages(cacheDir, names, bundled, cached) {
       const bytes = await downloadPackage(entry.fileName, entry.sha256, cacheDir);
       results.push({ name, state: 'cached', downloaded: true, bytes: bytes.length });
     } catch (error) {
-      console.error(`[manim-renderer] 预缓存 ${name} 失败：`, error);
+      console.error(`[manim-live] 预缓存 ${name} 失败：`, error);
       results.push({ name, state: 'absent', downloaded: false, error: error instanceof Error ? error.message : String(error) });
       break;
     }
@@ -431,7 +432,7 @@ export function packagesRoute(cacheDir) {
       } catch (error) {
         // 坏正文（截断的 JSON / 超限）是请求的错，答 400 且不吵日志；其余才是路由的真故障。
         const bad = error instanceof BadRequest;
-        if (!bad) console.error(`[manim-renderer] packages route failed (${request.url}):`, error);
+        if (!bad) console.error(`[manim-live] packages route failed (${request.url}):`, error);
         sendJson(response, bad ? 400 : 500, { error: error instanceof Error ? error.message : String(error) });
       }
     },

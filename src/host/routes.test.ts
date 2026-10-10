@@ -14,8 +14,8 @@
  *  - 设置页那两条：包清单（随包 / 已缓存 / 未缓存）与预缓存（跳过已在本地的、拒绝 lock 里没有的名字、
  *    校验不过就报错且不落盘、失败即停、坏正文给 400）；以及本机环境探测（计划不跑命令、找得到 python3、不认识的项 404）。
  *
- * `core.js` 被替身接走：工具执行里的 `runPython` 不真起 Pyodide，`setPyodideLoader` 只记录
- * （否则这一份会变成几秒级的集成测试）。资源路由用的是真的 node:stream，文件也是真的。
+ * 核心包 `manim-live/node` 被替身接走：工具执行里的 `runPython` 不真起 Pyodide、`setPyodideLoader`
+ * 只记录（否则这一份会变成几秒级的集成测试）。资源路由用的是真的 node:stream，文件也是真的。
  *
  * **预缓存「真的下成功」那一格**：离线造不出 sha256 对得上的字节（那等于求 sha256 的原像）。
  * 所以拆成两条——离线钉**目录本身不许缺摘要**（曾经 CATALOG 漏带 sha256，于是每次预缓存都必然
@@ -33,9 +33,9 @@ import { apply } from './index.js'
 import { pythonBesideExecutable, resolveExecutable } from './environment.js'
 import { CATALOG } from './pyodide.js'
 // 上面那份替身里的函数要在测试里直接驱动（断言被调用、改返回值）——vi.mock 会被提升，顺序无所谓
-import { runPython, setPyodideLoader } from '../../core.js'
+import { runPython, setPyodideLoader } from 'manim-live/node'
 
-vi.mock('../../core.js', async (importOriginal) => {
+vi.mock('manim-live/node', async (importOriginal) => {
   const actual = (await importOriginal()) as Record<string, unknown>
   return {
     ...actual,
@@ -49,13 +49,13 @@ const PLUGIN_DIR = join(dirname(fileURLToPath(import.meta.url)), '..', '..')
 const KATEX_DIR = join(PLUGIN_DIR, 'assets', 'katex')
 const PYODIDE_DIR = join(PLUGIN_DIR, 'assets', 'pyodide')
 
-const CORPUS_PATH = '/dsh-plugins/manim-renderer/corpus'
-const CACHE_PATH = '/dsh-plugins/manim-renderer/cache'
-const KATEX_PATH = '/dsh-plugins/manim-renderer/katex'
-const PYODIDE_PATH = '/dsh-plugins/manim-renderer/pyodide'
-const PACKAGES_PATH = '/dsh-plugins/manim-renderer/packages'
-const ENV_PATH = '/dsh-plugins/manim-renderer/environment'
-const EXPORT_PATH = '/dsh-plugins/manim-renderer/export'
+const CORPUS_PATH = '/dsh-plugins/manim-live/corpus'
+const CACHE_PATH = '/dsh-plugins/manim-live/cache'
+const KATEX_PATH = '/dsh-plugins/manim-live/katex'
+const PYODIDE_PATH = '/dsh-plugins/manim-live/pyodide'
+const PACKAGES_PATH = '/dsh-plugins/manim-live/packages'
+const ENV_PATH = '/dsh-plugins/manim-live/environment'
+const EXPORT_PATH = '/dsh-plugins/manim-live/export'
 
 interface Handler {
   (request: { method: string; url: string }, response: unknown): Promise<void>
@@ -197,7 +197,7 @@ function routeAt(path: string): Route {
 
 beforeEach(() => {
   homeRoot = mkdtempSync(join(tmpdir(), 'manim-home-'))
-  cacheDir = join(homeRoot, 'cache', 'manim-renderer', 'pyodide')
+  cacheDir = join(homeRoot, 'cache', 'manim-live', 'pyodide')
   captured = { routes: [], tools: [], sections: [], skills: [] }
   // apply 会打几条 info（缓存目录、技能已注册）——测试输出里不需要它们
   vi.spyOn(console, 'info').mockImplementation(() => {})
@@ -234,7 +234,7 @@ describe('apply 接线', () => {
     try {
       apply(fakeCtx({ home: false }))
       expect(vi.mocked(console.info).mock.calls.flat().join(' ')).toContain(
-        join(homeRoot, 'custom-home', 'cache', 'manim-renderer', 'pyodide'),
+        join(homeRoot, 'custom-home', 'cache', 'manim-live', 'pyodide'),
       )
     } finally {
       delete process.env.DSH_HOME
@@ -294,7 +294,7 @@ describe('技能注册', () => {
   it('SKILL.md 的 frontmatter 被剥掉，正文原样交出去', () => {
     apply(fakeCtx())
     const skill = captured.skills[0]!
-    expect(skill.name).toBe('manim-renderer')
+    expect(skill.name).toBe('manim-live')
     expect(skill.source).toBe('runtime')
     expect(typeof skill.content).toBe('string')
     expect((skill.content as string).length).toBeGreaterThan(0)
@@ -315,7 +315,7 @@ describe('常驻指引', () => {
   it('以固定名与顺序注册到 systemPrompt，正文非空', () => {
     apply(fakeCtx())
     const section = captured.sections[0]!
-    expect(section.name).toBe('manim-renderer:guide')
+    expect(section.name).toBe('manim-live:guide')
     expect(section.order).toBe(520)
     expect(typeof section.text).toBe('string')
     expect(section.text!.length).toBeGreaterThan(0)

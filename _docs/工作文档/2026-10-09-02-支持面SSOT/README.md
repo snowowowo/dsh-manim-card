@@ -1,5 +1,7 @@
 # 支持面 SSOT · README
 
+> 📛 **改名提示**（2026-10-11 追加）：本目录写作时插件叫 `manim-renderer`，Step 5（Phase 1 抽包）之后**仓目录与包名是 `dsh-manim-live`、短功能名是 `manim-live`**。文中出现的 `dsh-manim-renderer` / `manim-renderer` 与改名后的名字指**同一个插件**；正文与路径一律保留当时的写法（它是按时间写的记录）。另：本目录讲的支持面模块（`surface.ts` / `api-map.generated.ts`）现已随运行时**整体搬进核心包 `manim-live` 的 `src/py/`**。
+
 把「哪些 Manim 写法被支持」的定义从四处收成一处，让**预检与真桥同判**、改一处四处生效。供跨会话交接。
 
 分两侧：**消费侧**（`Step-1`–`4`，让四个消费方收敛到 SSOT）与**生成侧**（`Step-5`，让表本身接上 CE 真源）。

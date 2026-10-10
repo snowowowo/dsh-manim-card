@@ -221,7 +221,7 @@ describe('cachePackage：取一个包', () => {
     const spy = respondAndSpy({ results: [{ state: 'cached', bytes: 10 }] })
     await cachePackage('numpy')
     const [url, init] = spy.mock.calls[0] as [string, RequestInit]
-    expect(url).toBe('/dsh-plugins/manim-renderer/packages/cache')
+    expect(url).toBe('/dsh-plugins/manim-live/packages/cache')
     expect(init.method).toBe('POST')
     expect(JSON.parse(String(init.body))).toEqual({ names: ['numpy'] })
   })
@@ -265,7 +265,7 @@ describe('clearPackage：按行清理一个包', () => {
     const spy = respondAndSpy({ removed: ['pillow-10.2.0-cp312-cp312-pyodide_2024_0_wasm32.whl'] })
     expect(await clearPackage('Pillow')).toEqual(['pillow-10.2.0-cp312-cp312-pyodide_2024_0_wasm32.whl'])
     const [url, init] = spy.mock.calls[0] as [string, RequestInit]
-    expect(url).toBe('/dsh-plugins/manim-renderer/cache')
+    expect(url).toBe('/dsh-plugins/manim-live/cache')
     expect(init.method).toBe('POST')
     expect(JSON.parse(String(init.body))).toEqual({ names: ['Pillow'] })
   })
@@ -291,7 +291,7 @@ describe('clearPackageCache：清缓存的响应', () => {
     const spy = respondAndSpy({ removed: [] })
     await clearPackageCache()
     const [url, init] = spy.mock.calls[0] as [string, RequestInit]
-    expect(url).toBe('/dsh-plugins/manim-renderer/cache')
+    expect(url).toBe('/dsh-plugins/manim-live/cache')
     expect(init.method).toBe('POST')
   })
 

@@ -328,7 +328,7 @@ describe('HTTP 面', () => {
 
   it('GET /ready：回就绪结论（LaTeX 缺席不影响 ready）', async () => {
     probeAs(READY)
-    const response = await call('GET', '/dsh-plugins/manim-renderer/export/ready')
+    const response = await call('GET', '/dsh-plugins/manim-live/export/ready')
     expect(response.statusCode).toBe(200)
     const value = JSON.parse(response.body) as { ready: boolean; missing: unknown[] }
     expect(value.ready).toBe(true)
@@ -337,7 +337,7 @@ describe('HTTP 面', () => {
 
   it('GET /ready：缺必要条件时 ready=false 并列缺什么', async () => {
     probeAs({ ...READY, python3: { status: 'missing', detail: 'PATH 里找不到 python3' } })
-    const response = await call('GET', '/dsh-plugins/manim-renderer/export/ready')
+    const response = await call('GET', '/dsh-plugins/manim-live/export/ready')
     const value = JSON.parse(response.body) as { ready: boolean; missing: Array<{ id: string }> }
     expect(value.ready).toBe(false)
     expect(value.missing.map((item) => item.id)).toEqual(['python3'])
@@ -345,19 +345,19 @@ describe('HTTP 面', () => {
 
   it('POST：空源码回业务失败（200 的 ok:false，不是 5xx）', async () => {
     probeAs(READY)
-    const response = await call('POST', '/dsh-plugins/manim-renderer/export', { python: '' })
+    const response = await call('POST', '/dsh-plugins/manim-live/export', { python: '' })
     expect(response.statusCode).toBe(200)
     expect(JSON.parse(response.body)).toMatchObject({ ok: false, reason: 'input' })
   })
 
   it('POST 坏正文 400', async () => {
-    const response = await call('POST', '/dsh-plugins/manim-renderer/export', undefined)
+    const response = await call('POST', '/dsh-plugins/manim-live/export', undefined)
     // body undefined 时不发任何字节 → JSON.parse('') 抛 → 400
     expect(response.statusCode).toBe(400)
   })
 
   it('不认识的方法 405', async () => {
-    expect((await call('DELETE', '/dsh-plugins/manim-renderer/export')).statusCode).toBe(405)
+    expect((await call('DELETE', '/dsh-plugins/manim-live/export')).statusCode).toBe(405)
   })
 })
 
@@ -447,7 +447,7 @@ describe('在文件浏览器里定位导出文件', () => {
     const chunk = Buffer.from(JSON.stringify({ path: '/etc/hosts' }), 'utf8')
     const request = {
       method: 'POST',
-      url: '/dsh-plugins/manim-renderer/export/reveal',
+      url: '/dsh-plugins/manim-live/export/reveal',
       async *[Symbol.asyncIterator]() {
         yield chunk
       },

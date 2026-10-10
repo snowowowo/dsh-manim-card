@@ -1,17 +1,15 @@
 {
-  "name": "dsh-manim-renderer",
+  "name": "dsh-manim-live",
   "version": "0.1.0",
   "private": true,
   "type": "module",
   "description": "Manim 渲染：AI 在聊天里写 Python Manim 代码，当场在聊天流卡片里渲染（可独立运行）",
   "exports": {
     ".": "./index.js",
-    "./core": "./core.js",
     "./client": "./client.js"
   },
   "files": [
     "index.js",
-    "core.js",
     "client.js",
     "src",
     "assets",
@@ -39,6 +37,7 @@
     "lightningcss": "^1.33.0",
     "playwright": "^1.64.0",
     "postcss": "^8.5.29",
+    "tailwindcss": "^4.3.3",
     "tsdown": "^0.22.2",
     "typescript": "^7.0.2",
     "vitest": "^5.0.3"
@@ -46,7 +45,7 @@
   "dependencies": {
     "@shikijs/langs": "^4.3.1",
     "lucide-react": "^0.548.0",
-    "manim-web": "^0.3.24",
+    "manim-live": "link:../manim-live",
     "shiki": "^4.3.1"
   },
   "dsh": {

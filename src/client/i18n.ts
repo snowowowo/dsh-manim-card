@@ -69,7 +69,7 @@ export const DICT = {
     collapseGroup: '收起分组',
     expandGroup: '展开分组',
 
-    reportTitle: '# manim-renderer 实验场结果',
+    reportTitle: '# manim-live 实验场结果',
     reportTime: '时间：{time}',
     reportSummary: '总计 {total} 条 · 已跑 {tried} · 通过 {passed} · 失败 {failed}',
     reportFailed: '## 失败（{count}）',

@@ -12,9 +12,10 @@
 //      画布只在两种情况下没：卡片真卸载，或调度器按上限淘汰（超编时收离阅读位置最远的）。
 import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { CircleCheck, CircleX, CodeXml, Download, FastForward, Play, TriangleAlert } from 'lucide-react'
-import { createSurface, type Surface } from '../engine/renderer'
+import type { Surface } from 'manim-live'
 import type { ManimCardData } from '../definition'
 import type { Translate } from '../i18n'
+import { manimRenderer } from '../service'
 import { loadExportReadiness, requestExport, revealExport, type ExportReadiness } from '../export'
 import { loadExports, rememberExport } from '../storage'
 import { renderQueue } from '../render-queue'
@@ -196,7 +197,7 @@ export function ManimCard({ data, t, label, onResult, autoStart, fast }: {
         if (alive) setReadiness(value)
       })
       .catch((error) => {
-        console.error('[manim-renderer] export readiness failed:', error)
+        console.error('[manim-live] export readiness failed:', error)
         if (alive) setReadiness({ ready: false, missing: [] })
       })
     return () => {
@@ -220,7 +221,7 @@ export function ManimCard({ data, t, label, onResult, autoStart, fast }: {
       })
       .catch((error) => {
         // 问不到（Host 没起来之类）就不动它：宁可留一条可能过期的线索，也别误报成「文件没了」
-        console.error('[manim-renderer] export record check failed:', error)
+        console.error('[manim-live] export record check failed:', error)
       })
     return () => {
       alive = false
@@ -244,7 +245,7 @@ export function ManimCard({ data, t, label, onResult, autoStart, fast }: {
         }
       })
       .catch((error) => {
-        console.error('[manim-renderer] export failed:', error)
+        console.error('[manim-live] export failed:', error)
         setExportNote({ ok: false, text: t('exportFailed', { error: error instanceof Error ? error.message : String(error) }) })
       })
       .finally(() => setExporting(false))
@@ -265,7 +266,7 @@ export function ManimCard({ data, t, label, onResult, autoStart, fast }: {
         })
       })
       .catch((error) => {
-        console.error('[manim-renderer] reveal failed:', error)
+        console.error('[manim-live] reveal failed:', error)
         setExportNote({ ok: false, text: t('revealFailed', { error: error instanceof Error ? error.message : String(error) }) })
       })
   }
@@ -338,7 +339,8 @@ export function ManimCard({ data, t, label, onResult, autoStart, fast }: {
         try {
           // 极速与否只看**这一趟要不要演**：不演的那趟（自动落末帧、⏩ 跳过）直接落终态；
           // 要演的那趟一律真演——哪怕实验场的极速开关还开着，手动播放点下去就是要看过程。
-          const created = await createSurface(stage, { fast: !play })
+          // 画布工厂在核心包里（`manim-live`），本插件只持有那个页面级单例渲染器（见 ../service.ts）。
+          const created = await manimRenderer().createSurface(stage, { fast: !play })
           // 建的过程中这一趟被作废了（按了 ⏩、被淘汰、卡片卸载）：当场释放，别泄漏上下文。
           if (!alive || mine !== generation) {
             created.dispose()
@@ -357,7 +359,7 @@ export function ManimCard({ data, t, label, onResult, autoStart, fast }: {
           setRendered(true)
           report(result.ok ? { ok: true, text: t('ok') } : { ok: false, text: result.error ?? t('fail') })
         } catch (error) {
-          console.error('[manim-renderer] card render failed:', error)
+          console.error('[manim-live] card render failed:', error)
           if (alive && mine === generation) {
             report({ ok: false, text: error instanceof Error ? error.message : String(error) })
           }
@@ -547,9 +549,9 @@ export function ManimCard({ data, t, label, onResult, autoStart, fast }: {
             写「正在加载」会跟取包那条撞车（那条才是真的在取东西）。 */}
         {skeleton && !showCode && (
           <div className="mr-canvas-skeleton" aria-hidden="true">
-            <span className="mr-skel" style={{ width: '46%', height: '58%' }} />
-            <span className="mr-skel" style={{ width: '26%', height: '12%' }} />
-            <span className="mr-skel" style={{ width: '34%', height: '12%' }} />
+            <span className="mr-skel mr-skel-circle" />
+            <span className="mr-skel mr-skel-square" />
+            <span className="mr-skel mr-skel-triangle" />
           </div>
         )}
         {/* 取包进度盖在画布正中：这会儿画布还是空的，视线本来就在中间；

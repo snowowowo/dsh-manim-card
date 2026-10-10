@@ -403,17 +403,27 @@
  */
 .mr-canvas-skeleton {
   position: absolute; inset: 0; z-index: 3;
-  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px;
+  display: flex; flex-direction: row; align-items: center; justify-content: center; gap: 28px;
   box-sizing: border-box;
+  /* 盖的范围是画布的整个外沿（inset:0 相对 body，含 .mr-stage 的 0.5px 边框），
+     边框必须同款补上——不然骨架屏期间边框被盖住、渲染一完成才露出来，边缘会抖半像素。 */
+  border: 0.5px solid var(--dsw-alias-border-l3);
   border-radius: var(--dsw-radius-md);
   background: var(--dsw-alias-bg-layer-1);
 }
 .mr-skel {
-  /* flex: none —— 三块的百分比高度加起来接近满高，别让 flex 自动缩，宽度也要按给的百分比来 */
-  flex: none; display: block; max-width: 80%;
-  border-radius: var(--dsw-radius-md);
+  /* flex: none —— 形状固定尺寸，别让 flex 伸缩改变轮廓 */
+  flex: none; display: block;
+  width: 52px; height: 52px;
   background: var(--dsw-alias-bg-layer-2);
   animation: mr-skel-breathe 1.4s ease-in-out infinite;
+}
+/* 圆、方、三角：三个基础几何形，横排居中（容器已居中） */
+.mr-skel-circle { border-radius: 50%; }
+.mr-skel-square { border-radius: 4px; }
+.mr-skel-triangle {
+  /* border-radius 对三角形轮廓无意义，clip-path 直接裁出等腰三角形 */
+  clip-path: polygon(50% 0%, 100% 100%, 0% 100%);
 }
 @keyframes mr-skel-breathe {
   0%, 100% { opacity: 0.45; }

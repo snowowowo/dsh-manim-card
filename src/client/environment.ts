@@ -5,7 +5,9 @@
  * 一次问完等于让整页等最慢的那一项；逐项问则是逐行亮起来，快的先看到，
  * 慢的/坏的只影响它自己那一行。
  */
-const ENV_URL = '/dsh-plugins/manim-renderer/environment'
+import { ENVIRONMENT_ROUTE } from '../routes.js'
+
+const ENV_URL = ENVIRONMENT_ROUTE
 
 /** 一项探测的元信息（Host 只说「测什么、跑哪条命令」，文案在界面这一侧）。 */
 export interface EnvCheck {

@@ -1,5 +1,7 @@
 # Manim 渲染插件 · README
 
+> 📛 **改名提示**（2026-10-11 追加）：本目录写作时插件叫 `manim-renderer`，Step 5（Phase 1 抽包）之后**仓目录与包名是 `dsh-manim-live`、短功能名是 `manim-live`**（路由前缀 `/dsh-plugins/manim-live/…`、缓存目录 `~/.dsh/cache/manim-live/`）。**正文一律保留当时的名字不改**——它是按时间写的记录（目录树、路径、命令都是当时的事实）。改名清单与执行见容器根 `_docs/工作文档/manim-live/2026-10-10-01-抽出核心包/`。
+
 把旧黑板里的「Python Manim 源码 → 渲染」拆成一个能独立运行的新插件。供跨会话交接。
 
 ## 文档

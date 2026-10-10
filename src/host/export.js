@@ -17,10 +17,11 @@ import { statSync } from 'node:fs';
 import { copyFile, mkdir, mkdtemp, readdir, realpath, rm, writeFile } from 'node:fs/promises';
 import { homedir, tmpdir } from 'node:os';
 import { basename, dirname, join, sep } from 'node:path';
+import { EXPORT_ROUTE } from '../routes.js';
 import { probeCheck, resolveExecutable } from './environment.js';
 import { sendJson } from './http.js';
 
-const EXPORT_PATH = '/dsh-plugins/manim-renderer/export';
+const EXPORT_PATH = EXPORT_ROUTE;
 
 /** 导出的环境必要条件。LaTeX / dvisvgm 刻意不在内：只有 MathTex / Tex 写法才用得到，普通动画没有它们照样出片。 */
 const REQUIRED_CHECKS = ['python3', 'manim', 'manimModule', 'ffmpeg'];
@@ -331,7 +332,7 @@ export function exportRoute() {
         response.statusCode = 405;
         response.end();
       } catch (error) {
-        console.error(`[manim-renderer] export route failed (${request.url}):`, error);
+        console.error(`[manim-live] export route failed (${request.url}):`, error);
         sendJson(response, 500, { error: error instanceof Error ? error.message : String(error) });
       }
     },

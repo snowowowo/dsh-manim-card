@@ -14,9 +14,10 @@ import { execFile } from 'node:child_process';
 import { accessSync, constants, realpathSync, statSync } from 'node:fs';
 import { homedir } from 'node:os';
 import { delimiter, dirname, join } from 'node:path';
+import { ENVIRONMENT_ROUTE } from '../routes.js';
 import { sendJson } from './http.js';
 
-const ENVIRONMENT_PATH = '/dsh-plugins/manim-renderer/environment';
+const ENVIRONMENT_PATH = ENVIRONMENT_ROUTE;
 
 /** 单条命令的默认超时；`manim` 要 import 整个 Manim，单独放宽。 */
 const DEFAULT_TIMEOUT_MS = 6000;
@@ -228,7 +229,7 @@ export function environmentRoute() {
         }
         sendJson(response, 200, result);
       } catch (error) {
-        console.error(`[manim-renderer] environment route failed (${request.url}):`, error);
+        console.error(`[manim-live] environment route failed (${request.url}):`, error);
         sendJson(response, 500, { error: error instanceof Error ? error.message : String(error) });
       }
     },

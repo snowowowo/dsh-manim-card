@@ -1,4 +1,4 @@
-# manim-renderer — Manim 渲染
+# dsh-manim-live — Manim 渲染
 
 给宿主加一个能力：**AI 在聊天里直接写 Python 的 Manim 代码，当场渲染出画面**。只装这一个插件就能用，不依赖黑板或其他插件。
 
@@ -6,9 +6,9 @@
 
 ## 状态
 
-**进行中**：Python 运行时（`src/core/py/`，Pyodide 执行 + manim 适配层 + 桥，自带测试）、渲染引擎（`src/client/engine/`）、KaTeX 与 Pyodide 资源路由、**聊天卡片**（AI 调 `manim_render` → 聊天流出一张卡；**自动播只发生在「刚生成的那张」**——它第一次进视口正常播一遍，之后重挂载的一律极速落末帧，老会话里的卡根本不跑；播放与画布数量交给一份全页**渲染调度器**：以阅读位置为中心预热 6 张、可见的优先、**滚出视口不拆**（只在画布超上限时收掉离得最远的）、**同一个 step 并行发的几张只真播最后那张**；全页共用一条 Python 队列，不会两张卡抢同一个解释器）、**技能**（`skills/manim-renderer/`，把可用 API、写法边界与**场景模板**讲给模型）与**Host 侧预检**（返回前用空桥干跑一遍，不通过当场回 `error`）都已就位；**随包外的 Python 库按需取**（`import pandas` 这类首次联网取一次、按 sha256 校验后落进 `~/.dsh/cache/manim-renderer/pyodide/`，之后离线命中，取的期间卡片上提示「正在加载 X…」）也已接线；**设置面板**里的「Manim 渲染」一节（**本机环境探测** + **包缓存清单与预缓存**）也已就位，见下。
+**进行中**：Python 运行时（**核心包 `manim-live` 的 `src/py/`**，Pyodide 执行 + manim 适配层 + 桥，自带测试）、渲染引擎（**核心包 `manim-live` 的 `src/engine/`**）、KaTeX 与 Pyodide 资源路由、**聊天卡片**（AI 调 `manim_render` → 聊天流出一张卡；**自动播只发生在「刚生成的那张」**——它第一次进视口正常播一遍，之后重挂载的一律极速落末帧，老会话里的卡根本不跑；播放与画布数量交给一份全页**渲染调度器**：以阅读位置为中心预热 6 张、可见的优先、**滚出视口不拆**（只在画布超上限时收掉离得最远的）、**同一个 step 并行发的几张只真播最后那张**；全页共用一条 Python 队列，不会两张卡抢同一个解释器）、**技能**（`skills/manim-live/`，把可用 API、写法边界与**场景模板**讲给模型）与**Host 侧预检**（返回前用空桥干跑一遍，不通过当场回 `error`）都已就位；**随包外的 Python 库按需取**（`import pandas` 这类首次联网取一次、按 sha256 校验后落进 `~/.dsh/cache/manim-live/pyodide/`，之后离线命中，取的期间卡片上提示「正在加载 X…」）也已接线；**设置面板**里的「Manim 渲染」一节（**本机环境探测** + **包缓存清单与预缓存**）也已就位，见下。
 
-写法上除属性动画 `self.play(m.animate.x(...))`（可链的方法由探针实测 manim-web 的 animate 代理生成，不在表里的当场报错并列出可用项）外，`rate_func=` / `run_time=`、`m[i]` 取段、`m.width` 这类属性读取、`self.clear()` 也都已接线——「这个写法支不支持」的判定与真执行取同一份支持面（`src/core/py/surface.ts`），所以**预检放行的，真桥不会当场拒**。**方法改写**（`surface.ts` 的 `METHOD_REWRITES`）负责「CE 有、manim-web 换了形状」的那批：`set_stroke(color=, width=, opacity=)` → 颜色走**属性写**、`_color` 与 `strokeColor` 各写一份（渲染层读前者、回读走后者，见第六轮第 7 条）、宽 / 透明度走专属 setter——**不能**落 `setStyle`：manim-web 的 set color 存取器会把 fillColor 一起冲掉（见第四轮 (b) 的色板事故）；`set_opacity(x)` → stroke + fill 两个 setter、`put_start_and_end_on(a, b)` → Arrow 走同名方法、Line 走 `setStart` + `setEnd`。物体/动画的归类按 manim-web 的**实测原型链**定，不看 CE 把它挂在哪个模块下（CE 把 `TracedPath` / `AnimatedBoundary` 放在 `animation/` 里，两者其实是物体）；「包住一个物体」的写法（`TracedPath(dot)` / `SurroundingRectangle(text)` / `Union(a, b)` …）也走同一份构造规则。`self.add(...)` 收到动画会当场给出可读报错（校验在 Python 侧，预检也拦得住）。左侧导航「Manim 渲染」是**实验场**（见下节），既是肉眼验收台，也是支持面的计量器。
+写法上除属性动画 `self.play(m.animate.x(...))`（可链的方法由探针实测 manim-web 的 animate 代理生成，不在表里的当场报错并列出可用项）外，`rate_func=` / `run_time=`、`m[i]` 取段、`m.width` 这类属性读取、`self.clear()` 也都已接线——「这个写法支不支持」的判定与真执行取同一份支持面（核心包 `manim-live` 的 `src/py/surface.ts`），所以**预检放行的，真桥不会当场拒**。**方法改写**（`surface.ts` 的 `METHOD_REWRITES`）负责「CE 有、manim-web 换了形状」的那批：`set_stroke(color=, width=, opacity=)` → 颜色走**属性写**、`_color` 与 `strokeColor` 各写一份（渲染层读前者、回读走后者，见第六轮第 7 条）、宽 / 透明度走专属 setter——**不能**落 `setStyle`：manim-web 的 set color 存取器会把 fillColor 一起冲掉（见第四轮 (b) 的色板事故）；`set_opacity(x)` → stroke + fill 两个 setter、`put_start_and_end_on(a, b)` → Arrow 走同名方法、Line 走 `setStart` + `setEnd`。物体/动画的归类按 manim-web 的**实测原型链**定，不看 CE 把它挂在哪个模块下（CE 把 `TracedPath` / `AnimatedBoundary` 放在 `animation/` 里，两者其实是物体）；「包住一个物体」的写法（`TracedPath(dot)` / `SurroundingRectangle(text)` / `Union(a, b)` …）也走同一份构造规则。`self.add(...)` 收到动画会当场给出可读报错（校验在 Python 侧，预检也拦得住）。左侧导航「Manim 渲染」是**实验场**（见下节），既是肉眼验收台，也是支持面的计量器。
 
 顶层设计见 `_docs/工作文档/2026-10-09-01-manim渲染插件/顶层设计.md`。
 
@@ -26,15 +26,15 @@
 
 跑完点「复制结果」，把每条的结果、报错与**所在文件路径**一起带走——拿这份回执就能直接定位到那一个 `.py` 文件。
 
-语料本体是**本仓 `_dev/examples/` 下的完整 Manim 文件**（19 组 / 236 条：离线 221 条 = 178 条应通过 + 43 条应拒绝，其中 1 条标了 `@browser`、Node 套件跳过；另 15 条需联网），独立可跑：
+语料本体是**核心包 `manim-live` 仓里 `_dev/examples/` 下的完整 Manim 文件**（19 组 / 236 条：离线 221 条 = 178 条应通过 + 43 条应拒绝，其中 1 条标了 `@browser`、Node 套件跳过；另 15 条需联网），独立可跑：
 
 ```bash
-manim _dev/examples/basic/01-circle.py CircleScene
+manim ../manim-live/_dev/examples/basic/01-circle.py CircleScene
 ```
 
-**为什么在包外**：这批文件是开发期的回归网（外加讲解模板的出处），不是产品功能——跟着插件发布，等于让每个用户都背上一个只有开发者才用的实验场，还要把上百条源码打进 `client.js`。所以整条链路没有「语料打包」这一步：Host 侧的语料路由（`src/host/corpus.js`）在**运行时**去读那个目录，正式安装里这条路径不存在，实验场自然退化成「自定义代码」。语料根可用环境变量 `MANIM_CORPUS`（绝对路径）覆盖，解析顺序与「谁在读它」都收在 `src/host/corpus.js` 一处（消费者现有四处：页面路由 / Node 回归 / gen-skill / 截图脚本，**不许再有第五处**——各写各的路径必然漂移）。
+**为什么在包外**：这批文件是开发期的回归网（外加讲解模板的出处），不是产品功能——跟着插件发布，等于让每个用户都背上一个只有开发者才用的实验场，还要把上百条源码打进 `client.js`。抽核心包（Phase 1 Step 2）之后它随**运行时**一起搬进了核心包 `manim-live/_dev/examples/`——因为验的正是核心包那条管线。所以整条链路仍然没有「语料打包」这一步：插件 Host 侧的语料路由（`src/host/index.js`）在**运行时**调核心包的 `collectCorpus()`（`manim-live/node`）去读那个目录，正式安装里 `_dev/` 不存在，实验场自然退化成「自定义代码」。语料根可用环境变量 `MANIM_CORPUS`（绝对路径）覆盖，解析顺序与「谁在读它」都收在核心包 `manim-live` 的 `src/testbench/corpus.ts` 一处（消费者现有四处：页面路由 / Node 回归 / gen-skill / 截图脚本，**不许再有第五处**——各写各的路径必然漂移）。
 
-文件即元数据：docstring 第一行是标题，`@expect <一句话>` 是**预期表现**（页面展示、悬停可见，236 条全部已写），`@reject <关键词>` 标记「这条应当被当场拒绝」并钉住报错里必须出现的词，`@note` 写出处，`@template <什么时候照它抄>` 把一条标记成**技能模板**（见下）。目录即分组（目录没在 `corpus.js` 的 `GROUPS` 里登记就报错，免得新加的文件夹被静默漏掉），页面（浏览器）与自动测试（Node）读的是同一批 `.py` 文件，不存在「页面那份和测试那份不一样」。
+文件即元数据：docstring 第一行是标题，`@expect <一句话>` 是**预期表现**（页面展示、悬停可见，236 条全部已写），`@reject <关键词>` 标记「这条应当被当场拒绝」并钉住报错里必须出现的词，`@note` 写出处，`@template <什么时候照它抄>` 把一条标记成**技能模板**（见下）。目录即分组（目录没在核心包 `testbench/corpus.ts` 的 `GROUPS` 里登记就报错，免得新加的文件夹被静默漏掉），页面（浏览器）与自动测试（Node）读的是同一批 `.py` 文件，不存在「页面那份和测试那份不一样」。
 
 分组按「验什么」分层：`basic`–`scene` 八组是**语法与方法面**（构造、方法改写、坐标系、文字、更新器、动画、场景）；`lesson` 是**通用讲解范式**（也是技能模板的出处）；`math-calculus` / `math-linear` / `math-prob` / `math-group` / `math-discrete` 五组是**具体学科的真实讲解画面**（高数 / 线代 / 概率 / 群论 / 离散，各 12 条——泰勒展开、特征向量、正态分布、凯莱图、递归树这类上课真会画的东西）；`syntax` / `api` 是离线兜底（语法综合 + 三态表点名）；`net` / `combo` 需联网；`reject` 验「拒得对」。
 
@@ -116,11 +116,11 @@ manim _dev/examples/basic/01-circle.py CircleScene
 
 ### 第六轮：截图自查——「跑通 ≠ 画对」
 
-上面每一轮的教训都是同一句：**语料套件只回答「跑通了没有」，画得对不对它管不着**——颜色被冲掉、终态落在错处、形状造歪，全部跑到最后一行、退出码 0。所以加了一台**相机**：`scripts/shot-corpus.mjs` 用无头 Chromium 加载与卡片**同源**的整条管线（同一个 `core.js`、同一个 `manim-web.browser.js`、同一套画布调用形状），把可视化语料逐条真渲染、每条落一张 PNG 并量**墨迹占比**（画布上非透明像素的比率，≈0 即整张空白）；`scripts/shot-sheets.py` 再拼成 3×2 对照表，逐条对着 `@expect` 人眼核。跑法：`node scripts/shot-corpus.mjs`（全量离线组）/ `<组名…> --only <子串>`（只截某几条）/ `--probe <某个.py>`（打印 print 输出与场景物体清单，调「画得对不对」用）/ `--realtime`（不压速，核动画过程）/ `--clean`（整目录清空，默认只覆盖同名文件）。
+上面每一轮的教训都是同一句：**语料套件只回答「跑通了没有」，画得对不对它管不着**——颜色被冲掉、终态落在错处、形状造歪，全部跑到最后一行、退出码 0。所以加了一台**相机**：核心包的 `scripts/shot-corpus.mjs` 用无头 Chromium 加载与卡片**同源**的整条管线（同一份核心包产物、同一个 `manim-web.browser.js`、同一套画布调用形状），把可视化语料逐条真渲染、每条落一张 PNG 并量**墨迹占比**（画布上非透明像素的比率，≈0 即整张空白）；核心包的 `scripts/shot-sheets.py` 再拼成 3×2 对照表，逐条对着 `@expect` 人眼核。跑法：`node scripts/shot-corpus.mjs`（全量离线组）/ `<组名…> --only <子串>`（只截某几条）/ `--probe <某个.py>`（打印 print 输出与场景物体清单，调「画得对不对」用）/ `--realtime`（不压速，核动画过程）/ `--clean`（整目录清空，默认只覆盖同名文件）。
 
 ### 第七轮：截图落盘 + 全量布局体检
 
-截图从一次性产物升级成**持久资产**：产物默认落 `_dev/shots/<组>/<同名>.png`（与 `.py` 同名，路径唯一真源是 `corpus.js` 的 `shotPath()`；`MANIM_SHOTS` 可覆盖），每次重截覆盖同名文件——**图永远跟着语料是最新的一版**。Host 把这个目录经 `/dsh-plugins/manim-renderer/shots` 发出来，`collectCorpus()` 给「图真在」的条目带上 `shot` 字段，实验场每条语料的预期条下方直接显示**「上次截图」**：人不用每次重截，切了会话也能直接看这条语料长什么样。图进 git、截图清单（`index.json`）不进。
+截图从一次性产物升级成**持久资产**：产物默认落核心包 `manim-live/_dev/shots/<组>/<同名>.png`（与 `.py` 同名，路径唯一真源是核心包 `testbench/corpus.ts` 的 `shotPath()`；`MANIM_SHOTS` 可覆盖），每次重截覆盖同名文件——**图永远跟着语料是最新的一版**。Host 把这个目录经 `/dsh-plugins/manim-live/shots` 发出来，`collectCorpus()` 给「图真在」的条目带上 `shot` 字段，实验场每条语料的预期条下方直接显示**「上次截图」**：人不用每次重截，切了会话也能直接看这条语料长什么样。图进 git、截图清单（`index.json`）不进。
 
 同一轮做了**全量布局体检**：179 条离线语料逐条截图，六个核图代理对着 `@expect` 看图，抓出约 45 处只在画面上可见的缺陷（物体静默消失、丢填充、跑出画布、标签被盖、公式整条不显示、坐标比例错、数学本身画错），逐条「看 → 改 → 重截 → 再看图」闭环修掉 51 条。体检结论沉淀成 `SKILL.md` 的「布局红线」一章：MathTex 定位只用 `move_to`（包围盒是 KaTeX 异步量出的，`to_edge` / `arrange` 会拿到 NaN 把整条公式挪出画框、退出码 0）、中文不进 MathTex、`\mathbb` / `\mathcal` 不画字形、一个物体只进一个组、高亮别用 `Indicate`、3D 物体默认叠在原点必须逐个 `shift`、`BarChart` 默认摆位偏右上……每一条都是真浏览器截图才抓得到的，Node 回归全绿照样犯。
 
@@ -150,7 +150,7 @@ manim _dev/examples/basic/01-circle.py CircleScene
 
 根因是上游的**子路径记账**：`MathTex` 有两套「子路径长度」——`_baseSubpathLengths`（物体自己的结构）与 `_transformSubpathLengths`（morph 期间被改写成**目标**那套），生效值是**后者 ?? 前者**；morph 收尾时未必把点数摆回与记账同一套，两边一对不上，上游 `alignVmobjectPair` 的第一道对账就抛。两处细节值得记：① **坏的是子物不是顶层**——顶层 `VGroup` 自己压根没有记账（探针只看到 `undefined`），坏的是内部的字形子物，只在顶层查会一路放行；② `VGroup` 对会**跳过 `canMorph` 探针**（那条路认为「按子物配对」必然安全），于是这条路上没有任何一道关拦它——真机上就是这么被骗过去的：预检放行，进去之后才炸。
 
-修法是新模块 `src/core/py/subpath-bookkeeping.ts`，两手都要：**跑之前查**（`subpathTreeConsistent` **走子物**拦——对不上就不 morph、退回交叉淡入淡出），**跑完治**（`healSubpathBookkeeping`——先退回物体自己的基准记账；基准也对不上就**两套一起清**，让上游走 `alignPoints` 兜底。只清基准不够：生效值的 `??` 左边还挂着）。**不能只躲不治**：坏物体还留在场景里，渲染时算子路径朝向用的是同一份记账，照样会抛。回归网分两层：`subpath-bookkeeping.test.ts` 钉**判据本身**（什么时候算对不上、什么时候该治、治完必须自洽），真机验收靠那台真浏览器复现台（最小对照 `w2` 与第二张卡原文都从报错变成正常出画面）。
+修法是核心包的 `src/py/subpath-bookkeeping.ts`，两手都要：**跑之前查**（`subpathTreeConsistent` **走子物**拦——对不上就不 morph、退回交叉淡入淡出），**跑完治**（`healSubpathBookkeeping`——先退回物体自己的基准记账；基准也对不上就**两套一起清**，让上游走 `alignPoints` 兜底。只清基准不够：生效值的 `??` 左边还挂着）。**不能只躲不治**：坏物体还留在场景里，渲染时算子路径朝向用的是同一份记账，照样会抛。回归网分两层：`subpath-bookkeeping.test.ts` 钉**判据本身**（什么时候算对不上、什么时候该治、治完必须自洽），真机验收靠那台真浏览器复现台（最小对照 `w2` 与第二张卡原文都从报错变成正常出画面）。
 
 ### 第八轮：滚出屏幕又重播——从「拆画布」到一份渲染调度器
 
@@ -199,7 +199,7 @@ manim _dev/examples/basic/01-circle.py CircleScene
 - **面板是个可拆的组件**：`ManimSettingsPage` 只收一个 `t`（文案函数）——不读设置面板的 store、不假设自己在哪、不留「关闭」回调。注册只有一行（`client/index.tsx` 里的 `slots.register('settings.section', …)`），以后要把它搬进「学习工作台」那类聚合页，改的就是那一行，面板本身不动。
 - **视觉照抄宿主**：卡片 / 细分隔线 / 状态点 / ⓘ / 输入框都按 `dsh-design-system` 的配方、只用 `--dsw-alias-*` 变量手写（不许 import 宿主的 UI 包），浅色深色两套都成立。版式按宿主「存储」「审计中心」那类页的范式：**外面只留一个分组标签，标题、一行说明与动作键都进卡片头部**（动作是描边的文字键，不用挤在一起的小图标）；清单行内的动作是矮一档的文字键。改动版式后用 `_tmp/selfcheck/`（真组件 + 宿主真主题，按内容列实际 564px 宽）截亮暗两色核对、量行高与头部几何，不靠目测猜。
 
-Host 侧对应五条新路由，全都挂在 `/dsh-plugins/manim-renderer/` 下，成对写在 `src/host/routes.test.ts` 里：
+Host 侧对应五条新路由，全都挂在 `/dsh-plugins/manim-live/` 下，成对写在 `src/host/routes.test.ts` 里：
 
 | 路由 | 方法 | 干什么 |
 |---|---|---|
@@ -238,78 +238,69 @@ Host 侧对应五条新路由，全都挂在 `/dsh-plugins/manim-renderer/` 下�
 
 分两层，别混：
 
-- **语料回归**（覆盖「API 与场景」）：`pnpm --filter manim-renderer test src/core/py/examples.test.ts` 把实验场那批**离线**语料逐条过真管线（真 Pyodide + 真 manim-web；`Scene` 换假画布，只验「收不收、炸不炸」）。**需联网**的那 15 条（`net` 第三方包 / `combo` 多库协同）默认不跑：`MANIM_NET=1 pnpm --filter manim-renderer test:net`（首次会下载几十 MB）。`syntax`（语法综合）与 `api`（API 点名）只用 manim + 随包的 numpy，是离线的，随默认套件跑。
-- **Vitest 逻辑覆盖率**（覆盖「代码」）：`pnpm --filter manim-renderer coverage`。**不测 UI**（`.tsx` 与浏览器渲染胶水不计入分母），只要求**逻辑（非 `.tsx`）语句覆盖 ≥ 80%**——当前实测 **88.9%（1903/2140 语句；同一批文件按行是 90.8%，1641/1807）**；含 UI 的全部文件是 69.5%（行，1647/2369）。UI 改动以真机看几何为准，不写类名 / DOM 形态测试。
+- **语料回归 / 运行时 / 适配层 / 支持面**（**在核心包仓里跑**）：`cd ../manim-live && pnpm test`。当前 **11 文件 / 603 通过 / 15 跳过**。其中语料回归把实验场那批**离线**语料逐条过真管线（真 Pyodide + 真 manim-web；`Scene` 换假画布，只验「收不收、炸不炸」）。**需联网**的那 15 条（`net` 第三方包 / `combo` 多库协同）默认不跑：`MANIM_NET=1 pnpm test:net`（首次会下载几十 MB）。`syntax`（语法综合）与 `api`（API 点名）只用 manim + 随包的 numpy，是离线的，随默认套件跑。
+- **插件这一侧**（**在本仓跑**）：`pnpm test`。当前 **13 文件 / 264 通过 / 2 跳过**。覆盖 Host 工具 / 技能注册 / 各条路由 / 语料装载 / 包清单 / 环境探测 / 导出 / 客户端逻辑（卡片播放判定、渲染调度器、落盘校验）。客户端 **UI 不写测试**。
+- **Vitest 逻辑覆盖率**（覆盖「代码」）：两侧各有 `pnpm coverage`。**不测 UI**（`.tsx` 与浏览器渲染胶水不计入分母），只要求**逻辑（非 `.tsx`）语句覆盖 ≥ 80%**。UI 改动以真机看几何为准，不写类名 / DOM 形态测试。
 
-小费：`coverage` 每次要清自己上一轮的 `coverage/` 输出，本机的安全删除拦截会挡下来，前缀 `CODEBUDDY_SAFE_DELETE_ENABLED=0` 即可（只影响 vitest 的产物目录）。清除「按需取」的三方包缓存不必手删——实验场工具条有「清除缓存」，走 Host 的 `clear-cache` 路由，删的是 `~/.dsh/cache/manim-renderer/pyodide/` 里按需下载的那部分（随包件不在其中）。
+小费：`coverage` 每次要清自己上一轮的 `coverage/` 输出，本机的安全删除拦截会挡下来，前缀 `CODEBUDDY_SAFE_DELETE_ENABLED=0` 即可（只影响 vitest 的产物目录）。清除「按需取」的三方包缓存不必手删——实验场工具条有「清除缓存」，走 Host 的 `clear-cache` 路由，删的是 `~/.dsh/cache/manim-live/pyodide/` 里按需下载的那部分（随包件不在其中）。
 
 ## 结构
 
 ```
 index.js                  Host 侧入口；只 re-export src/host/index.js
-core.js                   Host 侧运行时产物（tools 返回前干跑预检用）
 client.js                 Client 构建产物（随包提交）
-cordis.patch.yml          把插件插进 profile 的 patch
-tsdown.config.ts          构建声明：两个产物（client.js / core.js）
+cordis.patch.yml          把插件插进 profile 的 patch（条目的 id 与入口路径都是 manim-live）
+tsdown.config.ts          构建声明：只有 client.js 一个产物（Host 半边是免构建 JS）
 tsdown.preset.ts          tsdown 客户端预设（每包自带一份，与 dsh-plugin-template 逐字节相同）
 tsconfig.json             类型检查（覆盖 src/）
-_dev/examples/            实验场语料（开发期回归网，**不进发布集**）
 assets/katex/             KaTeX 样式与字体（MathTex 渲染用，由 Host 路由提供）
 assets/pyodide/           Pyodide 发行版随包：核心（asm.js/wasm + stdlib.zip）+ 随包 wheel（numpy / sympy / mpmath）+ 包目录 pyodide-lock.json
-scripts/                  探针与生成器：probe-api.mjs（三态表）、gen-skill.mjs（把 lesson 模板内联进技能）、test-pyodide.mjs（测试用的 Pyodide 装载器）
-skills/manim-renderer/    AI 面向的技能：可用 API 清单 + manim-web 缺失项与替代 + 场景模板 + 纪律
+scripts/gen-skill.mjs     技能文档清单段生成器（跨仓读核心包的语料与三态表）
+skills/manim-live/        AI 面向的技能：可用 API 清单 + manim-web 缺失项与替代 + 场景模板 + 纪律
 
 src/
-├── host/                 Host 半边：manim_render 工具（含干跑预检）+ 技能注册 + 使用指引 + 资源路由 + Node 侧 Pyodide 加载
+├── routes.js             全部八条路由的唯一真源（Host 注册与 Client 请求用同一个值）
+├── host/                 Host 半边（**免构建的原样 JS**）：manim_render 工具（含干跑预检）+ 技能注册 + 使用指引 + 各条路由
 │   ├── index.js          apply 组装：把工具 / 技能 / 指引与各条路由挂上去
-│   ├── assets.js         静态资源路由（katex：路径边界校验 + MIME 直发）
+│   ├── assets.js         静态资源路由（katex / 语料截图：路径边界校验 + MIME 直发）
 │   ├── pyodide.js        Pyodide 资源路由（随包件直发，缺的按需回源 + sha256 校验 + 原子落盘）、包清单与预缓存、清缓存
 │   ├── environment.js    本机环境探测（python3 / manim / manim 模块 / ffmpeg / latex / dvisvgm）
-│   ├── corpus.js         实验场语料读取（包外 `_dev/examples/`；正式安装里是空表）
+│   ├── export.js         导出视频：本机 manim CLI 真渲染 mp4（就绪结论 + 真渲染 + 在文件浏览器里定位）
 │   ├── http.js           路由共用的小工具：sendJson / readJsonBody
 │   └── routes.test.ts    路由测试（含 405 / 404 / 坏正文 / sha256 不符 / 取包失败即停）
-├── client/               浏览器半边（打包进 client.js）
-│   ├── index.tsx         入口：locale / 样式接线 + 对外服务 + slot 注册（导航项 / 整页 / 聊天卡片 / **设置面板一节**）
-│   ├── service.ts        对外服务 `manim`：check（干跑预检）+ createSurface（一块画布）
-│   ├── definition.ts     聊天卡片的会话折叠定义（tool/call → 卡片节点；顺带读 `live`＝这张卡刚生成出来的、`interrupted`＝这次调用被中断、`stepKey`/`seq`＝这张卡属于哪一批（同一个 step）——`live` 靠模块级 `bornLive` 记住「见过一次 `open`」，见第七轮 (a)）
-│   ├── render-queue.ts   渲染调度器（全页一份）：阅读位置 + 6 张预热窗口 / 优先级 / 画布上限 8 张 / 同一批只由代表播 + render-queue.test.ts。判据纯逻辑、时钟可注入，见第八轮
-│   ├── components/       卡片与页面零件：card.tsx（画布 + 手动播放 ⏯ + 查看代码，聊天与实验场共用；`decidePlay` 钉播放规则 + `spent` 记「机会用掉没有」+ 骨架屏 + card.rules.test.ts）、code-view.tsx、segmented.tsx（视图切换，照抄宿主分段控件）、tip.tsx（悬浮提示）
-│   ├── page.tsx          实验场：语料实验场 / 自定义代码两个视图（分段切换），左栏清单 + 工具条，右栏预览
-│   ├── settings.tsx      设置面板「Manim 渲染」一节：本机环境 + 包缓存（可拆的纯组件，只收 `t`）
-│   ├── packages.ts       包清单 / 依赖闭包 / 取包 / 清缓存（设置页与实验场共用这一层）
-│   ├── environment.ts    本机环境探测的取数与响应解析
-│   ├── storage.ts        实验场状态落盘（结果 / 极速开关 / 代码 / 视图），读时逐字段校验
-│   ├── clipboard.ts      剪贴板（clipboard API + execCommand 兜底）与「已复制」反馈
-│   ├── code-highlight.ts shiki 高亮（自装，颜色走宿主 --shiki-* 变量）
-│   ├── navicon.tsx       导航图标
-│   ├── i18n.ts           文案与命名空间
-│   ├── styles.css        皮肤（只引 --dsw-* token）
-│   └── engine/           渲染引擎：library（懒加载）/ canvas（画布）/ renderer（Surface）/ pyodide（运行时加载）
-└── core/                 两侧共享的纯逻辑（不碰 DOM、不碰 Node API）
-    ├── index.ts          Host 侧门面（core.js 入口）：只暴露 py/ 的能力
-    ├── py/               Python 运行时链
-    │   ├── runtime.ts    Pyodide 装载（加载器由两端注入）+ **全页一条执行队列** + 执行 + 错误归一（PyRuntimeError / PyRunCancelled）
-    │   ├── pkg-names.ts  包名归一化（两端共用：lock 里三种写法混用，见设置页那节）
-    │   ├── manim-shim.ts Python 侧 manim 适配层源码（按 api-map 生成别名 / 属性读取 / 下标取段）+ construct 的 async 改写
-    │   ├── bridge.ts     Python 适配层 ↔ 桥实现的契约（ManimBridge / AnimationSpec / 线格式）
-    │   ├── surface.ts    支持面 SSOT：三态表 + 构造规则 + 判定（plan*）——预检与真桥的唯一同源
-    │   ├── manim-bridge.ts  真桥：动作落到真 manim-web 对象（含极速模式：压缩时长 + 推进 updater）
-    │   ├── subpath-bookkeeping.ts  子路径记账的自检与治疗（上游 morph 会留下坏记账：同一个 MathTex 连 morph 两次必炸，见第七轮 (b)）+ subpath-bookkeeping.test.ts
-    │   ├── dry-run-bridge.ts Host 预检用空桥：只查缺失项、不渲染
-    │   ├── examples.ts   语料**接口**（类型 + `parseCorpus` 边界校验）；本体是 `_dev/examples/` 下的 .py，运行时由 Host 路由读取
-    │   ├── examples.test.ts  语料回归：逐条过真管线（离线全跑，联网组见 MANIM_NET）
-    │   └── api-map.generated.ts  探针实测的三态表（ok / alias / missing）
+└── client/               浏览器半边（打包进 client.js）
+    ├── index.tsx         入口：locale / 样式接线 + 对外服务 + slot 注册（导航项 / 整页 / 聊天卡片 / 设置面板一节）
+    ├── service.ts        对外服务 `manim`：核心包 `createManimRenderer` 的薄封装 + 模块级单例（卸载时 dispose）
+    ├── definition.ts     聊天卡片的会话折叠定义（tool/call → 卡片节点；顺带读 `live`＝这张卡刚生成出来的、`interrupted`＝这次调用被中断、`stepKey`/`seq`＝这张卡属于哪一批（同一个 step））
+    ├── render-queue.ts   渲染调度器（全页一份）：阅读位置 + 6 张预热窗口 / 优先级 / 画布上限 8 张 / 同一批只由代表播
+    ├── components/       卡片与页面零件：card.tsx（画布 + 手动播放 ⏯ + 查看代码，聊天与实验场共用）、code-view.tsx、segmented.tsx、tip.tsx
+    ├── page.tsx          实验场：语料实验场 / 自定义代码两个视图（分段切换），左栏清单 + 工具条，右栏预览
+    ├── settings.tsx      设置面板「Manim 渲染」一节：本机环境 + 包缓存（可拆的纯组件，只收 `t`）
+    ├── corpus.ts         语料取数（`parseCorpus` / `Corpus` 从核心包取；地址从 `src/routes.js` 取）
+    ├── packages.ts       包清单 / 依赖闭包 / 取包 / 清缓存（设置页与实验场共用这一层）
+    ├── environment.ts    本机环境探测的取数与响应解析
+    ├── export.ts         导出视频的取数与响应解析
+    ├── storage.ts        实验场状态落盘（结果 / 极速开关 / 代码 / 视图 + 人工标注 + 导出记录），读时逐字段校验
+    ├── clipboard.ts      剪贴板（clipboard API + execCommand 兜底）与「已复制」反馈
+    ├── code-highlight.ts shiki 高亮（自装，颜色走宿主 --shiki-* 变量）
+    ├── navicon.tsx       导航图标
+    ├── i18n.ts           文案与命名空间
+    └── styles.css        皮肤（只引 --dsw-* token）
 ```
 
-三分区是硬约定：新增源码文件必须能归入 host / client / core 之一；`core` 下按能力再分子目录（`py` 是能力名）。
+**运行时 / 适配层 / 渲染引擎 / 语料 / 支持面都不在本仓**——它们在核心包 `manim-live`（`src/py/` 运行时链、`src/engine/` 渲染机制、`src/testbench/` 测试台逻辑、`_dev/examples/` 语料与截图）。本仓只剩两件事：**DSH 侧的接线（`src/host/`）+ 本插件自己的 UI（`src/client/`）**，外加一份 `src/routes.js`（八条路由地址的唯一真源）。这是 Phase 1 抽包的结论，见 `_docs/工作文档/manim-live/2026-10-10-01-抽出核心包/`。
+
+**注意 `src/host/**` 是免构建的原样 JS**：改它不用 `pnpm build`，宿主的热重载直接生效；只有 `src/client/**` 要打包成 `client.js`。
 
 ## 运行时
 
-`src/core/py/` 是本包的核心：**用真 Python（[Pyodide](https://pyodide.org/)，CPython 编译成 WASM）执行 AI 写的 Manim Python**，而不是自己手写 Python→JS 转译器、也不是手写 numpy 子集。原因是任何「手写子集」都是撞到才补，语法与库的缺口永远补不完——换成真 CPython 之后，numpy 就是 numpy 本身。链路是三段：
+核心包 `manim-live` 的 `src/py/` 是这套东西的核心：**用真 Python（[Pyodide](https://pyodide.org/)，CPython 编译成 WASM）执行 AI 写的 Manim Python**，而不是自己手写 Python→JS 转译器、也不是手写 numpy 子集。原因是任何「手写子集」都是撞到才补，语法与库的缺口永远补不完——换成真 CPython 之后，numpy 就是 numpy 本身。链路是三段：
 
 1. Pyodide 执行用户代码；`from manim import *` 加载我们内嵌的 Python 适配层（`manim-shim.ts`）。
 2. 适配层里每个图形 / 动画 / 方法调用，都转发到若干 `_mb_*` 内置函数。
 3. 这些内置函数调 `ManimBridge` 接口——浏览器里接**真桥**（落到 manim-web 对象），Host 预检时接**空桥**（只做缺失项检查）。
+
+> 本节提到的 `runtime.ts` / `manim-shim.ts` / `manim-bridge.ts` / `dry-run-bridge.ts` / `subpath-bookkeeping.ts` / `surface.ts` 都在**核心包 `manim-live` 的 `src/py/`**（`renderer.ts`、`canvas.ts`、`library.ts` 在 `src/engine/`）——Phase 1 抽包时整块搬走，本仓一行不留。
 
 一处与 Skulpt 的关键差异：CPython 没法在同步函数中途让出控制权去等渲染完成，所以 `construct` 会被 `ast` 改写成 `async def`、其中的 `play` / `wait` 补上 `await`（不是正则替换，走真语法树），再由 `runPythonAsync` 的顶层 `await` 驱动。因此**每个 `Scene.play()` 都是等一下播完才往下走**，与标准 Manim 的直觉一致。
 
@@ -320,11 +311,11 @@ Pyodide 与随包 wheel 放在 `assets/pyodide/`：Client 走 Host 的 prefix �
 **其余第三方库按需取**，两层协作：
 
 - **认**：`runPython` 每次执行前先用 Pyodide 的 `loadPackagesFromImports` 扫一遍源码里的 `import`，缺什么取什么（它认得 `from manim import *` 与标准库，不会误取——`manim` 那行每段场景都有，误判会让所有场景卡在取包阶段）。取的进展回调给卡片显示「正在加载 X…」，随包件与缓存命中都不经过这一步，所以不会闪提示。
-- **取**：浏览器侧 Pyodide **只从 `indexURL` 读**——源码里 Node 侧缺包会回落官方 CDN，浏览器侧**不会**（实测确认），所以取包的唯一通道就是 Host 那条资源路由。路由按「**随包目录 → 用户缓存目录 → 回源下载**」三级找；前两级都没有，才从 Pyodide 官方发行通道（`cdn.jsdelivr.net/pyodide/v0.27.7/full/`）下载，按 `pyodide-lock.json` 里的 sha256 校验后**原子写进用户缓存目录**（先写 `.part` 再改名，中途失败不留半截文件）。缓存目录是 **`~/.dsh/cache/manim-renderer/pyodide/`**——跟随宿主的 `dshHomePath`（与附件 `cache/attachments` 同一条规则），磁盘持久、之后离线也命中，用户能看能删；**绝不写进插件目录**（那是随包产物，还可能是软链出去的仓库）。取包失败**不 reject**、只走 errorCallback，所以 `runtime.ts` 把成对的英文行（`The following error occurred while loading scipy:` + 原因）拼成一句人话（含「首次用到需要联网取一次」这层信息）再抛 `PyRuntimeError`。
+- **取**：浏览器侧 Pyodide **只从 `indexURL` 读**——源码里 Node 侧缺包会回落官方 CDN，浏览器侧**不会**（实测确认），所以取包的唯一通道就是 Host 那条资源路由。路由按「**随包目录 → 用户缓存目录 → 回源下载**」三级找；前两级都没有，才从 Pyodide 官方发行通道（`cdn.jsdelivr.net/pyodide/v0.27.7/full/`）下载，按 `pyodide-lock.json` 里的 sha256 校验后**原子写进用户缓存目录**（先写 `.part` 再改名，中途失败不留半截文件）。缓存目录是 **`~/.dsh/cache/manim-live/pyodide/`**——跟随宿主的 `dshHomePath`（与附件 `cache/attachments` 同一条规则），磁盘持久、之后离线也命中，用户能看能删；**绝不写进插件目录**（那是随包产物，还可能是软链出去的仓库）。取包失败**不 reject**、只走 errorCallback，所以 `runtime.ts` 把成对的英文行（`The following error occurred while loading scipy:` + 原因）拼成一句人话（含「首次用到需要联网取一次」这层信息）再抛 `PyRuntimeError`。
 
 `assets/pyodide/pyodide-lock.json` 是 Pyodide 的**官方包目录**（351 项）：既是「Pyodide 有哪些包」的清单，也是**回源下载时文件名与 sha256 的唯一依据**——不另写一份包清单，随包件与按需件的校验都从这一处取。要让某个包变成随包件，只需把它的 wheel（及其依赖）放进 `assets/pyodide/`，`loadPackage` 就找得到。
 
-`api-map.generated.ts` 由 `scripts/probe-api.mjs` 对 manim-web 逐项实测生成（事实来源是 manim-web 本身），适配层据此自动生成类 / 动画别名，避免手抄漂移。
+核心包的 `api-map.generated.ts` 由核心包的 `scripts/probe-api.mjs` 对 manim-web 逐项实测生成（事实来源是 manim-web 本身），适配层据此自动生成类 / 动画别名，避免手抄漂移。
 
 ## 边界
 

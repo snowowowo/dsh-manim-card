@@ -17,10 +17,5 @@ _tmp/
 _tmp_*
 _tmp-*
 
-# 探针的构建期 Python 环境（scripts/probe-requirements.txt 用）
+# 探针的构建期 Python 环境（核心包 `manim-live` 的 scripts/probe-requirements.txt 用）
 .venv-probe/
-
-# 语料截图的上一次运行清单：图本身要进库（实验场页面靠它显示「上次截图」），
-# 但这份清单每跑一次全量就整体重写，进库只会天天刷屏。
-_dev/shots/index.json
-_dev/shots/*.json

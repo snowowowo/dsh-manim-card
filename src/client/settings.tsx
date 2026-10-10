@@ -113,7 +113,7 @@ function EnvCard({ t }: { t: Translate }) {
       try {
         result = await probeEnv(check.id)
       } catch (error) {
-        console.error(`[manim-renderer] 探测 ${check.id} 失败：`, error)
+        console.error(`[manim-live] 探测 ${check.id} 失败：`, error)
         result = { id: check.id, status: 'error', path: null, version: '', detail: error instanceof Error ? error.message : String(error) }
       }
       if (!alive.current) return
@@ -131,7 +131,7 @@ function EnvCard({ t }: { t: Translate }) {
       setPlan(next)
       void run(next)
     } catch (error) {
-      console.error('[manim-renderer] 取环境探测计划失败：', error)
+      console.error('[manim-live] 取环境探测计划失败：', error)
       if (alive.current) setFailure(error instanceof Error ? error.message : String(error))
     }
   }, [run])
@@ -257,7 +257,7 @@ function PackagesCard({ t }: { t: Translate }) {
       setInventory(next)
       setFailure(null)
     } catch (error) {
-      console.error('[manim-renderer] 取包清单失败：', error)
+      console.error('[manim-live] 取包清单失败：', error)
       if (alive.current) setFailure(error instanceof Error ? error.message : String(error))
     }
   }, [])
@@ -373,7 +373,7 @@ function PackagesCard({ t }: { t: Translate }) {
       if (!alive.current) return
       setNote(t('pkgCleared', { name }))
     } catch (error) {
-      console.error(`[manim-renderer] 清理 ${name} 失败：`, error)
+      console.error(`[manim-live] 清理 ${name} 失败：`, error)
       if (alive.current) setNote(t('pkgClearFailed', { name, error: error instanceof Error ? error.message : String(error) }))
     }
     if (!alive.current) return
