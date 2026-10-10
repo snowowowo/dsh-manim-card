@@ -78,14 +78,38 @@ export async function requestExport(python: string): Promise<ExportResult> {
 /**
  * 在系统的文件浏览器里定位导出的文件（macOS 是 Finder 里选中它）。
  * Host 只认导出目录（「下载」）里的文件，越界会回 `ok:false` 与原因——那不是错误，是拒绝。
+ * `checkOnly` 只问「还在不在」，不打开：恢复上次导出记录时用它核对，免得拿一条早已失效的路径当真。
  */
-export async function revealExport(path: string): Promise<{ ok: boolean; error: string }> {
+export async function revealExport(path: string, { checkOnly = false } = {}): Promise<RevealResult> {
   const response = await fetch(`${EXPORT_URL}/reveal`, {
     method: 'POST',
     headers: { 'content-type': 'application/json' },
-    body: JSON.stringify({ path }),
+    body: JSON.stringify({ path, checkOnly }),
   })
   if (!response.ok) throw new Error(`HTTP ${response.status}`)
-  const value = (await response.json()) as Record<string, unknown>
-  return { ok: value.ok === true, error: text(value.error) }
+  return parseReveal(await response.json())
+}
+
+export type RevealCode = '' | 'missing' | 'outside' | 'failed'
+
+export interface RevealResult {
+  ok: boolean
+  /** 失败原因（机器可读）：文件不在了 / 越出导出目录 / 命令跑失败。 */
+  code: RevealCode
+  error: string
+}
+
+/** 定位结果；形状不对按「命令跑失败」处理（宁可说失败，也不谎称文件还在）。 */
+export function parseReveal(payload: unknown): RevealResult {
+  if (payload === null || typeof payload !== 'object') return { ok: false, code: 'failed', error: '' }
+  const value = payload as Record<string, unknown>
+  const ok = value.ok === true
+  const raw = value.code
+  const code = raw === 'missing' || raw === 'outside' || raw === 'failed' ? raw : ''
+  return {
+    ok,
+    // 失败却没带认得的原因时归到 failed：页面文案才有确定落点，不必去猜空原因该说哪句
+    code: !ok && code === '' ? 'failed' : code,
+    error: text(value.error),
+  }
 }

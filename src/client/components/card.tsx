@@ -2,12 +2,12 @@
 // 聊天流是虚拟滚动的（滚出即卸载、滚回即重挂），把画布生命周期绑到视口上，
 // WebGL 上下文就只覆盖"当前可见的那几张卡"，不会随历史卡片累积。
 import { useEffect, useRef, useState, type ReactNode } from 'react'
-import { CircleCheck, CircleX, Copy, CodeXml, Download, FolderOpen, RotateCcw } from 'lucide-react'
+import { CircleCheck, CircleX, CodeXml, Download, RotateCcw } from 'lucide-react'
 import { createSurface, type Surface } from '../engine/renderer'
 import type { ManimCardData } from '../definition'
 import type { Translate } from '../i18n'
 import { loadExportReadiness, requestExport, revealExport, type ExportReadiness } from '../export'
-import { useCopied } from '../clipboard'
+import { loadExports, rememberExport } from '../storage'
 import { CodeView } from './code-view'
 import { Tip } from './tip'
 
@@ -86,7 +86,6 @@ export function ManimCard({ data, t, label, onResult, autoStart, fast }: {
   const [readiness, setReadiness] = useState<ExportReadiness | null>(null)
   const [exporting, setExporting] = useState(false)
   const [exportNote, setExportNote] = useState<{ ok: boolean; text: string; path?: string } | null>(null)
-  const [copiedPath, copyPath] = useCopied()
   const empty = data.python.trim().length === 0
   // Host 已先预检过一遍：ok:false 表示代码没过预检，卡片只显示错误、不再起画布重跑。
   const rejected = data.feedback !== undefined && !data.feedback.ok
@@ -126,6 +125,29 @@ export function ManimCard({ data, t, label, onResult, autoStart, fast }: {
     }
   }, [])
 
+  // 上次导出过什么：卡片滚出视口就被卸载、滚回来是全新挂载（见 top 注），
+  // 组件里的状态活不过那一趟——所以记录跟着 callId 落在 localStorage 里，挂载时捡回来。
+  // 捡回来先只当「线索」：顺手问一下 Host 文件还在不在（不打开、不跑任何系统命令），
+  // 不在了就把那条回执降级——拿一条早就失效的路径当真，比不显示更糟。
+  useEffect(() => {
+    const record = loadExports()[data.callId]
+    if (record === undefined) return
+    let alive = true
+    setExportNote({ ok: true, text: t('exportDone', { path: record.file }), path: record.file })
+    revealExport(record.file, { checkOnly: true })
+      .then((result) => {
+        if (!alive || result.ok || result.code !== 'missing') return
+        setExportNote({ ok: false, text: t('exportGone', { path: record.file }) })
+      })
+      .catch((error) => {
+        // 问不到（Host 没起来之类）就不动它：宁可留一条可能过期的线索，也别误报成「文件没了」
+        console.error('[manim-renderer] export record check failed:', error)
+      })
+    return () => {
+      alive = false
+    }
+  }, [data.callId, t])
+
   const doExport = (): void => {
     if (exporting || !ready) return
     setExporting(true)
@@ -134,6 +156,7 @@ export function ManimCard({ data, t, label, onResult, autoStart, fast }: {
       .then((result) => {
         if (result.ok) {
           setExportNote({ ok: true, text: t('exportDone', { path: result.file }), path: result.file })
+          rememberExport(data.callId, result.file)
         } else {
           const error = result.reason === 'environment'
             ? missingNames(result.missing ?? [], t)
@@ -154,7 +177,13 @@ export function ManimCard({ data, t, label, onResult, autoStart, fast }: {
     if (file === undefined) return
     revealExport(file)
       .then((result) => {
-        if (!result.ok) setExportNote({ ok: false, text: t('revealFailed', { error: result.error }) })
+        if (result.ok) return
+        setExportNote({
+          ok: false,
+          text: result.code === 'missing'
+            ? t('exportGone', { path: file })
+            : t('revealFailed', { error: result.error }),
+        })
       })
       .catch((error) => {
         console.error('[manim-renderer] reveal failed:', error)
@@ -349,7 +378,9 @@ export function ManimCard({ data, t, label, onResult, autoStart, fast }: {
           {exporting && <FootRow tone="busy" role="status">{t('exportBusy')}</FootRow>}
           {!exporting && exportNote !== null && (exportNote.ok && exportNote.path !== undefined ? (
             <FootRow tone="ok" role="status">
-              {/* 路径本身就是「在文件夹中显示」的入口：悬浮给气泡、点击在文件浏览器里选中它 */}
+              {/* 路径本身就是唯一的入口：悬浮出气泡、点击在文件浏览器里选中它。
+                  旁边不再放「复制 / 打开文件夹」两个键——那是同一个动作的第三、第四个说法，
+                  悬停已经说清楚了。 */}
               <Tip label={t('revealHint')} align="start" className="mr-chatcard-pathwrap">
                 <button
                   type="button"
@@ -357,26 +388,6 @@ export function ManimCard({ data, t, label, onResult, autoStart, fast }: {
                   onClick={showInFolder}
                 >
                   {exportNote.text}
-                </button>
-              </Tip>
-              <Tip label={copiedPath ? t('copied') : t('copyPath')} align="end">
-                <button
-                  className="mr-iconbtn mr-iconbtn-xs"
-                  type="button"
-                  aria-label={t('copyPath')}
-                  onClick={() => copyPath(exportNote.path ?? '')}
-                >
-                  <Copy size={13} strokeWidth={1.6} />
-                </button>
-              </Tip>
-              <Tip label={t('revealHint')} align="end">
-                <button
-                  className="mr-iconbtn mr-iconbtn-xs"
-                  type="button"
-                  aria-label={t('revealHint')}
-                  onClick={showInFolder}
-                >
-                  <FolderOpen size={13} strokeWidth={1.6} />
                 </button>
               </Tip>
             </FootRow>

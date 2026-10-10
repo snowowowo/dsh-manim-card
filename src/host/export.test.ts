@@ -399,6 +399,7 @@ describe('在文件浏览器里定位导出文件', () => {
     try {
       const result = await revealExportedFile(file, { run })
       expect(result.ok).toBe(false)
+      expect(result.code).toBe('outside')
       expect(result.error).toContain('只能打开导出目录里的文件')
       expect(calls).toEqual([]) // 拒绝了就一条命令都不许跑
     } finally {
@@ -410,12 +411,34 @@ describe('在文件浏览器里定位导出文件', () => {
     const { run } = spyRunner()
     const result = await revealExportedFile(join(downloads, 'gone.mp4'), { run })
     expect(result.ok).toBe(false)
+    expect(result.code).toBe('missing')
     expect(result.error).toContain('文件不在了')
   })
 
   it('空路径当场拒', async () => {
     const { run } = spyRunner()
-    expect(await revealExportedFile('', { run })).toMatchObject({ ok: false })
+    expect(await revealExportedFile('', { run })).toMatchObject({ ok: false, code: 'missing' })
+  })
+
+  it('checkOnly 只回答在不在：一条系统命令都不跑（恢复导出记录时用它核对）', async () => {
+    const file = join(downloads, 'manim-Demo-20261010T100000.mp4')
+    writeFileSync(file, 'mp4-bytes')
+    const { calls, run } = spyRunner()
+    expect(await revealExportedFile(file, { run, checkOnly: true })).toMatchObject({ ok: true })
+    expect(calls).toEqual([])
+    // 不在的文件同样给 missing，且照样不跑命令
+    expect(await revealExportedFile(join(downloads, 'gone.mp4'), { run, checkOnly: true }))
+      .toMatchObject({ ok: false, code: 'missing' })
+    expect(calls).toEqual([])
+  })
+
+  it('命令跑失败：code 是 failed，带回它自己的报错', async () => {
+    const file = join(downloads, 'manim-Demo-20261010T100000.mp4')
+    writeFileSync(file, 'mp4-bytes')
+    const run = () => Promise.resolve({ error: new Error('spawn failed'), stdout: '', stderr: 'nope' })
+    const result = await revealExportedFile(file, { run })
+    expect(result).toMatchObject({ ok: false, code: 'failed' })
+    expect(result.error).toContain('nope')
   })
 
   it('HTTP 面：POST /export/reveal 越界回 ok:false（200 的业务拒绝，不是 5xx）', async () => {

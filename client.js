@@ -297,16 +297,6 @@ window.__ModuleLoader__.load({
 		* This source code is licensed under the ISC license.
 		* See the LICENSE file in the root directory of this source tree.
 		*/
-		const FolderOpen = createLucideIcon("folder-open", [["path", {
-			d: "m6 14 1.5-2.9A2 2 0 0 1 9.24 10H20a2 2 0 0 1 1.94 2.5l-1.54 6a2 2 0 0 1-1.95 1.5H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h3.9a2 2 0 0 1 1.69.9l.81 1.2a2 2 0 0 0 1.67.9H18a2 2 0 0 1 2 2v2",
-			key: "usdka0"
-		}]]);
-		/**
-		* @license lucide-react v0.548.0 - ISC
-		*
-		* This source code is licensed under the ISC license.
-		* See the LICENSE file in the root directory of this source tree.
-		*/
 		const Info$2 = createLucideIcon("info", [
 			["circle", {
 				cx: "12",
@@ -160966,60 +160956,169 @@ void main() {
 		/**
 		* 在系统的文件浏览器里定位导出的文件（macOS 是 Finder 里选中它）。
 		* Host 只认导出目录（「下载」）里的文件，越界会回 `ok:false` 与原因——那不是错误，是拒绝。
+		* `checkOnly` 只问「还在不在」，不打开：恢复上次导出记录时用它核对，免得拿一条早已失效的路径当真。
 		*/
-		async function revealExport(path) {
+		async function revealExport(path, { checkOnly = false } = {}) {
 			const response = await fetch(`${EXPORT_URL}/reveal`, {
 				method: "POST",
 				headers: { "content-type": "application/json" },
-				body: JSON.stringify({ path })
+				body: JSON.stringify({
+					path,
+					checkOnly
+				})
 			});
 			if (!response.ok) throw new Error(`HTTP ${response.status}`);
-			const value = await response.json();
+			return parseReveal(await response.json());
+		}
+		/** 定位结果；形状不对按「命令跑失败」处理（宁可说失败，也不谎称文件还在）。 */
+		function parseReveal(payload) {
+			if (payload === null || typeof payload !== "object") return {
+				ok: false,
+				code: "failed",
+				error: ""
+			};
+			const value = payload;
+			const ok = value.ok === true;
+			const raw = value.code;
+			const code = raw === "missing" || raw === "outside" || raw === "failed" ? raw : "";
 			return {
-				ok: value.ok === true,
+				ok,
+				code: !ok && code === "" ? "failed" : code,
 				error: text$2(value.error)
 			};
 		}
 		//#endregion
-		//#region src/client/clipboard.ts
-		async function copyText(text) {
+		//#region src/client/storage.ts
+		const KEY = "manim-renderer.ground.v1";
+		/** 一条结果必须是 `{ ok: boolean, text: string }`；其余形状丢掉。 */
+		function readResult(value) {
+			if (value === null || typeof value !== "object") return null;
+			const bag = value;
+			if (typeof bag.ok !== "boolean" || typeof bag.text !== "string") return null;
+			return {
+				ok: bag.ok,
+				text: bag.text
+			};
+		}
+		/** 读回已保存的部分状态；没存过或存坏了都给空对象（调用方各自取默认值）。 */
+		function loadGround() {
 			try {
-				await navigator.clipboard.writeText(text);
-				return true;
-			} catch (error) {
-				try {
-					const area = document.createElement("textarea");
-					area.value = text;
-					area.style.position = "fixed";
-					area.style.opacity = "0";
-					document.body.append(area);
-					area.select();
-					const ok = document.execCommand("copy");
-					area.remove();
-					if (!ok) console.error("[manim-renderer] execCommand 复制失败:", error);
-					return ok;
-				} catch (fallbackError) {
-					console.error("[manim-renderer] copy failed:", fallbackError);
-					return false;
+				const raw = window.localStorage.getItem(KEY);
+				if (raw === null) return {};
+				const parsed = JSON.parse(raw);
+				if (parsed === null || typeof parsed !== "object") return {};
+				const bag = parsed;
+				const out = {};
+				if (bag.results !== null && typeof bag.results === "object") {
+					const results = {};
+					for (const [id, value] of Object.entries(bag.results)) {
+						const result = readResult(value);
+						if (result !== null) results[id] = result;
+					}
+					out.results = results;
 				}
+				if (typeof bag.fast === "boolean") out.fast = bag.fast;
+				if (typeof bag.source === "string") out.source = bag.source;
+				if (bag.mode === "examples" || bag.mode === "free") out.mode = bag.mode;
+				return out;
+			} catch (error) {
+				console.error("[manim-renderer] 读取实验场记录失败:", error);
+				return {};
 			}
 		}
-		/** 复制并给出 1.2 秒的「已复制」反馈：返回 [是否刚复制, 触发复制]。 */
-		function useCopied() {
-			const [copied, setCopied] = (0, react.useState)(false);
-			const timer = (0, react.useRef)(null);
-			(0, react.useEffect)(() => () => {
-				if (timer.current !== null) window.clearTimeout(timer.current);
-			}, []);
-			const copy = (text) => {
-				copyText(text).then((ok) => {
-					if (!ok) return;
-					setCopied(true);
-					if (timer.current !== null) window.clearTimeout(timer.current);
-					timer.current = window.setTimeout(() => setCopied(false), 1200);
-				});
-			};
-			return [copied, copy];
+		function saveGround(state) {
+			try {
+				window.localStorage.setItem(KEY, JSON.stringify(state));
+			} catch (error) {
+				console.error("[manim-renderer] 保存实验场记录失败:", error);
+			}
+		}
+		function clearGround() {
+			try {
+				window.localStorage.removeItem(KEY);
+			} catch (error) {
+				console.error("[manim-renderer] 清除实验场记录失败:", error);
+			}
+		}
+		const MARKS_KEY = "manim-renderer.marks.v1";
+		function loadMarks() {
+			try {
+				const raw = window.localStorage.getItem(MARKS_KEY);
+				if (raw === null) return {};
+				const parsed = JSON.parse(raw);
+				if (parsed === null || typeof parsed !== "object") return {};
+				const out = {};
+				for (const [id, value] of Object.entries(parsed)) if (value === "pass" || value === "fail") out[id] = value;
+				return out;
+			} catch (error) {
+				console.error("[manim-renderer] 读取人工标注失败:", error);
+				return {};
+			}
+		}
+		function saveMarks(marks) {
+			try {
+				window.localStorage.setItem(MARKS_KEY, JSON.stringify(marks));
+			} catch (error) {
+				console.error("[manim-renderer] 保存人工标注失败:", error);
+			}
+		}
+		/** 只清人工标注——自动渲染结果不动。 */
+		function clearMarks() {
+			try {
+				window.localStorage.removeItem(MARKS_KEY);
+			} catch (error) {
+				console.error("[manim-renderer] 清除人工标注失败:", error);
+			}
+		}
+		const EXPORTS_KEY = "manim-renderer.exports.v1";
+		/** 记录条数上限：够回过头找最近导出的一批，又不会在实验场里越长越肥。 */
+		const EXPORTS_LIMIT = 50;
+		function loadExports() {
+			try {
+				const raw = window.localStorage.getItem(EXPORTS_KEY);
+				if (raw === null) return {};
+				const parsed = JSON.parse(raw);
+				if (parsed === null || typeof parsed !== "object") return {};
+				const out = {};
+				for (const [callId, value] of Object.entries(parsed)) {
+					if (value === null || typeof value !== "object") continue;
+					const bag = value;
+					if (typeof bag.file !== "string" || bag.file.length === 0) continue;
+					if (typeof bag.at !== "number" || !Number.isFinite(bag.at)) continue;
+					out[callId] = {
+						file: bag.file,
+						at: bag.at
+					};
+				}
+				return out;
+			} catch (error) {
+				console.error("[manim-renderer] 读取导出记录失败:", error);
+				return {};
+			}
+		}
+		/**
+		* 记一条导出（同一张卡再导出就覆盖），并按时间裁到上限。
+		*
+		* 时间戳**单调递增**：同一毫秒里连写多条时，`Date.now()` 会给出相同的值，
+		* 「保留最近 50 条」就变成了一道没有正确答案的题（实测：连写 60 条的测试因此间歇性变红，
+		* 而且剪枝后存回去的顺序是「新→旧」，靠插入下标兜底会越兜越错）。所以新记录取
+		* `max(现在, 已存的最大值 + 1)`——真实场景里每条本来就隔着好几秒，这么写不影响任何行为，
+		* 却让「谁更新」在任何时候都有确定答案。
+		*/
+		function rememberExport(callId, file) {
+			if (callId.length === 0 || file.length === 0) return;
+			try {
+				const records = loadExports();
+				const newest = Object.values(records).reduce((max, record) => Math.max(max, record.at), 0);
+				records[callId] = {
+					file,
+					at: Math.max(Date.now(), newest + 1)
+				};
+				const kept = Object.entries(records).sort((left, right) => right[1].at - left[1].at).slice(0, EXPORTS_LIMIT);
+				window.localStorage.setItem(EXPORTS_KEY, JSON.stringify(Object.fromEntries(kept)));
+			} catch (error) {
+				console.error("[manim-renderer] 保存导出记录失败:", error);
+			}
 		}
 		//#endregion
 		//#region node_modules/.pnpm/@shikijs+types@4.5.0/node_modules/@shikijs/types/dist/index.mjs
@@ -171604,6 +171703,47 @@ XID_Start XIDS`.split(/\s/).map((p) => [w(p), p]));
 			}
 		}
 		//#endregion
+		//#region src/client/clipboard.ts
+		async function copyText(text) {
+			try {
+				await navigator.clipboard.writeText(text);
+				return true;
+			} catch (error) {
+				try {
+					const area = document.createElement("textarea");
+					area.value = text;
+					area.style.position = "fixed";
+					area.style.opacity = "0";
+					document.body.append(area);
+					area.select();
+					const ok = document.execCommand("copy");
+					area.remove();
+					if (!ok) console.error("[manim-renderer] execCommand 复制失败:", error);
+					return ok;
+				} catch (fallbackError) {
+					console.error("[manim-renderer] copy failed:", fallbackError);
+					return false;
+				}
+			}
+		}
+		/** 复制并给出 1.2 秒的「已复制」反馈：返回 [是否刚复制, 触发复制]。 */
+		function useCopied() {
+			const [copied, setCopied] = (0, react.useState)(false);
+			const timer = (0, react.useRef)(null);
+			(0, react.useEffect)(() => () => {
+				if (timer.current !== null) window.clearTimeout(timer.current);
+			}, []);
+			const copy = (text) => {
+				copyText(text).then((ok) => {
+					if (!ok) return;
+					setCopied(true);
+					if (timer.current !== null) window.clearTimeout(timer.current);
+					timer.current = window.setTimeout(() => setCopied(false), 1200);
+				});
+			};
+			return [copied, copy];
+		}
+		//#endregion
 		//#region src/client/components/code-view.tsx
 		function CodeView({ code, t }) {
 			const trimmed = code.endsWith("\n") ? code.slice(0, -1) : code;
@@ -171730,7 +171870,6 @@ XID_Start XIDS`.split(/\s/).map((p) => [w(p), p]));
 			const [readiness, setReadiness] = (0, react.useState)(null);
 			const [exporting, setExporting] = (0, react.useState)(false);
 			const [exportNote, setExportNote] = (0, react.useState)(null);
-			const [copiedPath, copyPath] = useCopied();
 			const empty = data.python.trim().length === 0;
 			const rejected = data.feedback !== void 0 && !data.feedback.ok;
 			const onResultRef = (0, react.useRef)(onResult);
@@ -171764,17 +171903,41 @@ XID_Start XIDS`.split(/\s/).map((p) => [w(p), p]));
 					alive = false;
 				};
 			}, []);
+			(0, react.useEffect)(() => {
+				const record = loadExports()[data.callId];
+				if (record === void 0) return;
+				let alive = true;
+				setExportNote({
+					ok: true,
+					text: t("exportDone", { path: record.file }),
+					path: record.file
+				});
+				revealExport(record.file, { checkOnly: true }).then((result) => {
+					if (!alive || result.ok || result.code !== "missing") return;
+					setExportNote({
+						ok: false,
+						text: t("exportGone", { path: record.file })
+					});
+				}).catch((error) => {
+					console.error("[manim-renderer] export record check failed:", error);
+				});
+				return () => {
+					alive = false;
+				};
+			}, [data.callId, t]);
 			const doExport = () => {
 				if (exporting || !ready) return;
 				setExporting(true);
 				setExportNote(null);
 				requestExport(data.python).then((result) => {
-					if (result.ok) setExportNote({
-						ok: true,
-						text: t("exportDone", { path: result.file }),
-						path: result.file
-					});
-					else {
+					if (result.ok) {
+						setExportNote({
+							ok: true,
+							text: t("exportDone", { path: result.file }),
+							path: result.file
+						});
+						rememberExport(data.callId, result.file);
+					} else {
 						const error = result.reason === "environment" ? missingNames(result.missing ?? [], t) : result.error ?? t("fail");
 						setExportNote({
 							ok: false,
@@ -171794,9 +171957,10 @@ XID_Start XIDS`.split(/\s/).map((p) => [w(p), p]));
 				const file = exportNote?.path;
 				if (file === void 0) return;
 				revealExport(file).then((result) => {
-					if (!result.ok) setExportNote({
+					if (result.ok) return;
+					setExportNote({
 						ok: false,
-						text: t("revealFailed", { error: result.error })
+						text: result.code === "missing" ? t("exportGone", { path: file }) : t("revealFailed", { error: result.error })
 					});
 				}).catch((error) => {
 					console.error("[manim-renderer] reveal failed:", error);
@@ -172026,50 +172190,20 @@ XID_Start XIDS`.split(/\s/).map((p) => [w(p), p]));
 								role: "status",
 								children: t("exportBusy")
 							}),
-							!exporting && exportNote !== null && (exportNote.ok && exportNote.path !== void 0 ? /* @__PURE__ */ (0, react_jsx_runtime.jsxs)(FootRow, {
+							!exporting && exportNote !== null && (exportNote.ok && exportNote.path !== void 0 ? /* @__PURE__ */ (0, react_jsx_runtime.jsx)(FootRow, {
 								tone: "ok",
 								role: "status",
-								children: [
-									/* @__PURE__ */ (0, react_jsx_runtime.jsx)(Tip, {
-										label: t("revealHint"),
-										align: "start",
-										className: "mr-chatcard-pathwrap",
-										children: /* @__PURE__ */ (0, react_jsx_runtime.jsx)("button", {
-											type: "button",
-											className: "mr-chatcard-path",
-											onClick: showInFolder,
-											children: exportNote.text
-										})
-									}),
-									/* @__PURE__ */ (0, react_jsx_runtime.jsx)(Tip, {
-										label: copiedPath ? t("copied") : t("copyPath"),
-										align: "end",
-										children: /* @__PURE__ */ (0, react_jsx_runtime.jsx)("button", {
-											className: "mr-iconbtn mr-iconbtn-xs",
-											type: "button",
-											"aria-label": t("copyPath"),
-											onClick: () => copyPath(exportNote.path ?? ""),
-											children: /* @__PURE__ */ (0, react_jsx_runtime.jsx)(Copy, {
-												size: 13,
-												strokeWidth: 1.6
-											})
-										})
-									}),
-									/* @__PURE__ */ (0, react_jsx_runtime.jsx)(Tip, {
-										label: t("revealHint"),
-										align: "end",
-										children: /* @__PURE__ */ (0, react_jsx_runtime.jsx)("button", {
-											className: "mr-iconbtn mr-iconbtn-xs",
-											type: "button",
-											"aria-label": t("revealHint"),
-											onClick: showInFolder,
-											children: /* @__PURE__ */ (0, react_jsx_runtime.jsx)(FolderOpen, {
-												size: 13,
-												strokeWidth: 1.6
-											})
-										})
+								children: /* @__PURE__ */ (0, react_jsx_runtime.jsx)(Tip, {
+									label: t("revealHint"),
+									align: "start",
+									className: "mr-chatcard-pathwrap",
+									children: /* @__PURE__ */ (0, react_jsx_runtime.jsx)("button", {
+										type: "button",
+										className: "mr-chatcard-path",
+										onClick: showInFolder,
+										children: exportNote.text
 									})
-								]
+								})
 							}) : /* @__PURE__ */ (0, react_jsx_runtime.jsx)(FootRow, {
 								tone: "error",
 								role: "alert",
@@ -172534,89 +172668,6 @@ XID_Start XIDS`.split(/\s/).map((p) => [w(p), p]));
 			"pillow",
 			"opencv-python"
 		];
-		//#endregion
-		//#region src/client/storage.ts
-		const KEY = "manim-renderer.ground.v1";
-		/** 一条结果必须是 `{ ok: boolean, text: string }`；其余形状丢掉。 */
-		function readResult(value) {
-			if (value === null || typeof value !== "object") return null;
-			const bag = value;
-			if (typeof bag.ok !== "boolean" || typeof bag.text !== "string") return null;
-			return {
-				ok: bag.ok,
-				text: bag.text
-			};
-		}
-		/** 读回已保存的部分状态；没存过或存坏了都给空对象（调用方各自取默认值）。 */
-		function loadGround() {
-			try {
-				const raw = window.localStorage.getItem(KEY);
-				if (raw === null) return {};
-				const parsed = JSON.parse(raw);
-				if (parsed === null || typeof parsed !== "object") return {};
-				const bag = parsed;
-				const out = {};
-				if (bag.results !== null && typeof bag.results === "object") {
-					const results = {};
-					for (const [id, value] of Object.entries(bag.results)) {
-						const result = readResult(value);
-						if (result !== null) results[id] = result;
-					}
-					out.results = results;
-				}
-				if (typeof bag.fast === "boolean") out.fast = bag.fast;
-				if (typeof bag.source === "string") out.source = bag.source;
-				if (bag.mode === "examples" || bag.mode === "free") out.mode = bag.mode;
-				return out;
-			} catch (error) {
-				console.error("[manim-renderer] 读取实验场记录失败:", error);
-				return {};
-			}
-		}
-		function saveGround(state) {
-			try {
-				window.localStorage.setItem(KEY, JSON.stringify(state));
-			} catch (error) {
-				console.error("[manim-renderer] 保存实验场记录失败:", error);
-			}
-		}
-		function clearGround() {
-			try {
-				window.localStorage.removeItem(KEY);
-			} catch (error) {
-				console.error("[manim-renderer] 清除实验场记录失败:", error);
-			}
-		}
-		const MARKS_KEY = "manim-renderer.marks.v1";
-		function loadMarks() {
-			try {
-				const raw = window.localStorage.getItem(MARKS_KEY);
-				if (raw === null) return {};
-				const parsed = JSON.parse(raw);
-				if (parsed === null || typeof parsed !== "object") return {};
-				const out = {};
-				for (const [id, value] of Object.entries(parsed)) if (value === "pass" || value === "fail") out[id] = value;
-				return out;
-			} catch (error) {
-				console.error("[manim-renderer] 读取人工标注失败:", error);
-				return {};
-			}
-		}
-		function saveMarks(marks) {
-			try {
-				window.localStorage.setItem(MARKS_KEY, JSON.stringify(marks));
-			} catch (error) {
-				console.error("[manim-renderer] 保存人工标注失败:", error);
-			}
-		}
-		/** 只清人工标注——自动渲染结果不动。 */
-		function clearMarks() {
-			try {
-				window.localStorage.removeItem(MARKS_KEY);
-			} catch (error) {
-				console.error("[manim-renderer] 清除人工标注失败:", error);
-			}
-		}
 		//#endregion
 		//#region src/client/page.tsx
 		/** 自由编辑的起手样本：坐标系 + 圆 + 公式，顺带验证 KaTeX 字体路由。 */
@@ -174320,9 +174371,9 @@ self.play(Write(eq))
 			exportBusy: "正在用本机 Manim 渲染并导出…要真跑一遍，可能得等一会儿",
 			exportDone: "已导出到 {path}",
 			exportFailed: "导出失败：{error}",
-			copyPath: "复制路径",
 			revealHint: "在文件夹中显示",
 			revealFailed: "打不开文件夹：{error}",
+			exportGone: "上次导出的文件已经不在了（可能被移走或删掉）：{path}",
 			envGroup: "环境",
 			envTitle: "本机环境",
 			envReady: "{ready} / {total} 就绪",

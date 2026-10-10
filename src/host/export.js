@@ -101,10 +101,16 @@ async function exportDir() {
  * 放开就等于给了一条「随便指个路径就替你打开」的通路。限定在导出目录（「下载」）之内，
  * 越界的一律拒绝——协议上多做一步，攻击面就归零。
  *
+ * `checkOnly`：只回答「还在不在、在不在导出目录里」，**一条系统命令都不跑**。页面恢复
+ * 上次导出记录时要问这个——记录是上次会话写的，文件早被移走删掉也是常事，不能拿它当真。
+ *
+ * 失败时给机器可读的 `code`（`missing` / `outside` / `failed`）：页面按它决定说什么话，
+ * 不必去猜错误文案里的字。
+ *
  * @param run 跑命令的注入点：测试要断言「点了什么命令」，又绝不能真弹出 Finder。
  */
-export async function revealExportedFile(target, { run = runCommand } = {}) {
-  if (typeof target !== 'string' || target.length === 0) return { ok: false, error: '路径为空' };
+export async function revealExportedFile(target, { run = runCommand, checkOnly = false } = {}) {
+  if (typeof target !== 'string' || target.length === 0) return { ok: false, code: 'missing', error: '路径为空' };
   const dir = await exportDir();
   let inside = null;
   let real = null;
@@ -113,11 +119,12 @@ export async function revealExportedFile(target, { run = runCommand } = {}) {
     real = await realpath(target);
     inside = await realpath(dir);
   } catch {
-    return { ok: false, error: '文件不在了（可能已被移走或删掉）' };
+    return { ok: false, code: 'missing', error: '文件不在了（可能已被移走或删掉）' };
   }
   if (real !== inside && !real.startsWith(inside + sep)) {
-    return { ok: false, error: '只能打开导出目录里的文件' };
+    return { ok: false, code: 'outside', error: '只能打开导出目录里的文件' };
   }
+  if (checkOnly) return { ok: true, code: '', error: '' };
   // macOS 用 open -R 选中文件；Windows 用 explorer /select,；Linux 没有「选中」这回事，开所在目录
   const [file, args] = process.platform === 'darwin'
     ? ['open', ['-R', real]]
@@ -126,9 +133,9 @@ export async function revealExportedFile(target, { run = runCommand } = {}) {
       : ['xdg-open', [dirname(real)]];
   const outcome = await run(file, args, 10_000);
   if (outcome.error !== null) {
-    return { ok: false, error: tail(outcome.stderr) || outcome.error.message };
+    return { ok: false, code: 'failed', error: tail(outcome.stderr) || outcome.error.message };
   }
-  return { ok: true };
+  return { ok: true, code: '', error: '' };
 }
 
 /** 跑一条命令等它结束；超时 / 非零退出都不抛，由调用方看 outcome。 */
@@ -312,7 +319,8 @@ export function exportRoute() {
           }
           if (suffix === 'reveal') {
             const path = typeof body?.path === 'string' ? body.path : '';
-            sendJson(response, 200, await revealExportedFile(path));
+            const checkOnly = body?.checkOnly === true;
+            sendJson(response, 200, await revealExportedFile(path, { checkOnly }));
             return;
           }
           const python = typeof body?.python === 'string' ? body.python : '';

@@ -112,9 +112,9 @@ export const DICT = {
     exportBusy: '正在用本机 Manim 渲染并导出…要真跑一遍，可能得等一会儿',
     exportDone: '已导出到 {path}',
     exportFailed: '导出失败：{error}',
-    copyPath: '复制路径',
     revealHint: '在文件夹中显示',
     revealFailed: '打不开文件夹：{error}',
+    exportGone: '上次导出的文件已经不在了（可能被移走或删掉）：{path}',
 
     // ---- 设置页：本机环境 ----
     // 探测项的标题与「为什么看它」按 id 查（见 settings.tsx 的 ENV_COPY）；
