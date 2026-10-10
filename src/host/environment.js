@@ -41,6 +41,11 @@ const CHECKS = [
  * 桌面应用启动时 PATH 往往是**精简过**的（拿不到登录 shell 那份），于是「明明装了却报没装」
  * 是这类工具最常见的假阴性。所以在这里补上几个常见安装位置：只影响我们找命令，
  * 不改进程环境；同时这份 PATH 会传给子进程，`manim` 起 ffmpeg 时也能找到。
+ *
+ * `/Library/TeX/texbin` 是 macOS 上 TeX Live（macTeX / BasicTeX）放 `latex` 与 `dvisvgm` 的地方，
+ * 由 `/etc/paths.d/TeX` 加进**登录 shell** 的 PATH——精简 PATH 的宿主进程照样拿不到。
+ * 它必须在这儿：公式导出时是 `manim` 自己去起 `latex` / `dvisvgm`，那条子进程继承的就是这份 PATH，
+ * 少了它「探测说没装」事小，「导出公式时 manim 找不到 latex」才是真哑火。
  */
 function searchPath() {
   const configured = (process.env.PATH ?? '').split(delimiter).filter((dir) => dir.length > 0);
@@ -49,6 +54,7 @@ function searchPath() {
     ...configured,
     '/usr/local/bin',
     '/opt/homebrew/bin',
+    '/Library/TeX/texbin',
     join(homedir(), '.local', 'bin'),
     '/usr/bin',
     '/bin',
