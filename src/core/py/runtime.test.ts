@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { PyRuntimeError, packageFailureMessage, runPython, setPyodideLoader } from './runtime.ts'
+import { PyRunCancelled, PyRuntimeError, packageFailureMessage, runPython, setPyodideLoader } from './runtime.ts'
 import { GROUP_KEY, HANDLE_KEY, createRecordingBridge, type ManimBridge } from './bridge.ts'
 import { createDryRunBridge } from './dry-run-bridge.ts'
 import { testPyodideLoader } from '../../../scripts/test-pyodide.mjs'
@@ -423,5 +423,75 @@ except NotImplementedError as error:
     print("abstract", "Polyhedron" in str(error), "Cube" in str(error))
 `
     expect((await runPlain(code)).trim()).toBe('abstract True True')
+  })
+})
+
+/**
+ * 全页一条队列：一个页面只有一份解释器、一套全局变量（`_dsh_bridge` / `_dsh_src` / 输出落点），
+ * 而适配层的 play / wait / create 是**每次调用现取**这些全局的。
+ *
+ * 为什么必须有这条：两张聊天卡片同屏时各起一块画布、各跑一段代码，await 动画期间解释器是让出去的——
+ * 后进的那段把桥顶掉，前一段后半程的动作就全打到别人的画布上（两张卡的内容挤在一块、另一块看着像没渲染），
+ * 或者打到一张没有对应句柄的表上当场报错。这正是「同屏两张卡就乱、报错一会儿又没了」的根。
+ */
+describe('runPython：全页一条队列', () => {
+  /** 把「谁在什么时候播了」按顺序记下来；带上延迟好让并发的另一段能插进来。 */
+  function timelineBridge(label: string, timeline: string[], delayMs = 0): ManimBridge {
+    const base = createRecordingBridge()
+    return {
+      ...base,
+      async play(handle, animations, kwargs) {
+        timeline.push(`${label}:play`)
+        if (delayMs > 0) await new Promise((resolve) => setTimeout(resolve, delayMs))
+        return base.play(handle, animations, kwargs)
+      },
+    }
+  }
+
+  const scene = (plays: string): string => `from manim import *
+
+class Demo(Scene):
+    def construct(self):
+${plays}
+`
+
+  it('两段并发提交时不交错：前一段整段跑完，后一段才进解释器', async () => {
+    const timeline: string[] = []
+    const first = runPython(scene('        self.play(Create(Circle()))\n        self.play(Create(Square()))'),
+      timelineBridge('A', timeline, 40), { output: () => {} })
+    const second = runPython(scene('        self.play(Create(Dot()))'),
+      timelineBridge('B', timeline), { output: () => {} })
+    await Promise.all([first, second])
+
+    // A 的两段连着、B 的在其后。没有队列时会是 A、B、A（B 插进 A 的两次 play 之间）
+    expect(timeline).toEqual(['A:play', 'A:play', 'B:play'])
+  })
+
+  it('轮到它时调用方已经拆了的活儿：整段丢弃、不碰解释器，也不挡住后面的', async () => {
+    let out = ''
+    const dropped = runPython('print("不该跑")', createRecordingBridge(), {
+      output: (text) => { out += text },
+      active: () => false,
+    })
+    await expect(dropped).rejects.toBeInstanceOf(PyRunCancelled)
+    expect(out).toBe('')
+
+    // 队首那条作废了，后面排队的照跑（不然一张滚走的卡能堵住整页）
+    expect((await run('print("该跑")')).trim()).toBe('该跑')
+  })
+
+  it('作废判定在拿到队位之后：前一段还在跑时提交的活儿，等轮到自己再问一次', async () => {
+    const timeline: string[] = []
+    const slow = timelineBridge('A', timeline, 40)
+    const first = runPython(scene('        self.play(Create(Circle()))'), slow, { output: () => {} })
+    let alive = true
+    const second = runPython(scene('        self.play(Create(Dot()))'), timelineBridge('B', timeline), {
+      output: () => {},
+      active: () => alive,
+    })
+    alive = false // 排队期间「画布被拆了」
+    await expect(second).rejects.toBeInstanceOf(PyRunCancelled)
+    await first
+    expect(timeline).toEqual(['A:play'])
   })
 })

@@ -326,6 +326,8 @@
 .mr-chatcard-footrow { display: flex; align-items: center; gap: 6px; font-size: 13px; line-height: 20px; }
 .mr-chatcard-footrow.is-ok { color: var(--dsw-alias-state-success-primary); }
 .mr-chatcard-footrow.is-busy { color: var(--dsw-alias-label-secondary); }
+/* 中断不是代码错：用警告色与三角，别和「渲染失败」的叉号混成一种 */
+.mr-chatcard-footrow.is-warn { color: var(--dsw-alias-state-warn-primary); }
 /* 报错可能有好几行：图标跟着第一行，文字整段换行 */
 .mr-chatcard-footrow.is-error {
   align-items: flex-start;

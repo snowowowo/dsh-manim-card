@@ -95,12 +95,16 @@ export const DICT = {
 
     cardLabel: 'Manim 动画',
     replay: '重新播放',
+    play: '播放',
     showCode: '查看代码',
     hideCode: '收起代码',
     copy: '复制代码',
     copied: '已复制',
     badCard: '卡片数据不完整（缺少 python 源码）',
     rejected: '代码未通过预检，未渲染',
+    interrupted: '这次工具调用被中断了',
+    interruptedHint:
+      '这次 manim_render 没跑完就被宿主收尾了（常见于回合被停止），所以卡片不替你自动渲染——代码本身是完整的，想看就点播放。',
 
     // ---- 卡片：导出视频（本机 manim CLI 真渲染成 mp4，存「下载」文件夹）----
     // 按钮亮不亮由环境必要条件决定（Python / manim / manim 库 / FFmpeg）；灰着的时候悬停要说清缺什么。

@@ -167,3 +167,62 @@ describe('buildViewNode：锚点与数据', () => {
     })
   })
 })
+
+describe('live：这张卡是不是刚出炉的', () => {
+  const at = (location: unknown) => ({ event: callEvent(), role: 'start', location }) as never
+
+  it('收录时所在那一轮还开着 → live（只有这种卡会被自动播一次）', () => {
+    expect(definition.start({} as never, at({ kind: 'turn', turn: { status: 'open' } })).live).toBe(true)
+    // 调用落在 step 上：location 是 step 级，但 turn 那一层照样在
+    expect(definition.start({} as never, at({ kind: 'step', turn: { status: 'open' }, step: {} })).live).toBe(true)
+  })
+
+  it('那一轮已经关了 → 不置位（老会话回填，一律落末帧）', () => {
+    expect(definition.start({} as never, at({ kind: 'turn', turn: { status: 'closed' } })).live).toBeUndefined()
+  })
+
+  it('location 缺席 / 形状没见过的 → 不置位（宁可静态，也不要乱播一遍）', () => {
+    for (const location of [undefined, {}, { kind: 'session' }, { kind: 'turn' }, { kind: 'turn', turn: {} }, 42, 'open']) {
+      expect(definition.start({} as never, at(location)).live, JSON.stringify(location)).toBeUndefined()
+    }
+  })
+})
+
+describe('interrupted：宿主说这次没跑成', () => {
+  const match = (event: unknown) => ({ event, role: 'update' }) as never
+  /** 中断时落进日志的是宿主文案 + isError，不是我们那套 {ok} 回执。 */
+  const aborted = (text: string) => ({
+    type: 'tool/result',
+    surfaceOp: 'append',
+    data: {
+      message: { source: { callId: 'c1' }, content: [{ type: 'text', text }], isError: true },
+    },
+  })
+
+  it('isError 且回执读不成 json → 标成 interrupted（卡片不再当它跑成了）', () => {
+    expect(definition.update({ state: state() } as never, match(aborted('Error: tool call aborted'))))
+      .toMatchObject({ interrupted: true })
+    expect(definition.update({ state: state() } as never, match(aborted('Error: tool call aborted before dispatch'))))
+      .toMatchObject({ interrupted: true })
+  })
+
+  it('预检不通过是我们自己的回执（读得出 ok:false）→ 不算中断，走 rejected 那条路', () => {
+    const event = aborted('{"ok":false,"error":"第 3 行：NameError"}')
+    const next = definition.update({ state: state() } as never, match(event))
+    expect(next.feedback).toEqual({ ok: false, error: '第 3 行：NameError' })
+    expect(next.interrupted).toBeUndefined()
+  })
+
+  it('没有 isError 的怪回执不标中断（宁可不动，也不要瞎认）', () => {
+    vi.spyOn(console, 'error').mockImplementation(() => {}) // 这条回执本来就会被记一条日志
+    const event = resultEvent('Error: something odd')
+    const before = state()
+    expect(definition.update({ state: before } as never, match(event))).toBe(before)
+  })
+
+  it('已经带 interrupted 的卡再收一条回执：回执归回执，不把中断擦掉', () => {
+    const before = state({ interrupted: true })
+    const next = definition.update({ state: before } as never, match(resultEvent('{"ok":true}')))
+    expect(next).toEqual({ python: 'pass', callId: 'c1', interrupted: true, feedback: { ok: true } })
+  })
+})

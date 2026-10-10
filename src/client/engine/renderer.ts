@@ -3,7 +3,10 @@
 //
 // 代码路径：AI 的 Manim Python → Pyodide 里的真 CPython → manim 适配层 → 桥 → 这块真场景。
 // 每次 run 用一块新桥（句柄表重新计数），句柄不跨次串味。
-import { PyRuntimeError, runPython } from '../../core/py/runtime.ts'
+//
+// 跨**画布**的串行由 core 的全局队列保证（一个页面只有一份解释器，见 runtime.ts 的 queue）——
+// 这里那条 tail 只管同一块画布上的先后。
+import { PyRunCancelled, PyRuntimeError, runPython } from '../../core/py/runtime.ts'
 import { createManimWebBridge, type ManimNamespace } from '../../core/py/manim-bridge.ts'
 import { createScene, type ManimScene } from './canvas.ts'
 import { loadManim } from './library.ts'
@@ -15,6 +18,8 @@ const HEIGHT = 720
 export interface RunResult {
   ok: boolean
   error?: string
+  /** 这段运行作废了（画布在轮到它之前就被拆）：不是错误，调用方一个字都不该显示。 */
+  cancelled?: boolean
 }
 
 export interface RunHandlers {
@@ -25,7 +30,7 @@ export interface RunHandlers {
 export interface Surface {
   /** 跑一段 Manim Python（内部交给 Pyodide 执行并驱动画布）。 */
   run(code: string, handlers?: RunHandlers): Promise<RunResult>
-  /** 拆掉这块画布；之后 run 一律失败。 */
+  /** 拆掉这块画布；之后 run 一律作废（cancelled），不会真的跑。 */
   dispose(): void
 }
 
@@ -46,7 +51,9 @@ export async function createSurface(container: HTMLDivElement, options: SurfaceO
   return {
     run(code: string, handlers: RunHandlers = {}): Promise<RunResult> {
       const job = tail.then(async () => {
-        if (disposed) throw new Error('surface 已拆掉')
+        // 拆掉之后一律作废（不是「失败」）：调用方看见 cancelled 就该闭嘴，
+        // 不像错误那样报出来——自己拆的画布跑不成，不算这张卡渲染失败。
+        if (disposed) throw new PyRunCancelled()
         const bridge = createManimWebBridge({
           manim: manim as unknown as ManimNamespace,
           scene,
@@ -55,12 +62,16 @@ export async function createSurface(container: HTMLDivElement, options: SurfaceO
         await runPython(code, bridge, {
           output: (text) => console.info('[manim-renderer] print:', text.trimEnd()),
           onLoading: handlers.onLoading,
+          // 排队期间（全页一次只跑一段）这块画布可能已经拆了：轮到这段时再问一次，
+          // 作废就整段丢，不占着队首白跑一遍代码。
+          active: () => !disposed,
         })
       })
       tail = job.catch(() => {}) // 前一段失败不阻断后面排队的分段
       return job.then(
         () => ({ ok: true }),
         (error: unknown) => {
+          if (error instanceof PyRunCancelled) return { ok: false, cancelled: true }
           console.error('[manim-renderer] run failed:', error)
           const message = error instanceof PyRuntimeError ? error.message : String(error)
           return { ok: false, error: message }

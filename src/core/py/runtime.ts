@@ -158,6 +158,44 @@ export interface RunOptions {
    * 是否显示、显示多久由调用方定——随包件与缓存命中都快，不该闪一下提示。
    */
   onLoading?: (names: string[]) => void
+  /**
+   * 轮到这段代码时再问一次「调用方还在吗」。返回 false 就整段作废、连解释器都不碰——
+   * 卡片滚出视口时画布已经拆了，硬跑的结果必然失败，而那条失败是自伤，不是渲染错误。
+   */
+  active?: () => boolean
+}
+
+/**
+ * 这段运行在轮到自己时已经作废：调用方拆了画布、或压根没轮上（见下面的队列）。
+ *
+ * 单独一类而不是普通 Error：调用方要能把它和「用户代码跑错」分开——
+ * 前者一个字都不该显示，后者必须原样报出来。
+ */
+export class PyRunCancelled extends Error {
+  constructor() {
+    super('运行已作废：轮到它时调用方已经拆了画布')
+    this.name = 'PyRunCancelled'
+  }
+}
+
+/**
+ * 页面级的全局运行队列。
+ *
+ * 一个页面只有一份解释器、一套全局变量（`_dsh_bridge` / `_dsh_src` / 输出落点），
+ * 而适配层的 play / wait / create 是**每次调用现取**这些全局的。两段用户代码同时在里面跑，
+ * 后进的那段就把前一段的桥顶掉：前一段后半程的动作全打到别人的画布上（两张卡的内容挤在一块、另一块看着像没渲染），
+ * 或者打到一张不存在对应句柄的表上，当场报「未知的对象句柄」。这正是「两张卡同屏就乱、报错过一会儿又没了」的根。
+ *
+ * 所以「一段跑完才准下一段进」是硬约束，不是优化。排队单位是**整段 runPython**——
+ * 含按 import 取包与运行时初始化那几段 await：那几段正是让出解释器的地方，漏在队外等于没排。
+ */
+let queue: Promise<unknown> = Promise.resolve()
+
+/** 排进队列，按提交顺序一段段跑；前一段失败不阻断后面排队的。 */
+function enqueue<T>(job: () => Promise<T>): Promise<T> {
+  const next = queue.then(job, job)
+  queue = next.then(() => undefined, () => undefined)
+  return next
 }
 
 /**
@@ -196,8 +234,18 @@ function prepareSource(code: string): { source: string; lineOffset: number } {
 /**
  * 执行一段 Manim Python。语法/运行错误统一抛 PyRuntimeError（带行号）。
  * 行号对应传入源码的行号。
+ *
+ * 入口即排队（见 queue）：同一时刻全页只有一段用户代码在解释器里跑。
  */
 export async function runPython(code: string, bridge: ManimBridge, options: RunOptions = {}): Promise<void> {
+  return enqueue(async () => {
+    // 作废判定要在拿到队位之后：作废的活儿必须「到点直接丢」，不能占着队首也不算数。
+    if (options.active?.() === false) throw new PyRunCancelled()
+    return execute(code, bridge, options)
+  })
+}
+
+async function execute(code: string, bridge: ManimBridge, options: RunOptions): Promise<void> {
   const runtime = await getRuntime()
   const drive = options.drive !== false
   const { source, lineOffset } = drive ? prepareSource(code) : { source: code, lineOffset: 0 }

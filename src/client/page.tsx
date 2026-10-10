@@ -232,7 +232,9 @@ export function ManimPage({ t }: { t: Translate }) {
     if (shown.kind === 'free') {
       if (view !== 'free') return null
       return {
-        data: { python: shown.code, callId: `free-${shown.run}` },
+        // live：这一条是用户**刚要求**渲染的（不是打开历史会话时回填出来的卡），
+        // 值得放一次真动画。callId 带 run 号——每条各算一张，重跑一次就重新播。
+        data: { python: shown.code, callId: `free-${shown.run}`, live: true },
         label: t('freeLabel'),
         job: { kind: 'free', code: shown.code },
       }
@@ -242,7 +244,7 @@ export function ManimPage({ t }: { t: Translate }) {
     return example === undefined
       ? null
       : {
-          data: { python: example.python, callId: `${example.id}-${shown.run}` },
+          data: { python: example.python, callId: `${example.id}-${shown.run}`, live: true },
           label: example.title,
           job: { kind: 'example', id: example.id },
         }
