@@ -470,8 +470,9 @@
 }
 
 /* 工具行：筛选 + 搜索 */
+/* 工具条：一个自由输入框 + 一个按钮（手动指定要提前取哪个包） */
 .mr-set-tools { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
-.mr-set-search {
+.mr-set-field {
   flex: 1; min-width: 120px;
   display: flex; align-items: center; gap: 6px;
   box-sizing: border-box; height: 32px; padding: 0 8px;
@@ -480,14 +481,14 @@
   background: var(--dsw-alias-bg-layer-1);
   color: var(--dsw-alias-label-tertiary);
 }
-.mr-set-search:focus-within { border-color: var(--dsw-alias-state-business-primary); }
-.mr-set-searchinput {
+.mr-set-field:focus-within { border-color: var(--dsw-alias-state-business-primary); }
+.mr-set-fieldinput {
   flex: 1; min-width: 0;
   border: none; outline: none; background: transparent;
   font: inherit; font-size: 13px; line-height: 20px;
   color: var(--dsw-alias-label-primary);
 }
-.mr-set-searchinput::placeholder { color: var(--dsw-alias-label-dimmed); }
+.mr-set-fieldinput::placeholder { color: var(--dsw-alias-label-dimmed); }
 
 /* 行：表格形态——行间用最弱一级分隔线，数字列走等宽数字 */
 .mr-set-list { display: flex; flex-direction: column; }
@@ -607,9 +608,10 @@
   color: var(--dsw-alias-state-error-primary);
   overflow-wrap: anywhere;
 }
-.mr-set-more {
-  margin: 0; padding-top: 6px; text-align: center;
+/* 清单下面那行小字：说明「还能写别的包名」，不是错误也不是结果 */
+.mr-set-hint {
+  margin: 0; padding-top: 2px;
   font-size: 12px; line-height: 18px;
   color: var(--dsw-alias-label-tertiary);
-  font-variant-numeric: tabular-nums;
+  overflow-wrap: anywhere;
 }

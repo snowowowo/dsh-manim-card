@@ -139,7 +139,9 @@ manim _dev/examples/basic/01-circle.py CircleScene
 - 走 `execFile`（不经 shell、参数写死），**自己补齐 PATH**——桌面端宿主拿到的是被裁剪过的 PATH，`/usr/local/bin` 这类常常不在里面，不补的话会「装了却说没装」。补的目录与顺序都收在 `src/host/environment.js` 一处。
 - **用户点开才跑**，逐项串行、每项各有超时（`manim` 20 秒、`import manim` 30 秒），不是启动时偷偷扫一遍机器。
 
-**包缓存**列出 `pyodide-lock.json` 里可安装的包（351 项里 wheel / zip 的那部分——`*-tests` 的 `.tar` 装不了、纯 `cpython_module` 不算），每条标出**随包 / 已缓存 / 未缓存**与本机占用字节；顶部可切「本地 / 未缓存 / 全部」、可按名字搜。点某个包上的「提前缓存」会把它的**依赖闭包**一起取下来——闭包**在客户端算**（依赖排在前面，所以中途停下来时已落地的部分是一个自洽的前缀）；卡片里还有缓存目录的完整路径（可复制，也能对着它手动清）。
+**包缓存**只列**常用**的那十一个（numpy / sympy / mpmath / matplotlib / pandas / scipy / scikit-learn / statsmodels / networkx / pillow / opencv-python——前三个是随包件，列出来是为了让「哪些已经在了」一眼可见），每条标出随包 / 已缓存 / 未缓存与本机占用字节，**未缓存的可以「缓存」、已缓存的可以「清理」**（这里清掉，下次用到会重新联网取一次）。清单不是白名单：它下面是**一个输入框**，写上任意包名就能取（名字按 Pyodide 目录里的包名，也按归一化对写法——`Pillow`、`scikit_learn` 都认），取过的手输包会留在表里，于是「取回来了、想再清掉」在同一条路径上闭环。清单本身控制在十个出头，是因为 lock 里近三百条、绝大多数人一辈子用不到——要全量的筛选，不如直接写名字快。卡片里还有缓存目录的完整路径（可复制）。
+
+**包名这件事比看上去复杂**（这轮的第二个真问题）：lock 里包名**三种写法在混用**——键 `pillow` 而条目内的 `name` 字段是 `Pillow`（351 条里 21 条如此：`jinja2`/`Jinja2`、`markupsafe`/`MarkupSafe`…），而 `depends` 里两种写法都出现（`pillow` 用键的写法、`astropy_iers_data` / `ruamel.yaml` 用 `name` 字段的下划线 / 点号写法）。实测 374 条依赖引用：只按**键**解析落空 8 条、只按 `name` 字段解析落空 11 条（含 `pillow`——也就是「提前缓存 matplotlib」会把 pillow 漏掉，而 pillow 正是 matplotlib 的依赖）。所以「选哪一边当名字」都是错的，正解是**归一化之后再比**（`canonicalPackageName`，PEP 503 那套：`[-_.]+` 折成 `-`、转小写），归一化之后 374 条一条不漏，顺带让用户按自己记得的名字打字也能落到同一个包上。这条规则**一处定义、两端共用**（`src/core/py/pkg-names.ts`：Host 侧从 `core.js` 取、浏览器侧直接 import），并配了对着 lock 真实分歧的用例——三个数字（8 / 11 / 0）就是它的账。
 
 两条契约值得单独记住：
 
@@ -152,7 +154,7 @@ Host 侧对应五条新路由，全都挂在 `/dsh-plugins/manim-renderer/` 下�
 |---|---|---|
 | `packages` | GET | 包清单：缓存目录、Pyodide 版本、每包的依赖 / 可 import 名 / 三态 / 字节数 |
 | `packages/cache` | POST | 按名字取包（`{ names: [...] }`，一个名字一次请求），sha256 校验后原子落盘 |
-| `cache` | POST | 清掉缓存目录里**按需取的**那部分，回删掉的文件名（随包件不动） |
+| `cache` | POST | 清缓存：体里给 `{ names: [...] }` 就只清这几个（设置页按行清理），不给就清掉缓存目录里全部包（实验场工具条）；都回删掉的文件名，随包件不动 |
 | `environment` | GET | 探测计划：有哪些项、每项跑什么命令 |
 | `environment/<id>` | GET | 跑一项，回 ok / missing / error 与原因（超时也归 error 并说清） |
 
@@ -161,7 +163,7 @@ Host 侧对应五条新路由，全都挂在 `/dsh-plugins/manim-renderer/` 下�
 分两层，别混：
 
 - **语料回归**（覆盖「API 与场景」）：`pnpm --filter manim-renderer test src/core/py/examples.test.ts` 把实验场那批**离线**语料逐条过真管线（真 Pyodide + 真 manim-web；`Scene` 换假画布，只验「收不收、炸不炸」）。**需联网**的那 15 条（`net` 第三方包 / `combo` 多库协同）默认不跑：`MANIM_NET=1 pnpm --filter manim-renderer test:net`（首次会下载几十 MB）。`syntax`（语法综合）与 `api`（API 点名）只用 manim + 随包的 numpy，是离线的，随默认套件跑。
-- **Vitest 逻辑覆盖率**（覆盖「代码」）：`pnpm --filter manim-renderer coverage`。**不测 UI**（`.tsx` 与浏览器渲染胶水不计入分母），只要求**逻辑（非 `.tsx`）语句覆盖 ≥ 80%**——当前实测 **88.5%（1459/1649）**；含 UI 的全部文件是 68.9%（行）。UI 改动以真机看几何为准，不写类名 / DOM 形态测试。
+- **Vitest 逻辑覆盖率**（覆盖「代码」）：`pnpm --filter manim-renderer coverage`。**不测 UI**（`.tsx` 与浏览器渲染胶水不计入分母），只要求**逻辑（非 `.tsx`）语句覆盖 ≥ 80%**——当前实测 **88.9%（1491/1678）**；含 UI 的全部文件是 68.8%（行）。UI 改动以真机看几何为准，不写类名 / DOM 形态测试。
 
 小费：`coverage` 每次要清自己上一轮的 `coverage/` 输出，本机的安全删除拦截会挡下来，前缀 `CODEBUDDY_SAFE_DELETE_ENABLED=0` 即可（只影响 vitest 的产物目录）。清除「按需取」的三方包缓存不必手删——实验场工具条有「清除缓存」，走 Host 的 `clear-cache` 路由，删的是 `~/.dsh/cache/manim-renderer/pyodide/` 里按需下载的那部分（随包件不在其中）。
 
@@ -208,16 +210,17 @@ src/
 │   └── engine/           渲染引擎：library（懒加载）/ canvas（画布）/ renderer（Surface）/ pyodide（运行时加载）
 └── core/                 两侧共享的纯逻辑（不碰 DOM、不碰 Node API）
     ├── index.ts          Host 侧门面（core.js 入口）：只暴露 py/ 的能力
-    └── py/               Python 运行时链
-        ├── runtime.ts    Pyodide 装载（加载器由两端注入）+ 执行 + 错误归一（PyRuntimeError）
-        ├── manim-shim.ts Python 侧 manim 适配层源码（按 api-map 生成别名 / 属性读取 / 下标取段）+ construct 的 async 改写
-        ├── bridge.ts     Python 适配层 ↔ 桥实现的契约（ManimBridge / AnimationSpec / 线格式）
-        ├── surface.ts    支持面 SSOT：三态表 + 构造规则 + 判定（plan*）——预检与真桥的唯一同源
-        ├── manim-bridge.ts  真桥：动作落到真 manim-web 对象（含极速模式：压缩时长 + 推进 updater）
-        ├── dry-run-bridge.ts Host 预检用空桥：只查缺失项、不渲染
-        ├── examples.ts   语料**接口**（类型 + `parseCorpus` 边界校验）；本体是 `_dev/examples/` 下的 .py，运行时由 Host 路由读取
-        ├── examples.test.ts  语料回归：逐条过真管线（离线全跑，联网组见 MANIM_NET）
-        └── api-map.generated.ts  探针实测的三态表（ok / alias / missing）
+    ├── py/               Python 运行时链
+    │   ├── runtime.ts    Pyodide 装载（加载器由两端注入）+ 执行 + 错误归一（PyRuntimeError）
+    │   ├── pkg-names.ts  包名归一化（两端共用：lock 里三种写法混用，见设置页那节）
+    │   ├── manim-shim.ts Python 侧 manim 适配层源码（按 api-map 生成别名 / 属性读取 / 下标取段）+ construct 的 async 改写
+    │   ├── bridge.ts     Python 适配层 ↔ 桥实现的契约（ManimBridge / AnimationSpec / 线格式）
+    │   ├── surface.ts    支持面 SSOT：三态表 + 构造规则 + 判定（plan*）——预检与真桥的唯一同源
+    │   ├── manim-bridge.ts  真桥：动作落到真 manim-web 对象（含极速模式：压缩时长 + 推进 updater）
+    │   ├── dry-run-bridge.ts Host 预检用空桥：只查缺失项、不渲染
+    │   ├── examples.ts   语料**接口**（类型 + `parseCorpus` 边界校验）；本体是 `_dev/examples/` 下的 .py，运行时由 Host 路由读取
+    │   ├── examples.test.ts  语料回归：逐条过真管线（离线全跑，联网组见 MANIM_NET）
+    │   └── api-map.generated.ts  探针实测的三态表（ok / alias / missing）
 ```
 
 三分区是硬约定：新增源码文件必须能归入 host / client / core 之一；`core` 下按能力再分子目录（`py` 是能力名）。

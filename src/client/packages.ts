@@ -4,7 +4,11 @@
  * 为什么「取一个包要连依赖一起取」在**客户端**算：Host 只回答「每个包现在在本地是什么状态」，
  * 而依赖关系是 lock 里的静态数据（跟着清单一起发过来）。算在客户端，取的时候就能**一个一个来**——
  * 进度、失败、停下来都在这一层看得见，而不是让 Host 闷头取完一大串才回话。
+ *
+ * 名字一律过 `canonicalPackageName` 再比：lock 里包名有三种写法（见 core/py/pkg-names.ts），
+ * 用户也会按自己记得的样子打字（`Pillow` / `scikit_learn`），归一化之后这些都能落到同一个包上。
  */
+import { canonicalPackageName } from '../core/py/pkg-names.ts'
 
 const PACKAGES_URL = '/dsh-plugins/manim-renderer/packages'
 const CACHE_URL = '/dsh-plugins/manim-renderer/cache'
@@ -91,6 +95,12 @@ export async function loadPackages(): Promise<PackageInventory> {
   return inventory
 }
 
+/** 按名字（任一写法：`Pillow` / `scikit_learn`…）找一条清单记录；找不到回 undefined。 */
+export function findPackage(entries: readonly PackageEntry[], name: string): PackageEntry | undefined {
+  const wanted = canonicalPackageName(name)
+  return entries.find((entry) => canonicalPackageName(entry.name) === wanted)
+}
+
 /**
  * 取一个包要连哪些一起取：它自己的依赖闭包，**依赖排在前面**。
  *
@@ -99,12 +109,12 @@ export async function loadPackages(): Promise<PackageInventory> {
  *    否则「A 缓存了、A 的依赖没缓存」这种半拉状态会被漏过去；
  *  - 顺序是后序（先依赖后本体），于是中途停下来时，已经落地的部分是一个**自洽的前缀**。
  * @param entries - Host 给的清单。
- * @param name - 想取的包名。
+ * @param name - 想取的包名（任一写法）。
  * @returns 要取的名字；清单里没有这个包时回空数组（调用方据此说「不认识的包」）。
  */
 export function prefetchPlan(entries: readonly PackageEntry[], name: string): string[] {
-  const byName = new Map(entries.map((entry) => [entry.name, entry]))
-  const root = byName.get(name)
+  const byName = new Map(entries.map((entry) => [canonicalPackageName(entry.name), entry]))
+  const root = byName.get(canonicalPackageName(name))
   if (root === undefined) return []
   const ordered: string[] = []
   const seen = new Set<string>()
@@ -112,7 +122,7 @@ export function prefetchPlan(entries: readonly PackageEntry[], name: string): st
     if (seen.has(entry.name)) return
     seen.add(entry.name)
     for (const dependency of entry.depends) {
-      const next = byName.get(dependency)
+      const next = byName.get(canonicalPackageName(dependency))
       if (next !== undefined) visit(next)
     }
     if (entry.state === 'absent') ordered.push(entry.name)
@@ -153,14 +163,32 @@ export async function cachePackage(name: string): Promise<PrefetchOutcome> {
   return { ok: true, bytes: typeof result.bytes === 'number' ? result.bytes : 0, error: '' }
 }
 
-/** 清掉本机缓存的按需包（Host 只删自己缓存目录里的包文件）。失败抛给调用方去显示。 */
-export async function clearPackageCache(): Promise<string[]> {
-  const response = await fetch(CACHE_URL, { method: 'POST' })
+/**
+ * 清缓存。给了 `names` 就只清这几个（设置页按行清理），不给就清掉缓存目录里全部包（实验场工具条）。
+ * Host 只删自己缓存目录里的包文件，回被删掉的文件名；失败抛给调用方去显示。
+ */
+async function clearCache(names?: string[]): Promise<string[]> {
+  const response = await fetch(CACHE_URL, {
+    method: 'POST',
+    ...(names === undefined
+      ? {}
+      : { headers: { 'content-type': 'application/json' }, body: JSON.stringify({ names }) }),
+  })
   if (!response.ok) throw new Error(`HTTP ${response.status}`)
   const body: unknown = await response.json()
   if (body === null || typeof body !== 'object') return []
   const removed = (body as { removed?: unknown }).removed
   return Array.isArray(removed) ? removed.filter((name): name is string => typeof name === 'string') : []
+}
+
+/** 清掉本机缓存的全部按需包。 */
+export function clearPackageCache(): Promise<string[]> {
+  return clearCache()
+}
+
+/** 清掉**一个**包的本机缓存（名字任一写法）。它下次被用到会重新联网取一次。 */
+export function clearPackage(name: string): Promise<string[]> {
+  return clearCache([name])
 }
 
 /** 字节数成人话（清单里最大的包几十 MB，用两位有效数字足够）。 */
@@ -180,3 +208,29 @@ export function formatBytes(bytes: number): string {
 export function stateKey(state: PackageState): string {
   return state === 'bundled' ? 'pkgBundled' : state === 'cached' ? 'pkgCached' : 'pkgAbsent'
 }
+
+/**
+ * 设置页上摆出来的**常用包**（画图 / 数值 / 数据这条线上最常被 import 的十一个）。
+ *
+ * 这不是白名单——只是把常见的摆出来，免得用户在一个三百行的清单里找。任意其他包
+ * 直接写名字就能取（走同一条预缓存通道）。
+ *
+ * 前三个是**随包**的（numpy / sympy / mpmath，装机即可用），列出来是为了让「哪些已经在了」
+ * 一眼可见——它们不会出现在「未缓存」里，但用户会想知道它们在不在。
+ *
+ * 名字必须与 lock 的**键**一致（`scikit-learn` 而不是 `sklearn`、`pillow` 而不是 `PIL`），
+ * 所以有测试对着 lock 逐个核（离线就能核）——否则界面上那一行永远是「未缓存」且点了报错。
+ */
+export const COMMON_PACKAGES = [
+  'numpy',
+  'sympy',
+  'mpmath',
+  'matplotlib',
+  'pandas',
+  'scipy',
+  'scikit-learn',
+  'statsmodels',
+  'networkx',
+  'pillow',
+  'opencv-python',
+] as const

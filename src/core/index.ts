@@ -44,6 +44,7 @@ export {
   type PyApiEntry,
 } from './py/surface.ts'
 export { createDryRunBridge } from './py/dry-run-bridge.ts'
+export { canonicalPackageName } from './py/pkg-names.ts'
 export {
   createManimWebBridge,
   type ManimNamespace,

@@ -516,6 +516,45 @@ describe('清包缓存路由', () => {
     expect(response.statusCode).toBe(405)
     expect(readdirSync(cacheDir)).toContain('sympy-1.13.3-py3-none-any.whl')
   })
+
+  it('给了 names 就只清这几个（设置页按行清理），别的包不能跟着被清', async () => {
+    seedCache()
+    apply(fakeCtx())
+    const response = await call(routeAt(CACHE_PATH), 'POST', CACHE_PATH, { names: ['sympy'] })
+    expect(response.statusCode).toBe(200)
+    expect(JSON.parse(response.body).removed).toEqual(['sympy-1.13.3-py3-none-any.whl'])
+    expect(readdirSync(cacheDir).sort()).toEqual(['README.txt', 'mpmath-1.3.0-py3-none-any.whl', 'nested-dir'])
+  })
+
+  it('按名字清时名字写法不一致也认（用户会写 Pillow / scikit_learn 这种）', async () => {
+    mkdirSync(cacheDir, { recursive: true })
+    writeFileSync(join(cacheDir, 'pillow-10.2.0-cp312-cp312-pyodide_2024_0_wasm32.whl'), 'w')
+    apply(fakeCtx())
+    const response = await call(routeAt(CACHE_PATH), 'POST', CACHE_PATH, { names: ['Pillow'] })
+    expect(JSON.parse(response.body).removed).toEqual(['pillow-10.2.0-cp312-cp312-pyodide_2024_0_wasm32.whl'])
+  })
+
+  it('names 里混着不认识的、或本来就没缓存的，静默跳过（不是错）', async () => {
+    seedCache()
+    apply(fakeCtx())
+    const response = await call(routeAt(CACHE_PATH), 'POST', CACHE_PATH, { names: ['definitely-not-a-package', 'scipy', 'sympy'] })
+    expect(response.statusCode).toBe(200)
+    expect(JSON.parse(response.body).removed).toEqual(['sympy-1.13.3-py3-none-any.whl'])
+  })
+
+  it('按名字清也守尺度：不动非包文件与子目录', async () => {
+    seedCache()
+    apply(fakeCtx())
+    await call(routeAt(CACHE_PATH), 'POST', CACHE_PATH, { names: ['sympy', 'mpmath'] })
+    expect(readdirSync(cacheDir).sort()).toEqual(['README.txt', 'nested-dir'])
+  })
+
+  it('坏正文给 400，不是 500（清缓存也不能被一段烂 JSON 说成插件故障）', async () => {
+    apply(fakeCtx())
+    const response = await callRaw(routeAt(CACHE_PATH), 'POST', CACHE_PATH, '{')
+    expect(response.statusCode).toBe(400)
+    expect(JSON.parse(response.body).error).toContain('不是合法 JSON')
+  })
 })
 
 describe('包清单路由', () => {
@@ -574,6 +613,28 @@ describe('包清单路由', () => {
     expect(fileNames.some((name) => name.endsWith('.tar'))).toBe(false)
     expect(fileNames).not.toContain('pyodide.asm.wasm')
     expect(fileNames).not.toContain('python_stdlib.zip')
+  })
+
+  it('名字用 lock 的键，不是条目里的 name 字段（`pillow` 而不是 `Pillow`）', async () => {
+    const names = (await inventory()).entries.map((entry) => entry.name)
+    expect(names).toContain('pillow')
+    expect(names).toContain('scikit-learn')
+    expect(names).not.toContain('Pillow')
+  })
+
+  it('依赖引用条条都对得上目录里的名字——原来 pillow 这类客户端对不上，取 matplotlib 会漏掉它', async () => {
+    const entries = (await inventory()).entries
+    const names = new Set(entries.map((entry) => entry.name))
+    const dangling: string[] = []
+    for (const entry of entries) {
+      for (const dependency of entry.depends) {
+        if (!names.has(dependency)) dangling.push(`${entry.name} -> ${dependency}`)
+      }
+    }
+    expect(dangling).toEqual([])
+    // matplotlib 真的依赖 pillow：这条以前是坏的（客户端按字段名发了 `Pillow`，
+    // 而清单里叫 `pillow`，闭包把它当「名字对不上」跳过），所以单独钉一句
+    expect(entries.find((entry) => entry.name === 'matplotlib')!.depends).toContain('pillow')
   })
 
   it('缓存目录不存在时不算错：全表按「未缓存」回答', async () => {

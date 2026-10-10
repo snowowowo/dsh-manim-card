@@ -10,19 +10,15 @@
 // 样式只用宿主 `--dsw-alias-*` token（明暗双主题自动成立），类名统一 `mr-` 前缀；
 // 说明性长文案一律进悬浮提示（`Tip`），页面上只留控件与数值。
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { Check, Copy, RefreshCw, Search } from 'lucide-react'
+import { Check, Copy, RefreshCw } from 'lucide-react'
 import { Tip } from './components/tip'
-import { Segmented } from './components/segmented'
 import { useCopied } from './clipboard'
 import { loadEnvPlan, probeEnv, type EnvCheck, type EnvPlan, type EnvResult, type EnvStatus } from './environment'
 import {
-  cachePackage, formatBytes, loadPackages, prefetchPlan, stateKey,
+  cachePackage, clearPackage, COMMON_PACKAGES, findPackage, formatBytes, loadPackages, prefetchPlan, stateKey,
   type PackageEntry, type PackageInventory, type PackageState,
 } from './packages'
 import type { Translate } from './i18n'
-
-/** 列表一次最多画多少行：全表近三百条，画全了白卡；剩下的靠搜索缩小范围。 */
-const MAX_ROWS = 60
 
 /** 状态点的语义（与宿主 StateDot 同一套）：绿=好、黄=要注意、红=错、灰=中性、空环=没有、转圈=进行中。 */
 type Tone = 'ok' | 'warn' | 'error' | 'idle' | 'empty' | 'busy'
@@ -202,20 +198,21 @@ function envDetail(t: Translate, result: EnvResult | undefined): string {
 
 // ---------------------------------------------------------------- 包缓存
 
-type Filter = 'local' | 'absent' | 'all'
-
 /**
- * 包缓存卡片：清单 + 预缓存。
+ * 包缓存卡片：一张常用包短清单 + 一个手动输入框，外加「按行清理」。
  *
- * 默认只列「本地已有」（随包 + 已取回）——那正是用户想知道的事；
- * 想提前取什么就切到「未缓存」找。取的时候连依赖一起取（见 packages.ts 的 prefetchPlan），
- * 取完**重新问一次 Host**要状态，而不是本地猜（状态以后端为准）。
+ * 为什么不是全表：lock 里有近三百条，绝大多数人一辈子用不到——把常用的摆出来，
+ * 比让人在一个长列表里筛要快。**列表不是白名单**：清单里没有的包，直接写上名字就能取，
+ * 走的是同一条预缓存通道（也照样连依赖一起取）。手输过的包会留在表里，
+ * 于是「取回来了、想再清掉」这条路也在同一张表上闭环。
+ *
+ * 取/清都就地重问一次 Host（状态以后端为准），不本地猜。
  */
 function PackagesCard({ t }: { t: Translate }) {
   const [inventory, setInventory] = useState<PackageInventory | null>(null)
   const [failure, setFailure] = useState<string | null>(null)
-  const [query, setQuery] = useState('')
-  const [filter, setFilter] = useState<Filter>('local')
+  const [manual, setManual] = useState('')
+  const [extra, setExtra] = useState<string[]>([])
   const [busy, setBusy] = useState<{ name: string; done: number; total: number } | null>(null)
   const [note, setNote] = useState<string | null>(null)
   const [copied, copy] = useCopied()
@@ -238,56 +235,88 @@ function PackagesCard({ t }: { t: Translate }) {
   useEffect(() => { void refresh() }, [refresh])
 
   const entries = inventory?.entries ?? []
+
+  /** 表上要画的：常用那几个（固定顺序）+ 用户手输过的（去重、且不在常用里的）。 */
+  const shown = useMemo(() => {
+    const common: PackageEntry[] = []
+    const listed = new Set<string>()
+    for (const name of COMMON_PACKAGES) {
+      const entry = findPackage(entries, name)
+      if (entry !== undefined) { common.push(entry); listed.add(entry.name) }
+    }
+    for (const name of extra) {
+      const entry = findPackage(entries, name)
+      if (entry !== undefined && !listed.has(entry.name)) { common.push(entry); listed.add(entry.name) }
+    }
+    return common
+  }, [entries, extra])
+
   const counts = useMemo(() => {
     let bundled = 0
     let cached = 0
-    let absent = 0
     let bytes = 0
     for (const entry of entries) {
       if (entry.state === 'bundled') bundled += 1
       else if (entry.state === 'cached') { cached += 1; bytes += entry.bytes ?? 0 }
-      else absent += 1
     }
-    return { bundled, cached, absent, bytes }
+    return { bundled, cached, bytes }
   }, [entries])
 
-  const filtered = useMemo(() => {
-    const needle = query.trim().toLowerCase()
-    const matches = (entry: PackageEntry): boolean => {
-      if (filter === 'local' && entry.state === 'absent') return false
-      if (filter === 'absent' && entry.state !== 'absent') return false
-      if (needle.length === 0) return true
-      return entry.name.toLowerCase().includes(needle)
-        || entry.imports.some((name) => name.toLowerCase().includes(needle))
-    }
-    return entries.filter(matches)
-  }, [entries, filter, query])
+  /** 把它摆到表上（手输过的包留在表里，便于回头清理）。 */
+  const surface = (name: string): void => {
+    setExtra((previous) => (previous.includes(name) ? previous : [...previous, name]))
+  }
 
-  const shown = filtered.slice(0, MAX_ROWS)
-
-  /** 取一个包：先算出依赖闭包，再一个一个取（进度落在按钮上）。 */
-  const prefetch = async (entry: PackageEntry): Promise<void> => {
-    if (busy !== null) return
+  /**
+   * 取一个包（连依赖）：先算闭包，再一个一个取，进度落在按钮上。
+   * 名字不认识 / 已经在本机都当场说清楚，不去发无谓的请求。
+   */
+  const fetchPackages = async (name: string, clearInput = false): Promise<void> => {
+    if (name.length === 0 || busy !== null) return
     setNote(null)
-    const plan = prefetchPlan(entries, entry.name)
-    if (plan.length === 0) {
-      setNote(t('pkgNothingToFetch', { name: entry.name }))
+    if (findPackage(entries, name) === undefined) {
+      setNote(t('pkgUnknown', { name }))
       return
     }
-    setBusy({ name: entry.name, done: 0, total: plan.length })
-    for (const [index, name] of plan.entries()) {
-      const outcome = await cachePackage(name)
+    surface(name)
+    const plan = prefetchPlan(entries, name)
+    if (plan.length === 0) {
+      setNote(t('pkgNothingToFetch', { name }))
+      return
+    }
+    setBusy({ name, done: 0, total: plan.length })
+    for (const [index, target] of plan.entries()) {
+      const outcome = await cachePackage(target)
       if (!alive.current) return
       if (!outcome.ok) {
-        setNote(t('pkgFetchFailed', { name, error: outcome.error }))
+        setNote(t('pkgFetchFailed', { name: target, error: outcome.error }))
         setBusy(null)
         void refresh()
         return
       }
-      setBusy({ name: entry.name, done: index + 1, total: plan.length })
+      setBusy({ name, done: index + 1, total: plan.length })
     }
     setBusy(null)
     setNote(t('pkgFetched', { count: plan.length }))
+    if (clearInput) setManual('')
+    await refresh()
+  }
+
+  /** 清掉某个包的本机缓存：它下次被用到会重新取一次。 */
+  const clearOne = async (name: string): Promise<void> => {
+    if (busy !== null) return
+    setNote(null)
+    setBusy({ name, done: 0, total: 1 })
+    try {
+      await clearPackage(name)
+      if (!alive.current) return
+      setNote(t('pkgCleared', { name }))
+    } catch (error) {
+      console.error(`[manim-renderer] 清理 ${name} 失败：`, error)
+      if (alive.current) setNote(t('pkgClearFailed', { name, error: error instanceof Error ? error.message : String(error) }))
+    }
+    if (!alive.current) return
+    setBusy(null)
     await refresh()
   }
 
@@ -324,22 +353,6 @@ function PackagesCard({ t }: { t: Translate }) {
 
       {inventory !== null && (
         <>
-          <div className="mr-set-tools">
-            <Segmented label={t('pkgFilter')} value={filter} disabled={busy !== null}
-              options={[
-                { value: 'local', label: t('pkgFilterLocal') },
-                { value: 'absent', label: t('pkgFilterAbsent') },
-                { value: 'all', label: t('pkgFilterAll') },
-              ]}
-              onChange={(next) => setFilter(next)} />
-            <label className="mr-set-search">
-              <Search size={13} aria-hidden="true" />
-              <input className="mr-set-searchinput" type="search" value={query} spellCheck={false}
-                placeholder={t('pkgSearch')} aria-label={t('pkgSearch')}
-                onChange={(event) => setQuery(event.target.value)} />
-            </label>
-          </div>
-
           <div className="mr-set-list">
             {shown.map((entry) => (
               <div key={entry.name} className="mr-set-row" data-kind="pkg" data-tone={packageTone(entry.state)}>
@@ -352,10 +365,18 @@ function PackagesCard({ t }: { t: Translate }) {
                   {entry.state === 'absent' && (
                     <Tip label={t('pkgCacheHint')} align="end">
                       <button type="button" className="mr-btn" disabled={busy !== null}
-                        onClick={() => { void prefetch(entry) }}>
-                        {busy !== null && busy.name === entry.name
+                        onClick={() => { void fetchPackages(entry.name) }}>
+                        {busy !== null && busy.name === entry.name && busy.total > 1
                           ? t('pkgFetching', { done: busy.done, total: busy.total })
                           : t('pkgCache')}
+                      </button>
+                    </Tip>
+                  )}
+                  {entry.state === 'cached' && (
+                    <Tip label={t('pkgClearHint')} align="end">
+                      <button type="button" className="mr-btn" disabled={busy !== null}
+                        onClick={() => { void clearOne(entry.name) }}>
+                        {t('pkgClear')}
                       </button>
                     </Tip>
                   )}
@@ -364,14 +385,20 @@ function PackagesCard({ t }: { t: Translate }) {
             ))}
           </div>
 
-          {filtered.length === 0 && (
-            <p className="mr-set-empty" role="status">
-              {filter === 'local' ? t('pkgEmptyLocal') : query.length > 0 ? t('pkgEmptySearch', { query }) : t('pkgEmptyAbsent')}
-            </p>
-          )}
-          {filtered.length > shown.length && (
-            <p className="mr-set-more">{t('pkgMore', { count: filtered.length - shown.length })}</p>
-          )}
+          <form className="mr-set-tools" onSubmit={(event) => { event.preventDefault(); void fetchPackages(manual.trim(), true) }}>
+            <Tip label={t('pkgManualHint')} align="start">
+              <label className="mr-set-field">
+                <input className="mr-set-fieldinput" type="text" value={manual} spellCheck={false}
+                  placeholder={t('pkgManual')} aria-label={t('pkgManualLabel')}
+                  onChange={(event) => setManual(event.target.value)} />
+              </label>
+            </Tip>
+            <button type="submit" className="mr-btn primary" disabled={busy !== null || manual.trim().length === 0}>
+              {t('pkgCache')}
+            </button>
+          </form>
+
+          <p className="mr-set-hint">{t('pkgListHint')}</p>
         </>
       )}
 
