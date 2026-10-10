@@ -2,6 +2,7 @@
 
 @expect 特征方向上的向量变换后仍在这条方向上（红 v₁ 沿虚线拉长 3 倍、蓝 v₂ 不动），
 灰色对照向量 u 变换后偏离原方向——偏折的与不偏折的对照着看；虚线即两条特征方向。
+变换前三根向量以半透明 ghost 留原位，箭头尖附近有 λ₁=3 / λ₂=1 标注。
 @template 要讲线性变换 / 矩阵作用于图形与向量（网格变形、变换前后对照、找不变方向）时照它抄。
 @note 讲解模板：变换后方向不变的向量就是特征向量（A 的特征值 3 与 1，特征方向 [1,1] 与 [1,-1]）
 """
@@ -44,9 +45,18 @@ class EigenvectorScene(Scene):
         self.play(FadeIn(dash_e1), FadeIn(dash_e2))
         self.play(Create(vec_a), Create(vec_b), Create(vec_c), Write(title))
         self.play(Write(label_a), Write(label_b), Write(label_c), run_time=0.6)
+
+        # 变换前 ghost：三根向量以低透明度留原位（不参与变换），供 before/after 对照
+        ghosts = VGroup(vec_a.copy(), vec_b.copy(), vec_c.copy()).set_opacity(0.25)
+        self.play(FadeIn(ghosts), run_time=0.5)
+
         self.play(
             ApplyMatrix([[2, 1], [1, 2]], VGroup(vec_a, vec_b, vec_c)),
             t.animate.set_value(1),
             run_time=2,
         )
+        # 特征值标注：单个 MathTex 直接 move_to 到对应箭头尖附近
+        lam_1 = MathTex(r"\lambda_1=3", color=RED, font_size=40).move_to([3.0, 1.9, 0])
+        lam_2 = MathTex(r"\lambda_2=1", color=BLUE, font_size=40).move_to([2.3, -2.1, 0])
+        self.play(Write(lam_1), Write(lam_2), run_time=0.7)
         self.wait(0.3)

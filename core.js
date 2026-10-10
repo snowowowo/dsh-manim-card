@@ -5129,6 +5129,23 @@ function fastForward(scene, duration) {
 	view.render?.();
 }
 /**
+* 极速模式下 play 结束后补跑一次 updater。真实 manim 的 play 每帧都先推动画、再跑 updater
+* （`Scene.update` 里 animations 先、mobjects 后），末帧落终态时 updater 也跑了最后一遍——
+* tracker 驱动的物体跟着走到新值。manim-web 的实时 play 循环确实每帧 `mobject.update(dt)`，
+* 但极速动画 duration=0 一帧不 tick，updater 就从未执行：`play(tracker.animate.set_value(2))`
+* 过后点还钉在起点，紧跟着的 `clear_updaters()` 就把「先到 2、再停住」变成了「从头到尾没动过」
+* （语料 updater-clear 的截图自查抓到的：终态红点停在 0，@expect 说应停在 2）。
+*
+* 补法：play 返回后按真实 run_time 补一次 `update(dt)`（对齐末帧语义；dt 用真实时长，
+* TracedPath 这类按 dt 记账的 updater 不会把整段轨迹缩成零时长）。只补极速路径——实时 play
+* 自带每帧 update，不用也不能重复补。
+*/
+function runUpdatersAfterFastPlay(scene, dt) {
+	const view = scene;
+	const all = view.mobjects === void 0 ? [] : [...view.mobjects];
+	for (const mobject of all) if (mobject.hasUpdaters?.() === true) mobject.update?.(dt);
+}
+/**
 * 修上游 `TransformMatchingTex` / `TransformMatchingShapes` 的另一处坑：**淡入的那部分没进场景**。
 *
 * 上游把「没配上对的片段」做成目标的复制品、透明起步，然后挂到 `this.mobject.parent` 上
@@ -5226,6 +5243,15 @@ function repairMatrixEntries(instance) {
 	}
 	return collected;
 }
+/**
+* 上游 `Tex` 的坑：它继承 MathTex，但构造时把每段 latex 包进 `\text{...}`（模仿 CE 的
+* Tex 走文本模式）。副作用是 LaTeX 语法全被当字面文本——`Tex("E = mc^2")` 的 `^` 排成
+* 一个字面 `^`、没有上标（截图自查 text-tex-plain 抓到的）。
+*
+* 修法：构造时把 Tex 改道 MathTex——manim-web 的 KaTeX 管线只有数学模式一种，「Tex 也是
+* LaTeX 全文」就该照排（与 MathTex 同管线，参数形状两者本来就一致：pack 到 `latex` 键）。
+*/
+const KIND_ALIAS = { Tex: "MathTex" };
 /**
 * 上游 `Angle` 三点输入把顺时针角画成优弧（病根与算法见 surface.ts 的 `angleFromPoints`），
 * 同弧线修法：用 `Arc` 按「顶点为圆心、第一射线为起始角、带符号扫角」重造。
@@ -5416,7 +5442,7 @@ function createManimWebBridge(options) {
 			const ctorArgs = planCreate(kind, args.map(deepResolve), deepResolve(kwargs));
 			const repaired = ARC_SHAPE_REPAIRS[kind] === void 0 ? void 0 : buildArcShape(manim, kind, ctorArgs[0] ?? {});
 			const angleRepaired = ANGLE_POINTS_REBUILT.has(kind) ? buildAngleShape(manim, ctorArgs[0] ?? {}, ctorArgs[1] ?? {}) : void 0;
-			const Ctor = manim[kind];
+			const Ctor = manim[KIND_ALIAS[kind] ?? kind];
 			if (repaired === void 0 && angleRepaired === void 0 && typeof Ctor !== "function") throw new Error(`${kind} 在 manim-web 里没有对应类——检查拼写，或改用已支持的形状`);
 			const instance = repaired ?? angleRepaired ?? new Ctor(...ctorArgs);
 			const renderable = instance;
@@ -5597,6 +5623,7 @@ function createManimWebBridge(options) {
 			};
 			const built = animations.map(build);
 			await target.play(...built);
+			if (fast) runUpdatersAfterFastPlay(target, playPlan.duration ?? 0);
 			let healed = false;
 			for (const [source, target_] of morphPairs) {
 				healed = healSubpathBookkeeping(source) || healed;

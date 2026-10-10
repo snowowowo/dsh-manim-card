@@ -35,11 +35,32 @@ class SvdGeometryScene(Scene):
         step_2 = Text("② 沿轴拉伸 2 与 0.55", font_size=28, color=GREEN).move_to([5.4, 0.8, 0])
         step_3 = Text("③ 再旋转", font_size=28, color=RED).move_to([5.4, 0.0, 0])
 
+        # ghost 层：原始圆（白虚线）与中间态椭圆（黄虚线，主轴沿拉伸方向的 40° 朝向）
+        ghost_circle = DashedVMobject(
+            disk.copy().set_fill(opacity=0).set_stroke(WHITE, 2), num_dashes=48)
+        ghost_mid = DashedVMobject(
+            Ellipse(width=4.4, height=1.21, color=YELLOW, stroke_width=2)
+            .set_fill(opacity=0)
+            .rotate(theta1),
+            num_dashes=48,
+        )
+        major_axis = Line(start=[-2.2 * math.cos(theta1), -2.2 * math.sin(theta1), 0],
+                          end=[2.2 * math.cos(theta1), 2.2 * math.sin(theta1), 0],
+                          stroke_color=WHITE, stroke_width=2)
+        minor_axis = Line(start=[0.605 * math.cos(theta1 + math.pi / 2), 0.605 * math.sin(theta1 + math.pi / 2), 0],
+                          end=[-0.605 * math.cos(theta1 + math.pi / 2), -0.605 * math.sin(theta1 + math.pi / 2), 0],
+                          stroke_color=WHITE, stroke_width=2)
+        # MathTex 定位一律 move_to 绝对坐标
+        sigma_major = MathTex("2", font_size=34, color=WHITE).move_to([2.05, 1.85, 0])
+        sigma_minor = MathTex("0.55", font_size=34, color=WHITE).move_to([-0.95, 1.05, 0])
+
         self.play(Create(plane), FadeIn(disk), Write(caption), run_time=1.0)
         self.play(Write(step_1), run_time=0.4)
         self.play(ApplyMatrix(v, figure), run_time=1.2)
         self.play(Write(step_2), run_time=0.4)
         self.play(ApplyMatrix(sigma, figure), run_time=1.2)
-        self.play(Write(step_3), run_time=0.4)
+        self.play(FadeIn(ghost_mid), Write(step_3), run_time=0.6)
         self.play(ApplyMatrix(u, figure), run_time=1.2)
+        self.play(FadeIn(ghost_circle), Create(major_axis), Create(minor_axis),
+                  Write(sigma_major), Write(sigma_minor), run_time=0.8)
         self.wait(0.4)

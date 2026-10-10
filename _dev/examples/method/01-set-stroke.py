@@ -9,7 +9,12 @@ from manim import *
 
 class SetStrokeScene(Scene):
     def construct(self):
-        circle = Circle(radius=1.4)
+        circle = Circle(radius=1.4, fill_opacity=0.5)
+        # 并排一颗未改动的对照圆（灰描边）：两颗填充一致，证明 set_stroke 只动了描边
+        control = circle.copy()
         circle.set_stroke(color=RED, width=6)
-        self.play(Create(circle))
+        control.set_stroke(color=GREY)
+        circle.shift(LEFT * 2.6)
+        control.shift(RIGHT * 2.6)
+        self.play(Create(circle), Create(control))
         self.wait(0.3)

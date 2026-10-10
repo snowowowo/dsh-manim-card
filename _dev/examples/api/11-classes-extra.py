@@ -5,6 +5,10 @@
 @note 这些类 manim-web 都有，只是构造姿势与 CE 不同（CE 收位置参数、manim-web 多收一个选项对象）——
       在 surface.ts 的 CTOR 里逐个登记了配方。全部对象默认叠在原点，必须逐格摆放；
       MathTex 一支只敢用 move_to 定位。
+      场类缺口：manim-web 0.3.24 的 VectorField._regenerate() 是空的（抽象基类，只有
+      ArrowVectorField / StreamLines 生成可见物）——名字能构造但画不出东西，格内放灰方块作
+      格位参照；ArrowVectorField / StreamLines 的线箭头按场走会越出采样范围，范围与步长收紧
+      （步长 ×0.8 封顶箭头长）才不侵入上排 Variable / Code。
 """
 
 from manim import *
@@ -94,18 +98,19 @@ class ExtraClassesScene(Scene):
         vfield = VectorField(
             cell_field(cx, cy), x_range=[cx - 1, cx + 1, 1], y_range=[cy - 0.35, cy + 0.75, 1],
         )
-        self.add(label_at(3, 3, "VectorField", -0.32), vfield)
+        # VectorField 上游不生成可见物（见 @note）——灰方块只标格位，不是它的渲染结果
+        self.add(label_at(3, 3, "VectorField", -0.32), Square(side_length=0.3, color=GREY).move_to(cell(3, 3)), vfield)
 
         ax, ay = COLS[4], ROWS[3]
         afield = ArrowVectorField(
-            cell_field(ax, ay), x_range=[ax - 1, ax + 1, 1], y_range=[ay - 0.35, ay + 0.75, 1],
-            length_func=lambda norm: min(norm, 0.25),  # 箭头默认太长，会伸出格子
+            cell_field(ax, ay), x_range=[ax - 0.6, ax + 0.6, 0.5], y_range=[ay, ay + 0.55, 0.5],
+            length_func=lambda norm: min(norm, 0.2),  # 箭头压短，可见簇整体缩在格上半区，让开格下标签
         )
         self.add(label_at(3, 4, "ArrowVectorField", -0.32), afield)
 
-        sx, sy = COLS[5], ROWS[3]
+        sx, sy = COLS[5], ROWS[3] + 0.35
         stream = StreamLines(
-            cell_field(sx, sy), x_range=[sx - 1, sx + 1, 1], y_range=[sy - 0.35, sy + 0.75, 1],
+            cell_field(sx, sy), x_range=[sx - 0.8, sx + 0.8, 1], y_range=[sy - 0.5, sy + 0.3, 1],
             num_lines=4,
         )
         self.add(label_at(3, 5, "StreamLines", -1.15), stream)

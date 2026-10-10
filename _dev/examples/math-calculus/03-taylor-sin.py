@@ -31,7 +31,7 @@ class TaylorSinScene(Scene):
                 return total
             return f
 
-        sine = ax.plot(lambda x: np.sin(x), x_range=[-PI, PI], color=WHITE, stroke_width=3)
+        sine = ax.plot(lambda x: np.sin(x), x_range=[-PI, PI], color=RED, stroke_width=5)
         colors = [BLUE, TEAL, GREEN, YELLOW]
         # 每一阶新加的那一项；最终公式由这些项拼成完整的多项式
         parts = [r"x", r"-\frac{x^3}{3!}", r"+\frac{x^5}{5!}", r"+\frac{x^7}{7!}"]

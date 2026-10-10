@@ -11,5 +11,5 @@ class ApplyMatrixScene(Scene):
     def construct(self):
         square = Square(side_length=2, color=BLUE)
         self.add(square)
-        self.play(ApplyMatrix([[0, -1], [1, 0]], square))
+        self.play(ApplyMatrix([[1, 0.6], [0, 1]], square))
         self.wait(0.3)

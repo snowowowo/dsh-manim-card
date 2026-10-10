@@ -19,7 +19,7 @@ inter = Intersection(Square(), Circle())
 elbow = Elbow(width=1, height=1)
 dashed = DashedVMobject(Circle())
 cdarrow = CurvedDoubleArrow([-2, 0, 0], [2, 0, 0])
-cloud = PointCloudDot()
+cloud = PointCloudDot(radius=0.5, numParticles=200, particleSize=6, color=YELLOW)
 mark = AnnotationDot()
 unit = UnitInterval()
 m1 = Mobject1D()
@@ -92,7 +92,8 @@ class ApiClassesScene(Scene):
             if s != 1.0:
                 mob.scale(s)  # s=1.0 的（坐标系大件）不调 scale——manim-web 的 scale 无条件量包围盒
             mob.move_to([COLS[c], ROWS[r] + (0.35 if big else 0.18), 0])
-            label = Text(name, font_size=11).move_to([COLS[c], ROWS[r] - (0.75 if big else 0.42), 0])
+            down = 0.75 if big else (0.68 if name == 'SurroundingRect' else 0.42)
+            label = Text(name, font_size=11).move_to([COLS[c], ROWS[r] - down, 0])
             self.add(label, mob)
         self.play(Create(sector), Create(arcbp), run_time=0.2)
         self.wait(0.2)

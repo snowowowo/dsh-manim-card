@@ -24,7 +24,9 @@ class FourierSquareScene(Scene):
         square = np.sign(np.sin(xs))
         square[square == 0] = 1.0
 
-        square_graph = ax.plot_line_graph(xs, square, add_vertex_dots=False, line_color=GRAY_B)
+        square_graph = ax.plot_line_graph(xs, square, add_vertex_dots=False,
+                                          line_color=WHITE, stroke_width=4)
+        square_label = Text("方波", font_size=24, color=WHITE).move_to([-2.9, 1.15, 0])
         partials = VGroup()
         for terms, color in [(1, BLUE), (3, TEAL), (9, GREEN), (25, YELLOW)]:
             ys = np.zeros_like(xs)
@@ -35,7 +37,7 @@ class FourierSquareScene(Scene):
         note = Text("项数 1 → 3 → 9 → 25", font_size=26, color=WHITE).to_edge(DOWN, buff=0.35)
         title = MathTex(r"\frac{4}{\pi}\sum_{k\ \text{odd}}\frac{\sin kx}{k}", font_size=42).to_edge(UP)
 
-        self.play(Create(ax), Create(square_graph), run_time=1.0)
+        self.play(Create(ax), Create(square_graph), Write(square_label), run_time=1.0)
         self.play(Write(title), run_time=0.8)
         for curve in partials:
             self.play(Create(curve), run_time=0.8)

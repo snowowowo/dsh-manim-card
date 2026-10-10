@@ -13,5 +13,8 @@ class SaveRestoreScene(Scene):
         square.save_state()
         self.add(square)
         self.play(square.animate.shift(RIGHT * 2).set_color(RED))
+        # 改动后的红色偏移副本留作影子：restore 后与居中蓝方块同框对照
+        ghost = square.copy()
         square.restore()
+        self.add(ghost)
         self.wait(0.3)

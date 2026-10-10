@@ -7,6 +7,6 @@ from manim import *
 
 class MarkupScene(Scene):
     def construct(self):
-        m = MarkupText("<b>粗体</b> 与 <i>斜体</i>", font_size=44)
+        m = MarkupText('<b>粗体</b> 与 <i>斜体</i> 与 <span color="#FF6666">红色</span>', font_size=44)
         self.play(FadeIn(m))
         self.wait(0.3)

@@ -6,6 +6,7 @@
 
 from manim import *
 import numpy as np
+import math
 
 
 class RandomWalkScene(Scene):
@@ -26,9 +27,16 @@ class RandomWalkScene(Scene):
 
         zero_line = DashedLine(ax.c2p(0, 0), ax.c2p(300, 0), color=GRAY_B, stroke_width=2)
 
+        # ±√n 参考带：两端绝对坐标（c2p），直观对照「包络宽度 ~ √n 而非 n」
+        sqrt_n = math.sqrt(300)
+        band_top = DashedLine(ax.c2p(0, sqrt_n), ax.c2p(300, sqrt_n), color=RED, stroke_width=2)
+        band_bottom = DashedLine(ax.c2p(0, -sqrt_n), ax.c2p(300, -sqrt_n), color=RED, stroke_width=2)
+        band_label = Text("±√n ≈ ±17.3", font_size=24, color=RED).move_to([2.7, 0.98, 0])
+
         walks = VGroup()
         ends = VGroup()
         legend = VGroup()
+        end_pts = []
         for idx, color in enumerate(colors):
             moves = rng.choice([-1.0, 1.0], size=steps)
             path_values = np.concatenate([[0.0], np.cumsum(moves)])
@@ -36,8 +44,11 @@ class RandomWalkScene(Scene):
             walks.add(
                 VGroup(*[Line(pts[i], pts[i + 1], color=color, stroke_width=2) for i in range(len(pts) - 1)])
             )
+            end_pts.append(pts[-1])
             ends.add(Dot(pts[-1], radius=0.08, color=color))
             legend.add(Text(f"第 {idx + 1} 条", font_size=22, color=color).move_to([4.4, 2.6 - idx * 0.45, 0]))
+        # 蓝色终点单独补一颗稍大的点，避免与其他终点重叠后看不见
+        blue_end_dot = Dot(end_pts[0], radius=0.11, color=BLUE, stroke_color=WHITE, stroke_width=1.5)
 
         sigma_note = MathTex(r"\text{std}(S_n) = \sqrt{n} \approx 17.3", font_size=40, color=RED)
         sigma_note.move_to([-3.9, -2.4, 0])
@@ -49,7 +60,8 @@ class RandomWalkScene(Scene):
         self.play(Write(formula), run_time=0.8)
         self.play(Create(ax), Create(zero_line), run_time=0.9)
         self.play(LaggedStart(*[Create(w) for w in walks], lag_ratio=0.3), run_time=3.0)
-        self.play(FadeIn(ends), Write(legend), run_time=0.7)
+        self.play(FadeIn(ends), FadeIn(blue_end_dot), Write(legend), run_time=0.7)
+        self.play(Create(band_top), Create(band_bottom), Write(band_label), run_time=0.8)
         self.play(Write(sigma_note), run_time=0.7)
         self.play(Write(caption), run_time=0.7)
         self.wait(0.4)

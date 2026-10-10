@@ -22,8 +22,14 @@ class SingularMatrixScene(Scene):
         det_label = MathTex(r"\det\begin{bmatrix} 1 & 2 \\ 2 & 4 \end{bmatrix} = 0", font_size=42).to_edge(UP)
         note = Text("压成了秩 1 的一条线：不可逆", font_size=30, color=RED).to_edge(DOWN, buff=0.5)
 
+        # 变换前留低透明度 ghost 在原位，ApplyMatrix 只作用实体组
+        ghost_plane = plane.copy().set_opacity(0.25)
+        ghost_block = block.copy().set_opacity(0.25)
+        image_label = Text("原方块的像", font_size=24, color=YELLOW).move_to([1.9, 2.3, 0])
+
         self.play(Create(plane), run_time=1.0)
         self.play(FadeIn(block), Write(det_label), run_time=0.8)
+        self.play(FadeIn(ghost_plane), FadeIn(ghost_block), run_time=0.6)
         self.play(ApplyMatrix([[1, 2], [2, 4]], VGroup(plane, block)), run_time=2.0)
-        self.play(Write(note), run_time=0.6)
+        self.play(Write(note), FadeIn(image_label), run_time=0.6)
         self.wait(0.4)

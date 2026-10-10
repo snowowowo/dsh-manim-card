@@ -10,5 +10,11 @@ from manim import *
 class VectorScene(Scene):
     def construct(self):
         vec = Vector([2, 1, 0], color=TEAL)
-        self.play(GrowArrow(vec))
+        # 原点灰点 + 水平/垂直虚线勾出两个分量：方向与长度确实就是 (2, 1)
+        origin = Dot(ORIGIN, color=GREY)
+        along_x = DashedLine(ORIGIN, [2, 0, 0], color=GREY)
+        along_y = DashedLine([2, 0, 0], [2, 1, 0], color=GREY)
+        label = Text("(2, 1)", font_size=26)
+        label.move_to([2.6, 1.3, 0])
+        self.play(GrowArrow(vec), FadeIn(origin), Create(along_x), Create(along_y), Write(label))
         self.wait(0.3)

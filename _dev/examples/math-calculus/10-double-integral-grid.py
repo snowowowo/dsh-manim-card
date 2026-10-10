@@ -16,18 +16,36 @@ class DoubleIntegralGridScene(Scene):
         ys = np.arange(-1.5, 1.5, dy)
 
         inside = VGroup()
+        partial = VGroup()
         outside = VGroup()
+        partial_cells = []
         for x0 in xs:
             for y0 in ys:
                 cell = Rectangle(width=dx, height=dy, stroke_width=1)
                 cell.move_to([float(x0) + dx / 2, float(y0) + dy / 2, 0])
-                if (float(x0) + dx / 2) ** 2 + (float(y0) + dy / 2) ** 2 <= 4.0:
+                cx, cy = float(x0) + dx / 2, float(y0) + dy / 2
+                r2 = cx ** 2 + cy ** 2
+                if r2 <= 4.0:
                     cell.set_fill(YELLOW, 0.45)
                     inside.add(cell)
                 else:
-                    outside.add(cell)
+                    # 格心在外但方块与圆相交：四角至少一角落圆内，按角点比例估权重
+                    corners = [(cx - dx / 2, cy - dy / 2), (cx + dx / 2, cy - dy / 2),
+                               (cx - dx / 2, cy + dy / 2), (cx + dx / 2, cy + dy / 2)]
+                    frac = sum(1.0 for ux, uy in corners if ux ** 2 + uy ** 2 <= 4.0) / 4.0
+                    if frac > 0:
+                        cell.set_fill(YELLOW, 0.15)
+                        partial.add(cell)
+                        partial_cells.append((cx, cy, frac))
+                    else:
+                        outside.add(cell)
 
         circle = Circle(radius=2.0, color=RED, stroke_width=3)
+        weight_marks = VGroup()
+        for cx, cy, frac in partial_cells[:3]:
+            mark = Text(f"{frac:.2f}", font_size=16, color=WHITE)
+            mark.move_to([cx, cy, 0])
+            weight_marks.add(mark)
         labels = VGroup(
             MathTex(r"\iint_D f(x,y)\,dx\,dy \approx \sum f(x_i,y_j)\,\Delta x\,\Delta y", font_size=38).to_edge(UP),
             MathTex(r"\Delta x = \Delta y = 0.5", color=YELLOW, font_size=32).to_edge(DOWN, buff=0.6),
@@ -36,5 +54,6 @@ class DoubleIntegralGridScene(Scene):
         self.play(Write(labels[0]), run_time=0.8)
         self.play(Create(outside), Create(circle), run_time=1.0)
         self.play(LaggedStart(*[FadeIn(cell) for cell in inside], lag_ratio=0.02), run_time=1.6)
+        self.play(FadeIn(partial), Write(weight_marks), run_time=0.8)
         self.play(Write(labels[1]), run_time=0.5)
         self.wait(0.4)

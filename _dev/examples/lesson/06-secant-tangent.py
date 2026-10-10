@@ -90,6 +90,8 @@ class SecantToTangent(Scene):
         # h 变小，割线滑向切线
         self.play(h.animate.set_value(0.12), run_time=3.0, rate_func=smooth)
         self.play(FadeIn(tangent), run_time=0.7)
+        tangent_label = Text("切线", font_size=24, color=RED).move_to(ax.c2p(2.55, 4.35))
+        self.play(Write(tangent_label), run_time=0.5)
         self.play(FadeTransform(eq, result), run_time=1.0)
         self.play(Indicate(result, color=YELLOW, scale_factor=1.15), run_time=0.8)
         self.wait(0.8)

@@ -7,6 +7,6 @@ from manim import *
 
 class CircleScene(Scene):
     def construct(self):
-        circle = Circle(radius=1.2, color=BLUE)
+        circle = Circle(radius=1.2)
         self.play(Create(circle))
         self.wait(0.3)

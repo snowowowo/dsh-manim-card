@@ -188,6 +188,8 @@ def pos(row, col):
 - **中文不进公式**：`MathTex(r"\text{传递}")` 一个字都不显示。中文用 `Text`，公式用 `MathTex`，并排时各自 `move_to` 对齐。
 - **字体切换命令整段画成空**：`\mathbb` / `\mathcal` / `\mathsf` 实测一个字形都不出来（还会去拉动态字体，控制台报 `Can't load …`）。要花体字母就用普通字母：`Z`、`P`、`V^T`。
 - 间距命令（`\;` `\quad` `\qquad` `\,`）实测都安全，放心用。
+- **排版完成前别动它的几何**：`MathTex` 的分段与包围盒要等 KaTeX 异步排版才存在。构造后立刻 `copy()` 当残影、`scale()`、`arrange()` 都拿到空/未填充的结构——实测排版前 copy 的残影会把 `TransformMatchingTex` 的对位数据污染成 `aˣ = y b`。要对照残影就画一个独立的灰公式用 `move_to` 摆过去，别 copy 公式本体。
+- `Tex` 照数学模式排（适配层已把 `Tex` 改道 `MathTex` 管线），`Tex("E = mc^2")` 的 `^` 正常出上标。
 
 ### `Graph` 的标签看不见
 

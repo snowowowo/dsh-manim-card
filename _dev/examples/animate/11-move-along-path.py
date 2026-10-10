@@ -11,4 +11,5 @@ class MoveAlongPathScene(Scene):
         dot = Dot(point=[2, 0, 0], color=RED)
         self.add(circle, dot)
         self.play(MoveAlongPath(dot, circle), run_time=2)
+        self.add(Text("红点已沿圆走完一整圈", font_size=24).move_to([0, -3, 0]))
         self.wait(0.3)
