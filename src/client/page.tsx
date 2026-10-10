@@ -16,7 +16,7 @@ import { ManimCard, type CardResult } from './components/card'
 import { Segmented } from './components/segmented'
 import { Tip } from './components/tip'
 import { useCopied } from './clipboard'
-import { useCorpus } from './corpus'
+import { SHOTS_URL, useCorpus } from './corpus'
 import { clearPackageCache } from './packages'
 import type { ManimCardData } from './definition'
 import type { Translate } from './i18n'
@@ -71,6 +71,8 @@ export function ManimPage({ t }: { t: Translate }) {
   const [clearing, setClearing] = useState(false)
   /** 人工验证标注（对 / 不对）：与自动结果分开存、分开清（见 storage 的注释）。 */
   const [marks, setMarks] = useState<Record<string, ManualMark>>(() => loadMarks())
+  /** 加载失败的截图（语料还在、图被删了）：按路径记下来就别再试了，免得控制台一直报 404。 */
+  const [brokenShots, setBrokenShots] = useState<Record<string, true>>({})
 
   // 语料从 Host 取（见 ./corpus）：正式安装里是空表，本页退化成「自定义代码」。
   const corpusState = useCorpus()
@@ -391,6 +393,36 @@ export function ManimPage({ t }: { t: Translate }) {
     )
   })()
 
+  /**
+   * 上次真渲染的截图（`_dev/shots/<组>/<同名>.png`，由 scripts/shot-corpus.mjs 落盘）。
+   *
+   * 为什么值得占一块位置：自动结果只说明「没炸」，预期表现只说明「应该长什么样」——
+   * 中间那一步「画面到底对不对」只有图能回答。图留盘上、与语料同名归档，这里直接显示，
+   * 就不必每核一次重截一次；重跑截图脚本会覆盖同名文件，所以这里看到的永远是当前这版。
+   * 点开在新标签页看原尺寸（1280×720）——布局类问题（贴到角上、字压字）在小图上不好认。
+   */
+  const shotRel = currentExample?.shot
+  const shotFigure = shotRel === undefined || brokenShots[shotRel] === true
+    ? null
+    : (
+      <figure className="mr-shot">
+        <figcaption className="mr-shot-label">
+          <Tip label={t('shotHint')} align="start">
+            <span>{t('shotLabel')}</span>
+          </Tip>
+        </figcaption>
+        <a className="mr-shot-link" href={`${SHOTS_URL}/${shotRel}`} target="_blank" rel="noreferrer">
+          <img
+            className="mr-shot-img"
+            src={`${SHOTS_URL}/${shotRel}`}
+            alt={shotRel}
+            loading="lazy"
+            onError={() => setBrokenShots((prev) => ({ ...prev, [shotRel]: true }))}
+          />
+        </a>
+      </figure>
+    )
+
   const preview = (
     <section className="mr-preview">
       {currentExample !== undefined && (
@@ -404,6 +436,7 @@ export function ManimPage({ t }: { t: Translate }) {
           {markButtons}
         </div>
       )}
+      {shotFigure}
       {current === null
         ? <p className="mr-empty">{t('previewEmpty')}</p>
         : (

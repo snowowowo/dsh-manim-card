@@ -46,7 +46,7 @@ class ApiRatesScene(Scene):
         dots = []
         for i, name in enumerate(RATES):
             y = TOP - i * STEP
-            label = Text(name, font_size=13).move_to([-6.3, y, 0])
+            label = Text(name, font_size=13).move_to([-5.8, y, 0])
             track = Line([X0, y, 0], [X0 + SPAN, y, 0]).set_stroke(width=1.5, opacity=0.25)
             dot = Dot([X0, y, 0], radius=0.09)
             self.add(label, track, dot)

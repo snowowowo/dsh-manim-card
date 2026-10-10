@@ -6,10 +6,10 @@
 //       所以不需要重建 client.js / core.js。
 //
 // 只生成「清单类」内容——写法叙述、示例、纪律、改写建议都是人写的，不在这里。
-import { readFileSync, readdirSync, writeFileSync } from 'node:fs'
+import { readFileSync, writeFileSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { corpusRoot } from '../src/host/corpus.js'
+import { collectCorpus } from '../src/host/corpus.js'
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..')
 const mapPath = join(root, 'src/core/py/api-map.generated.ts')
@@ -106,28 +106,35 @@ function animateMethodList() {
 }
 
 /**
- * 场景模板：把语料里 `lesson/` 那组的完整文件**原样内联**进技能。
+ * 场景模板：只内联 docstring 里带 `@template <理由>` 标记的语料，**原样**贴进技能。
+ *
+ * 为什么按标记精选而不是整组内联：模板区是给模型照抄的范本，多了会稀释注意力、
+ * 少了覆盖不住讲解范式——「哪条够格」是个判断，判断就写在标记后面（`@template 什么时候照它抄`）。
+ * 想增删模板就改语料文件的标记，这里不做任何二次筛选。
  *
  * 为什么内联而不是让模型自己去读文件：技能是整段正文注册的，模型一次就拿到全部，
- * 不必再赌它有文件访问权。这些文件同时是实验场的语料（回归跑过），所以内联的是**验过的**写法。
+ * 不必再赌它有文件访问权。这些文件同时是实验场的语料（回归跑过 + 真浏览器截过图），
+ * 所以内联的是**验过的**写法。
  * 语料本体在插件仓 `_dev/`（**包外**，语料位置与解析见 src/host/corpus.js）——所以这一步只能在
  * 仓库检出里跑，正式安装里没有这条路径。
  */
 function templatesSection() {
-  const dir = join(corpusRoot(), 'lesson')
+  const { groups, examples } = collectCorpus()
+  const groupTitle = new Map(groups.map((group) => [group.id, group.title]))
+  const chosen = examples.filter((example) => example.template !== undefined)
+  if (chosen.length === 0) {
+    throw new Error('没有任何语料带 @template 标记——模板区会是空的，先去 _dev/examples 里选几条')
+  }
   const fence = '```'
-  return readdirSync(dir)
-    .filter((name) => name.endsWith('.py'))
-    .sort()
-    .map((name) => {
-      const text = readFileSync(join(dir, name), 'utf8')
-      const header = text.match(/^"""([\s\S]*?)"""/)
-      const title =
-        (header?.[1] ?? '')
-          .split('\n')
-          .map((line) => line.trim())
-          .find((line) => line !== '' && !line.startsWith('@')) ?? name
-      return `### ${title}（\`${name}\`）\n\n${fence}python\n${text.trimEnd()}\n${fence}`
+  return chosen
+    .map((example) => {
+      const name = example.file.split('/').pop()
+      const from = groupTitle.get(example.group) ?? example.group
+      return (
+        `### ${example.title}（\`${name}\`，出自「${from}」组）\n\n` +
+        `**什么时候照它抄**：${example.template}\n\n` +
+        `${fence}python\n${example.python.trimEnd()}\n${fence}`
+      )
     })
     .join('\n\n')
 }

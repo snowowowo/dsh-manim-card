@@ -18,6 +18,9 @@ export const MIME = {
   '.wasm': 'application/wasm',
   '.zip': 'application/zip',
   '.whl': 'application/octet-stream',
+  // 语料截图（`_dev/shots/<组>/<同名>.png`）：实验场页面直接当 <img> 显示
+  '.png': 'image/png',
+  '.webp': 'image/webp',
 };
 
 /** 把请求的相对路径解析成 baseDir 下的真实文件；越界或不存在返回 null。 */

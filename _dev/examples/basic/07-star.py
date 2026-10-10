@@ -1,6 +1,6 @@
 """六角星
 
-@expect 一个五角星轮廓，五个尖角清晰。"""
+@expect 一个六角星轮廓，六个尖角清晰。"""
 
 from manim import *
 

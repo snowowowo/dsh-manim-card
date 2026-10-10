@@ -28,4 +28,7 @@ class UpdateFromFuncScene(Scene):
             UpdateFromAlphaFunc(square, lambda m, alpha: m.set_fill(BLUE, alpha)),
             run_time=0.8,
         )
+        # 适配层在动画终态会丢掉回调刷出来的填充；play 外的 set_fill 不触发重绘，
+        # 故再用一条 .animate 动画显式补上不透明蓝填充（终帧必须实心蓝）
+        self.play(square.animate.set_fill(BLUE, 1.0), run_time=0.4)
         self.wait(0.3)

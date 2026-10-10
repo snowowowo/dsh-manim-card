@@ -16,23 +16,29 @@
 //   位置参数    组名（默认 = 全部离线组：basic ctor method graph text updater animate scene lesson syntax api）
 //   --only 子串   只跑 id 命中的（可多次）
 //   --limit N     每组最多前 N 条（冒烟用）
+//   --clean       先清空该组目录再截（默认是覆盖同名文件，不动别的）
 //   --bg 颜色     页面底色（默认 #1C1C1C）
 //   --realtime    不启用极速，按 run_time 真等（慢，用来核「动画过程」）
-//   --out 目录    产物目录（默认 <插件包根>/_tmp/shots）
+//   --out 目录    产物目录（默认 <插件仓根>/_dev/shots，即语料截图的正规位置）
 //
-// 产物：<out>/<组>/<id>.png、<out>/index.json
-import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
-import { dirname, join, resolve } from 'node:path'
+// 产物：<out>/<组>/<同名>.png、<out>/index.json
+//
+// 产物默认落在**语料旁边**（`_dev/shots/`，包外）而不是 _tmp：这张图是「这条语料真渲染出来长什么样」
+// 的唯一记录，回归只证明没炸、画面对不对只能看图。留在盘上+按同名归档，宿主就能把它发给实验场页面
+// （见 src/host/corpus.js 的 shotPath() / shotsRoot()），页面直接显示——不必每次重截。
+// 每次重跑**覆盖**同名文件（用户要的就是「永远是当前这版」）；`--clean` 才整目录清空。
+// 顺带扫一遍孤儿图（语料里已经没有对应条目了）报出来——默认删掉会撞上宿主的批量删除保护，
+// 而这类文件本来就极少，看见名字手删一次更省事。
+import { existsSync, mkdirSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs'
+import { basename, dirname, join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { chromium } from 'playwright'
-import { collectCorpus } from '../src/host/corpus.js'
+import { collectCorpus, shotPath, shotsRoot } from '../src/host/corpus.js'
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..')
 const MANIM_DIST = join(root, 'node_modules', 'manim-web', 'dist')
 const PYODIDE_DIR = join(root, 'assets', 'pyodide')
 const KATEX_DIR = join(root, 'assets', 'katex')
-/** 插件包根：语料在 `_dev/`、截图产物在 `_tmp/`，都在包内（两者都不进发布集）。 */
-const PKG_ROOT = root
 
 /** 画布尺寸：与 src/client/engine/canvas.ts 的 WIDTH / HEIGHT 一致。 */
 const WIDTH = 1280
@@ -59,7 +65,7 @@ function parseArgs(argv) {
   const groups = []
   const only = []
   const options = {
-    limit: 0, bg: '#1C1C1C', realtime: false, out: join(PKG_ROOT, '_tmp', 'shots'),
+    limit: 0, bg: '#1C1C1C', realtime: false, clean: false, out: shotsRoot(),
     probe: null,
   }
   for (let index = 0; index < argv.length; index += 1) {
@@ -70,6 +76,7 @@ function parseArgs(argv) {
     else if (arg === '--bg') options.bg = next()
     else if (arg === '--out') options.out = resolve(next())
     else if (arg === '--realtime') options.realtime = true
+    else if (arg === '--clean') options.clean = true
     else if (arg === '--probe') options.probe = resolve(next())
     else if (arg.startsWith('--')) throw new Error(`未知选项 ${arg}`)
     else groups.push(arg)
@@ -334,6 +341,8 @@ console.info(
 
 const browser = await chromium.launch({ channel: 'chromium' })
 const results = []
+/** 碰过的分组：孤儿图要按组扫（声明在 try 外面——收尾统计在块外读它）。 */
+const touchedGroups = new Set()
 
 try {
   const page = await browser.newPage({ viewport: { width: WIDTH, height: HEIGHT }, deviceScaleFactor: 1 })
@@ -345,17 +354,20 @@ try {
   await serve(page, options.bg)
 
   const stage = page.locator('#stage')
-  const cleared = new Set()
+  const clearedGroups = new Set()
   let index = 0
   for (const example of selected) {
     index += 1
-    const dir = join(options.out, example.group)
-    // 整跑前清空该组目录一次（免得上一轮旧图混进来冒充本轮结果）；组内逐条只增不删
-    if (options.limit === 0 && !cleared.has(example.group)) {
-      rmSync(dir, { recursive: true, force: true })
-      cleared.add(example.group)
+    // 产物路径 = 语料旁的**同名** PNG（唯一真源在 corpus.js 的 shotPath，与 Host 的路由同一份定义）
+    const rel = shotPath(example.group, basename(example.file))
+    const file = join(options.out, rel)
+    // 默认只覆盖同名文件；--clean 才整目录清空（免得上一轮旧图混进来冒充本轮结果）
+    if (options.clean && !clearedGroups.has(example.group)) {
+      rmSync(dirname(file), { recursive: true, force: true })
+      clearedGroups.add(example.group)
     }
-    mkdirSync(dir, { recursive: true })
+    mkdirSync(dirname(file), { recursive: true })
+    touchedGroups.add(example.group)
 
     const before = consoleErrors.length
     let outcome
@@ -368,12 +380,13 @@ try {
       outcome = { ok: false, error: `页面执行失败：${error instanceof Error ? error.message : String(error)}`, logs: [], ink: 0 }
     }
 
-    await stage.screenshot({ path: join(dir, `${example.id}.png`) })
+    await stage.screenshot({ path: file })
 
     results.push({
       id: example.id,
       group: example.group,
       title: example.title,
+      shot: rel,
       expectation: example.expectation ?? null,
       browser: example.browser === true,
       ok: outcome.ok,
@@ -401,9 +414,33 @@ writeFileSync(
 
 const failed = results.filter((result) => !result.ok)
 const blank = results.filter((result) => result.ok && result.ink < 0.002)
+
+// 孤儿图：这一组里还留着、但语料已经没有对应条目的 PNG（改过文件名就会留下）。
+// 参照系必须是**该组的完整语料**，不是本轮选中的那几条——否则一加 --only，同组其它图全成「孤儿」。
+// 只报不删——这类文件极少，看见名字手删一次就好；在脚本里批量删会撞上宿主的删除保护，得不偿失。
+const allShotsByGroup = new Map()
+for (const example of corpus.examples) {
+  if (NON_VISUAL.has(example.group)) continue
+  const group = example.group
+  const set = allShotsByGroup.get(group) ?? new Set()
+  set.add(basename(shotPath(group, basename(example.file))))
+  allShotsByGroup.set(group, set)
+}
+
+const orphans = []
+for (const group of touchedGroups) {
+  const dir = join(options.out, group)
+  if (!existsSync(dir)) continue
+  const expected = allShotsByGroup.get(group) ?? new Set()
+  for (const name of readdirSync(dir)) {
+    if (name.endsWith('.png') && !expected.has(name)) orphans.push(`${group}/${name}`)
+  }
+}
+
 console.info(
   `\n截图完成：${results.length} 条 → ${options.out}\n` +
     `  跑通 ${results.length - failed.length} / 报错 ${failed.length} / 疑似空白 ${blank.length}` +
     (failed.length > 0 ? `\n  报错：${failed.map((item) => item.id).join('、')}` : '') +
-    (blank.length > 0 ? `\n  疑似空白：${blank.map((item) => item.id).join('、')}` : ''),
+    (blank.length > 0 ? `\n  疑似空白：${blank.map((item) => item.id).join('、')}` : '') +
+    (orphans.length > 0 ? `\n  孤儿图（语料里已无对应条目，可手删）：${orphans.join('、')}` : ''),
 )

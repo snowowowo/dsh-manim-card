@@ -44,6 +44,60 @@ function fakeScene() {
 }
 
 describe('manim-web 桥', () => {
+  it('move_to 在「包围盒量不出」的物体上也能落位（干跑环境的 getBounds 兜底）', async () => {
+    const canvas = fakeScene()
+    const bridge = createManimWebBridge({ manim, scene: canvas.scene })
+
+    // BarChart 是组合体：无 WebGL 时它的包围盒量不出来（empty Three.js bounds），
+    // 真 moveTo 会抛。兜底要接住并按 getCenter + shift 落到同一位置。
+    await runPython(
+      `from manim import *
+
+class Demo(Scene):
+    def construct(self):
+        chart = BarChart(values=[1, 3, 2])
+        chart.move_to([0.0, -0.5, 0.0])
+        self.add(chart)
+`,
+      bridge,
+    )
+
+    expect(canvas.added).toHaveLength(1)
+    // 验证位置不能调 getCenter()——它同样走包围盒、同样会抛。按「全部点的均值」算
+    // （真 Manim 的中心定义，也是桥上兜底用的同一套算法，不经过渲染器）。
+    const centerOf = (node: unknown, depth = 0): number[] | null => {
+      const acc = { x: 0, y: 0, z: 0, n: 0 }
+      const visit = (item: unknown, level: number): void => {
+        const view = item as { getPoints?: () => unknown; children?: unknown }
+        const raw = typeof view.getPoints === 'function' ? view.getPoints() : null
+        const flat: number[] = []
+        if (Array.isArray(raw)) {
+          for (const entry of raw as unknown[]) {
+            if (typeof entry === 'number') flat.push(entry)
+            else if (Array.isArray(entry)) for (const value of entry as number[]) flat.push(Number(value))
+          }
+        }
+        for (let index = 0; index + 2 < flat.length; index += 3) {
+          const [x, y, z] = [flat[index], flat[index + 1], flat[index + 2]]
+          if (Number.isFinite(x) && Number.isFinite(y) && Number.isFinite(z)) {
+            acc.x += x
+            acc.y += y
+            acc.z += z
+            acc.n += 1
+          }
+        }
+        if (level < 6 && Array.isArray(view.children)) {
+          for (const kid of view.children as unknown[]) visit(kid, level + 1)
+        }
+      }
+      visit(node, depth)
+      return acc.n === 0 ? null : [acc.x / acc.n, acc.y / acc.n, acc.z / acc.n]
+    }
+    const center = centerOf(canvas.added[0][0])
+    expect(center?.[0]).toBeCloseTo(0, 1)
+    expect(center?.[1]).toBeCloseTo(-0.5, 1)
+  })
+
   it('把适配层的 add / play / wait 落到真 manim-web 对象上', async () => {
     const canvas = fakeScene()
     const bridge = createManimWebBridge({ manim, scene: canvas.scene })

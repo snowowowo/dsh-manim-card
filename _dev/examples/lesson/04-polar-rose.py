@@ -1,6 +1,7 @@
 """极坐标玫瑰线
 
 @expect 玫瑰线的花瓣数与方程参数一致（2k 瓣 / k 瓣的规律看得出来）。
+@template 要画极坐标 / 参数方程曲线（玫瑰线、螺线、摆线……manim-web 没有 plot_polar_graph）时照它抄。
 @note 讲解模板：manim-web 没有 plot_polar_graph——把 r(θ) 写成参数方程交给 ParametricFunction
 """
 

@@ -339,6 +339,84 @@ function settleRateTerminal(animation: unknown): boolean {
   }
 }
 
+/**
+ * manim-web 的 moveTo 内部要量包围盒；包围盒由 Three.js 从**渲染树**算，在**无 WebGL 的干跑 /
+ * 回归环境**里，物体带「永远渲染不出来的孩子」（BarChart / UnitInterval 里的数字、公式纹理）
+ * 时会抛 `Mobject.getBounds(): … produced empty Three.js bounds`。真浏览器量得出来，不进这条路
+ * ——所以这是「门禁比现实严格」的同判性缺口（同一份代码浏览器能跑、Node 门禁拒绝）。
+ *
+ * 修法不是让语料绕开，而是桥上兜底：中心按**全部点的均值**手算（真 Manim 的 get_center 就是这个
+ * 定义），点的读取与递归子物体都不经过渲染器；算出中心后 shift（纯点运算，同样不碰包围盒）。
+ * 一个点都读不出来时兜底失败、原样抛错——那说明物体真空几何，浏览器里同样画不出。
+ * 只兜 move_to：to_edge / next_to 的语义要读「别的物体」、scale 在 manim-web 里无条件量包围盒
+ * （显式 about_point 也拦不住），这两个兜不了——坐标系这类要用构造参数（x_length / radius_max）定尺寸。
+ */
+const BOUNDS_ERROR = /empty Three\.js bounds/
+const CENTER_FALLBACK_METHODS = new Set(['move_to'])
+
+/** 递归收集一个 manim-web 物体（含全部子物体）的点的均值；一个点都没有返回 null。 */
+function centerFromPoints(target: Record<string, unknown>, depth = 0): number[] | null {
+  const acc = { x: 0, y: 0, z: 0, n: 0 }
+  const visit = (node: Record<string, unknown>, level: number): void => {
+    const getPoints = node.getPoints
+    if (typeof getPoints === 'function') {
+      try {
+        const raw = (getPoints as () => unknown).call(node)
+        const flat: number[] = []
+        if (Array.isArray(raw)) {
+          for (const item of raw as unknown[]) {
+            if (typeof item === 'number') flat.push(item)
+            else if (Array.isArray(item)) for (const value of item as number[]) flat.push(Number(value))
+          }
+        } else if (ArrayBuffer.isView(raw)) {
+          for (const value of raw as ArrayLike<number>) flat.push(Number(value))
+        }
+        for (let index = 0; index + 2 < flat.length; index += 3) {
+          const [x, y, z] = [flat[index], flat[index + 1], flat[index + 2]]
+          if (Number.isFinite(x) && Number.isFinite(y) && Number.isFinite(z)) {
+            acc.x += x
+            acc.y += y
+            acc.z += z
+            acc.n += 1
+          }
+        }
+      } catch {
+        // 这个孩子读不出点就跳过——要的不是精确包围盒，是一个能用的中心
+      }
+    }
+    const kids = node.children
+    if (level < 6 && Array.isArray(kids)) {
+      for (const kid of kids as Record<string, unknown>[]) {
+        if (kid !== null && typeof kid === 'object') visit(kid, level + 1)
+      }
+    }
+  }
+  visit(target, depth)
+  return acc.n === 0 ? null : [acc.x / acc.n, acc.y / acc.n, acc.z / acc.n]
+}
+
+function recoverBoundsFailure(
+  target: Record<string, unknown>,
+  name: string,
+  args: unknown[],
+  error: unknown,
+): 'recovered' | null {
+  if (!CENTER_FALLBACK_METHODS.has(name)) return null
+  if (!BOUNDS_ERROR.test(error instanceof Error ? error.message : String(error))) return null
+  const point = Array.from((args[0] as ArrayLike<unknown> | undefined) ?? [], Number)
+  if (point.length < 2 || point.some((value) => !Number.isFinite(value))) return null
+  const center = centerFromPoints(target)
+  if (center === null) return null
+  const shift = target.shift
+  if (typeof shift !== 'function') return null
+  ;(shift as (...a: unknown[]) => unknown).call(target, [
+    point[0] - center[0],
+    point[1] - center[1],
+    (point[2] ?? 0) - (center[2] ?? 0),
+  ])
+  return 'recovered'
+}
+
 export function createManimWebBridge(options: ManimWebBridgeOptions): ManimBridge {
   const { manim, scene } = options
   const fast = options.fast === true
@@ -451,18 +529,24 @@ export function createManimWebBridge(options: ManimWebBridgeOptions): ManimBridg
       for (const calls of plan.variants) {
         // prop 调用是属性写（存取器），不看是不是函数、只要槽位在（见 MethodCall 注）。
         if (!calls.every((call) => (call.prop === true ? call.js in target : typeof target[call.js] === 'function'))) continue
-        let result: unknown = target
-        for (const call of calls) {
-          if (call.prop === true) {
-            ;(target as Record<string, unknown>)[call.js] = call.args[0]
-            result = target
-          } else {
-            result = (target[call.js] as (...a: unknown[]) => unknown).apply(target, call.args)
+        try {
+          let result: unknown = target
+          for (const call of calls) {
+            if (call.prop === true) {
+              ;(target as Record<string, unknown>)[call.js] = call.args[0]
+              result = target
+            } else {
+              result = (target[call.js] as (...a: unknown[]) => unknown).apply(target, call.args)
+            }
           }
+          // CE 这些方法是原地改、返回自身（manim-web 的 setter 也返回 this）——依旧句柄最省事；
+          // 返回了新对象的方法（copy 这类）走 tag，让 Python 侧包成新 Mobject。
+          return result === target ? { [HANDLE_KEY]: handle } : tag(result)
+        } catch (error) {
+          const recovered = recoverBoundsFailure(target, name, args.map(deepResolve), error)
+          if (recovered === null) throw error
+          return { [HANDLE_KEY]: handle }
         }
-        // CE 这些方法是原地改、返回自身（manim-web 的 setter 也返回 this）——依旧句柄最省事；
-        // 返回了新对象的方法（copy 这类）走 tag，让 Python 侧包成新 Mobject。
-        return result === target ? { [HANDLE_KEY]: handle } : tag(result)
       }
       throw new Error(`${name}() 在 manim-web 无对应方法——检查拼写，或查支持速查表`)
     },

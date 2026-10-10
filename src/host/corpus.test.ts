@@ -11,9 +11,10 @@ import { afterEach, describe, expect, it } from 'vitest'
 import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
-import { GROUPS, REPO_ROOT, collectCorpus, corpusAvailable, corpusRoot } from './corpus.js'
+import { GROUPS, REPO_ROOT, collectCorpus, corpusAvailable, corpusRoot, shotPath, shotsRoot } from './corpus.js'
 
 const original = process.env.MANIM_CORPUS
+const originalShots = process.env.MANIM_SHOTS
 const made = []
 
 /** 往某个分组里写一个条目。 */
@@ -40,6 +41,8 @@ function useCorpus(add?: (root: string) => void): string {
 afterEach(() => {
   if (original === undefined) delete process.env.MANIM_CORPUS
   else process.env.MANIM_CORPUS = original
+  if (originalShots === undefined) delete process.env.MANIM_SHOTS
+  else process.env.MANIM_SHOTS = originalShots
   for (const root of made.splice(0)) rmSync(root, { recursive: true, force: true })
 })
 
@@ -93,6 +96,22 @@ describe('语料解析', () => {
     expect(plain?.browser).toBeUndefined()
   })
 
+  it('@template 解析成 template 字段（值 = 入选理由），没标记的条目不带', () => {
+    useCorpus((dir) => {
+      entry(
+        dir,
+        'lesson',
+        '01-chosen.py',
+        '"""入选模板\n\n@expect 出现单位圆\n@template 要画静态定义图时照它抄\n"""\n\nprint(1)\n',
+      )
+      entry(dir, 'lesson', '02-plain.py', '"""落选的一条\n"""\n\nprint(2)\n')
+    })
+    const { examples } = collectCorpus()
+    const chosen = examples.find((item) => item.id === 'lesson-chosen')
+    expect(chosen).toMatchObject({ template: '要画静态定义图时照它抄' })
+    expect(examples.find((item) => item.id === 'lesson-plain')?.template).toBeUndefined()
+  })
+
   it('file 是能照着找的路径：仓内相对仓根', () => {
     delete process.env.MANIM_CORPUS
     const one = collectCorpus().examples[0]
@@ -129,6 +148,43 @@ describe('语料配置错了要当场炸（静默漏掉更糟）', () => {
   it('缺开头的模块 docstring', () => {
     useCorpus((dir) => entry(dir, 'basic', '09-nodoc.py', 'print(1)\n'))
     expect(() => collectCorpus()).toThrow(/缺少开头的模块 docstring/)
+  })
+})
+
+describe('截图位置（语料旁边那一张，页面直接显示）', () => {
+  it('默认在插件仓 _dev/shots 下——与语料**同级**，不是它的子目录', () => {
+    delete process.env.MANIM_SHOTS
+    expect(shotsRoot()).toBe(join(REPO_ROOT, '_dev', 'shots'))
+    // 特意不在 examples/ 里面：语料根下未登记的目录会被当配置错误抛错，截图不该占那个豁免
+    expect(shotsRoot().startsWith(corpusRoot())).toBe(false)
+  })
+
+  it('MANIM_SHOTS 覆盖位置', () => {
+    const root = useCorpus()
+    process.env.MANIM_SHOTS = root
+    expect(shotsRoot()).toBe(root)
+  })
+
+  it('shotPath 只换扩展名：与 .py 同名同目录，看文件名就知道图在哪', () => {
+    expect(shotPath('lesson', '01-unit-circle.py')).toBe('lesson/01-unit-circle.png')
+    expect(shotPath('math-prob', '10-monte-carlo-pi.py')).toBe('math-prob/10-monte-carlo-pi.png')
+  })
+
+  it('图在 = 条目带上 shot；图不在就不带（页面据此决定要不要发请求）', () => {
+    const root = useCorpus()
+    const shots = mkdtempSync(join(tmpdir(), 'manim-shots-'))
+    made.push(shots)
+    process.env.MANIM_SHOTS = shots
+
+    // 还没截过：不带字段——给了地址却 404 会在控制台留噪声，也会被当成故障
+    expect(collectCorpus().examples.find((item) => item.id === 'basic-stub')?.shot).toBeUndefined()
+
+    mkdirSync(join(shots, 'basic'), { recursive: true })
+    writeFileSync(join(shots, 'basic', '01-stub.png'), 'png')
+    expect(collectCorpus().examples.find((item) => item.id === 'basic-stub')?.shot).toBe('basic/01-stub.png')
+    // 只有同名的那一条认领到它，别的分组不受影响
+    expect(collectCorpus().examples.find((item) => item.id === 'lesson-stub')?.shot).toBeUndefined()
+    expect(root).toBe(process.env.MANIM_CORPUS)
   })
 })
 

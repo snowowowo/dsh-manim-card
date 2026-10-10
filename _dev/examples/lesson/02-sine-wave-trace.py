@@ -1,7 +1,8 @@
 """从圆上一点画出正弦波
 
-@expect 圆上的点一边转、波形一边向右展开，画出的正是正弦曲线。
-@note 讲解模板：ValueTracker 驱动圆上的点，TracedPath 把它的高度扫成波形
+@expect 圆上的点一边转、波形一边向右展开，画出的正是正弦曲线（振幅 ±1.2 的完整正弦，真时序下观察；极速截图帧点过疏会让 TracedPath 轨迹塌成直线，属截图假象）。
+@template 要让一个点/量被 ValueTracker 驱动、边动边扫出轨迹（TracedPath / updaters）时照它抄。
+@note 讲解模板：ValueTracker 驱动圆上的点，TracedPath 把它的高度扫成波形；留存截图用 --realtime 真时序重截
 """
 
 from manim import *

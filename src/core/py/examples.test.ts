@@ -144,13 +144,15 @@ describe('parseCorpus：不可信的语料响应', () => {
     })
   })
 
-  it('可选字段带上时收下（拒词 / 出处 / 需联网 / 预期表现 / 只能浏览器）', () => {
+  it('可选字段带上时收下（拒词 / 出处 / 需联网 / 预期表现 / 只能浏览器 / 截图）', () => {
     const corpus = parseCorpus({
       groups: [{ id: 'a', title: 'A', network: true }],
-      examples: [{ ...item, expect: 'reject', errorIncludes: 'Table', note: '出处', expectation: '圆是青色的', network: true, browser: true }],
+      examples: [{ ...item, expect: 'reject', errorIncludes: 'Table', note: '出处', expectation: '圆是青色的', network: true, browser: true, shot: 'a/f.png' }],
     })
-    expect(corpus.examples[0]).toMatchObject({ errorIncludes: 'Table', note: '出处', expectation: '圆是青色的', network: true, browser: true })
+    expect(corpus.examples[0]).toMatchObject({ errorIncludes: 'Table', note: '出处', expectation: '圆是青色的', network: true, browser: true, shot: 'a/f.png' })
     expect(corpus.groups[0]?.network).toBe(true)
+    // 没截过的条目不该凭空长出一个地址——否则页面会去请求一张不存在的图
+    expect(parseCorpus({ groups: [{ id: 'a', title: 'A' }], examples: [item] }).examples[0]?.shot).toBeUndefined()
   })
 
   it('缺字段 / 类型不对的条目直接丢，不牵连别的', () => {

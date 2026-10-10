@@ -7,7 +7,8 @@ from manim import *
 
 class AxesLabelsScene(Scene):
     def construct(self):
-        ax = Axes(x_range=[0, 5, 1], y_range=[0, 5, 1])
+        # 对称范围让原点居中，不缩在角落
+        ax = Axes(x_range=[-4, 4, 1], y_range=[-2, 2, 1])
         labels = ax.get_axis_labels(x_label="x", y_label="y")
         self.play(Create(ax))
         self.play(Write(labels))

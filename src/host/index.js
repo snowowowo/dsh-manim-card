@@ -4,7 +4,8 @@
 // ③ KaTeX 静态资源路由——MathTex 在浏览器里渲染成 KaTeX HTML；
 // ④ Pyodide 本体、按需取包、包缓存清单与预缓存——整块在 ./pyodide.js；静态资源那层在 ./assets.js；
 // ⑤ 实验场语料路由（GET，见 ./corpus.js）与本机环境探测（见 ./environment.js）；
-// ⑥ 导出视频路由（见 ./export.js）——本机 CLI 真渲染出 mp4，落「下载」文件夹。
+// ⑥ 导出视频路由（见 ./export.js）——本机 CLI 真渲染出 mp4，落「下载」文件夹；
+// ⑦ 语料截图路由——每条语料上次真渲染的 PNG（`_dev/shots/`），页面直接显示。
 // 工具返回前先干跑一遍（core.js，与 Client 侧同一个 Python 运行时）：
 // 语法错 / 未定义名 / manim-web 实测缺失项当场回给模型，同一回合自我修正；
 // 渲染期错误仍由卡片回显。
@@ -14,7 +15,7 @@ import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { createDryRunBridge, runPython } from '../../core.js'
 import { assetRoute } from './assets.js'
-import { collectCorpus } from './corpus.js'
+import { collectCorpus, shotsRoot } from './corpus.js'
 import { environmentRoute } from './environment.js'
 import { exportRoute } from './export.js'
 import { clearCacheRoute, installPyodideLoader, packagesRoute, pyodideRoute, resolveCacheDir } from './pyodide.js'
@@ -26,6 +27,7 @@ const PLUGIN_DIR = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
 const KATEX_DIR = join(PLUGIN_DIR, 'assets', 'katex');
 const KATEX_PATH = '/dsh-plugins/manim-renderer/katex';
 const CORPUS_PATH = '/dsh-plugins/manim-renderer/corpus';
+const SHOTS_PATH = '/dsh-plugins/manim-renderer/shots';
 const SKILL_DIR = join(PLUGIN_DIR, 'skills', 'manim-renderer');
 
 const GUIDE = [
@@ -176,10 +178,17 @@ export function apply(ctx) {
     'manim-renderer: export route',
   );
 
-  // 实验场那两条：语料（包外的开发语料，正式安装里是空表）与清包缓存。
+  // 实验场那三条：语料（包外的开发语料，正式安装里是空表）、语料截图、清包缓存。
   ctx.effect(
     () => ctx.webServer.register(corpusRoute()),
     'manim-renderer: corpus route',
+  );
+  // 语料截图（`_dev/shots/<组>/<同名>.png`）：每条语料一条，由 scripts/shot-corpus.mjs 落盘。
+  // 复用静态资源那一层——「解析路径 → 越界拒绝 → 发流」与 KaTeX / Pyodide 完全同一份实现。
+  // 正式安装里这个目录不存在，整条路由退化成 404（页面也不会去请求：没有 shot 字段）。
+  ctx.effect(
+    () => ctx.webServer.register(assetRoute(shotsRoot(), SHOTS_PATH)),
+    'manim-renderer: corpus shots route',
   );
   ctx.effect(
     () => ctx.webServer.register(clearCacheRoute(cacheDir)),

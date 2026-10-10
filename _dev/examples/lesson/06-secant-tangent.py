@@ -1,6 +1,7 @@
 """割线趋近切线（导数的定义）
 
 @expect 割线绕切点旋转、越来越贴近切线，最终重合。
+@template 要讲「极限 / 趋近」——一条线或一个量随参数滑动、逼近目标位置时照它抄。
 @note 2026-10-09 真机事故原文：这段被预检误拒两次——`(pos_p() + pos_m()) / 2` 与
       `x0 + h.get_value()` 都拿 c2p / get_value 的返回值做算术，而预检把它们当成了 Mobject
       （`TypeError: unsupported operand type(s) for /: 'Mobject' and 'int'`）。
@@ -22,7 +23,10 @@ class SecantToTangent(Scene):
             axis_config={"color": GRAY_D},
         )
         ax.shift(LEFT * 3.4 + DOWN * 0.4)
-        axis_labels = ax.get_axis_labels(x_label="x", y_label="y")
+        # 轴标签手动定位：get_axis_labels 的自动定位会把 "x" 漂到轴外空白处；
+        # 适配层 ax.x_axis 是函数不能 get_end，改用 c2p 手算轴末端坐标
+        label_x = Text("x", font_size=30, color=GRAY_D).move_to(ax.c2p(3.15, -0.35))
+        label_y = Text("y", font_size=30, color=GRAY_D).move_to(ax.c2p(-0.35, 5.25))
 
         graph = ax.plot(lambda x: x ** 2, x_range=[0.1, 2.3], color=BLUE)
 
@@ -75,7 +79,7 @@ class SecantToTangent(Scene):
             stroke_width=3,
         )
 
-        self.play(Create(ax), Write(axis_labels), run_time=1.0)
+        self.play(Create(ax), Write(label_x), Write(label_y), run_time=1.0)
         self.play(Create(graph), run_time=1.0)
         self.play(FadeIn(dot_p), FadeIn(dot_q), run_time=0.5)
         self.play(Create(secant), run_time=0.7)

@@ -24,6 +24,15 @@ export interface ManimExample {
   file: string
   /** 一句话说明这条在验什么（取自文件 docstring 第一行）。 */
   title: string
+  /**
+   * 上次真渲染的截图，相对截图根的路径（形如 `basic/01-circle.png`）。
+   *
+   * 为什么要有它：自动结果是「没炸」，预期表现是「应该长什么样」，两者之间差的那一步
+   * ——**画面到底对不对**——只有图能回答。以前每核一次就得重截一遍，现在图跟着语料留在盘上
+   * （`_dev/shots/`，宿主经 `/dsh-plugins/manim-renderer/shots` 发出来），页面直接显示。
+   * 没有截过的条目（或正式安装）就没有这个字段——这时页面不显示图，也不去请求。
+   */
+  shot?: string
   expect: ExampleExpect
   /** expect='reject' 时，报错里必须出现的词——钉住「拒了、而且说清楚了」。 */
   errorIncludes?: string
@@ -40,6 +49,11 @@ export interface ManimExample {
   note?: string
   /** 预期表现（取自 docstring 的 @expect）：跑通只说明没炸，画得对不对要对着这句核。 */
   expectation?: string
+  /**
+   * 入选技能模板区的标记（取自 docstring 的 @template）：值 = 「什么时候照它抄」。
+   * 解析与消费都不在本包（Host 解析、gen-skill 消费）；这里透传只为页面与测试能看见同一份事实。
+   */
+  template?: string
 }
 
 export interface ExampleGroup {
@@ -73,6 +87,8 @@ function readExample(value: unknown): ManimExample | null {
   const errorIncludes = optionalString(bag.errorIncludes)
   const note = optionalString(bag.note)
   const expectation = optionalString(bag.expectation)
+  const shot = optionalString(bag.shot)
+  const template = optionalString(bag.template)
   return {
     id,
     group,
@@ -85,6 +101,8 @@ function readExample(value: unknown): ManimExample | null {
     ...(bag.browser === true ? { browser: true } : {}),
     ...(note === undefined ? {} : { note }),
     ...(expectation === undefined ? {} : { expectation }),
+    ...(shot === undefined ? {} : { shot }),
+    ...(template === undefined ? {} : { template }),
   }
 }
 

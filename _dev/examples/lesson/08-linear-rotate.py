@@ -9,6 +9,13 @@ from manim import *
 
 class RotationTransformScene(Scene):
     def construct(self):
+        # 网格与向量一起参与变换，让「整体旋转」看得见
+        plane = NumberPlane(
+            x_range=[-3, 3, 1],
+            y_range=[-3, 3, 1],
+            background_line_style={"stroke_color": BLUE_D, "stroke_width": 1.5},
+            axis_config={"stroke_color": GRAY_D},
+        )
         basis = VGroup(
             Arrow(start=ORIGIN, end=RIGHT * 2, color=GREEN),
             Arrow(start=ORIGIN, end=UP * 2, color=BLUE),
@@ -16,8 +23,8 @@ class RotationTransformScene(Scene):
         square = Square(side_length=1.6, color=YELLOW)
         square.set_fill(YELLOW, 0.35)
         square.move_to(RIGHT + UP)
-        figure = VGroup(basis, square)
-        title = MathTex(r"\begin{bmatrix} 0 & -1 \\ 1 & 0 \end{bmatrix}").to_edge(UP)
+        figure = VGroup(plane, basis, square)
+        title = MathTex(r"\begin{bmatrix} 0 & -1 \\ 1 & 0 \end{bmatrix}").move_to([0, 3.4, 0])
 
         self.play(Create(figure), Write(title))
         self.play(ApplyMatrix([[0, -1], [1, 0]], figure), run_time=2)

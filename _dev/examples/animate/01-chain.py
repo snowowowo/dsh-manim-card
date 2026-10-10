@@ -9,5 +9,5 @@ class ChainScene(Scene):
     def construct(self):
         square = Square(side_length=1.5)
         self.add(square)
-        self.play(square.animate.shift(RIGHT * 2).set_color(RED))
+        self.play(square.animate.shift(RIGHT * 2).set_color(RED).scale(1.3))
         self.wait(0.3)

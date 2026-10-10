@@ -138,19 +138,84 @@ self.play(FadeIn(label, shift=UP), rate_func=running_start)   # 位移淡入
 - **抽象基类（有名字但不能直接构造）**：`Polyhedron`（抽象基类，不能直接构造——用具体类：Cube / Sphere / Cone / Cylinder / Torus / Prism / Tetrahedron / Octahedron / Dodecahedron / Icosahedron）
 <!-- /gen:missing -->
 
+## 布局红线：这些写法退出码 0、画面却是坏的
+
+干跑只证明「跑得起来」。下面每一条都来自真机截图抓到的事故——**不报错、但画面坏了**，只有渲染出来看才知道。写的时候照做，能躲开全部已知坑。
+
+### 场景坐标与留边
+
+画布中心是 (0,0)，上下到 ±4、左右到 ±7.1。**留边**：内容别超出 y ∈ [-3.6, 3.6]、x ∈ [-6.8, 6.8]。顶部标题带 y ≈ 3.3，说明行 y ≈ -3.3，中间留给正文。
+
+### 公式定位：只用 `move_to` 写绝对坐标
+
+`MathTex` 的宽高要等 KaTeX **异步**量出来。`to_edge` / `next_to` / `arrange` / `get_center()` 这类**要读包围盒**的定位，在量出来之前会按 NaN 计算——整条公式被挪出画框，**什么都不显示，退出码还是 0**。同一句公式实测：`to_edge(UP)` 时隐时现（是竞态，不是必然），`move_to([0, 3.3, 0])` 稳定。所以：
+
+```python
+# ❌ 偶发整条消失
+formula = MathTex(r"p \to q \equiv \neg p \lor q", font_size=44).to_edge(UP, buff=0.3)
+# ✅ 稳定
+formula = MathTex(r"p \to q \equiv \neg p \lor q", font_size=44).move_to([0, 3.3, 0])
+```
+
+`Text` 没这个问题（几何是同步的），`to_edge` / `next_to` 随便用。
+
+### 手工布局：写一个 `pos()` 算坐标
+
+表格、点阵、节点图这类「格子对齐」的画面，写一个小函数算每格中心，别用 `next_to` 一层层堆——重叠和出框都是这么来的：
+
+```python
+def pos(row, col):
+    return [left + cell * (col + 0.5), top - cell * (row + 0.5), 0]
+```
+
+要单独点名某个格子/点时，**另存一份普通 Python list**（`marks.append(dot)`），别靠 `VGroup` 下标取。
+
+### 一个物体只进一个组
+
+- `VGroup(*[已有物体])` 会把物体**从原组偷走**：原组从此少一块、填充也丢。
+- 把同一个物体 `add` 进第二个组同样致病。要单独引用就存上面那样的 list。
+
+### 用框「量」物体：按坐标手算，别圈组
+
+`SurroundingRectangle(组)` 会让被量的那组**之后不再渲染**（静默消失）。真要圈就 `组.copy()`；更稳的是按坐标手算一个 `Rectangle(width=…, height=…).move_to(…)`——尤其当那些物体已经在别的组里时。
+
+### 高亮：别用 `Indicate`
+
+`Indicate(已填充的物体)` 会把填充剥掉（而且不稳定，同样写法有时剥有时不剥）；`Indicate(组)` 会留下染色残渣（描边被冲白、彩点消失）。要强调就 `Flash(物体, color=…)` / `Circumscribe`，或手画一个高亮 `Rectangle`——都不碰物体本身。
+
+### `MathTex` 内容红线
+
+- **中文不进公式**：`MathTex(r"\text{传递}")` 一个字都不显示。中文用 `Text`，公式用 `MathTex`，并排时各自 `move_to` 对齐。
+- **字体切换命令整段画成空**：`\mathbb` / `\mathcal` / `\mathsf` 实测一个字形都不出来（还会去拉动态字体，控制台报 `Can't load …`）。要花体字母就用普通字母：`Z`、`P`、`V^T`。
+- 间距命令（`\;` `\quad` `\qquad` `\,`）实测都安全，放心用。
+
+### `Graph` 的标签看不见
+
+`Graph(..., showLabels=True)` 的标签被顶点圆盘整个盖住，`vertexConfig={"radius": …}` 也改不动（manim-web 0.3.24）。关系图、自动机、哈斯图这类**手工搭**：`Circle` 当顶点、`Text` 贴标签、`Line` 手算坐标连线。
+
+### numpy 与环境
+
+- `np.math.factorial` 在 numpy 2.x 已移除 → `import math` 后用 `math.factorial`。
+- `np.bincount(...)` 这类返回 int64，回传可能撞 `Cannot cast array data from dtype('int64') to dtype('int32')` → 计数用纯 Python 列表。
+- `ImageMobject` 一构造就要 DOM，干跑必炸 → 别用。
+
+
 ## 场景模板：整段照抄，别从零拼
 
-下面是**完整可跑**的讲解场景（三角 / 极坐标 / 线性变换 / 微积分 / 概率）。要讲同类内容时，先照结构最接近的那个改——怎么摆坐标系、怎么用 `ValueTracker` 驱动、动画按什么节奏推进，照着写比凭空拼准得多。
+下面是**完整可跑**的讲解场景，每条开头的「**什么时候照它抄**」就是它的适用范式（静态定义图 / tracker 扫描 / 参数曲线 / 极限 / 细分逼近 / 线性变换 / 随机模拟对照）。要讲同类内容时，先照范式最接近的那个改——怎么摆坐标系、怎么用 `ValueTracker` 驱动、动画按什么节奏推进，照着写比凭空拼准得多。
 
-这些模板与实验场的语料是**同一批文件**（`examples/lesson/`），每条都在回归里真跑过，所以照抄是安全的。
+这些模板与实验场的语料是**同一批文件**（`_dev/examples/`，按 docstring 里的 `@template` 标记精选——每条入选都要说清它代表哪种范式，宁缺勿滥），每条都在回归里真跑过、真浏览器里截过图，所以照抄是安全的。
 
 <!-- gen:templates -->
-### 单位圆与三角函数线（`01-unit-circle.py`）
+### 单位圆与三角函数线（`01-unit-circle.py`，出自「讲解场景（模板）」组）
+
+**什么时候照它抄**：要画「一个量随角度/参数变化」的静态定义图（圆上取点 + 投影线 + 对应公式标注）时照它抄。
 
 ```python
 """单位圆与三角函数线
 
 @expect 单位圆上一点转动，正弦 / 余弦线随角度伸缩，长度与角度对得上。
+@template 要画「一个量随角度/参数变化」的静态定义图（圆上取点 + 投影线 + 对应公式标注）时照它抄。
 @note 讲解模板：角度 → 圆上一点 → sin / cos 两条投影线。讲定义的静态图
 """
 
@@ -180,13 +245,16 @@ class UnitCircleScene(Scene):
         self.wait(0.3)
 ```
 
-### 从圆上一点画出正弦波（`02-sine-wave-trace.py`）
+### 从圆上一点画出正弦波（`02-sine-wave-trace.py`，出自「讲解场景（模板）」组）
+
+**什么时候照它抄**：要让一个点/量被 ValueTracker 驱动、边动边扫出轨迹（TracedPath / updaters）时照它抄。
 
 ```python
 """从圆上一点画出正弦波
 
-@expect 圆上的点一边转、波形一边向右展开，画出的正是正弦曲线。
-@note 讲解模板：ValueTracker 驱动圆上的点，TracedPath 把它的高度扫成波形
+@expect 圆上的点一边转、波形一边向右展开，画出的正是正弦曲线（振幅 ±1.2 的完整正弦，真时序下观察；极速截图帧点过疏会让 TracedPath 轨迹塌成直线，属截图假象）。
+@template 要让一个点/量被 ValueTracker 驱动、边动边扫出轨迹（TracedPath / updaters）时照它抄。
+@note 讲解模板：ValueTracker 驱动圆上的点，TracedPath 把它的高度扫成波形；留存截图用 --realtime 真时序重截
 """
 
 from manim import *
@@ -214,61 +282,15 @@ class SineWaveScene(Scene):
         self.wait(0.3)
 ```
 
-### 勾股定理（`03-pythagorean.py`）
+### 极坐标玫瑰线（`04-polar-rose.py`，出自「讲解场景（模板）」组）
 
-```python
-"""勾股定理
-
-@expect 直角三角形三边上贴的正方形面积关系呈现 a² + b² = c²。
-@note 讲解模板：直角三角形 + 两条直角边上的正方形，公式在下方
-"""
-
-from manim import *
-import numpy as np
-
-
-class PythagoreanScene(Scene):
-    def construct(self):
-        s = 0.7
-        A = np.array([0.0, 0.0, 0.0])
-        B = A + RIGHT * (3 * s)
-        C = A + UP * (4 * s)
-
-        triangle = Polygon(A, B, C, color=WHITE, stroke_width=4)
-        a_label = MathTex("a", font_size=40, color=BLUE).move_to((A + B) / 2 + DOWN * 0.35)
-        b_label = MathTex("b", font_size=40, color=GREEN).move_to((A + C) / 2 + LEFT * 0.38)
-        c_label = MathTex("c", font_size=40, color=YELLOW).move_to((B + C) / 2 + UR * 0.38)
-
-        sq_a = Polygon(A, B, B + DOWN * (3 * s), A + DOWN * (3 * s), color=BLUE, stroke_width=3)
-        sq_a.set_fill(BLUE, 0.22)
-        sq_b = Polygon(A, C, C + LEFT * (4 * s), A + LEFT * (4 * s), color=GREEN, stroke_width=3)
-        sq_b.set_fill(GREEN, 0.22)
-        offset = np.array([4 * s, 3 * s, 0.0])
-        sq_c = Polygon(B, C, C + offset, B + offset, color=YELLOW, stroke_width=3)
-        sq_c.set_fill(YELLOW, 0.22)
-
-        shapes = VGroup(triangle, sq_a, sq_b, sq_c, a_label, b_label, c_label)
-        shapes.shift(-shapes.get_center())
-
-        eq = MathTex("a^2", "+", "b^2", "=", "c^2", font_size=54)
-        eq.arrange(RIGHT, buff=0.16)
-        eq.to_edge(DOWN, buff=0.55)
-
-        self.play(Create(triangle), run_time=1.0)
-        self.play(Write(a_label), Write(b_label), Write(c_label), run_time=0.6)
-        self.play(Create(sq_a), Create(sq_b), run_time=1.0)
-        self.play(Create(sq_c), run_time=1.0)
-        self.play(Write(eq), run_time=0.8)
-        self.play(Indicate(eq, color=WHITE, scale_factor=1.1), run_time=0.8)
-        self.wait(0.5)
-```
-
-### 极坐标玫瑰线（`04-polar-rose.py`）
+**什么时候照它抄**：要画极坐标 / 参数方程曲线（玫瑰线、螺线、摆线……manim-web 没有 plot_polar_graph）时照它抄。
 
 ```python
 """极坐标玫瑰线
 
 @expect 玫瑰线的花瓣数与方程参数一致（2k 瓣 / k 瓣的规律看得出来）。
+@template 要画极坐标 / 参数方程曲线（玫瑰线、螺线、摆线……manim-web 没有 plot_polar_graph）时照它抄。
 @note 讲解模板：manim-web 没有 plot_polar_graph——把 r(θ) 写成参数方程交给 ParametricFunction
 """
 
@@ -292,39 +314,15 @@ class PolarRoseScene(Scene):
         self.wait(0.3)
 ```
 
-### 阿基米德螺线（`05-polar-spiral.py`）
+### 割线趋近切线（导数的定义）（`06-secant-tangent.py`，出自「讲解场景（模板）」组）
 
-```python
-"""阿基米德螺线
-
-@expect 螺线一圈圈等距外扩，圈距恒定（阿基米德螺线的特征）。
-@note 讲解模板：r 随 θ 线性增长，同样用参数方程画
-"""
-
-from manim import *
-import numpy as np
-
-
-class PolarSpiralScene(Scene):
-    def construct(self):
-        def spiral(t):
-            r = 0.35 * t
-            return [r * np.cos(t), r * np.sin(t), 0]
-
-        curve = ParametricFunction(spiral, t_range=[0, TAU * 2, 0.02], color=TEAL)
-        title = MathTex(r"r = \theta").to_edge(UP)
-
-        self.play(Write(title))
-        self.play(Create(curve), run_time=2)
-        self.wait(0.3)
-```
-
-### 割线趋近切线（导数的定义）（`06-secant-tangent.py`）
+**什么时候照它抄**：要讲「极限 / 趋近」——一条线或一个量随参数滑动、逼近目标位置时照它抄。
 
 ```python
 """割线趋近切线（导数的定义）
 
 @expect 割线绕切点旋转、越来越贴近切线，最终重合。
+@template 要讲「极限 / 趋近」——一条线或一个量随参数滑动、逼近目标位置时照它抄。
 @note 2026-10-09 真机事故原文：这段被预检误拒两次——`(pos_p() + pos_m()) / 2` 与
       `x0 + h.get_value()` 都拿 c2p / get_value 的返回值做算术，而预检把它们当成了 Mobject
       （`TypeError: unsupported operand type(s) for /: 'Mobject' and 'int'`）。
@@ -346,7 +344,10 @@ class SecantToTangent(Scene):
             axis_config={"color": GRAY_D},
         )
         ax.shift(LEFT * 3.4 + DOWN * 0.4)
-        axis_labels = ax.get_axis_labels(x_label="x", y_label="y")
+        # 轴标签手动定位：get_axis_labels 的自动定位会把 "x" 漂到轴外空白处；
+        # 适配层 ax.x_axis 是函数不能 get_end，改用 c2p 手算轴末端坐标
+        label_x = Text("x", font_size=30, color=GRAY_D).move_to(ax.c2p(3.15, -0.35))
+        label_y = Text("y", font_size=30, color=GRAY_D).move_to(ax.c2p(-0.35, 5.25))
 
         graph = ax.plot(lambda x: x ** 2, x_range=[0.1, 2.3], color=BLUE)
 
@@ -399,7 +400,7 @@ class SecantToTangent(Scene):
             stroke_width=3,
         )
 
-        self.play(Create(ax), Write(axis_labels), run_time=1.0)
+        self.play(Create(ax), Write(label_x), Write(label_y), run_time=1.0)
         self.play(Create(graph), run_time=1.0)
         self.play(FadeIn(dot_p), FadeIn(dot_q), run_time=0.5)
         self.play(Create(secant), run_time=0.7)
@@ -415,12 +416,15 @@ class SecantToTangent(Scene):
         self.wait(0.8)
 ```
 
-### 黎曼和逼近积分（`07-riemann-sum.py`）
+### 黎曼和逼近积分（`07-riemann-sum.py`，出自「讲解场景（模板）」组）
+
+**什么时候照它抄**：要讲「细分 / 求和逼近」（黎曼和、梯形近似、级数部分和这类越分越准的画面）时照它抄。
 
 ```python
 """黎曼和逼近积分
 
 @expect 矩形越分越细、矩形面积之和越来越接近定积分值。
+@template 要讲「细分 / 求和逼近」（黎曼和、梯形近似、级数部分和这类越分越准的画面）时照它抄。
 @note 讲解模板：同一段区间把 dx 变小，矩形和逼近曲线下的面积
 """
 
@@ -430,10 +434,11 @@ from manim import *
 class RiemannSumScene(Scene):
     def construct(self):
         ax = Axes(x_range=[0, 4, 1], y_range=[0, 4, 1])
-        graph = ax.plot(lambda x: 0.4 * x * x + 0.6, color=GREEN)
+        # 曲线只画到 x=2.6：0.4*2.6²+0.6≈3.3，峰落在 y_range=[0,4] 内不被上缘裁断
+        graph = ax.plot(lambda x: 0.4 * x * x + 0.6, x_range=[0, 2.6], color=GREEN)
         coarse = ax.get_riemann_rectangles(graph, x_range=[0, 2], dx=1)
         fine = ax.get_riemann_rectangles(graph, x_range=[0, 2], dx=0.25)
-        formula = MathTex(r"\int_0^2 f(x)\,dx").to_edge(UP)
+        formula = MathTex(r"\int_0^2 f(x)\,dx").move_to([0, 3.4, 0])
 
         self.play(Create(ax), Create(graph))
         self.play(Write(formula), FadeIn(coarse))
@@ -441,95 +446,79 @@ class RiemannSumScene(Scene):
         self.wait(0.3)
 ```
 
-### 线性变换：旋转（`08-linear-rotate.py`）
+### 线性变换：特征方向（`10-eigenvector.py`，出自「讲解场景（模板）」组）
 
-```python
-"""线性变换：旋转
-
-@expect 网格与向量整体旋转同一个角度，形状不变、朝向变。
-@note 讲解模板：ApplyMatrix 把基向量与图形一起按矩阵搬过去
-"""
-
-from manim import *
-
-
-class RotationTransformScene(Scene):
-    def construct(self):
-        basis = VGroup(
-            Arrow(start=ORIGIN, end=RIGHT * 2, color=GREEN),
-            Arrow(start=ORIGIN, end=UP * 2, color=BLUE),
-        )
-        square = Square(side_length=1.6, color=YELLOW)
-        square.set_fill(YELLOW, 0.35)
-        square.move_to(RIGHT + UP)
-        figure = VGroup(basis, square)
-        title = MathTex(r"\begin{bmatrix} 0 & -1 \\ 1 & 0 \end{bmatrix}").to_edge(UP)
-
-        self.play(Create(figure), Write(title))
-        self.play(ApplyMatrix([[0, -1], [1, 0]], figure), run_time=2)
-        self.wait(0.3)
-```
-
-### 线性变换：剪切（`09-linear-shear.py`）
-
-```python
-"""线性变换：剪切
-
-@expect 网格被剪切：横行水平错动、竖列倾斜，面积不变。
-@note 讲解模板：剪切矩阵把竖直方向推向水平方向，网格最能看出来
-"""
-
-from manim import *
-
-
-class ShearTransformScene(Scene):
-    def construct(self):
-        cells = VGroup()
-        for i in range(-3, 3):
-            for j in range(-3, 3):
-                cell = Square(side_length=0.7, color=BLUE, stroke_width=1.5)
-                cell.move_to([i * 0.7 + 0.35, j * 0.7 + 0.35, 0])
-                cells.add(cell)
-        title = MathTex(r"\begin{bmatrix} 1 & 1 \\ 0 & 1 \end{bmatrix}").to_edge(UP)
-
-        self.play(Create(cells), Write(title))
-        self.play(ApplyMatrix([[1, 1], [0, 1]], cells), run_time=2)
-        self.wait(0.3)
-```
-
-### 线性变换：特征方向（`10-eigenvector.py`）
+**什么时候照它抄**：要讲线性变换 / 矩阵作用于图形与向量（网格变形、变换前后对照、找不变方向）时照它抄。
 
 ```python
 """线性变换：特征方向
 
-@expect 特征方向上的向量变换后仍在这条方向上（只伸缩、不转向），其余向量会偏。
-@note 讲解模板：变换后方向不变的向量就是特征向量（这里被拉长 3 倍 / 压到 1 倍）
+@expect 特征方向上的向量变换后仍在这条方向上（红 v₁ 沿虚线拉长 3 倍、蓝 v₂ 不动），
+灰色对照向量 u 变换后偏离原方向——偏折的与不偏折的对照着看；虚线即两条特征方向。
+@template 要讲线性变换 / 矩阵作用于图形与向量（网格变形、变换前后对照、找不变方向）时照它抄。
+@note 讲解模板：变换后方向不变的向量就是特征向量（A 的特征值 3 与 1，特征方向 [1,1] 与 [1,-1]）
 """
 
 from manim import *
+import numpy as np
 
 
 class EigenvectorScene(Scene):
     def construct(self):
-        vec_a = Arrow(start=ORIGIN, end=[1.5, 1.5, 0], color=RED)
-        vec_b = Arrow(start=ORIGIN, end=[1.5, -1.5, 0], color=BLUE)
-        label_a = MathTex(r"\vec v_1", color=RED).next_to(vec_a, UR)
-        label_b = MathTex(r"\vec v_2", color=BLUE).next_to(vec_b, DR)
-        figure = VGroup(vec_a, vec_b, label_a, label_b)
-        title = MathTex(r"A = \begin{bmatrix} 2 & 1 \\ 1 & 2 \end{bmatrix}").to_edge(UP)
+        A = np.array([[2.0, 1.0], [1.0, 2.0]])
 
-        self.play(Create(figure), Write(title))
-        self.play(ApplyMatrix([[2, 1], [1, 2]], figure), run_time=2)
+        # 两条特征方向虚线（[1,1] 与 [1,-1]）
+        dash_e1 = DashedLine([-2.9, -2.9, 0], [2.9, 2.9, 0], color=GRAY_D, stroke_width=1.5)
+        dash_e2 = DashedLine([-2.9, 2.9, 0], [2.9, -2.9, 0], color=GRAY_D, stroke_width=1.5)
+
+        # 特征向量缩短初始长度，拉长 3 倍后仍不出框
+        vec_a = Arrow(start=ORIGIN, end=[0.8, 0.8, 0], color=RED, buff=0)
+        vec_b = Arrow(start=ORIGIN, end=[1.5, -1.5, 0], color=BLUE, buff=0)
+        # 非特征对照向量，变换后明显偏折（[1,1] 方向的 v₁ 不偏，对照才醒目）
+        vec_c = Arrow(start=ORIGIN, end=[1.4, 0.2, 0], color=GRAY_B, buff=0)
+
+        t = ValueTracker(0)
+
+        def tip(v):
+            """从初始端点插值到 A·v 的端点，供标签跟随（不用 MathTex 包围盒定位）"""
+            v = np.asarray(v, dtype=float)
+            w = A @ v[:2]
+            return (1 - t.get_value()) * v + t.get_value() * np.array([w[0], w[1], 0.0])
+
+        label_a = MathTex(r"\vec v_1", color=RED, font_size=36)
+        label_a.add_updater(lambda m: m.move_to(tip([0.8, 0.8, 0]) + UP * 0.25 + RIGHT * 0.35))
+        label_b = MathTex(r"\vec v_2", color=BLUE, font_size=36)
+        label_b.add_updater(lambda m: m.move_to(tip([1.5, -1.5, 0]) + DOWN * 0.05 + RIGHT * 0.4))
+        label_c = MathTex(r"\vec u", color=GRAY_B, font_size=36)
+        label_c.add_updater(lambda m: m.move_to(tip([1.4, 0.2, 0]) + DOWN * 0.35))
+
+        title = MathTex(r"A = \begin{bmatrix} 2 & 1 \\ 1 & 2 \end{bmatrix}").move_to([0, 3.4, 0])
+
+        self.play(FadeIn(dash_e1), FadeIn(dash_e2))
+        self.play(Create(vec_a), Create(vec_b), Create(vec_c), Write(title))
+        self.play(Write(label_a), Write(label_b), Write(label_c), run_time=0.6)
+        self.play(
+            ApplyMatrix([[2, 1], [1, 2]], VGroup(vec_a, vec_b, vec_c)),
+            t.animate.set_value(1),
+            run_time=2,
+        )
         self.wait(0.3)
 ```
 
-### 概率：投骰子的频率（`11-probability-dice.py`）
+### 概率：投骰子的频率（`11-probability-dice.py`，出自「讲解场景（模板）」组）
+
+**什么时候照它抄**：要画「随机模拟 + 频率柱状图 + 理论值对照线」（大数定律、蒙特卡洛这类实验对照理论）时照它抄。
 
 ```python
 """概率：投骰子的频率
 
-@expect 掷骰子次数越多，六面的频率柱越来越齐平（趋近均匀）。
-@note 讲解模板：BarChart 画实测频率，与理论值 1/6 对照
+@expect 掷骰子次数越多，六面的频率柱越来越齐平（趋近均匀）：六根柱几乎等高（15%–18%），
+实测值都贴着理论值 16.7% 的橙色虚线附近起伏。
+@template 要画「随机模拟 + 频率柱状图 + 理论值对照线」（大数定律、蒙特卡洛这类实验对照理论）时照它抄。
+@note 讲解模板：BarChart 画实测频率，与理论值 1/6 对照；BarChart 默认摆位偏右上、
+      上缘刻度会被裁，需整体 move_to 居中偏下并收紧 y_range；刻度用整数百分比
+      （适配层把两位小数刻度标签四舍五入到一位，0.05 步进会显示成重复的 0.2/0.1）；
+      BarChart 实例不挂 c2p（只有 Axes 桥接），参考线按图表几何手算绝对坐标
 """
 
 from manim import *
@@ -537,36 +526,29 @@ from manim import *
 
 class DiceFrequencyScene(Scene):
     def construct(self):
-        observed = [0.15, 0.18, 0.16, 0.17, 0.16, 0.18]
-        chart = BarChart(values=observed, bar_colors=[BLUE])
-        title = Text("投骰子 600 次的频率", font_size=34).to_edge(UP)
+        observed_pct = [15, 18, 16, 17, 16, 18]
+        chart = BarChart(
+            values=observed_pct,
+            y_range=[0, 20, 5],
+            bar_colors=[BLUE],
+        )
+        chart.move_to([0, -0.7, 0])
+        title = Text("投骰子 600 次的频率", font_size=34).move_to([0, 3.4, 0])
+
+        # 理论值 1/6=16.7% 的参考线：量程 20 对应轴高 5 单位（默认 y_length），
+        # 16.7% 高度 = 16.7/20*5 ≈ 4.2；轴底经实测标定在 y≈-3.0
+        guide = DashedLine(
+            [-1.9, -3.0 + 16.7 / 20 * 5, 0],
+            [1.9, -3.0 + 16.7 / 20 * 5, 0],
+            color=ORANGE,
+            stroke_width=2.5,
+        )
+        guide_label = Text("1/6 ≈ 16.7%", font_size=22, color=ORANGE)
+        guide_label.move_to([2.9, -3.0 + 16.7 / 20 * 5, 0])
 
         self.play(Write(title))
         self.play(Create(chart))
-        self.wait(0.3)
-```
-
-### 概率：二项分布（`12-probability-binomial.py`）
-
-```python
-"""概率：二项分布
-
-@expect 二项分布的柱状图呈中间高两边低的钟形，参数决定胖瘦。
-@note 讲解模板：n 次试验成功 k 次的概率——柱状图随 n 变大而变高变窄
-"""
-
-from manim import *
-import math
-
-
-class BinomialScene(Scene):
-    def construct(self):
-        counts = [math.comb(10, k) * 0.5 ** 10 for k in range(11)]
-        chart = BarChart(values=counts, bar_colors=[GREEN])
-        title = MathTex(r"n=10,\ p=0.5").to_edge(UP)
-
-        self.play(Write(title))
-        self.play(Create(chart))
+        self.play(Create(guide), Write(guide_label))
         self.wait(0.3)
 ```
 <!-- /gen:templates -->

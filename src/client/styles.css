@@ -299,6 +299,25 @@
   color: var(--dsw-alias-state-error-primary);
 }
 
+/* ---- 上次截图（压在预期条下面、预览之上）---- */
+/* 只在本机开发仓里有图（`_dev/shots/`），所以这一块可能整块不出现——不留空位、不占高度。 */
+.mr-shot {
+  display: flex; align-items: center; gap: 8px;
+  box-sizing: border-box; margin: 8px 0 0;
+}
+.mr-shot-label {
+  flex: none; font-size: 12px; line-height: 18px;
+  color: var(--dsw-alias-label-secondary); cursor: help;
+}
+.mr-shot-link { flex: none; display: block; }
+.mr-shot-img {
+  display: block; height: 84px; width: auto;
+  border: 1px solid var(--dsw-alias-border-l3);
+  border-radius: var(--dsw-radius-sm);
+  /* 截图自带深色底（manim 默认底色），别让宿主主题透进来 */
+  background: #1c1c1c;
+}
+
 /* ---- 聊天卡片（conversation.chat.node）---- */
 
 /* 画布与代码共用一块位置：容器定比例，切视图只换上面盖着的那一层，卡片高度不变。 */

@@ -16,6 +16,12 @@ import { parseCorpus, type Corpus } from '../core/py/examples.ts'
 
 const CORPUS_URL = '/dsh-plugins/manim-renderer/corpus'
 
+/**
+ * 语料截图的静态资源前缀：与 Host 注册的那条 `assetRoute(shotsRoot(), …)` 一一对应。
+ * 每条语料的图就是 `${SHOTS_URL}/${example.shot}`（`shot` 由 Host 只在文件真在时才带上）。
+ */
+export const SHOTS_URL = '/dsh-plugins/manim-renderer/shots'
+
 export type CorpusState =
   /** 正在取（本机路由，正常是毫秒级）。 */
   | { status: 'loading' }

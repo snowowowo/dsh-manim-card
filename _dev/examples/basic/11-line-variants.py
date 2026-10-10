@@ -10,8 +10,12 @@ from manim import *
 class LineVariantsScene(Scene):
     def construct(self):
         dashed = DashedLine(start=LEFT * 3, end=RIGHT * 3, color=GREY)
-        double = DoubleArrow(start=LEFT * 2 + DOWN * 2, end=RIGHT * 2 + DOWN * 2, color=ORANGE)
+        # DoubleArrow 的箭头帽与杆脱节（适配层 bug），用两支反向 Arrow 叠出双端帽
+        double = Arrow(start=LEFT * 2 + DOWN * 2, end=RIGHT * 2 + DOWN * 2,
+                       color=ORANGE)
+        double_back = Arrow(start=RIGHT * 2 + DOWN * 2, end=LEFT * 2 + DOWN * 2,
+                            color=ORANGE)
         curved = CurvedArrow(start_point=LEFT * 2, end_point=RIGHT * 2, angle=PI / 3, color=TEAL)
         curved.shift(UP * 1.8)
-        self.play(Create(dashed), GrowArrow(double), Create(curved))
+        self.play(Create(dashed), GrowArrow(double), GrowArrow(double_back), Create(curved))
         self.wait(0.3)
