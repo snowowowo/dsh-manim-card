@@ -161,7 +161,7 @@ Host 侧对应五条新路由，全都挂在 `/dsh-plugins/manim-renderer/` 下�
 分两层，别混：
 
 - **语料回归**（覆盖「API 与场景」）：`pnpm --filter manim-renderer test src/core/py/examples.test.ts` 把实验场那批**离线**语料逐条过真管线（真 Pyodide + 真 manim-web；`Scene` 换假画布，只验「收不收、炸不炸」）。**需联网**的那 15 条（`net` 第三方包 / `combo` 多库协同）默认不跑：`MANIM_NET=1 pnpm --filter manim-renderer test:net`（首次会下载几十 MB）。`syntax`（语法综合）与 `api`（API 点名）只用 manim + 随包的 numpy，是离线的，随默认套件跑。
-- **Vitest 逻辑覆盖率**（覆盖「代码」）：`pnpm --filter manim-renderer coverage`。**不测 UI**（`.tsx` 与浏览器渲染胶水不计入分母），只要求**逻辑（非 `.tsx`）语句覆盖 ≥ 80%**——当前实测 **88.4%（1081/1223）**；含 UI 的全部文件是 67.4%。UI 改动以真机看几何为准，不写类名 / DOM 形态测试。
+- **Vitest 逻辑覆盖率**（覆盖「代码」）：`pnpm --filter manim-renderer coverage`。**不测 UI**（`.tsx` 与浏览器渲染胶水不计入分母），只要求**逻辑（非 `.tsx`）语句覆盖 ≥ 80%**——当前实测 **88.5%（1459/1649）**；含 UI 的全部文件是 68.9%（行）。UI 改动以真机看几何为准，不写类名 / DOM 形态测试。
 
 小费：`coverage` 每次要清自己上一轮的 `coverage/` 输出，本机的安全删除拦截会挡下来，前缀 `CODEBUDDY_SAFE_DELETE_ENABLED=0` 即可（只影响 vitest 的产物目录）。清除「按需取」的三方包缓存不必手删——实验场工具条有「清除缓存」，走 Host 的 `clear-cache` 路由，删的是 `~/.dsh/cache/manim-renderer/pyodide/` 里按需下载的那部分（随包件不在其中）。
 
