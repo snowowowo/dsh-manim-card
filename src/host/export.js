@@ -13,9 +13,9 @@
 // 后期要对外提供这个服务，也以这一层为界——只依赖本机 CLI 与文件系统，不碰任何 UI。
 
 import { execFile } from 'node:child_process';
-import { copyFile, mkdir, mkdtemp, readdir, rm, writeFile } from 'node:fs/promises';
+import { copyFile, mkdir, mkdtemp, readdir, realpath, rm, writeFile } from 'node:fs/promises';
 import { homedir, tmpdir } from 'node:os';
-import { join } from 'node:path';
+import { dirname, join, sep } from 'node:path';
 import { probeCheck, resolveExecutable } from './environment.js';
 import { sendJson } from './http.js';
 
@@ -91,6 +91,43 @@ async function exportDir() {
   const dir = join(homedir(), 'Downloads');
   await mkdir(dir, { recursive: true });
   return dir;
+}
+
+/**
+ * 在系统的文件浏览器里定位一个文件（导出成功后点路径就走这里）。
+ *
+ * 为什么只认导出目录里的文件：这个动作会**代替用户去操作系统**，路径又是从页面来的。
+ * 放开就等于给了一条「随便指个路径就替你打开」的通路。限定在导出目录（「下载」）之内，
+ * 越界的一律拒绝——协议上多做一步，攻击面就归零。
+ *
+ * @param run 跑命令的注入点：测试要断言「点了什么命令」，又绝不能真弹出 Finder。
+ */
+export async function revealExportedFile(target, { run = runCommand } = {}) {
+  if (typeof target !== 'string' || target.length === 0) return { ok: false, error: '路径为空' };
+  const dir = await exportDir();
+  let inside = null;
+  let real = null;
+  try {
+    // 两边都先解掉软链再比（macOS 上 /var 就是 /private/var 的软链，不解析会误判越界）
+    real = await realpath(target);
+    inside = await realpath(dir);
+  } catch {
+    return { ok: false, error: '文件不在了（可能已被移走或删掉）' };
+  }
+  if (real !== inside && !real.startsWith(inside + sep)) {
+    return { ok: false, error: '只能打开导出目录里的文件' };
+  }
+  // macOS 用 open -R 选中文件；Windows 用 explorer /select,；Linux 没有「选中」这回事，开所在目录
+  const [file, args] = process.platform === 'darwin'
+    ? ['open', ['-R', real]]
+    : process.platform === 'win32'
+      ? ['explorer', [`/select,${real}`]]
+      : ['xdg-open', [dirname(real)]];
+  const outcome = await run(file, args, 10_000);
+  if (outcome.error !== null) {
+    return { ok: false, error: tail(outcome.stderr) || outcome.error.message };
+  }
+  return { ok: true };
 }
 
 /** 跑一条命令等它结束；超时 / 非零退出都不抛，由调用方看 outcome。 */
@@ -201,8 +238,9 @@ async function readBody(request) {
 
 /**
  * 导出路由（一条前缀路由，看路径尾巴决定干什么）：
- *  - `GET /export/ready` → 就绪结论（带 TTL 缓存，秒回）；
- *  - `POST /export`      → 真渲染，正文 `{ python, quality? }`。
+ *  - `GET  /export/ready`  → 就绪结论（带 TTL 缓存，秒回）；
+ *  - `POST /export`        → 真渲染，正文 `{ python, quality? }`；
+ *  - `POST /export/reveal` → 在文件浏览器里定位导出好的文件，正文 `{ path }`。
  * 就绪结论也顺带把「设置页刚检测过」的缓存失效做在 `invalidateReadiness` 上，由调用方按需调。
  */
 export function exportRoute() {
@@ -216,12 +254,17 @@ export function exportRoute() {
           sendJson(response, 200, await exportReadiness());
           return;
         }
-        if (request.method === 'POST' && suffix === '') {
+        if (request.method === 'POST' && (suffix === '' || suffix === 'reveal')) {
           let body;
           try {
             body = JSON.parse(await readBody(request));
           } catch {
             sendJson(response, 400, { error: '正文不是合法 JSON' });
+            return;
+          }
+          if (suffix === 'reveal') {
+            const path = typeof body?.path === 'string' ? body.path : '';
+            sendJson(response, 200, await revealExportedFile(path));
             return;
           }
           const python = typeof body?.python === 'string' ? body.python : '';

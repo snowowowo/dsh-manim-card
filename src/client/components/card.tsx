@@ -1,12 +1,12 @@
 // 聊天卡片：AI 写出 Manim Python → 卡片进入视口自动渲染，离开视口即释放画布。
 // 聊天流是虚拟滚动的（滚出即卸载、滚回即重挂），把画布生命周期绑到视口上，
 // WebGL 上下文就只覆盖"当前可见的那几张卡"，不会随历史卡片累积。
-import { useEffect, useRef, useState } from 'react'
-import { Copy, CodeXml, Download, RotateCcw } from 'lucide-react'
+import { useEffect, useRef, useState, type ReactNode } from 'react'
+import { CircleCheck, CircleX, Copy, CodeXml, Download, FolderOpen, RotateCcw } from 'lucide-react'
 import { createSurface, type Surface } from '../engine/renderer'
 import type { ManimCardData } from '../definition'
 import type { Translate } from '../i18n'
-import { loadExportReadiness, requestExport, type ExportReadiness } from '../export'
+import { loadExportReadiness, requestExport, revealExport, type ExportReadiness } from '../export'
 import { useCopied } from '../clipboard'
 import { CodeView } from './code-view'
 import { Tip } from './tip'
@@ -27,6 +27,28 @@ function missingNames(missing: ExportReadiness['missing'], t: Translate): string
     dvisvgm: t('envDvisvgm'),
   }
   return missing.map((item) => NAMES[item.id] ?? item.id).join('、')
+}
+
+/**
+ * 底部状态栏的一行：图标 + 内容。
+ *
+ * 为什么状态都收在底部：顶栏是「这张卡是什么」——标签与动作键，高度要稳；
+ * 而「现在怎么样了」是随时在变的一层，长在顶栏会把标签挤掉、还让视线往上跑。
+ * 于是**顶栏只留标签与按钮**，渲染成功不吭声（画面本身就是回执），
+ * 只有出错、以及导出这条用户主动发起的事，才在底部出一条。
+ */
+function FootRow({ tone, role, children }: { tone: 'ok' | 'error' | 'busy'; role?: 'status' | 'alert'; children: ReactNode }) {
+  const icon = tone === 'busy'
+    ? <span className="mr-spinner" aria-hidden="true" />
+    : tone === 'ok'
+      ? <CircleCheck size={14} strokeWidth={1.8} aria-hidden="true" />
+      : <CircleX size={14} strokeWidth={1.8} aria-hidden="true" />
+  return (
+    <div className={`mr-chatcard-footrow is-${tone}`} role={role}>
+      {icon}
+      {children}
+    </div>
+  )
 }
 
 /**
@@ -126,6 +148,20 @@ export function ManimCard({ data, t, label, onResult, autoStart, fast }: {
       .finally(() => setExporting(false))
   }
 
+  /** 在系统的文件浏览器里定位导出的文件（macOS：Finder 里选中它）。打不开就如实回一条错误。 */
+  const showInFolder = (): void => {
+    const file = exportNote?.path
+    if (file === undefined) return
+    revealExport(file)
+      .then((result) => {
+        if (!result.ok) setExportNote({ ok: false, text: t('revealFailed', { error: result.error }) })
+      })
+      .catch((error) => {
+        console.error('[manim-renderer] reveal failed:', error)
+        setExportNote({ ok: false, text: t('revealFailed', { error: error instanceof Error ? error.message : String(error) }) })
+      })
+  }
+
   useEffect(() => {
     const stage = stageRef.current
     if (stage === null || empty || rejected) return
@@ -194,7 +230,13 @@ export function ManimCard({ data, t, label, onResult, autoStart, fast }: {
   }, [data.python, empty, rejected, replayKey, t, autoStart, fast])
 
   if (empty) {
-    return <div className="mr-chatcard"><span className="mr-status err">{t('badCard')}</span></div>
+    return (
+      <div className="mr-chatcard">
+        <div className="mr-chatcard-foot">
+          <FootRow tone="error">{t('badCard')}</FootRow>
+        </div>
+      </div>
+    )
   }
 
   const toggleCode = (
@@ -215,21 +257,21 @@ export function ManimCard({ data, t, label, onResult, autoStart, fast }: {
       <div className="mr-chatcard">
         <div className="mr-chatcard-head">
           <span className="mr-chatcard-label">{label ?? t('cardLabel')}</span>
-          <span className="mr-status err" role="status">{t('rejected')}</span>
+          <span className="mr-chatcard-spacer" />
           {toggleCode}
         </div>
         {showCode && <div className="mr-chatcard-code"><CodeView code={data.python} t={t} /></div>}
-        <p className="mr-chatcard-error">{data.feedback?.error ?? t('fail')}</p>
+        {/* 「未通过预检」这件事本身就是报错——按底栏的统一口径出：叉号 + 原话 */}
+        <div className="mr-chatcard-foot">
+          <FootRow tone="error" role="alert">{`${t('rejected')}：${data.feedback?.error ?? t('fail')}`}</FootRow>
+        </div>
       </div>
     )
   }
 
-  // 取包的进展盖在画布正中（见下面的浮层），顶部栏只留 ok / fail：
-  // 跟在标签后面的那行字，标签一长就被挤没，而且长在边框上沿、视线本来也不在那儿。
+  // 取包的进展盖在画布正中（见下面的浮层），顶栏不再放状态——状态统一收在底部（见 FootRow）。
   const loadingNames = loading === null ? null : loading.join('、')
   const takingPackages = slowLoading && loadingNames !== null
-  const statusText = status === null ? '' : status.ok ? t('ok') : t('fail')
-  const statusClass = status === null ? 'mr-status' : status.ok ? 'mr-status ok' : 'mr-status err'
 
   // 导出按钮：亮不亮只看环境必要条件。灰着也要「说得出为什么」——悬停提示列缺什么；
   // 检查还没回来时同样灰着，提示「正在检查」。导出与画布互不相干（一条走本机 CLI，
@@ -258,13 +300,16 @@ export function ManimCard({ data, t, label, onResult, autoStart, fast }: {
     </Tip>
   )
 
+  // 底部状态栏的内容：渲染只在**失败**时出一条（成功不必吭声，画面本身就是回执）；
+  // 导出是用户主动发起的长活儿，从进行中到成功/失败全程有回执。两者都在时上下两行。
+  const renderFailed = status !== null && !status.ok
+  const hasFoot = renderFailed || exporting || exportNote !== null
+
   return (
     <div className="mr-chatcard">
       <div className="mr-chatcard-head">
         <span className="mr-chatcard-label">{label ?? t('cardLabel')}</span>
-        <span className={statusClass} role="status">
-          {statusText}
-        </span>
+        <span className="mr-chatcard-spacer" />
         <button
           className="mr-iconbtn"
           type="button"
@@ -297,28 +342,49 @@ export function ManimCard({ data, t, label, onResult, autoStart, fast }: {
           </div>
         )}
       </div>
-      {/* 完整报错放画布下方：顶部栏只留短状态，高度才守得住。 */}
-      {status !== null && !status.ok && <p className="mr-chatcard-error">{status.text}</p>}
-      {/* 导出回执与报错同理：路径可能很长，截断展示，悬停能看全，旁边一键复制。 */}
-      {exportNote !== null && (exportNote.ok ? (
-        <p className="mr-chatcard-export">
-          <span className="mr-chatcard-exporttext" title={exportNote.text}>{exportNote.text}</span>
-          {exportNote.path !== undefined && (
-            <Tip label={copiedPath ? t('copied') : t('copyPath')} align="end">
-              <button
-                className="mr-iconbtn"
-                type="button"
-                aria-label={t('copyPath')}
-                onClick={() => copyPath(exportNote.path ?? '')}
-              >
-                <Copy size={14} strokeWidth={1.6} />
-              </button>
-            </Tip>
-          )}
-        </p>
-      ) : (
-        <p className="mr-chatcard-error">{exportNote.text}</p>
-      ))}
+      {/* 底部状态栏：渲染失败、导出进行中/成功/失败，都长在这一条上 */}
+      {hasFoot && (
+        <div className="mr-chatcard-foot">
+          {renderFailed && <FootRow tone="error" role="alert">{status.text}</FootRow>}
+          {exporting && <FootRow tone="busy" role="status">{t('exportBusy')}</FootRow>}
+          {!exporting && exportNote !== null && (exportNote.ok && exportNote.path !== undefined ? (
+            <FootRow tone="ok" role="status">
+              {/* 路径本身就是「在文件夹中显示」的入口：悬浮给气泡、点击在文件浏览器里选中它 */}
+              <Tip label={t('revealHint')} align="start" className="mr-chatcard-pathwrap">
+                <button
+                  type="button"
+                  className="mr-chatcard-path"
+                  onClick={showInFolder}
+                >
+                  {exportNote.text}
+                </button>
+              </Tip>
+              <Tip label={copiedPath ? t('copied') : t('copyPath')} align="end">
+                <button
+                  className="mr-iconbtn mr-iconbtn-xs"
+                  type="button"
+                  aria-label={t('copyPath')}
+                  onClick={() => copyPath(exportNote.path ?? '')}
+                >
+                  <Copy size={13} strokeWidth={1.6} />
+                </button>
+              </Tip>
+              <Tip label={t('revealHint')} align="end">
+                <button
+                  className="mr-iconbtn mr-iconbtn-xs"
+                  type="button"
+                  aria-label={t('revealHint')}
+                  onClick={showInFolder}
+                >
+                  <FolderOpen size={13} strokeWidth={1.6} />
+                </button>
+              </Tip>
+            </FootRow>
+          ) : (
+            <FootRow tone="error" role="alert">{exportNote.text}</FootRow>
+          ))}
+        </div>
+      )}
     </div>
   )
 }

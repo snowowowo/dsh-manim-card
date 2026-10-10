@@ -186,10 +186,6 @@
 .mr-code-fill { flex: 1; min-height: 0; margin: 0; resize: none; }
 .mr-code:focus-visible { outline: 2px solid var(--dsw-alias-state-business-primary); outline-offset: 0; }
 
-.mr-status { font-size: 13px; line-height: 20px; white-space: pre-wrap; }
-.mr-status.ok { color: var(--dsw-alias-state-success-primary); }
-.mr-status.err { color: var(--dsw-alias-state-error-primary); }
-
 /* ---- 实验场：语料清单 ---- */
 
 .mr-ground-group { display: flex; flex-direction: column; gap: 2px; }
@@ -315,12 +311,45 @@
   background: var(--dsw-alias-settings-card-fill);
   color: var(--dsw-alias-label-primary);
 }
-/* 顶部栏固定高：标签居左、状态占中（截断不加高）、图标按钮收在右侧。 */
+/* 顶部栏固定高：标签居左，动作键收在右侧（状态一律不在这儿——见底部状态栏）。 */
 .mr-chatcard-head { display: flex; align-items: center; gap: 6px; height: 32px; }
 .mr-chatcard-label { flex: none; font-size: 13px; line-height: 20px; font-weight: 500; }
-.mr-chatcard-head .mr-status {
+.mr-chatcard-spacer { flex: 1; min-width: 0; }
+
+/*
+ * 底部状态栏：一张卡上所有「现在怎么样了」都长在这一条——渲染失败、导出进行中/成功/失败。
+ * 为什么在底部：顶栏是「这张卡是什么」，高度要稳、视线在那儿找动作；
+ * 状态是随时在变的一层，压在顶栏会把标签挤掉。渲染成功不出条（画面本身就是回执），
+ * 只有出错与用户主动发起的导出才有话要说。
+ */
+.mr-chatcard-foot { display: flex; flex-direction: column; gap: 4px; margin-top: 8px; }
+.mr-chatcard-footrow { display: flex; align-items: center; gap: 6px; font-size: 13px; line-height: 20px; }
+.mr-chatcard-footrow.is-ok { color: var(--dsw-alias-state-success-primary); }
+.mr-chatcard-footrow.is-busy { color: var(--dsw-alias-label-secondary); }
+/* 报错可能有好几行：图标跟着第一行，文字整段换行 */
+.mr-chatcard-footrow.is-error {
+  align-items: flex-start;
+  white-space: pre-wrap; word-break: break-word;
+  color: var(--dsw-alias-state-error-primary);
+}
+.mr-chatcard-footrow.is-error > svg { margin-top: 3px; }
+.mr-chatcard-footrow > svg, .mr-chatcard-footrow > .mr-spinner { flex: none; }
+
+/* 导出路径：本身就是「在文件夹中显示」的入口（悬浮给气泡与下划线），长了截断。
+   气泡套在外层，所以那一层也要跟着占满剩余宽度——**只认带 pathwrap 的那条**：
+   同一行里复制 / 文件夹那两个键的气泡也在 `.mr-tip` 上，一视同仁会让三个各占三分之一。 */
+.mr-chatcard-pathwrap { flex: 1; min-width: 0; display: flex; }
+.mr-chatcard-path {
   flex: 1; min-width: 0;
-  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  padding: 0; border: 0; background: none;
+  font: inherit; color: inherit; text-align: left;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  cursor: pointer;
+}
+.mr-chatcard-path:hover { text-decoration: underline; }
+.mr-chatcard-path:focus-visible {
+  outline: 2px solid var(--dsw-alias-state-business-primary); outline-offset: 2px;
+  border-radius: var(--dsw-radius-sm);
 }
 
 /*
@@ -424,24 +453,6 @@
   background: var(--dsw-alias-bg-layer-1);
 }
 .mr-chatcard-code > .mr-codeview { padding: 8px 10px; }
-
-/* Host 预检回执：代码没过预检时替代画布显示的错误块 */
-.mr-chatcard-error {
-  margin: 8px 0 0; font-size: 13px; line-height: 20px;
-  white-space: pre-wrap; word-break: break-word;
-  color: var(--dsw-alias-state-error-primary);
-}
-
-/* 导出视频的回执：绿色一行，路径可能很长——截断展示（悬停看全），复制键收在右边 */
-.mr-chatcard-export {
-  display: flex; align-items: center; gap: 4px;
-  margin: 8px 0 0; font-size: 13px; line-height: 20px;
-  color: var(--dsw-alias-state-success-primary);
-}
-.mr-chatcard-exporttext {
-  flex: 1; min-width: 0;
-  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
-}
 
 /* ---- 设置面板：本机环境 + Python 库 ---------------------------------------- */
 

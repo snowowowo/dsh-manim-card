@@ -113,6 +113,8 @@ export const DICT = {
     exportDone: '已导出到 {path}',
     exportFailed: '导出失败：{error}',
     copyPath: '复制路径',
+    revealHint: '在文件夹中显示',
+    revealFailed: '打不开文件夹：{error}',
 
     // ---- 设置页：本机环境 ----
     // 探测项的标题与「为什么看它」按 id 查（见 settings.tsx 的 ENV_COPY）；

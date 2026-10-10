@@ -23,6 +23,7 @@ import {
   exportRoute,
   exportVideo,
   invalidateReadiness,
+  revealExportedFile,
   sceneClassName,
   wrapConstructBody,
 } from './export.js'
@@ -320,6 +321,80 @@ describe('HTTP 面', () => {
 
   it('不认识的方法 405', async () => {
     expect((await call('DELETE', '/dsh-plugins/manim-renderer/export')).statusCode).toBe(405)
+  })
+})
+
+describe('在文件浏览器里定位导出文件', () => {
+  let downloads = ''
+  /** 假 runner：只记下被调用的命令，绝不真弹 Finder。 */
+  function spyRunner() {
+    const calls: Array<{ file: string; args: string[] }> = []
+    const run = (file: string, args: string[]) => {
+      calls.push({ file, args })
+      return Promise.resolve({ error: null, stdout: '', stderr: '' })
+    }
+    return { calls, run }
+  }
+
+  beforeEach(() => {
+    downloads = join(FAKE_HOME, 'Downloads')
+    mkdirSync(downloads, { recursive: true })
+  })
+
+  it('导出目录里的文件：按平台调对命令（macOS 是 open -R 选中它）', async () => {
+    const file = join(downloads, 'manim-Demo-20261010T100000.mp4')
+    writeFileSync(file, 'mp4-bytes')
+    const { calls, run } = spyRunner()
+    const result = await revealExportedFile(file, { run })
+    expect(result.ok).toBe(true)
+    expect(calls).toHaveLength(1)
+    if (process.platform === 'darwin') {
+      expect(calls[0]?.file).toBe('open')
+      expect(calls[0]?.args[0]).toBe('-R')
+    }
+  })
+
+  it('导出目录之外一律拒绝：不能拿页面上的路径当「替你操作系统」的通路', async () => {
+    const outside = mkdtempSync(join(tmpdir(), 'manim-outside-'))
+    const file = join(outside, 'secret.mp4')
+    writeFileSync(file, 'x')
+    const { calls, run } = spyRunner()
+    try {
+      const result = await revealExportedFile(file, { run })
+      expect(result.ok).toBe(false)
+      expect(result.error).toContain('只能打开导出目录里的文件')
+      expect(calls).toEqual([]) // 拒绝了就一条命令都不许跑
+    } finally {
+      rmSync(outside, { recursive: true, force: true })
+    }
+  })
+
+  it('文件已经不在了：如实回，不抛', async () => {
+    const { run } = spyRunner()
+    const result = await revealExportedFile(join(downloads, 'gone.mp4'), { run })
+    expect(result.ok).toBe(false)
+    expect(result.error).toContain('文件不在了')
+  })
+
+  it('空路径当场拒', async () => {
+    const { run } = spyRunner()
+    expect(await revealExportedFile('', { run })).toMatchObject({ ok: false })
+  })
+
+  it('HTTP 面：POST /export/reveal 越界回 ok:false（200 的业务拒绝，不是 5xx）', async () => {
+    const route = exportRoute()
+    const response = { statusCode: 200, body: '', setHeader() {}, end(body?: string) { this.body = body ?? '' } }
+    const chunk = Buffer.from(JSON.stringify({ path: '/etc/hosts' }), 'utf8')
+    const request = {
+      method: 'POST',
+      url: '/dsh-plugins/manim-renderer/export/reveal',
+      async *[Symbol.asyncIterator]() {
+        yield chunk
+      },
+    }
+    await route.handler(request as never, response as never)
+    expect(response.statusCode).toBe(200)
+    expect(JSON.parse(response.body)).toMatchObject({ ok: false })
   })
 })
 

@@ -74,3 +74,18 @@ export async function requestExport(python: string): Promise<ExportResult> {
   }
   throw new Error('导出结果形状不对')
 }
+
+/**
+ * 在系统的文件浏览器里定位导出的文件（macOS 是 Finder 里选中它）。
+ * Host 只认导出目录（「下载」）里的文件，越界会回 `ok:false` 与原因——那不是错误，是拒绝。
+ */
+export async function revealExport(path: string): Promise<{ ok: boolean; error: string }> {
+  const response = await fetch(`${EXPORT_URL}/reveal`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ path }),
+  })
+  if (!response.ok) throw new Error(`HTTP ${response.status}`)
+  const value = (await response.json()) as Record<string, unknown>
+  return { ok: value.ok === true, error: text(value.error) }
+}
