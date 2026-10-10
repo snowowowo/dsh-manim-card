@@ -1,0 +1,14 @@
+# 探针的构建期依赖：只用于「重新生成域清单」（scripts/export-ce-api.py）。
+#
+# 装法（隔离环境，不进插件产物、不进 node_modules）：
+#   python3 -m venv .venv-probe
+#   ./.venv-probe/bin/pip install -r scripts/probe-requirements.txt
+#   ./.venv-probe/bin/python scripts/export-ce-api.py
+#
+# CE 还有系统级依赖，pip 装不动（pycairo 要 cairo 头文件）：
+#   macOS: brew install pkg-config cairo   （Apple Silicon 另加 pango scipy）
+#   Linux: apt install libcairo2-dev libpango1.0-dev
+# LaTeX 不必装——生成域清单只 import manim，不渲染。
+#
+# 版本钉死：域清单跟着这一版走，换版本要重跑导出 + 探针（生成物里记了版本号）。
+manim==0.22.0

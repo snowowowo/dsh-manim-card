@@ -1,0 +1,82 @@
+{
+  "_comment": "手工清单，只保留**无法从 CE 自动枚举**的那一组：mobjectMethods。类 / 动画 / 函数 / 颜色 / 速率 / 常量全部由 scripts/export-ce-api.py 从 CE 0.22 直接枚举（见 ce-public-api.json），不再在这里维护第二份——两份清单必然漂移，而这正是支持面 SSOT 要消灭的东西。",
+  "_why_methods_are_manual": "CE 的 Mobject 继承体系有 240+ 公开方法，大半是内部工具（add_cubic_bezier_curve / align_points_with_larger / gen_subpaths_from_points_2d…），没有能把「模型会写的」切出来的命名空间边界；自动枚举会把三态表灌满噪声，替代文案也没法给准。故这一组由人维护，并由 export-ce-api.py 的 phantom_methods() 门禁盯着（对不上 CE 就告警）。",
+  "_conventions": [
+    "方法名一律写 CE 的 snake_case——探测时转 camelCase 去 manim-web 里找。",
+    "indexing 不是 CE 方法名，是适配层造的写法（m[i] 取段），登记在这里只为让它进三态表。"
+  ],
+  "mobjectMethods": {
+    "generic": [
+      "shift",
+      "move_to",
+      "scale",
+      "rotate",
+      "stretch",
+      "flip",
+      "set_fill",
+      "set_stroke",
+      "set_color",
+      "set_opacity",
+      "set_style",
+      "next_to",
+      "align_to",
+      "to_edge",
+      "to_corner",
+      "arrange",
+      "arrange_in_grid",
+      "copy",
+      "save_state",
+      "restore",
+      "become",
+      "surround",
+      "get_center",
+      "get_bounding_box",
+      "put_start_and_end_on",
+      "set_z_index",
+      "set_x",
+      "set_y",
+      "set_z",
+      "add_updater",
+      "remove_updater",
+      "clear_updaters",
+      "get_updaters",
+      "animate"
+    ],
+    "line": [
+      "get_start",
+      "get_end",
+      "put_start_and_end"
+    ],
+    "axes": [
+      "plot",
+      "plot_parametric_curve",
+      "plot_line_graph",
+      "get_axis_labels",
+      "c2p",
+      "coords_to_point",
+      "get_graph_label",
+      "get_area",
+      "get_riemann_rectangles",
+      "input_to_graph_point",
+      "plot_derivative_graph"
+    ],
+    "mathtex": [
+      "get_part_by_tex",
+      "indexing"
+    ],
+    "tracker": [
+      "set_value",
+      "get_value",
+      "interpolate"
+    ],
+    "scene": [
+      "play",
+      "add",
+      "remove",
+      "wait",
+      "clear",
+      "bring_to_front",
+      "bring_to_back"
+    ]
+  }
+}

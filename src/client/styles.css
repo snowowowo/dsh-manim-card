@@ -1,0 +1,425 @@
+@import 'tailwindcss/theme' layer(theme);
+@import 'tailwindcss/utilities' layer(utilities);
+@source "./**/*.{tsx,ts}";
+
+/*
+ * 色值全部直接引用宿主 --dsw-alias-* token（亮 / 暗随宿主自动切换），不写死颜色。
+ * 不引 preflight、不写全局选择器；类名统一 mr- 前缀，避免与宿主 / 其他插件泄漏。
+ * 数值照抄宿主源码成品配方：整页骨架 ui-plugin-manager/PluginManagerPage.module.css，
+ * 卡片 ui-settings-account/AccountSection.module.css，按钮 ui-primitives/Button.module.css，
+ * 分段控件 ui-primitives/SegmentedControl.module.css，悬浮提示 ui-primitives/Tooltip.module.css。
+ */
+
+/*
+ * 整页：页头 + 工作区。页头与工作区各自留白、页面本身不滚——
+ * 滚动只发生在两栏内部，于是「左边点一条、右边立刻看」不需要来回滚整页。
+ * 页头一行只放标题、说明（悬停出）与视图切换；说明性长文案一律不上页面。
+ */
+.mr-page {
+  display: flex; flex-direction: column; align-items: center;
+  box-sizing: border-box; height: 100%; overflow: hidden;
+  padding: 0 clamp(24px, 4vw, 48px);
+  color: var(--dsw-alias-label-primary);
+}
+.mr-page-head, .mr-workspace { width: 100%; max-width: 1160px; }
+
+/* 顶部 28px 属于页头行（macOS 窗口拖拽区），容器不重复加内边距 */
+.mr-page-head {
+  display: flex; align-items: center; justify-content: space-between; gap: 16px;
+  box-sizing: border-box; padding-top: 28px; flex: none;
+}
+[data-platform='darwin'] .mr-page-head {
+  padding-top: calc(28px + var(--dsh-frame-top-clearance, 0px));
+}
+.mr-head-title { display: flex; align-items: center; gap: 2px; min-width: 0; }
+.mr-page-title { margin: 0; font-size: 20px; font-weight: 500; line-height: 28px; }
+
+.mr-workspace {
+  flex: 1; min-height: 0;
+  display: grid; grid-template-columns: minmax(240px, 300px) minmax(0, 1fr);
+  gap: 16px; padding: 16px 0 24px;
+}
+/* 自定义代码视图：两栏等重——左边写代码、右边看结果，编辑器太窄没法用 */
+.mr-workspace-free { grid-template-columns: minmax(300px, 1fr) minmax(0, 1.25fr); }
+
+/* 左栏：工具条固定、清单自己滚 */
+.mr-side { display: flex; flex-direction: column; gap: 8px; min-height: 0; min-width: 0; }
+.mr-side-scroll {
+  flex: 1; min-height: 0; overflow: auto;
+  display: flex; flex-direction: column; gap: 10px;
+  padding-right: 4px;
+}
+
+/* 右栏：预览。整栏自己滚（卡片里还可能展开代码框） */
+.mr-main {
+  display: flex; flex-direction: column; gap: 16px;
+  min-height: 0; min-width: 0; overflow: auto; padding-right: 4px;
+}
+.mr-preview { flex: none; }
+/* 空态：没选语料时的占位，居中留白（照宿主列表空态） */
+.mr-empty {
+  margin: 0; padding: 48px 0; text-align: center;
+  font-size: 13px; line-height: 20px; color: var(--dsw-alias-label-tertiary);
+}
+
+/* 工具条：图标化，文案靠悬浮提示；整体抬一层，气泡才不会被下面的滚动区盖住 */
+.mr-toolbar {
+  position: relative; z-index: 5;
+  display: flex; align-items: center; gap: 4px; flex: none; flex-wrap: wrap;
+}
+.mr-toolbar-count {
+  margin-left: auto; font-size: 12px; line-height: 18px;
+  color: var(--dsw-alias-label-tertiary); font-variant-numeric: tabular-nums;
+}
+
+/* ---- 悬浮提示（照抄宿主 Tooltip 的气泡配方）---- */
+
+.mr-tip { position: relative; display: inline-flex; }
+.mr-tip-bubble {
+  position: absolute; top: calc(100% + 6px); left: 50%; transform: translateX(-50%);
+  z-index: 40; pointer-events: none;
+  box-sizing: border-box; width: max-content; max-width: 300px; padding: 3px 7px;
+  border-radius: var(--dsw-radius-sm);
+  background: var(--dsw-alias-tooltip-bg);
+  color: var(--dsw-static-neutral-bluish-00);
+  font-size: 13px; line-height: 20px; font-weight: 400;
+  white-space: pre-line; overflow-wrap: break-word;
+  opacity: 0; visibility: hidden;
+}
+.mr-tip[data-align='start'] .mr-tip-bubble { left: 0; transform: none; }
+.mr-tip[data-align='end'] .mr-tip-bubble { left: auto; right: 0; transform: none; }
+.mr-tip:hover .mr-tip-bubble,
+.mr-tip:focus-within .mr-tip-bubble { opacity: 1; visibility: visible; }
+
+/* ---- 分段控件（视图切换；照抄宿主 SegmentedControl）---- */
+
+.mr-seg {
+  position: relative; display: inline-grid; grid-auto-flow: column; grid-auto-columns: 1fr;
+  gap: 2px; padding: 4px; flex: none;
+  border-radius: var(--dsw-radius-md);
+  background: var(--dsw-alias-interactive-bg-hover);
+}
+.mr-seg-indicator {
+  position: absolute; top: 4px; left: 4px;
+  width: calc((100% - 8px - 2px * (var(--mr-seg-count, 2) - 1)) / var(--mr-seg-count, 2));
+  height: calc(100% - 8px);
+  border: 0; border-radius: var(--dsw-radius-sm);
+  background: var(--dsw-alias-bg-layer-1);
+  box-shadow: var(--dsw-elevation-soft);
+  transform: translateX(calc(var(--mr-seg-index, 0) * (100% + 2px)));
+  transition: transform 160ms ease;
+  pointer-events: none;
+}
+.mr-seg-tab {
+  box-sizing: border-box; position: relative; z-index: 1;
+  height: 28px; padding: 0 16px;
+  border: 0; border-radius: var(--dsw-radius-sm); background: transparent;
+  color: var(--dsw-alias-label-secondary);
+  font: inherit; font-size: 13px; line-height: 20px; font-weight: 500;
+  white-space: nowrap; cursor: pointer; transition: color 120ms ease;
+}
+.mr-seg-tab:hover:not(:disabled), .mr-seg-tab[aria-selected='true'] { color: var(--dsw-alias-label-primary); }
+.mr-seg-tab:disabled { cursor: default; opacity: 0.4; }
+.mr-seg-tab:focus-visible {
+  outline: var(--dsw-focus-ring-width, 2px) solid var(--dsw-alias-state-business-primary);
+  outline-offset: -2px;
+}
+@media (prefers-reduced-motion: reduce) {
+  .mr-seg-indicator, .mr-seg-tab { transition: none; }
+}
+
+/* ---- 按钮 ---- */
+
+.mr-btn {
+  box-sizing: border-box; display: inline-flex; align-items: center; justify-content: center;
+  gap: 4px; height: 28px; padding: 0 10px; cursor: pointer;
+  border: none; border-radius: var(--dsw-radius-sm);
+  font-size: 12px; line-height: 18px;
+  color: var(--dsw-alias-label-primary); background: transparent;
+}
+.mr-btn:disabled { cursor: not-allowed; opacity: 0.4; }
+.mr-btn.primary { background: var(--dsw-alias-button-primary-fill); color: var(--dsw-alias-label-primary-foreground); }
+.mr-btn.primary:hover:not(:disabled) { background: var(--dsw-alias-button-primary-hover); }
+.mr-btn:focus-visible { outline: 2px solid var(--dsw-alias-state-business-primary); outline-offset: 2px; }
+
+/* 图标按钮：透明底、hover 才亮，键位焦点环照宿主。 */
+.mr-iconbtn {
+  flex: none; display: inline-flex; align-items: center; justify-content: center;
+  box-sizing: border-box; width: 24px; height: 24px; padding: 0;
+  border: none; border-radius: var(--dsw-radius-sm);
+  cursor: pointer; background: transparent;
+  color: var(--dsw-alias-label-secondary);
+}
+.mr-iconbtn-xs { width: 20px; height: 20px; }
+.mr-iconbtn:hover:not(:disabled) {
+  background: var(--dsw-alias-interactive-bg-hover);
+  color: var(--dsw-alias-label-primary);
+}
+.mr-iconbtn:disabled { cursor: not-allowed; opacity: 0.4; }
+.mr-iconbtn:focus-visible { outline: 2px solid var(--dsw-alias-state-business-primary); outline-offset: 2px; }
+.mr-iconbtn[aria-pressed='true'] {
+  background: var(--dsw-alias-interactive-bg-hover);
+  color: var(--dsw-alias-state-business-primary);
+}
+
+/* ---- 代码框 ---- */
+
+.mr-code {
+  box-sizing: border-box; display: block; width: 100%; min-height: 190px;
+  resize: vertical; padding: 8px 10px;
+  border: 0.5px solid var(--dsw-alias-border-l4);
+  border-radius: var(--dsw-radius-md);
+  background: var(--dsw-alias-bg-layer-1);
+  color: var(--dsw-alias-label-primary);
+  font-family: var(--ds-font-family-code);
+  font-size: 12px; line-height: 18px; tab-size: 2;
+}
+/* 自定义代码视图里编辑框占满整栏，只跟着窗口走、不允许手动拉高 */
+.mr-code-fill { flex: 1; min-height: 0; margin: 0; resize: none; }
+.mr-code:focus-visible { outline: 2px solid var(--dsw-alias-state-business-primary); outline-offset: 0; }
+
+.mr-status { font-size: 13px; line-height: 20px; white-space: pre-wrap; }
+.mr-status.ok { color: var(--dsw-alias-state-success-primary); }
+.mr-status.err { color: var(--dsw-alias-state-error-primary); }
+
+/* ---- 实验场：语料清单 ---- */
+
+.mr-ground-group { display: flex; flex-direction: column; gap: 2px; }
+
+/* 分组行：左边整块是折叠开关、右边是「渲染本组」——两个按钮，不能嵌套。 */
+.mr-ground-grouphead { display: flex; align-items: center; gap: 2px; }
+.mr-ground-toggle {
+  display: flex; align-items: center; gap: 6px; text-align: start;
+  box-sizing: border-box; flex: 1; min-width: 0; height: 24px; padding: 0 4px;
+  border: none; border-radius: var(--dsw-radius-sm);
+  background: transparent; cursor: pointer;
+  color: var(--dsw-alias-label-tertiary);
+}
+.mr-ground-toggle:hover { background: var(--dsw-alias-interactive-bg-hover); }
+.mr-ground-toggle:focus-visible { outline: 2px solid var(--dsw-alias-state-business-primary); outline-offset: -2px; }
+.mr-ground-grouptitle { font-size: 12px; line-height: 18px; font-weight: 500; }
+.mr-ground-gcount {
+  margin-left: auto; font-size: 11px; line-height: 16px;
+  font-variant-numeric: tabular-nums;
+}
+.mr-ground-gfail {
+  font-size: 11px; line-height: 16px; font-variant-numeric: tabular-nums;
+  color: var(--dsw-alias-state-error-primary);
+}
+/* 「需联网」标记：这一组要真联网取包（所以默认不进自动测试） */
+.mr-ground-net {
+  flex: none; font-size: 11px; line-height: 16px; padding: 0 4px;
+  border: 1px solid var(--dsw-alias-border-l3);
+  border-radius: var(--dsw-radius-sm);
+  color: var(--dsw-alias-label-secondary);
+}
+/* 语料不在时（正式安装）贴在编辑区上方的说明：是有意的降级，不做成错误样式 */
+.mr-ground-notice {
+  margin: 0; padding: 8px 10px; flex: none;
+  border: 1px solid var(--dsw-alias-border-l3);
+  border-radius: var(--dsw-radius-sm);
+  background: var(--dsw-alias-bg-layer-1);
+  font-size: 12px; line-height: 18px;
+  color: var(--dsw-alias-label-secondary);
+}
+/* 清缓存的结果回执（工具条右端，与计数同款字色） */
+.mr-toolbar-note { font-size: 12px; line-height: 18px; color: var(--dsw-alias-label-secondary); }
+.mr-ground-items { display: flex; flex-direction: column; }
+
+.mr-ground-item {
+  display: flex; align-items: center; gap: 8px; text-align: start;
+  box-sizing: border-box; width: 100%; height: 28px; padding: 0 8px;
+  border: none; border-radius: var(--dsw-radius-sm);
+  background: transparent; cursor: pointer;
+  color: var(--dsw-alias-label-primary);
+}
+.mr-ground-item:hover { background: var(--dsw-alias-interactive-bg-hover); }
+.mr-ground-item[aria-pressed='true'] { background: var(--dsw-alias-interactive-bg-hover); }
+.mr-ground-item:focus-visible { outline: 2px solid var(--dsw-alias-state-business-primary); outline-offset: -2px; }
+
+/* 结果点：未跑是空心，符合预期 / 未通过填宿主的状态色——一眼看出哪条不对。 */
+.mr-ground-dot {
+  flex: none; width: 7px; height: 7px; border-radius: 50%;
+  border: 0.5px solid var(--dsw-alias-border-l3); background: transparent;
+}
+.mr-ground-item[data-state='ok'] .mr-ground-dot {
+  border-color: var(--dsw-alias-state-success-primary);
+  background: var(--dsw-alias-state-success-primary);
+}
+.mr-ground-item[data-state='fail'] .mr-ground-dot {
+  border-color: var(--dsw-alias-state-error-primary);
+  background: var(--dsw-alias-state-error-primary);
+}
+
+.mr-ground-name { flex: none; font-size: 13px; line-height: 20px; }
+/* 人工标注徽标：清单里一眼看出哪条人看过、结论是什么（与左侧的自动结果点分开） */
+.mr-ground-mark {
+  flex: none; font-size: 11px; line-height: 16px; font-weight: 600;
+}
+.mr-ground-mark.is-pass { color: var(--dsw-alias-state-success-primary); }
+.mr-ground-mark.is-fail { color: var(--dsw-alias-state-error-primary); }
+.mr-ground-id {
+  margin-left: auto; flex: 1; min-width: 0;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap; text-align: end;
+  font-family: var(--ds-font-family-code); font-size: 11px; line-height: 16px;
+  color: var(--dsw-alias-label-tertiary);
+}
+
+/* ---- 预期表现条 + 人工验证（挂在预览上方）---- */
+
+.mr-expect {
+  display: flex; align-items: baseline; gap: 8px;
+  box-sizing: border-box; padding: 8px 10px;
+  border: 1px solid var(--dsw-alias-border-l3);
+  border-radius: var(--dsw-radius-sm);
+  background: var(--dsw-alias-bg-layer-1);
+}
+.mr-expect-label {
+  flex: none; font-size: 12px; line-height: 18px; font-weight: 500;
+  color: var(--dsw-alias-label-secondary); cursor: help;
+}
+.mr-expect-text {
+  flex: 1; min-width: 0; font-size: 12px; line-height: 18px;
+  color: var(--dsw-alias-label-primary); overflow-wrap: break-word;
+}
+/* 人工验证按钮组：靠右；标的那个高亮成对应状态色 */
+.mr-expect-mark { flex: none; display: inline-flex; align-items: center; gap: 2px; }
+.mr-expect-marktitle {
+  font-size: 12px; line-height: 18px; color: var(--dsw-alias-label-tertiary);
+  margin-right: 4px; cursor: help;
+}
+.mr-expect-mark .mr-iconbtn[data-mark='pass'] {
+  color: var(--dsw-alias-state-success-primary);
+}
+.mr-expect-mark .mr-iconbtn[data-mark='fail'] {
+  color: var(--dsw-alias-state-error-primary);
+}
+
+/* ---- 聊天卡片（conversation.chat.node）---- */
+
+/* 画布与代码共用一块位置：容器定比例，切视图只换上面盖着的那一层，卡片高度不变。 */
+.mr-chatcard-body { position: relative; margin-top: 12px; }
+
+.mr-chatcard {
+  box-sizing: border-box; margin: 6px 0; padding: 10px 12px;
+  border: 0.5px solid var(--dsw-alias-settings-card-stroke);
+  border-radius: var(--dsw-radius-xl);
+  background: var(--dsw-alias-settings-card-fill);
+  color: var(--dsw-alias-label-primary);
+}
+/* 顶部栏固定高：标签居左、状态占中（截断不加高）、图标按钮收在右侧。 */
+.mr-chatcard-head { display: flex; align-items: center; gap: 6px; height: 32px; }
+.mr-chatcard-label { flex: none; font-size: 13px; line-height: 20px; font-weight: 500; }
+.mr-chatcard-head .mr-status {
+  flex: 1; min-width: 0;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+
+/*
+ * 画布：容器定比例，canvas 本体做响应式缩放。
+ * manim-web 经 three.js setSize 给 canvas 写了内联 px 宽高，必须 !important 才能覆盖。
+ */
+.mr-stage {
+  position: relative; width: 100%; aspect-ratio: 16 / 9; margin-top: 12px;
+  overflow: hidden;
+  border: 0.5px solid var(--dsw-alias-border-l3);
+  border-radius: var(--dsw-radius-md);
+  background: var(--dsw-alias-bg-layer-1);
+}
+/* 卡片里外层已给间距（见 .mr-chatcard-body），画布不再自带。 */
+.mr-chatcard-body > .mr-stage { margin-top: 0; }
+.mr-stage canvas { display: block; width: 100% !important; height: 100% !important; }
+
+/*
+ * 取包浮层：正在联网取第三方包时盖在画布上用。
+ * 为什么在正中——这会儿画布还是空的，视线本来就在中间；先前跟在标签后面，
+ * 标签一长就被挤掉，长在画布上沿也不显眼。
+ * 想挪到左下角：把 align-items / justify-content 换成 flex-end / flex-start 即可。
+ * pointer-events: none —— 只报状态，别抢画布上的鼠标。
+ */
+.mr-canvas-loading {
+  position: absolute; inset: 0; z-index: 2;
+  display: flex; align-items: center; justify-content: center;
+  box-sizing: border-box; padding: 12px; pointer-events: none;
+}
+/* 药丸用悬浮提示的底色（亮暗两套主题下都跟画布拉得开），文字同提示气泡。 */
+.mr-canvas-loading-pill {
+  display: flex; align-items: center; gap: 8px;
+  box-sizing: border-box; min-width: 0; max-width: 100%; padding: 6px 12px;
+  border-radius: 999px;
+  background: var(--dsw-alias-tooltip-bg);
+  color: var(--dsw-static-neutral-bluish-00);
+  font-size: 13px; line-height: 20px;
+}
+/* 包名是代码原文，可能很长：截断加省略号，药丸不加高、不撑破画布。 */
+.mr-canvas-loading-text { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+.mr-spinner {
+  flex: none; box-sizing: border-box; width: 14px; height: 14px;
+  border: 1.5px solid rgb(255 255 255 / 25%);
+  border-top-color: currentColor; border-radius: 50%;
+  animation: mr-spin 0.8s linear infinite;
+}
+@keyframes mr-spin { to { transform: rotate(360deg); } }
+/* 关了动效就别转——静止的一圈同样是「在等」的意思。 */
+@media (prefers-reduced-motion: reduce) { .mr-spinner { animation: none; } }
+
+/* 代码视图：盖满画布那一块，自身滚动——不挤压、不改变卡片高度。 */
+.mr-code-pane {
+  position: absolute; inset: 0; overflow: auto;
+  border: 0.5px solid var(--dsw-alias-border-l3);
+  border-radius: var(--dsw-radius-md);
+  background: var(--dsw-alias-bg-layer-1);
+}
+
+/*
+ * 高亮代码：颜色由每段行内 style 给（shiki 的 var(--shiki-token-*)），此处只管排版。
+ * 行号用 CSS 计数器，宽度按行数位数由行内 --mr-codeview-gutter 给。
+ */
+.mr-codeview {
+  margin: 0; padding: 10px 12px;
+  font-family: var(--ds-font-family-code);
+  font-size: 12px; line-height: 18px;
+  color: var(--dsw-alias-label-primary);
+  white-space: pre-wrap; word-break: break-word;
+  tab-size: 2;
+}
+.mr-codeview code { display: block; counter-reset: source-line; }
+.mr-codeview code > .line {
+  position: relative; display: block; min-height: 1lh;
+  padding-inline-start: calc(var(--mr-codeview-gutter, 2ch) + 12px);
+  counter-increment: source-line;
+}
+.mr-codeview code > .line::before {
+  position: absolute; inset-inline-start: 0; width: var(--mr-codeview-gutter, 2ch);
+  color: var(--dsw-alias-label-tertiary); text-align: end;
+  content: counter(source-line); user-select: none;
+}
+
+/* 代码框右上角的复制键：吸附在滚动容器顶端，滚到哪都够得着。 */
+.mr-codepane-actions {
+  position: sticky; top: 0; z-index: 2; height: 0;
+  display: flex; justify-content: flex-end;
+  padding: 6px 8px 0 0;
+}
+.mr-codepane-actions .mr-iconbtn {
+  width: 22px; height: 22px;
+  background: var(--dsw-alias-bg-layer-1);
+  border: 0.5px solid var(--dsw-alias-border-l3);
+}
+
+/* 预检未过时内联展开的代码框（无画布，直接跟错误信息上下排）；字体与高亮由 CodeView 出。 */
+.mr-chatcard-code {
+  margin-top: 8px; max-height: 180px; overflow: auto;
+  border: 0.5px solid var(--dsw-alias-border-l4);
+  border-radius: var(--dsw-radius-md);
+  background: var(--dsw-alias-bg-layer-1);
+}
+.mr-chatcard-code > .mr-codeview { padding: 8px 10px; }
+
+/* Host 预检回执：代码没过预检时替代画布显示的错误块 */
+.mr-chatcard-error {
+  margin: 8px 0 0; font-size: 13px; line-height: 20px;
+  white-space: pre-wrap; word-break: break-word;
+  color: var(--dsw-alias-state-error-primary);
+}

@@ -1,0 +1,18 @@
+# 依赖
+node_modules/
+
+# 构建产物（本仓把 client.js / core.js 作为发布产物提交，故不忽略；这里只忽略其它）
+dist/
+lib/
+*.tsbuildinfo
+*.log
+.DS_Store
+
+# 覆盖率输出（vitest --coverage 的产物，随时可重跑）
+coverage/
+
+# 开发期临时产物（`scripts/shot-corpus.mjs` 的截图等，用完即清）
+_tmp/
+
+# 探针的构建期 Python 环境（scripts/probe-requirements.txt 用）
+.venv-probe/

@@ -1,0 +1,3 @@
+- insert:
+    - id: manim-renderer
+      name: './plugins/manim-renderer/index.js'

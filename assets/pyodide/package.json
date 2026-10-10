@@ -1,0 +1,4 @@
+{
+  "type": "commonjs",
+  "//": "本目录是 Pyodide 发行版原样 vendored。pyodide.asm.js 是 CJS（用 require/module），而本仓 package.json 是 type=module，就近加一份声明把它按 CJS 解析，Node 侧才能加载。浏览器侧不受影响（按 script 标签加载）。"
+}
