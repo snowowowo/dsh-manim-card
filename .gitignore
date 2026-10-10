@@ -13,6 +13,7 @@ coverage/
 
 # 开发期临时产物（`scripts/shot-corpus.mjs` 的截图等，用完即清）
 _tmp/
+_tmp_*
 
 # 探针的构建期 Python 环境（scripts/probe-requirements.txt 用）
 .venv-probe/
