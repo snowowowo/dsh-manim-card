@@ -27,7 +27,7 @@
 import { builtinModules, createRequire } from 'node:module'
 import { existsSync, readFileSync } from 'node:fs'
 import { readFile } from 'node:fs/promises'
-import { basename, dirname, join, resolve as resolvePath } from 'node:path'
+import { basename, dirname, join, relative, resolve as resolvePath } from 'node:path'
 import { transform as minifyCss } from 'lightningcss'
 import postcss from 'postcss'
 import tailwindcss from '@tailwindcss/postcss'
@@ -172,20 +172,28 @@ function makeCssPlugin(id: string, cssText: readonly string[]) {
     return importer === undefined ? resolvePath(source) : resolvePath(dirname(importer), source)
   }
 
+  /**
+   * 虚拟 id 里只放相对包根的路径：rolldown 会把模块 id 原样写进产物的 `#region` 注释，
+   * 存绝对路径等于把构建机路径刻进 `client.js`（不同机器构建出的产物就不一致了）。
+   * `load` 再相对包根还原，读文件仍用绝对路径。
+   */
+  const toVirtualId = (fileId: string) => relative(process.cwd(), fileId)
+  const fromVirtualId = (virtualPath: string) => resolvePath(process.cwd(), virtualPath)
+
   return {
     name: 'plugin-css-inline',
     resolveId(source: string, importer: string | undefined) {
       if (!source.endsWith('.css')) return null
       const mode = cssText.includes(source) ? CSS_TEXT_PREFIX : CSS_VIRTUAL_PREFIX
-      return mode + locate(source, importer) + CSS_VIRTUAL_SUFFIX
+      return mode + toVirtualId(locate(source, importer)) + CSS_VIRTUAL_SUFFIX
     },
     async load(virtualId: string) {
       if (virtualId.startsWith(CSS_TEXT_PREFIX)) {
-        const fileId = virtualId.slice(CSS_TEXT_PREFIX.length, -CSS_VIRTUAL_SUFFIX.length)
+        const fileId = fromVirtualId(virtualId.slice(CSS_TEXT_PREFIX.length, -CSS_VIRTUAL_SUFFIX.length))
         return `export default ${JSON.stringify(await readFile(fileId, 'utf8'))};`
       }
       if (!virtualId.startsWith(CSS_VIRTUAL_PREFIX)) return null
-      const fileId = virtualId.slice(CSS_VIRTUAL_PREFIX.length, -CSS_VIRTUAL_SUFFIX.length)
+      const fileId = fromVirtualId(virtualId.slice(CSS_VIRTUAL_PREFIX.length, -CSS_VIRTUAL_SUFFIX.length))
       const source = await readFile(fileId, 'utf8')
       const { css } = await tailwind.process(source, { from: fileId })
       const { code } = minifyCss({ filename: fileId, code: Buffer.from(css), minify: true })
