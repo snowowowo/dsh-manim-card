@@ -3,9 +3,9 @@
  *
  * 为什么不放仓外共享：插件已拆成独立仓（一个功能 = 一个仓），仓之间没有共享文件系统，
  * 预设若留在外面，每个仓就没法独立构建。所以它跟着包走。
- * **`plugin-template` 里的这份是唯一源**；本文件在其余包里必须与它**逐字节相同**，
+ * **`dsh-plugin-template` 仓里的这份是唯一源**；本文件在其余包里必须与它**逐字节相同**，
  * 由容器工作目录仓的 `scripts/check-preset-drift.mjs` 自动核对。
- * 改预设 → 先改 plugin-template，再把同一份复制到其余包；**不要单独改某一个包**。
+ * 改预设 → 先改 dsh-plugin-template，再把同一份复制到其余包；**不要单独改某一个包**。
  *
  * 复刻官方预设（dsh 源码 packages/client/tsdown.client.ts）的产物形态：
  *   - CJS 单文件，banner/footer 包成 window.__ModuleLoader__.load({ id, factory })，
@@ -62,7 +62,7 @@ const CSS_TEXT_PREFIX = '\0plugin-css-text:'
 const NODE_BUILTINS = new Set([...builtinModules, ...builtinModules.map((id) => `node:${id}`)])
 
 export interface ClientBundleOptions {
-  /** 插件 id：必须与 package.json 的 name、cordis.patch.yml 的 id 一致。 */
+  /** 插件 id：与 `cordis.patch.yml` 的 id 一致；**包名另带 `dsh-` 前缀，两者是两回事**。 */
   id: string
   /** 入口，默认 `src/client/index.tsx`。 */
   entry?: string

@@ -10,7 +10,7 @@
 
 写法上除属性动画 `self.play(m.animate.x(...))`（可链的方法由探针实测 manim-web 的 animate 代理生成，不在表里的当场报错并列出可用项）外，`rate_func=` / `run_time=`、`m[i]` 取段、`m.width` 这类属性读取、`self.clear()` 也都已接线——「这个写法支不支持」的判定与真执行取同一份支持面（`src/core/py/surface.ts`），所以**预检放行的，真桥不会当场拒**。**方法改写**（`surface.ts` 的 `METHOD_REWRITES`）负责「CE 有、manim-web 换了形状」的那批：`set_stroke(color=, width=, opacity=)` → 颜色走**属性写**、`_color` 与 `strokeColor` 各写一份（渲染层读前者、回读走后者，见第六轮第 7 条）、宽 / 透明度走专属 setter——**不能**落 `setStyle`：manim-web 的 set color 存取器会把 fillColor 一起冲掉（见第四轮 (b) 的色板事故）；`set_opacity(x)` → stroke + fill 两个 setter、`put_start_and_end_on(a, b)` → Arrow 走同名方法、Line 走 `setStart` + `setEnd`。物体/动画的归类按 manim-web 的**实测原型链**定，不看 CE 把它挂在哪个模块下（CE 把 `TracedPath` / `AnimatedBoundary` 放在 `animation/` 里，两者其实是物体）；「包住一个物体」的写法（`TracedPath(dot)` / `SurroundingRectangle(text)` / `Union(a, b)` …）也走同一份构造规则。`self.add(...)` 收到动画会当场给出可读报错（校验在 Python 侧，预检也拦得住）。左侧导航「Manim 渲染」是**实验场**（见下节），既是肉眼验收台，也是支持面的计量器。
 
-顶层设计见 `_docs/2026-10-09-01-manim渲染插件/顶层设计.md`。
+顶层设计见 `_docs/工作文档/2026-10-09-01-manim渲染插件/顶层设计.md`。
 
 ### 实验场（语料回归网）
 
@@ -147,7 +147,7 @@ core.js                   Host 侧运行时产物（tools 返回前干跑预检�
 client.js                 Client 构建产物（随包提交）
 cordis.patch.yml          把插件插进 profile 的 patch
 tsdown.config.ts          构建声明：两个产物（client.js / core.js）
-tsdown.preset.ts          tsdown 客户端预设（每包自带一份，与 plugin-template 逐字节相同）
+tsdown.preset.ts          tsdown 客户端预设（每包自带一份，与 dsh-plugin-template 逐字节相同）
 tsconfig.json             类型检查（覆盖 src/）
 _dev/examples/            实验场语料（开发期回归网，**不进发布集**）
 assets/katex/             KaTeX 样式与字体（MathTex 渲染用，由 Host 路由提供）

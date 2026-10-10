@@ -1,5 +1,5 @@
 /**
- * 构建预设见同目录 `tsdown.preset.ts`（每个插件包自带一份，逐字节相同；唯一源是 plugin-template 仓）。
+ * 构建预设见同目录 `tsdown.preset.ts`（每个插件包自带一份，逐字节相同；唯一源是 dsh-plugin-template 仓）。
  * 本插件有两个产物：
  *   - client.js  浏览器半边（共享预设；Python 运行时与渲染都在这一侧）
  *   - core.js    Host 半边用的 Python 运行时（`src/core/index.ts` → Node ESM，全量内联自包含）——
@@ -7,7 +7,7 @@
  */
 import { clientBundle } from './tsdown.preset.ts'
 
-/** 插件 id：必须与 package.json 的 name、cordis.patch.yml 的 id 一致。 */
+/** 插件 id：与 cordis.patch.yml 的 id 一致；**包名另带 `dsh-` 前缀，两者是两回事**。 */
 const PLUGIN_ID = 'manim-renderer'
 
 export default [

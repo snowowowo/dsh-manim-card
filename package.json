@@ -1,5 +1,5 @@
 {
-  "name": "manim-renderer",
+  "name": "dsh-manim-renderer",
   "version": "0.1.0",
   "private": true,
   "type": "module",
