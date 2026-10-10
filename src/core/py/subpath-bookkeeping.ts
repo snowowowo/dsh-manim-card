@@ -95,6 +95,6 @@ export function healSubpathBookkeeping(mobject: unknown): boolean {
       // 治不动别把一次 play 弄挂：morph 前那道 `subpathTreeConsistent` 仍然拦得住。
     }
     return false
-  })
+  }, 0)
   return healed
 }

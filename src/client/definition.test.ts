@@ -75,12 +75,23 @@ describe('start：从调用参数里取源码', () => {
   const match = (event: unknown) => ({ event, role: 'start' }) as never
 
   it('取出 python 与 callId', () => {
-    expect(definition.start({} as never, match(callEvent()))).toEqual({ python: 'print(1)', callId: 'c1' })
+    expect(definition.start({} as never, match(callEvent()))).toEqual({
+      python: 'print(1)',
+      callId: 'c1',
+      // 事件上没有 location：认不出 step，于是这张卡自成一"批"（键带 callId），序号取事件 seq
+      stepKey: 'call:c1',
+      seq: 7,
+    })
   })
 
   it('arguments 是坏 JSON 时退回空源码（卡片落到「数据不完整」占位，不炸）', () => {
     const event = callEvent({ data: { name: 'manim_render', arguments: '{不是 JSON', callId: 'c1' } })
-    expect(definition.start({} as never, match(event))).toEqual({ python: '', callId: 'c1' })
+    expect(definition.start({} as never, match(event))).toEqual({
+      python: '',
+      callId: 'c1',
+      stepKey: 'call:c1',
+      seq: 7,
+    })
   })
 
   it('arguments 解析出来不是对象时也退回空源码', () => {
@@ -94,6 +105,60 @@ describe('start：从调用参数里取源码', () => {
     expect(definition.start({} as never, match(callEvent({ data: { name: 'manim_render' } }))).python).toBe('')
     const wrong = callEvent({ data: { name: 'manim_render', arguments: '{"python":42}', callId: 'c1' } })
     expect(definition.start({} as never, match(wrong)).python).toBe('')
+  })
+})
+
+describe('start：这批卡怎么分批（同一个 step 只真播一张）', () => {
+  /** 真事件的 location 长这样：turn 那一层还带序号，step 那一层带 step 号。 */
+  const where = (turn: unknown, step: unknown) => ({ kind: 'step', turn: { status: 'open', turn }, step: { step } })
+  const start = (location: unknown, callId: string, seq: number) => definition.start({} as never, {
+    event: callEvent({ seq, data: { name: 'manim_render', arguments: '{}', callId } }),
+    role: 'start',
+    location,
+  } as never)
+
+  it('同一个 step 里并行发的几张算一批（这就是「只真播一张」的落点）', () => {
+    const a = start(where(1, 2), 'call_00_a', 10)
+    const b = start(where(1, 2), 'call_01_b', 11)
+    const c = start(where(1, 2), 'call_02_c', 12)
+    expect([a.stepKey, b.stepKey, c.stepKey]).toEqual(['1:2', '1:2', '1:2'])
+    // 同一批里靠 seq 比谁最后到——调度器播的就是 seq 最大那张
+    expect([a.seq, b.seq, c.seq]).toEqual([10, 11, 12])
+  })
+
+  it('不同 step、不同 turn 各自一批（不能把别的 step 的动画吃掉）', () => {
+    expect(start(where(1, 2), 'c1', 1).stepKey).not.toBe(start(where(1, 3), 'c2', 2).stepKey)
+    expect(start(where(1, 3), 'c3', 3).stepKey).not.toBe(start(where(2, 3), 'c4', 4).stepKey)
+  })
+
+  it('认不出 step（那一层缺席或不是数字）→ 每张自成一批，键带 callId', () => {
+    for (const location of [
+      undefined,
+      {},
+      { kind: 'step', turn: { status: 'open', turn: 1 } },
+      { kind: 'step', turn: { status: 'open', turn: 1 }, step: {} },
+      { kind: 'step', turn: { status: 'open', turn: 1 }, step: { step: '2' } },
+    ]) {
+      const label = JSON.stringify(location)
+      expect(start(location, 'c1', 1).stepKey, label).toBe('call:c1')
+      // 关键：不是落回同一个空串——否则这些"认不出"的卡会挤成一批、只播一张
+      expect(start(location, 'c2', 2).stepKey, label).toBe('call:c2')
+    }
+  })
+
+  it('step 在、turn 认不出 → 仍按 step 分批，前缀给个 ? 占位', () => {
+    const a = start({ kind: 'step', step: { step: 5 } }, 'c1', 1)
+    const b = start({ kind: 'step', step: { step: 5 } }, 'c2', 2)
+    expect(a.stepKey).toBe('?:5')
+    expect(b.stepKey).toBe(a.stepKey)
+  })
+
+  it('seq 缺席或不是安全整数 → 落 0（不让 NaN 混进排序）', () => {
+    for (const raw of [undefined, null, '9', 1.5, Number.NaN, Number.MAX_SAFE_INTEGER + 2]) {
+      const event = callEvent({ seq: undefined, data: { name: 'manim_render', arguments: '{}', callId: 'c1' } })
+      if (raw !== undefined) (event as { seq: unknown }).seq = raw
+      expect(definition.start({} as never, { event, role: 'start' } as never).seq, String(raw)).toBe(0)
+    }
   })
 })
 

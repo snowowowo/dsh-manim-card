@@ -5074,7 +5074,7 @@ function healSubpathBookkeeping(mobject) {
 			healed = true;
 		} catch {}
 		return false;
-	});
+	}, 0);
 	return healed;
 }
 //#endregion

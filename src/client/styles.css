@@ -370,6 +370,40 @@
 .mr-stage canvas { display: block; width: 100% !important; height: 100% !important; }
 
 /*
+ * 骨架屏：盖在画布上，等第一幅画出来。
+ *
+ * 为什么必须有：极速重跑（滚回来那张、被淘汰后重跑那张）会把**一串中间态频闪出来**——
+ * 极速只是把动画时长压到 0，每个 play 仍然各画一帧。虽然快，但看着很脏。
+ * 盖住之后用户只看到「骨架 → 终态」，中间那串全在盖子底下发生。
+ *
+ * 为什么是块状、不带文字：这会儿跑的是**动画**，不是「在下载什么」。写「正在加载」
+ * 会跟真正在取包的那条（.mr-canvas-loading）撞车——那条才是真的在等外部东西。
+ * 块状是「这里马上会有东西」的通用意思，不指涉原因。
+ *
+ * 底色盖满：不能半透明，否则底下频闪的中间态还是会透出来。
+ */
+.mr-canvas-skeleton {
+  position: absolute; inset: 0; z-index: 3;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px;
+  box-sizing: border-box;
+  border-radius: var(--dsw-radius-md);
+  background: var(--dsw-alias-bg-layer-1);
+}
+.mr-skel {
+  /* flex: none —— 三块的百分比高度加起来接近满高，别让 flex 自动缩，宽度也要按给的百分比来 */
+  flex: none; display: block; max-width: 80%;
+  border-radius: var(--dsw-radius-md);
+  background: var(--dsw-alias-bg-layer-2);
+  animation: mr-skel-breathe 1.4s ease-in-out infinite;
+}
+@keyframes mr-skel-breathe {
+  0%, 100% { opacity: 0.45; }
+  50% { opacity: 0.9; }
+}
+/* 关了动效就是几块静止的灰——「还没好」的意思照样传达到。 */
+@media (prefers-reduced-motion: reduce) { .mr-skel { animation: none; opacity: 0.6; } }
+
+/*
  * 取包浮层：正在联网取第三方包时盖在画布上用。
  * 为什么在正中——这会儿画布还是空的，视线本来就在中间；先前跟在标签后面，
  * 标签一长就被挤掉，长在画布上沿也不显眼。
@@ -377,7 +411,7 @@
  * pointer-events: none —— 只报状态，别抢画布上的鼠标。
  */
 .mr-canvas-loading {
-  position: absolute; inset: 0; z-index: 2;
+  position: absolute; inset: 0; z-index: 4;
   display: flex; align-items: center; justify-content: center;
   box-sizing: border-box; padding: 12px; pointer-events: none;
 }

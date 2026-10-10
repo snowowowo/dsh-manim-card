@@ -10,6 +10,17 @@ export interface ManimFeedback {
 export interface ManimCardData {
   python: string
   callId: string
+  /**
+   * 这一批（同一个 step）的标识，形如 `1:2`；认不出 step 时是 `call:${callId}`（自成一批）。
+   *
+   * 为什么需要：模型会在**同一个 step 里并行发好几个** `manim_render`（真实轨迹里见过 3 个，
+   * 形如 `call_00_` / `call_01_` / `call_02_`）。一个 step 只真播一张——用户等的其实是结果，
+   * 不是 2~3 段动画接连演完（那要 6~9 秒，后几张全程骨架屏）。判定见 render-queue 的
+   * `isBatchTail`。
+   */
+  stepKey: string
+  /** 事件序号（`tool/call` 的 seq）：同一批里比谁最后到，也用它排预热顺序。 */
+  seq: number
   /** Host 侧预检回执；缺省 = 尚未回执（仍按可渲染处理）。 */
   feedback?: ManimFeedback
   /**
@@ -36,9 +47,10 @@ interface FoldEventData {
   message?: { source?: { callId?: string }; content?: readonly FoldContentItem[]; isError?: unknown }
 }
 
-/** 事件在会话层级里的落点（引擎给的）。这里只用到「所在那一轮还开着没有」。 */
+/** 事件在会话层级里的落点（引擎给的）。这里只用两件事：所在那一轮还开着没有、是不是同一个 step。 */
 interface FoldLocation {
-  turn?: { status?: unknown }
+  turn?: { status?: unknown; turn?: unknown }
+  step?: { step?: unknown }
 }
 
 interface FoldEvent {
@@ -127,6 +139,24 @@ function readLive(match: FoldMatch): boolean {
   return callId !== '' && bornLive.has(callId)
 }
 
+/**
+ * 这批多大：同一个 step 的卡算一批，一批只真播一张（见 render-queue 的 `isBatchTail`）。
+ *
+ * 认不出 step 时**每张卡各算一批**（键带上 callId，而不是落回一个空串）：落回空串会让所有
+ * 「认不出」的卡挤成同一批、结果只播一张——那等于凭一次采样失败就把几张卡的动画吃掉。
+ * 宁可多播一张，也不能少播。
+ */
+function readBatch(match: FoldMatch, callId: string): { stepKey: string; seq: number } {
+  const turn = match.location?.turn?.turn
+  const step = match.location?.step?.step
+  const raw = match.event.seq
+  const seq = typeof raw === 'number' && Number.isSafeInteger(raw) ? raw : 0
+  return {
+    stepKey: typeof step === 'number' ? `${typeof turn === 'number' ? turn : '?'}:${step}` : `call:${callId}`,
+    seq,
+  }
+}
+
 export const definition = {
   kind: 'manim-render',
   target: 'chat',
@@ -145,16 +175,18 @@ export const definition = {
   },
   start: (_context: FoldContext, match: FoldMatch): ManimCardData => {
     const args = safeArguments(match.event.data?.arguments)
+    const callId = String(match.event.data?.callId ?? '')
     return {
       python: typeof args.python === 'string' ? args.python : '',
-      callId: String(match.event.data?.callId ?? ''),
+      callId,
+      ...readBatch(match, callId),
       ...readLive(match) ? { live: true as const } : {},
     }
   },
   update: (context: FoldContext, match: FoldMatch): ManimCardData => {
     if (match.event.type !== 'tool/result') return context.state
     const text = receiptText(match.event)
-    const feedback = readFeedback(text, false)
+    const feedback = readFeedback(text)
     if (feedback !== undefined) return { ...context.state, feedback }
     // 中断收尾（宿主说这次没跑成）：认出来就走 interrupted，不打日志——那不是「怪数据」。
     if (readInterrupted(match.event)) return { ...context.state, interrupted: true }

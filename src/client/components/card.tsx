@@ -1,13 +1,23 @@
-// 聊天卡片：AI 写出 Manim Python → 卡片进入视口自动渲染，离开视口即释放画布。
-// 聊天流是虚拟滚动的（滚出即卸载、滚回即重挂），把画布生命周期绑到视口上，
-// WebGL 上下文就只覆盖"当前可见的那几张卡"，不会随历史卡片累积。
+// 聊天卡片：AI 写出 Manim Python → 卡片挂着不拆，由渲染调度器（render-queue.ts）决定
+// 「什么时候轮到它跑」「按什么顺序跑」「画布攒到几张该收」。
+//
+// 两条曾经的误解都会直接变成事故，写在这儿免得再踩：
+//
+//   1) 「聊天流是虚拟滚动的、滚出即卸载」——**是错的**。宿主的 `ChatNodeList` 是
+//      `entries.map(...)` 全量渲染，宿主文档也写着 "The transcript itself remains fully
+//      mounted"（被虚拟化的是右侧那条 Turn 导航条，不是正文）。行一直是挂着的，
+//      所以「拆画布」从头到尾都是我们自己干的。
+//   2) 于是「滚出视口就 dispose」纯属自伤：滚回来要重跑一遍 Python，屏幕上先空一块、
+//      再重画——用户看到的就是「一滚动它就又播一遍」。现在**滚出视口不拆**，
+//      画布只在两种情况下没：卡片真卸载，或调度器按上限淘汰（超编时收离阅读位置最远的）。
 import { useEffect, useRef, useState, type ReactNode } from 'react'
-import { CircleCheck, CircleX, CodeXml, Download, RotateCcw, TriangleAlert } from 'lucide-react'
+import { CircleCheck, CircleX, CodeXml, Download, FastForward, Play, TriangleAlert } from 'lucide-react'
 import { createSurface, type Surface } from '../engine/renderer'
 import type { ManimCardData } from '../definition'
 import type { Translate } from '../i18n'
 import { loadExportReadiness, requestExport, revealExport, type ExportReadiness } from '../export'
 import { loadExports, rememberExport } from '../storage'
+import { renderQueue } from '../render-queue'
 import { CodeView } from './code-view'
 import { Tip } from './tip'
 
@@ -58,8 +68,8 @@ function FootRow({ tone, role, children }: { tone: 'ok' | 'error' | 'busy' | 'wa
 /**
  * 「这张卡在本页的自动播机会已经用掉了」。
  *
- * 为什么是模块级的：卡片滚出视口就被卸载、滚回来是**全新挂载**，组件里的状态活不过那一趟；
- * 而这条账要跨挂载——不然滚回来又是一条好汉、从头再播一遍。
+ * 为什么是模块级的：卡片滚出视口会被调度器淘汰画布、回来要重跑，组件里的状态活不过那一趟；
+ * 而这条账要跨挂载——不然回来又是一条好汉、从头再播一遍。
  *
  * 为什么只记在内存、不落 localStorage：这是「这一页看过没有」。刷新之后画布本来就没了，
  * 重来一次自然重算（也符合直觉）；落盘反而会让这张卡在之后的每一天都永远是静默的。
@@ -67,20 +77,38 @@ function FootRow({ tone, role, children }: { tone: 'ok' | 'error' | 'busy' | 'wa
 const spent = new Set<string>()
 
 /**
- * 这一次进视口该「放动画」还是「直接落末帧」。
+ * 这一趟该「放动画」还是「直接落末帧」——整条播放规则就这一个函数。
  *
- * 只有一种情况值得放：**这张卡是刚生成出来的（`live`），而且这一页还没放过它**。
+ * 自动那趟值得放的条件：**这张卡是刚生成出来的（`live`）、这一页还没放过它、而且它是本批的代表**。
  * 其余一律落末帧——重挂、滚回来、以及打开老会话时回填的整屏卡：
  * 老会话里几十张卡各播一遍，谁也等不起，而且那些画面用户早就看过了。
- * 想看从头播，点重播键就是（那条路永远真播）。
  *
- * 抽成纯函数是为了它能被单测钉住：这是产品规则，不该埋在 effect 里靠跑界面验证。
+ * 两个用户动作**压过全部自动规则**：
+ * - 手动播放 → 一定真播。包括那张「预算已经用掉」的、老会话的、以及实验场极速档下的——
+ *   点下去就是「我要看这一段」。它**同样压过「本批只由代表播」**：那条是跨卡的省算力规则，
+ *   拿它把用户按下的键按回去，等于按了个寂寞（非代表那张按下去只会跳到终态）。
+ * - ⏩ 跳过 → 不演，直接落终态。
+ *
+ * `batchTail`（本批是不是由它代表真播）不在这里判：那是**跨卡**的事（同一个 step 里谁最后到），
+ * 由调度器判好了传进来，见 render-queue 的 `isBatchTail`。
+ *
+ * 抽成纯函数是为了能被单测钉住：这是产品规则，不该埋在 effect 里靠跑界面验证。
  */
-export function decidePlay(input: { live: boolean; spent: boolean; manual: boolean; fast: boolean }): boolean {
+export function decidePlay(input: {
+  live: boolean
+  spent: boolean
+  manual: boolean
+  fast: boolean
+  /** 用户按了 ⏩：不演了，直接到最终态。 */
+  skip: boolean
+  /** 这一批（同一个 step）里由它代表真播。 */
+  batchTail: boolean
+}): boolean {
+  if (input.skip) return false
   if (input.manual) return true
   if (input.fast) return false
   if (input.spent) return false
-  return input.live
+  return input.live && input.batchTail
 }
 
 /**
@@ -105,14 +133,28 @@ export function ManimCard({ data, t, label, onResult, autoStart, fast }: {
   const stageRef = useRef<HTMLDivElement>(null)
   const [status, setStatus] = useState<CardResult | null>(null)
   const [showCode, setShowCode] = useState(false)
-  const [busy, setBusy] = useState(false)
+  /** 画布上已经有一幅画好的终态画面了（跑完那一刻置位；被作废 / 被淘汰时清零）。 */
+  const [rendered, setRendered] = useState(false)
+  /** 这一趟是真播（用户在看着动画演）。决定「要不要盖骨架屏」与按钮显示哪个图标。 */
+  const [playing, setPlaying] = useState(false)
   // 按需取包的进展：只在这段代码用到了随包之外的库时才有值，且延迟 300ms 才显示——
   // 随包件（numpy / sympy）与磁盘缓存命中都是瞬时的事，闪一下提示反而像卡住了。
   const [loading, setLoading] = useState<string[] | null>(null)
   const [slowLoading, setSlowLoading] = useState(false)
   const loadingActive = loading !== null
-  // 重播靠换 key 让下面的 effect 重跑：清理会拆掉旧画布，重建后 observer 立即回调重新播放。
-  const [replayKey, setReplayKey] = useState(0)
+  /**
+   * 「让渲染 effect 重跑一次」的计数。
+   *
+   * 只有一种情况需要它：**被中断的卡**——那种卡第一次根本不会渲染（effect 直接 return），
+   * 于是没有画布、`controls` 也是空的，用户点「手动播放」时够不到任何东西，只能靠这个计数
+   * 把 effect 重新叫起来。其余情况一律**原地重跑**（effect 里的 `rerun`），不回炉重注册：
+   * 重注册会和上一趟迟到的 `release()` 撞在一起，把新登记的那份误标成「有画布了」。
+   */
+  const [attempts, setAttempts] = useState(0)
+  /** 按钮下一次触发的模式（手动播放 / ⏩ 跳过）。effect 读一次就清回 auto。 */
+  const modeRef = useRef<'auto' | 'manual' | 'skip'>('auto')
+  /** 渲染 effect 把「原地重跑」递出来给按钮用（闭包变量 JSX 够不到）。 */
+  const controls = useRef<{ rerun: (mode: 'manual' | 'skip') => void } | null>(null)
   // 导出视频：就绪结论（null = 还在检查）、导出中、导出回执。就绪结论问的是 Host（带缓存），
   // 几十张卡各问一遍也不会各跑一遍探测。
   const [readiness, setReadiness] = useState<ExportReadiness | null>(null)
@@ -162,7 +204,7 @@ export function ManimCard({ data, t, label, onResult, autoStart, fast }: {
     }
   }, [])
 
-  // 上次导出过什么：卡片滚出视口就被卸载、滚回来是全新挂载（见 top 注），
+  // 上次导出过什么：卡片会随切会话 / 刷新页面被卸载重挂（滚出视口不再拆了，见 top 注），
   // 组件里的状态活不过那一趟——所以记录跟着 callId 落在 localStorage 里，挂载时捡回来。
   // 捡回来先只当「线索」：顺手问一下 Host 文件还在不在（不打开、不跑任何系统命令），
   // 不在了就把那条回执降级——拿一条早就失效的路径当真，比不显示更糟。
@@ -232,94 +274,149 @@ export function ManimCard({ data, t, label, onResult, autoStart, fast }: {
     const stage = stageRef.current
     if (stage === null || empty || rejected) return
     // 被中断的调用不自动渲染：那一轮用户不要了，没必要替他烧算力。
-    // 想在中断之后自己看，按播放键——replayKey 一变这条 effect 重跑，就不再走这个分支。
-    if (data.interrupted === true && replayKey === 0) return
+    // 想在中断之后自己看，按「手动播放」——那一下会把 attempts 从 0 顶到 1，这条 effect 重跑，
+    // 于是走到下面去（不再是「直接 return」这一支）。
+    if (data.interrupted === true && attempts === 0) return
 
+    let alive = true
     let surface: Surface | null = null
-    let visible = false
-    let disposed = false
+    /**
+     * 这一趟怎么跑：自动（按规则抽签）、手动（用户点了播放，一定真播）、
+     * 跳过（用户按了 ⏩，不演了、直接落终态）。
+     *
+     * 放在闭包里而不是 state：它只在**发车那一刻**被读一次，进 state 只会多一轮渲染。
+     * 按钮那侧改 `modeRef` 再叫本组件原地重跑，见 rerun。
+     */
+    let mode: 'auto' | 'manual' | 'skip' = modeRef.current
+    modeRef.current = 'auto'
+    /**
+     * 这一趟的编号。`rerun` / 淘汰 / 卸载都会把它顶掉——在途的那些 `await` 醒来看一眼编号，
+     * 不是自己那一趟就直接收摊。没有它的话，「按 ⏩ 打断正在建的画布」会让两个 run 抢同一块舞台。
+     */
+    let generation = 0
 
-    const teardown = () => {
-      surface?.dispose()
-      surface = null
-      setBusy(false)
-      setLoading(null)
-    }
-
-    /** 这一次进视口该「放动画」还是「直接落末帧」（规则与理由见 decidePlay）。 */
+    /** 这一次该不该真播——判据全在 decidePlay 里（含「手动压过一切」那两条），这里只负责取数。 */
     const shouldPlay = (): boolean => decidePlay({
       live: data.live === true,
       spent: spent.has(data.callId),
-      manual: replayKey > 0,
+      manual: mode === 'manual',
+      skip: mode === 'skip',
       fast: fast === true,
+      batchTail: renderQueue.isBatchTail(data.callId),
     })
 
-    // 创建是异步的：等待期间可能已经滚出视口（visible 变 false）或卡片已卸载（disposed），
-    // 两个出口都要把刚造出来的画布释放掉，否则上下文泄漏。
-    const start = async (): Promise<void> => {
-      if (disposed || surface !== null) return
-      const play = shouldPlay()
-      // **决定即记账**：这一次机会用掉了，之后再进视口不再重新抽签。
-      // 否则「进视口 → 立刻滚出（拆画布）→ 再滚回来」这条路上，同一张卡前一次来不及播、
-      // 后一次却能播，同一张卡两种待遇；反过来也会出现「播到一半被打断，回来直接跳末帧」。
-      // 用户口径：被打断就算它播过（一次机会用掉不补）。
-      if (play) spent.add(data.callId)
-      setBusy(true)
-      try {
-        const created = await createSurface(stage, { fast: fast === true || !play })
-        if (disposed || !visible) {
-          created.dispose()
-          return
-        }
-        surface = created
-        const result = await created.run(data.python, {
-          onLoading: (names) => {
-            if (!disposed) setLoading(names.length === 0 ? null : names)
-          },
-        })
-        // 这几种「没成」都不算这张卡渲染失败，别报到界面上：
-        // cancelled = 轮到它之前画布就被拆了（一个字都没跑）；disposed/不可见 = 跑的过程中被我们自己拆了。
-        // 真正的渲染错误（代码写错、桥报错）照报。
-        if (result.cancelled === true) {
-          // 唯一一次「不算播过」的例外：它排在队里、压根没轮到就被拆了——一个字都没跑，
-          // 用户什么都没看到。这跟「播到一半被打断」不是一回事，所以这次机会还给他。
-          spent.delete(data.callId)
-          return
-        }
-        if (disposed || !visible) return
-        report(result.ok ? { ok: true, text: t('ok') } : { ok: false, text: result.error ?? t('fail') })
-      } catch (error) {
-        console.error('[manim-renderer] card render failed:', error)
-        if (!disposed && visible) report({ ok: false, text: error instanceof Error ? error.message : String(error) })
-      } finally {
-        if (!disposed) {
-          setBusy(false)
-          setLoading(null)
-        }
-      }
+    /** 把这一趟作废并把画布收掉。两个出口：调度器淘汰、用户按 ⏩ / 手动播放打断。
+     *  （卡片卸载不在这里——组件都要没了，setState 没有意义，cleanup 里自己收更干脆。） */
+    const dropSurface = (): void => {
+      generation += 1
+      surface?.dispose()
+      surface = null
+      setRendered(false)
+      setPlaying(false)
+      setLoading(null)
     }
+
+    /**
+     * 轮到这张卡了（调度器发的许可）。**跑完必须 release**，否则整条队列停在这儿。
+     *
+     * `release` 要如实报「跑完时手里还有没有画布」——被 ⏩ / 手动播放打断的那趟画布已经收了，
+     * 报 `true` 会让这张卡被当成「已经有画布」而永远不再排队（台上留一块空白加骨架屏）。
+     */
+    const run = (release: (hasCanvas: boolean) => void): void => {
+      const mine = generation
+      const play = shouldPlay()
+      // **决定即记账**：这一次机会用掉了，之后不再重新抽签。
+      //
+      // 曾经这里有个「作废就把机会还回去」的例外，而那正是「滚出屏幕、等下再回来又从头演一遍」
+      // 的成因：全页一条队列，滚出去时这一趟多半还排着队 → 作废 → 机会退回 → 回来重演。
+      // 用户口径早就定了：**播到一半被打断也算它播过了，不补**。
+      if (play) spent.add(data.callId)
+      setPlaying(play)
+      setRendered(false)
+
+      void (async () => {
+        try {
+          // 极速与否只看**这一趟要不要演**：不演的那趟（自动落末帧、⏩ 跳过）直接落终态；
+          // 要演的那趟一律真演——哪怕实验场的极速开关还开着，手动播放点下去就是要看过程。
+          const created = await createSurface(stage, { fast: !play })
+          // 建的过程中这一趟被作废了（按了 ⏩、被淘汰、卡片卸载）：当场释放，别泄漏上下文。
+          if (!alive || mine !== generation) {
+            created.dispose()
+            return
+          }
+          surface = created
+          const result = await created.run(data.python, {
+            onLoading: (names) => {
+              if (alive && mine === generation) setLoading(names.length === 0 ? null : names)
+            },
+          })
+          if (!alive || mine !== generation) return
+          // cancelled = 轮到它之前画布就被拆了。这不是「渲染失败」，一个字都不该报出去，
+          // 但**也不退还机会**（理由见上面记账那行）。
+          if (result.cancelled === true) return
+          setRendered(true)
+          report(result.ok ? { ok: true, text: t('ok') } : { ok: false, text: result.error ?? t('fail') })
+        } catch (error) {
+          console.error('[manim-renderer] card render failed:', error)
+          if (alive && mine === generation) {
+            report({ ok: false, text: error instanceof Error ? error.message : String(error) })
+          }
+        } finally {
+          if (alive && mine === generation) {
+            setLoading(null)
+            setPlaying(false)
+          }
+          // 如实报「手里还有没有画布」：被打断的那趟已经收掉了，报 false 才会重新排队。
+          release(alive && mine === generation && surface !== null)
+        }
+      })()
+    }
+
+    renderQueue.register(
+      { callId: data.callId, seq: data.seq, stepKey: data.stepKey },
+      // 实验场一次只挂一张卡、而它可能被滚出可视区（右侧栏往下翻看代码），那时再等视口
+      // 就会让「全部渲染」卡住——所以那一侧直接报「可见」，不摆观察者。
+      { visible: autoStart === true, willing: true, hasCanvas: false },
+      { run, evict: dropSurface },
+    )
+
+    /**
+     * 原地再跑一趟（手动播放 / ⏩ 跳过）。
+     *
+     * **不回炉重注册**：重注册会把 `visible` 覆盖成传进去的那个值——聊天那一侧传的是
+     * `autoStart === true`，也就是 false，这张卡于是丢掉真实可见性，要等下一次
+     * IntersectionObserver 回调才回来；顺带还会把这一批的静默期重新计时。
+     * 只把 `hasCanvas` 报回 false，调度器自然把它重新排进队。
+     */
+    const rerun = (next: 'manual' | 'skip'): void => {
+      mode = next
+      setStatus(null)
+      dropSurface()
+      renderQueue.update(data.callId, { hasCanvas: false })
+    }
+    // 按钮长在 JSX 里，够不到上面的闭包，从这里递出去。
+    controls.current = { rerun }
 
     const observer = new IntersectionObserver(
       (entries) => {
-        visible = entries.some((entry) => entry.isIntersecting)
-        if (visible) void start()
-        else teardown()
+        // 只**报**可见性，不再决定生死——拆不拆画布是调度器按上限说了算（滚出视口不拆）。
+        renderQueue.update(data.callId, { visible: entries.some((entry) => entry.isIntersecting) })
       },
-      { rootMargin: '240px' }, // 提前一屏创建，滚动到时不至于白等
+      { rootMargin: '240px' }, // 提前一屏登记「可见」，滚到时不至于白等
     )
-    if (autoStart === true) {
-      visible = true
-      void start()
-    } else {
-      observer.observe(stage)
-    }
+    observer.observe(stage)
 
     return () => {
-      disposed = true
+      alive = false
       observer.disconnect()
-      teardown()
+      controls.current = null
+      renderQueue.unregister(data.callId)
+      // 卸载这里不走 dropSurface：组件都要没了，setState 没有意义。
+      generation += 1
+      surface?.dispose()
+      surface = null
     }
-  }, [data.python, data.interrupted, empty, rejected, replayKey, t, autoStart, fast])
+  }, [data.python, data.callId, data.seq, data.stepKey, data.interrupted, empty, rejected, attempts, t, autoStart, fast])
 
   if (empty) {
     return (
@@ -397,9 +494,29 @@ export function ManimCard({ data, t, label, onResult, autoStart, fast }: {
   // 三者都在时上下几行。
   const renderFailed = status !== null && !status.ok
   const hasFoot = renderFailed || interrupted || exporting || exportNote !== null
-  // 被中断的卡没自动渲染过，那个键此刻的意思是「播给我看」而不是「再播一次」
-  const replayLabel = interrupted ? t('play') : t('replay')
-  const showStage = !interrupted || replayKey > 0
+  // 被中断的卡在「还没手动播过」之前连画布都不摆——一块空边框看着像渲染坏了，
+  // 跟未通过预检那张卡一个形状（头 + 说明）反而更清楚。
+  const showStage = !interrupted || attempts > 0
+  // 骨架屏：想渲染、还没画好、而且**不是在真播**（真播时用户就是要看过程，别盖住）。
+  // 它同时盖住两种时刻：排队等许可，以及极速重跑的那一段——后者会把一串中间态频闪出来
+  //（极速只是把动画时长压到 0，每个 play 仍然各画一帧），只有盖住才只剩「骨架 → 终态」。
+  const skeleton = showStage && !rendered && !playing
+
+  /**
+   * 播放键。两种状态共用一个键：
+   * - 没在播 → **手动播放**：一定真播一遍（跟自动那套规则无关）。
+   * - 正在播 → **⏩**：不演了，直接落终态。
+   */
+  const onPlayButton = (): void => {
+    const next = playing ? 'skip' : 'manual'
+    // 被中断的卡先前压根没渲染（effect 直接 return 了），得先把那条 effect 叫起来。
+    if (interrupted && attempts === 0) {
+      modeRef.current = next
+      setAttempts(1)
+      return
+    }
+    controls.current?.rerun(next)
+  }
 
   return (
     <div className="mr-chatcard">
@@ -409,26 +526,32 @@ export function ManimCard({ data, t, label, onResult, autoStart, fast }: {
         <button
           className="mr-iconbtn"
           type="button"
-          disabled={busy}
-          aria-label={replayLabel}
-          title={replayLabel}
-          onClick={() => {
-            setStatus(null)
-            setReplayKey((n) => n + 1)
-          }}
+          aria-label={playing ? t('skipToEnd') : t('manualPlay')}
+          title={playing ? t('skipToEnd') : t('manualPlay')}
+          onClick={onPlayButton}
         >
-          <RotateCcw size={15} strokeWidth={1.6} />
+          {playing
+            ? <FastForward size={15} strokeWidth={1.6} />
+            : <Play size={15} strokeWidth={1.6} />}
         </button>
         {toggleCode}
         {exportButton}
       </div>
       {/* 画布与代码同一块位置：切的是视图，不是把代码挤进内容里。画布保持挂载，
           切回来接着看，不必重跑一遍 Pyodide。
-          被中断的卡在「还没手动播过」时连画布都不摆——一块空边框看着像渲染坏了，
-          跟未通过预检那张卡一个形状（头 + 说明）反而更清楚。 */}
+          滚出视口**不拆**——拆不拆由调度器按画布上限说了算（见 render-queue.ts）。 */}
       <div className="mr-chatcard-body">
         {showStage && <div className="mr-stage" ref={stageRef} />}
         {showCode && <div className="mr-code-pane"><CodeView code={data.python} t={t} /></div>}
+        {/* 骨架屏：块状、不带文字。**不能写字**——这会儿是「动画在跑」，不是「在下载什么」，
+            写「正在加载」会跟取包那条撞车（那条才是真的在取东西）。 */}
+        {skeleton && !showCode && (
+          <div className="mr-canvas-skeleton" aria-hidden="true">
+            <span className="mr-skel" style={{ width: '46%', height: '58%' }} />
+            <span className="mr-skel" style={{ width: '26%', height: '12%' }} />
+            <span className="mr-skel" style={{ width: '34%', height: '12%' }} />
+          </div>
+        )}
         {/* 取包进度盖在画布正中：这会儿画布还是空的，视线本来就在中间；
             换成左下角只要改 .mr-canvas-loading 的对齐（见 styles.css）。 */}
         {takingPackages && loadingNames !== null && (
