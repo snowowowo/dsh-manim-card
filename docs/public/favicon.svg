@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="dsh-manim-live">
+  <!-- 渲染 = 播放：画布上一枚播放三角。 -->
+  <rect width="64" height="64" rx="14" fill="#1C1C1C" />
+  <rect x="10" y="10" width="44" height="44" rx="9" fill="none" stroke="#30363D" stroke-width="3" />
+  <path d="M26 22 L44 32 L26 42 Z" fill="#58C4DD" />
+</svg>

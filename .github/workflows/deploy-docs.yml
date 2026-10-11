@@ -1,0 +1,75 @@
+# 文档站（docs/，VitePress）→ GitHub Pages。
+#
+# 仓库当前是私有的，而 GitHub Pages 不支持私有仓（个人免费套餐）——所以部署前先
+# 探测 Pages 是否已开通：未开通时**构建照跑**（每次 push 顺手验证文档站不破），
+# 部署作业整个跳过（绿灯，不红）。仓库转公开后，在仓库 Settings → Pages 把
+# Source 设为 GitHub Actions，下一个 push 即自动上线——本文件不用改；也可以随时
+# 在 Actions 页手动 Run workflow 试部署。
+name: deploy-docs
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# 连续 push 只保留最后一次部署；构建中的旧运行被顶替不算失败
+concurrency:
+  group: pages-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    outputs:
+      pages-enabled: ${{ steps.pages.outputs.enabled }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+          cache-dependency-path: docs/pnpm-lock.yaml
+
+      - name: 安装文档依赖
+        run: pnpm --dir docs install --frozen-lockfile
+
+      - name: 构建文档站
+        run: pnpm --dir docs build
+
+      - name: 探测 Pages 是否已开通
+        id: pages
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if gh api "repos/$GITHUB_REPOSITORY/pages" > /dev/null 2>&1; then
+            echo "enabled=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "enabled=false" >> "$GITHUB_OUTPUT"
+            echo '::notice::GitHub Pages 未开通（私有仓需先转公开）：文档站构建通过，本次跳过部署。'
+          fi
+
+      - uses: actions/upload-pages-artifact@v3
+        if: steps.pages.outputs.enabled == 'true'
+        with:
+          path: docs/.vitepress/dist
+
+  deploy:
+    needs: build
+    if: needs.build.outputs.pages-enabled == 'true' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

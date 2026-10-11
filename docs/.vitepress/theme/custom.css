@@ -1,0 +1,90 @@
+/**
+ * 版式只改一件事：**让「左侧整站目录」和「右侧本页目录」出现在同一个断点上。**
+ *
+ * 实测（逐页 × 逐宽度扫过，见 _tmp/probe-layout.mjs）：VitePress 默认主题给两栏
+ * 配了两套断点——
+ *   · 左栏 `.VPSidebar`：≥960px 固定显示；<960px 收成抽屉（要点头部「菜单」）
+ *   · 右栏 `.aside`   ：**只在 ≥1280px 才 display:block**（VPDoc.vue 的 scoped 样式里写死）
+ * 于是 960–1279px 这一整段是「左边有、右边没有」。而这一带恰恰是常见的窗口宽度
+ * （1440 的屏幕缩放 125% 就落在 1152，缩到一半分屏更是常事），看着就像右侧目录丢了。
+ * 默认主题这么排是给正文让路；这里的判断是反过来的——**两栏都在**比正文宽 200px
+ * 更重要，所以把右栏提前到与左栏同一个断点，再在 1279 以下把三栏都收窄些。
+ *
+ * 首页不在这里动：index.md 用的是官方同款 `layout: home`（landing 布局），
+ * 按设计就不带左右两栏——首页是简介页，进文档页才有两栏（参考 VitePress 官网首页）。
+ *
+ * 覆盖默认主题必须带 !important：那些声明来自组件的 scoped 样式，编译后是
+ * `.VPDoc .aside[data-v-xxx]`（多一个属性选择器），权重高于这里的 `.VPDoc .aside`。
+ */
+
+@media (min-width: 960px) {
+  /* 布局由 block 切到 flex——默认主题把这一步放在 1280 */
+  .VPDoc .container {
+    display: flex !important;
+    justify-content: center;
+  }
+
+  /* 右栏由藏起来变成显示——默认主题把这一步也放在 1280 */
+  .VPDoc .aside {
+    display: block !important;
+  }
+
+  .VPDoc .content {
+    order: 1;
+    margin: 0;
+  }
+
+  .VPDoc.has-aside .content-container {
+    max-width: 688px;
+  }
+}
+
+/* 960–1279px：右边这两百多像素全是从正文身上挤出来的，这一档把左、右两栏都收窄一点。
+   左栏宽度走主题变量 --vp-sidebar-width（VPContent 的 padding-left 跟着它变）。 */
+@media (min-width: 960px) and (max-width: 1279px) {
+  :root {
+    --vp-sidebar-width: 248px;
+  }
+
+  .VPDoc .aside {
+    max-width: 200px;
+    padding-left: 20px;
+  }
+
+  .VPDoc .aside-container,
+  .VPDoc .aside-curtain {
+    width: 180px;
+  }
+
+  .VPDoc .content {
+    padding: 0 20px 128px;
+  }
+}
+
+/* ───────────────────────────────────────────────────────────────────────────
+   首页正文（frontmatter 之后的 markdown，渲染在 features 下面）用到的类。
+   hero、行动按钮、特性卡片都是默认主题 layout: home 的内置组件，不用自己写。
+   ─────────────────────────────────────────────────────────────────────────── */
+
+.gallery {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 12px;
+}
+
+.gallery figure {
+  margin: 0;
+}
+
+.gallery img {
+  width: 100%;
+  border: 1px solid var(--vp-c-divider);
+  border-radius: 8px;
+}
+
+.gallery figcaption {
+  margin-top: 4px;
+  text-align: center;
+  font-size: 13px;
+  color: var(--vp-c-text-2);
+}
