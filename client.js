@@ -158145,6 +158145,46 @@ void main() {
 				"kind": "method",
 				"state": "missing",
 				"alt": "用 set_z(较小值) 压到下层"
+			},
+			"set_camera_orientation": {
+				"kind": "scene-method",
+				"state": "alias",
+				"js": "setCameraOrientation(phi, theta, distance)"
+			},
+			"move_camera": {
+				"kind": "scene-method",
+				"state": "alias",
+				"js": "moveCamera({ phi, theta, distance, duration })"
+			},
+			"begin_ambient_camera_rotation": {
+				"kind": "scene-method",
+				"state": "alias",
+				"js": "beginAmbientCameraRotation(rate)"
+			},
+			"stop_ambient_camera_rotation": {
+				"kind": "scene-method",
+				"state": "alias",
+				"js": "stopAmbientCameraRotation()"
+			},
+			"add_fixed_in_frame_mobjects": {
+				"kind": "scene-method",
+				"state": "alias",
+				"js": "addFixedInFrameMobjects(...mobjects)"
+			},
+			"remove_fixed_in_frame_mobjects": {
+				"kind": "scene-method",
+				"state": "alias",
+				"js": "removeFixedInFrameMobjects(...mobjects)"
+			},
+			"add_fixed_orientation_mobjects": {
+				"kind": "scene-method",
+				"state": "alias",
+				"js": "addFixedOrientationMobjects(...mobjects)"
+			},
+			"remove_fixed_orientation_mobjects": {
+				"kind": "scene-method",
+				"state": "alias",
+				"js": "removeFixedOrientationMobjects(...mobjects)"
 			}
 		};
 		const PY_COLOR_HEX = {
@@ -158282,11 +158322,91 @@ void main() {
 		*
 		* 所以按「缺失」处理：适配层生成一个「用一下即抛、并给出具体替代类」的存根，
 		* 技能文档也把它们从「可用清单」挪进「实测缺失」（gen-skill 读的就是这张表）。
-		* 与场景家族（有类、只是共用一块画布）不同：那些是能用的，这些是不能直接构造的。
+		* 与场景家族（SCENE_FAMILY：有对应类、能真的建出那一种场景）不同：那些是能用的，这些是不能直接构造的。
 		*
 		* ⚠️ 放这儿而不是 manim-shim.ts 里：两边（执行侧与文档生成侧）都读这一份，免得漂。
 		*/
 		const ABSTRACT_CLASSES = { Polyhedron: "抽象基类，不能直接构造——用具体类：Cube / Sphere / Cone / Cylinder / Torus / Prism / Tetrahedron / Octahedron / Dodecahedron / Icosahedron" };
+		/**
+		* 场景族 SSOT：CE 的场景基类名 → manim-web 的对应类。
+		*
+		* 适配层照这张表把 `ThreeDScene` / `MovingCameraScene` / … 生成成 Scene 的**真子类**，
+		* 真桥再按「用户类的 MRO 里出现的第一个场景基类」去 manim-web 里 new 出**对应种类**的场景
+		* （见 manim-bridge 的 `create`、canvas.ts 的 createScene）。
+		*
+		* 为什么非这样不可（Phase 2 的核心，Node 实测）：3D 形状套在 2D 画布上会**全黑**——
+		* `Scene.add` 为了让 2D 图层正确叠放会把材质的 `depthTest` 关掉（`[false]`），
+		* 而且场景里**一盏灯都没有**（`lights=0`）；Cube / Sphere 这些用的是吃光的材质，没光就是纯黑。
+		* 换成 `ThreeDScene` 之后同一段代码是 `lights=3, depthTest=[true]`，形状才有明暗。
+		*
+		* `js: null` = manim-web 没有这个类 → 退回 2D 的 Scene（**不静默**：note 写清为什么，
+		* `resolveSceneKind` 退回时 warn 一次）。
+		*/
+		const SCENE_FAMILY = {
+			Scene: { js: "Scene" },
+			ThreeDScene: { js: "ThreeDScene" },
+			MovingCameraScene: { js: "MovingCameraScene" },
+			ZoomedScene: { js: "ZoomedScene" },
+			VectorScene: { js: "VectorScene" },
+			LinearTransformationScene: { js: "LinearTransformationScene" },
+			GraphScene: {
+				js: null,
+				note: "manim-web 没有 GraphScene（CE 0.22 的公共 API 里也没有——那是 ManimGL 的写法）"
+			}
+		};
+		/** CE 的场景基类名：适配层靠它决定「哪些名字要生成为场景子类、且不给它们形状别名」。 */
+		const SCENE_CLASS_NAMES = Object.keys(SCENE_FAMILY);
+		/** 已经 warn 过「退回了 Scene」的种类：同一页同一个名字只吵一次。 */
+		const sceneFallbackWarned = /* @__PURE__ */ new Set();
+		/**
+		* 把 CE 的场景基类名解析成 **manim-web 的类名**。manim-web 没有的（GraphScene）退回 `'Scene'`，
+		* 并**大声**说明——静默退回会让「写法被吃掉了」看起来像「写法生效了」。
+		*/
+		function resolveSceneKind(kind) {
+			const entry = SCENE_FAMILY[kind];
+			if (entry?.js != null) return entry.js;
+			if (!sceneFallbackWarned.has(kind)) {
+				sceneFallbackWarned.add(kind);
+				console.warn(`[manim-live] ${kind}：${entry?.note ?? "manim-web 没有这个场景类"}——本场景退回 2D 的 Scene`);
+			}
+			return "Scene";
+		}
+		/**
+		* 3D 相机的距离：对着 CE 的 `ThreeDCamera.focal_distance = 20` 取。
+		*
+		* 为什么要对齐它：透视强度只由「距离 / 可视高度」这个比决定。manim-web 的 fov 默认 45°，
+		* 配上「可视高度 = 8」反推出来的距离只有 9.66——比值 1.21，透视**很冲**：
+		* 一帧里 y=+4 的东西比 y=-4 的小三分之一，按 2D 尺度摆好的网格排出来上下大小不一。
+		* CE 的 focal_distance 是 20（帧高 8），比值 2.5，透视温和得多。取同一个比值，
+		* 「一帧 8 单位高」的尺度直觉在 3D 里才真的和 2D 一致（CE 的 8 单位帧下，
+		* `side_length=2` 的立方体占画面高度的 1/4）。
+		*/
+		const THREE_D_DISTANCE = 20;
+		/**
+		* `ThreeDScene` 的相机默认值（fov 用度、phi/theta 用弧度）——三处取值都对着 CE 抄。
+		*
+		* - **phi / theta**：CE 的 `ThreeDCamera` 初值是 `phi=0, theta=-90°`，即「相机蹲在 +Z 轴上正对
+		*   XY 平面」的退化视角——看起来跟 2D 一模一样（实测渲染出来就是个正方形），
+		*   CE 用户几乎总要先 `set_camera_orientation` 才见立体。CE 自己把「漂亮的斜视」定义成
+		*   `default_angled_camera_orientation_kwargs = phi 70° / theta -135°`
+		*   （`set_to_default_angled_camera_orientation()` 与无参 `move_camera()` 用的就是它）。
+		*   默认取这一组：`class X(ThreeDScene)` 一眼就是 3D，显式 `set_camera_orientation` 照常覆盖。
+		* - **distance / fov**：见 `THREE_D_DISTANCE`。两者必须成对改——单改一个，可视高度就跑了
+		*   （可视高度 = 2·d·tan(fov/2)）。
+		*/
+		const THREE_D_CAMERA_DEFAULTS = {
+			fov: 2 * Math.atan(4 / THREE_D_DISTANCE) * 180 / Math.PI,
+			phi: 70 * Math.PI / 180,
+			theta: -135 * Math.PI / 180,
+			distance: THREE_D_DISTANCE,
+			/** 默认光照：没有它吃光的材质就是纯黑（见 SCENE_FAMILY 的注释）。 */
+			setupLighting: true,
+			/**
+			* 关掉鼠标拖拽转视角：卡片活在可滚动页面里，拖拽会跟页面手势抢事件；
+			* 而且录屏 / 重播时相机姿态是「被用户摸过的」，画面就不可复现了。要交互另开一期。
+			*/
+			enableOrbitControls: false
+		};
 		const CTOR = {
 			Text: {
 				mode: "options",
@@ -159258,8 +159378,102 @@ void main() {
 					js: "plotLineGraph",
 					args: [options]
 				}]];
-			}
+			},
+			set_camera_orientation: (args, kwargs) => {
+				rejectCameraKeys("set_camera_orientation", CAMERA_KEYS, kwargs);
+				return [[{
+					js: "setCameraOrientation",
+					args: cameraPosition(args, kwargs)
+				}]];
+			},
+			move_camera: (args, kwargs) => {
+				rejectCameraKeys("move_camera", [
+					...CAMERA_KEYS,
+					"run_time",
+					"duration"
+				], kwargs);
+				const [phi, theta, distance] = cameraPosition(args, kwargs);
+				const options = {
+					phi,
+					theta,
+					distance
+				};
+				const duration = kwargs.run_time ?? kwargs.duration ?? args[3];
+				if (duration !== void 0 && duration !== null) options.duration = duration;
+				return [[{
+					js: "moveCamera",
+					args: [options]
+				}]];
+			},
+			begin_ambient_camera_rotation: (args, kwargs) => {
+				rejectCameraKeys("begin_ambient_camera_rotation", ["rate"], kwargs);
+				const rate = kwargs.rate ?? args[0];
+				return [[{
+					js: "beginAmbientCameraRotation",
+					args: rate === void 0 || rate === null ? [] : [rate]
+				}]];
+			},
+			stop_ambient_camera_rotation: (args, kwargs) => {
+				rejectCameraKeys("stop_ambient_camera_rotation", [], kwargs);
+				return [[{
+					js: "stopAmbientCameraRotation",
+					args: []
+				}]];
+			},
+			add_fixed_in_frame_mobjects: (args, kwargs) => fixedMobjectsCall("add_fixed_in_frame_mobjects", "addFixedInFrameMobjects", args, kwargs),
+			remove_fixed_in_frame_mobjects: (args, kwargs) => fixedMobjectsCall("remove_fixed_in_frame_mobjects", "removeFixedInFrameMobjects", args, kwargs),
+			add_fixed_orientation_mobjects: (args, kwargs) => fixedMobjectsCall("add_fixed_orientation_mobjects", "addFixedOrientationMobjects", args, kwargs),
+			remove_fixed_orientation_mobjects: (args, kwargs) => fixedMobjectsCall("remove_fixed_orientation_mobjects", "removeFixedOrientationMobjects", args, kwargs)
 		};
+		/** 相机位置三件套：CE 与 manim-web 唯一对得上的三个方位参数。 */
+		const CAMERA_KEYS = [
+			"phi",
+			"theta",
+			"distance"
+		];
+		/**
+		* 相机方法的 phi / theta / distance：位置参数在前、关键字优先。
+		*
+		* 缺的项回落到**登记的默认斜视**（THREE_D_CAMERA_DEFAULTS），而不是「保持当前值」：
+		* manim-web 的 `orbit` 三个参数是一起算相机坐标的，塞 undefined 进去就是 NaN——
+		* 而 NaN 一旦写进相机位置就再也回不来（后面每一帧都是空的），且**不报错**。
+		* 「明确的默认」比「不清不楚的原值」安全，也比静默 NaN 可解释。
+		*/
+		function cameraPosition(args, kwargs) {
+			const missing = (value) => value === void 0 || value === null;
+			const pick = (index, key, fallback) => {
+				const value = kwargs[key] ?? args[index];
+				return missing(value) ? fallback : value;
+			};
+			return [
+				pick(0, "phi", THREE_D_CAMERA_DEFAULTS.phi),
+				pick(1, "theta", THREE_D_CAMERA_DEFAULTS.theta),
+				pick(2, "distance", THREE_D_CAMERA_DEFAULTS.distance)
+			];
+		}
+		/**
+		* 相机方法只认 manim-web 真有的键；多给的当场报可读错（病根见 METHOD_REWRITES 里那段注释）。
+		* `accepted` 是「这个方法允许的键」全集——含 run_time 这类会被改名的。
+		*/
+		function rejectCameraKeys(where, accepted, kwargs) {
+			const extra = Object.keys(kwargs).filter((key) => !accepted.includes(key));
+			if (extra.length === 0) return;
+			throw new Error(`${where} 不支持 ${extra.join(" / ")}——manim-web 的 3D 相机只收 ${accepted.join(" / ") || "位置参数"}（CE 的 gamma / zoom / focal_distance / frame_center 它没有；要同时放动画请另起 self.play(...)）`);
+		}
+		/**
+		* 「钉在屏幕上 / 钉住朝向」那族：CE 与 manim-web 都是 `*mobjects`，直接透传参数。
+		*
+		* 唯一的改写理由：CE 的 `add_fixed_orientation_mobjects` 还收 `use_static_center_func` /
+		* `center_func` 两个关键字，manim-web 没有对应物——写成关键字要**当场**说清，别静默丢。
+		* （`add` 那一半在适配层：CE 本体会 `self.add(*mobjects)`，manim-web 只登记，见 manim-shim.ts。）
+		*/
+		function fixedMobjectsCall(where, js, args, kwargs) {
+			if (Object.keys(kwargs).length > 0) throw new Error(`${where} 只收位置参数${where === "add_fixed_orientation_mobjects" ? "（含 CE 的 use_static_center_func / center_func）" : ""}——写成 ${where}(标题, 注释) 这样，别用关键字`);
+			return [[{
+				js,
+				args
+			}]];
+		}
 		/**
 		* 「CE 写成关键字、manim-web 收位置」的方法：声明 manim-web 的位置参数顺序（写 CE 的关键字名）。
 		*
@@ -159353,6 +159567,7 @@ void main() {
 			const sizes = /* @__PURE__ */ new Map();
 			return {
 				create(kind, args, kwargs) {
+					if (SCENE_FAMILY[kind] !== void 0) return nextHandle++;
 					planCreate(kind, args, kwargs);
 					const handle = nextHandle++;
 					if (kind === "VGroup") sizes.set(handle, args.length);
@@ -159403,16 +159618,11 @@ void main() {
 		*/
 		/** snake_case → camelCase（manim-web 的方法名是 camel）。 */
 		const camel = (name) => name.replace(/_([a-z0-9])/g, (_, c) => c.toUpperCase());
-		/** 场景基类不是「能 new 的物体」，不能生成成形状别名。 */
-		const SCENE_CLASSES = /* @__PURE__ */ new Set([
-			"Scene",
-			"ThreeDScene",
-			"MovingCameraScene",
-			"ZoomedScene",
-			"LinearTransformationScene",
-			"VectorScene",
-			"GraphScene"
-		]);
+		/**
+		* 场景基类不是「能 new 的物体」，不能生成成形状别名。
+		* 名字表不在这里手写——去 surface.ts 的 SCENE_FAMILY 取（同一张表还决定「映射到 manim-web 的哪个类」）。
+		*/
+		const SCENE_CLASSES = new Set(SCENE_CLASS_NAMES);
 		const IDENTIFIER = /^[A-Za-z_][A-Za-z0-9_]*$/;
 		/** 适配层自己定义的名字：生成别名时一律让路，免得被表里的同名项覆盖掉。 */
 		const RESERVED = /* @__PURE__ */ new Set([
@@ -159471,15 +159681,28 @@ void main() {
 			return `${animations.join("\n")}\n\n${shapes.join("\n")}`;
 		}
 		/**
-		* 场景家族：`ThreeDScene` / `MovingCameraScene` / … 都定义为 Scene 的子类。
+		* 场景家族：`ThreeDScene` / `MovingCameraScene` / … 都生成为 Scene 的**真子类**。
 		*
-		* 探针把它们记成 ok（manim-web 里确实有这些类），但**本实现只有一块画布**——真桥的 create
-		* 只对 "Scene" 返回已建好的句柄，其它 kind 会去 new 一个没有容器的场景对象。所以这里统一
-		* 继承 Scene、共用同一个句柄；不定义的话 `class X(ThreeDScene)` 直接 NameError
-		* （技能把 ThreeDScene 列在可用清单里，模型照写就炸——真机事故）。
+		* 真子类不是为了好看——**类的名字要一路传到桥那边**：`Scene.__init__` 把「用户类的 MRO 里
+		* 第一个场景基类名」发给 `_mb_create`（见下面的 `_scene_kind`），桥按这个名字挑 manim-web 的
+		* 对应类 new 出**那一种**场景（`ThreeDScene` → 真 3D 相机 + 光照 + 深度写回）。
+		*
+		* 以前这里统一 `class X(Scene): pass`、且所有名字共用同一个句柄，于是 `class X(ThreeDScene)`
+		* 拿到的是 **2D 画布**：3D 形状（Cube / Sphere / …）用的是吃光的材质，而 2D 场景里一盏灯都没有、
+		* 材质的 depthTest 还被关掉——渲染出来**全黑**（真机现象，Phase 2 才修）。
+		*
+		* manim-web 没有的场景名（SCENE_FAMILY 里 `js: null`，如 GraphScene）照样要定义成类——
+		* 不定义的话 `class X(GraphScene)` 直接 NameError；定义了就退回 2D Scene，解析处 warn 一次。
 		*/
 		function sceneAliases() {
-			return [...SCENE_CLASSES].filter((name) => name !== "Scene" && usable(name)).map((name) => `class ${name}(Scene):\n    pass`).join("\n\n");
+			return SCENE_CLASS_NAMES.filter((name) => name !== "Scene" && usable(name)).map((name) => {
+				const js = SCENE_FAMILY[name]?.js ?? null;
+				return `class ${name}(Scene):\n    """${js === null ? "manim-web 没有对应类，退回 2D 的 Scene（见 surface.ts 的 SCENE_FAMILY）" : `真 ${js} 场景：相机 / 光照 / 深度由 manim-web 提供`}"""\n    pass`;
+			}).join("\n\n");
+		}
+		/** 适配层认得的场景基类名（surface.ts 的 SCENE_FAMILY 键）——`_scene_kind` 靠它认亲。 */
+		function sceneKindSet() {
+			return `_SCENE_KINDS = (${SCENE_CLASS_NAMES.map((name) => JSON.stringify(name)).join(", ")},)`;
 		}
 		/** 缺失项存根：表里 state=missing 的名字生成一个「用一下就抛」的存根，报错带上替代写法。
 		*  颜色不在其列——它是**值**不是调用，存根拦不住（用到才炸，且 NameError 里已经有名字）。 */
@@ -160033,15 +160256,125 @@ def _checked_mobjects(where, values):
     return values
 
 
+def _scene_kind(cls):
+    """用户类 → 它真正继承的**场景种类**（ThreeDScene / MovingCameraScene / …）。
+
+    按 MRO 找**第一个**认识的场景基类：用户写 class My3D(ThreeDScene) 时，
+    type(self).__name__ 是 "My3D"，桥不认这个名字；要的是它爹那一层。找不到就按 Scene
+    （适配层自己生成的子类、以及用户直接继承 Scene 的写法，MRO 里总有一层是 Scene）。
+
+    只认**适配层自己生成的**那些类（__module__ 是本模块）：只看名字会撞车——用户写
+    class VectorScene(Scene) 时，那个类恰好叫 VectorScene，继承的却是普通 Scene；
+    按名字认亲会把它当成 manim-web 的真 VectorScene（那个类**自带一块坐标平面**），
+    于是用户没要的东西凭空出现（2026-10-11 全量重截图时抓到，_dev/examples/ctor/05-vector.py）。
+    用户类的 __module__ 是 "__main__"，所以这一层过滤正好把它们挡在外面。
+    """
+    for base in getattr(cls, "__mro__", (cls,)):
+        if getattr(base, "__module__", None) != __name__:
+            continue
+        name = getattr(base, "__name__", None)
+        if name in _SCENE_KINDS:
+            return name
+    return "Scene"
+
+
 class Scene(object):
-    """场景：一块已建好的 manim-web 画布的句柄 + add / remove / play / wait。
+    """场景：一块已建好的 manim-web 画布（按种类）的句柄 + add / remove / play / wait。
 
     play / wait 是 async——CPython 里没法在同步函数中途让出控制权去等渲染完成，
     所以由 _compile 把 construct 与其中的调用改写成 async / await（见下）。
     """
 
     def __init__(self):
-        self._h = _mb_create("Scene", [], {})
+        # 把**真实的场景种类**告诉桥：它据此换一块对应种类的 manim-web 场景
+        # （ThreeDScene → 真 3D 相机 + 光照）。写死 "Scene" 的话 3D 形状会落在 2D 画布上——全黑。
+        self._kind = _scene_kind(type(self))
+        self._h = _mb_create(self._kind, [], {})
+
+    def _require_3d(self, where):
+        """相机方法只在 3D 场景上存在。
+
+        CE 里对普通 Scene 调 set_camera_orientation 是 AttributeError（那些方法就定义在
+        ThreeDScene 上）；适配层把它们挂在 Scene 上（好让名字一直可解析、报错发生在能读懂的地方），
+        所以得自己拦——不然真桥会说「setCameraOrientation() 在 manim-web 无对应方法」，
+        看着像拼写错，其实是场景种类不对。
+        """
+        if self._kind != "ThreeDScene":
+            raise AttributeError(
+                "%s() 只在 3D 场景上可用——把场景类改成 class 你的类名(ThreeDScene)；"
+                "当前是 %s" % (where, self._kind)
+            )
+
+    # ---- 3D 相机（Phase 2）----
+    # 参数形状的翻译（CE 的 gamma / zoom / focal_distance → manim-web 的 phi / theta / distance、
+    # run_time → duration）在 surface.ts 的方法改写表里，这里只管把参数递过去。
+    # 没给的参数**不在这里补默认值**：补在判定层（cameraPosition），统一走同一份登记。
+
+    def set_camera_orientation(self, phi=None, theta=None, distance=None):
+        """CE 的 self.set_camera_orientation(phi=…, theta=…)：立刻把相机摆到该朝向。"""
+        self._require_3d("set_camera_orientation")
+        _mb_method(self._h, "set_camera_orientation", _tag_args([phi, theta, distance]), {})
+
+    async def move_camera(self, phi=None, theta=None, distance=None, run_time=None):
+        """CE 的 self.move_camera(…)：把相机**动画**移到该朝向（不是瞬移）。
+
+        是异步的——construct 会被改写成 async 并在这一句前补 await（见 _AWAIT_METHODS）；
+        因此只能当语句写（与 play / wait 同一条限制）。
+        """
+        self._require_3d("move_camera")
+        await _mb_method(self._h, "move_camera", _tag_args([phi, theta, distance, run_time]), {})
+
+    def begin_ambient_camera_rotation(self, rate=None):
+        """CE 的 self.begin_ambient_camera_rotation(rate)：让相机一直慢慢绕着转。"""
+        self._require_3d("begin_ambient_camera_rotation")
+        _mb_method(self._h, "begin_ambient_camera_rotation", _tag_args([rate]), {})
+
+    def stop_ambient_camera_rotation(self):
+        """停掉 begin_ambient_camera_rotation 起的自转。"""
+        self._require_3d("stop_ambient_camera_rotation")
+        _mb_method(self._h, "stop_ambient_camera_rotation", [], {})
+
+    def add_fixed_in_frame_mobjects(self, *mobjects):
+        """把物体**钉在屏幕上**：相机怎么转它都不动（标题 / 说明这类要用的）。
+
+        先 self.add 再钉：CE 的 add_fixed_in_frame_mobjects 里本来就有一句 self.add(*mobjects)
+        （manim/scene/three_d_scene.py），而 manim-web 的同名方法**只登记、不加入场景**——
+        不补这一句，照 CE 写的代码会「不报错、画面上什么都没有」。
+        """
+        checked = _checked_mobjects("add_fixed_in_frame_mobjects", mobjects)
+        self.add(*checked)
+        self._require_3d("add_fixed_in_frame_mobjects")
+        _mb_method(self._h, "add_fixed_in_frame_mobjects", _tag_args(checked), {})
+
+    def remove_fixed_in_frame_mobjects(self, *mobjects):
+        """把 add_fixed_in_frame_mobjects 钉住的物体放开（之后随相机一起转）。"""
+        self._require_3d("remove_fixed_in_frame_mobjects")
+        _mb_method(
+            self._h,
+            "remove_fixed_in_frame_mobjects",
+            _tag_args(_checked_mobjects("remove_fixed_in_frame_mobjects", mobjects)),
+            {},
+        )
+
+    def add_fixed_orientation_mobjects(self, *mobjects):
+        """钉住**朝向**（位置仍随相机远近变化）：字面始终正对着观众。
+
+        同 add_fixed_in_frame_mobjects：CE 里也有一句 self.add(*mobjects)，manim-web 只登记。
+        """
+        checked = _checked_mobjects("add_fixed_orientation_mobjects", mobjects)
+        self.add(*checked)
+        self._require_3d("add_fixed_orientation_mobjects")
+        _mb_method(self._h, "add_fixed_orientation_mobjects", _tag_args(checked), {})
+
+    def remove_fixed_orientation_mobjects(self, *mobjects):
+        """放开 add_fixed_orientation_mobjects 钉住的朝向。"""
+        self._require_3d("remove_fixed_orientation_mobjects")
+        _mb_method(
+            self._h,
+            "remove_fixed_orientation_mobjects",
+            _tag_args(_checked_mobjects("remove_fixed_orientation_mobjects", mobjects)),
+            {},
+        )
 
     def add(self, *mobjects):
         # add 走桥的**专用入口**（Scene.add(...mobjects)，收裸句柄号）。
@@ -160098,7 +160431,9 @@ async def _run(namespace):
 
 # play / wait 需要 await 才能等到渲染完成。这个改写必须做在**语法树**上，不能拿正则凑：
 # 要精确识别「construct 里的表达式语句且被调方法是 play/wait」，还要只作用于 construct。
-_AWAIT_METHODS = ("play", "wait")
+# move_camera 同理：manim-web 的 moveCamera 是 async（要一帧一帧推），不 await 就当场返回、
+# 相机纹丝不动。
+_AWAIT_METHODS = ("play", "wait", "move_camera")
 
 # 排版异步的类：construct 里对这些类的构造调用自动包一层 await _flush_after(...)，
 # 让随后的 to_edge / next_to / move_to 测到渲染后的真实宽度（缺了这步，角落标签会超界）。
@@ -160188,7 +160523,7 @@ async def _run_source(source):
 
 # ===== 以下由 api-map.generated.ts（探针实测）生成，勿手改：重跑探针即更新 =====
 
-`.replace("    # __GENERATED_MEMBERS__\n", `${memberSection()}\n`)}${animateAliases()}\n\n${rateAliases()}\n\n${colorAliases()}\n\n${objectAliases()}\n\n${sceneAliases()}\n\n${missingAliases()}\n`;
+`.replace("    # __GENERATED_MEMBERS__\n", `${memberSection()}\n`)}${animateAliases()}\n\n${rateAliases()}\n\n${colorAliases()}\n\n${objectAliases()}\n\n${sceneAliases()}\n\n${sceneKindSet()}\n\n${missingAliases()}\n`;
 		/** Python 执行失败：带行号。Host 预检把它回给模型，卡片把它显示给用户。 */
 		var PyRuntimeError = class extends Error {
 			line;
@@ -160530,6 +160865,8 @@ _sys.modules["manim"] = _dsh_manim
 		* 「这个写法支不支持」一律问 `surface.ts`（支持面 SSOT）——名字、构造参数形状、animate 白名单都在那儿，
 		* 预检（`dry-run-bridge.ts`）取的是同一份判定。本模块只管**执行期**的事：句柄解析、真对象构造与调用。
 		*/
+		/** 是不是「场景基类」而非「要 new 的物体」——表在 surface.ts（SCENE_FAMILY）。 */
+		const isSceneKind = (kind) => SCENE_FAMILY[kind] !== void 0;
 		const isHandleTag = (value) => value !== null && typeof value === "object" && "__handle" in value;
 		const isGroupTag = (value) => value !== null && typeof value === "object" && "__animations" in value;
 		const isAnimClassTag = (value) => value !== null && typeof value === "object" && "__animClass" in value;
@@ -160880,7 +161217,11 @@ _sys.modules["manim"] = _dsh_manim
 			};
 			return {
 				create(kind, args, kwargs) {
-					if (kind === "Scene") return SCENE_HANDLE;
+					if (isSceneKind(kind)) {
+						const wanted = options.sceneFor?.(kind);
+						if (wanted !== void 0 && wanted !== objects.get(SCENE_HANDLE)) objects.set(SCENE_HANDLE, wanted);
+						return SCENE_HANDLE;
+					}
 					const ctorArgs = planCreate(kind, args.map(deepResolve), deepResolve(kwargs));
 					const repaired = ARC_SHAPE_REPAIRS[kind] === void 0 ? void 0 : buildArcShape(manim, kind, ctorArgs[0] ?? {});
 					const angleRepaired = ANGLE_POINTS_REBUILT.has(kind) ? buildAngleShape(manim, ctorArgs[0] ?? {}, ctorArgs[1] ?? {}) : void 0;
@@ -161088,23 +161429,94 @@ _sys.modules["manim"] = _dsh_manim
 				}
 			};
 		}
+		/** 已打过补丁的原型（同一份 manim-web 模块只打一次）。 */
+		const patched = /* @__PURE__ */ new WeakSet();
+		/** 给 manim-web 打上游补丁。幂等；拿不到目标时静默跳过（换了库版本不该把页面搞挂）。 */
+		function patchManimWeb(manim) {
+			const proto = manim.Camera3D?.prototype;
+			if (proto === void 0 || patched.has(proto)) return;
+			const original = proto.orbit;
+			if (typeof original !== "function") return;
+			proto.orbit = function patchedOrbit(phi, theta, distance, gamma) {
+				this._up = void 0;
+				return original.call(this, phi, theta, distance, gamma);
+			};
+			patched.add(proto);
+		}
 		/** 容器上挂的类名：与 style.css 里的 `.manim-live-surface` 对应（修 canvas 的基线间隙）。 */
 		const SURFACE_CLASS = "manim-live-surface";
-		function createScene(container, manim, width, height) {
-			container.classList.add(SURFACE_CLASS);
-			const scene = new manim.Scene(container, {
-				width: Math.max(width, 320),
-				height: Math.max(height, 240),
-				autoResize: false,
-				backgroundOpacity: 0
+		/** 画布尺寸下限：容器被撑到 0 时 canvas 会塌成一条线（受控尺寸下 autoResize 是关的）。 */
+		const MIN_WIDTH = 320;
+		const MIN_HEIGHT = 240;
+		/**
+		* 建一块 manim-web 场景。`kind` 决定 new 哪个类——这是 Phase 2 的要害：
+		* `ThreeDScene` 拿到的是一块**真 3D 场景**（3D 相机 + 默认光照 + 深度写回），
+		* 而 3D 形状套在 2D 画布上会**全黑**（2D 场景里没有光、还把材质的 depthTest 关掉）。
+		* 细节与实测见 `py/surface.ts` 的 SCENE_FAMILY。
+		*
+		* manim-web 没有的场景名（GraphScene）经 `resolveSceneKind` 退回 `Scene`，并在那里 warn 一次。
+		*/
+		function createScene(container, manim, width, height, options = {}) {
+			const kind = resolveSceneKind(options.kind ?? "Scene");
+			patchManimWeb(manim);
+			const Ctor = manim[kind];
+			if (typeof Ctor !== "function") throw new Error(`manim-live：manim-web 里没有 ${kind} 场景类`);
+			container?.classList.add(SURFACE_CLASS);
+			const scene = new Ctor(container, {
+				width: Math.max(width, MIN_WIDTH),
+				height: Math.max(height, MIN_HEIGHT),
+				...options.headless === true ? { headless: true } : { autoResize: false },
+				backgroundOpacity: 0,
+				...kind === "ThreeDScene" ? {
+					...THREE_D_CAMERA_DEFAULTS,
+					frameWidth: 8 * (width / height),
+					frameHeight: 8
+				} : {}
 			});
-			try {
+			if (kind !== "ThreeDScene") try {
 				scene.camera.frameHeight = 8;
 				scene.camera.frameWidth = 8 * (width / height);
 			} catch (error) {
 				console.error("[manim-live] camera frame normalize failed:", error);
 			}
 			return scene;
+		}
+		/** 造一块场景槽。`container` 为 null = 无头（Node 单测）。 */
+		function createSceneSlot(container, manim, width, height, options = {}) {
+			let kind = "Scene";
+			let scene = createScene(container, manim, width, height, options);
+			const replace = (wanted) => {
+				try {
+					scene.dispose();
+				} catch (error) {
+					console.error("[manim-live] scene dispose failed:", error);
+				}
+				if (container !== null) container.innerHTML = "";
+				scene = createScene(container, manim, width, height, {
+					...options,
+					kind: wanted
+				});
+				return scene;
+			};
+			return {
+				scene: () => scene,
+				sceneFor(wanted) {
+					const resolved = resolveSceneKind(wanted);
+					if (resolved === kind) return scene;
+					kind = resolved;
+					return replace(wanted);
+				},
+				reset() {
+					return replace(kind);
+				},
+				dispose() {
+					try {
+						scene.dispose();
+					} catch (error) {
+						console.error("[manim-live] scene dispose failed:", error);
+					}
+				}
+			};
 		}
 		let cached = null;
 		function loadManim() {
@@ -161116,7 +161528,7 @@ _sys.modules["manim"] = _dsh_manim
 		/** 在给定容器里造一块画布。契约：容器由调用方给、由调用方管生命周期。 */
 		async function createSurface(container, options = {}) {
 			const manim = await loadManim();
-			let scene = createScene(container, manim, WIDTH, HEIGHT);
+			const slot = createSceneSlot(container, manim, WIDTH, HEIGHT);
 			let tail = Promise.resolve();
 			let disposed = false;
 			let lastCode = null;
@@ -161126,7 +161538,8 @@ _sys.modules["manim"] = _dsh_manim
 			const execute = async (code, handlers) => {
 				await runPython(code, createManimWebBridge({
 					manim,
-					scene,
+					scene: slot.scene(),
+					sceneFor: slot.sceneFor,
 					fast: options.fast === true
 				}), {
 					output: (text) => console.info("[manim-live] print:", text.trimEnd()),
@@ -161162,13 +161575,7 @@ _sys.modules["manim"] = _dsh_manim
 					if (code === null) throw new Error("manim-live：还没跑过任何代码，没得重播");
 					const job = tail.then(async () => {
 						if (disposed) throw new PyRunCancelled();
-						try {
-							scene.dispose();
-						} catch (error) {
-							console.error("[manim-live] replay dispose failed:", error);
-						}
-						container.innerHTML = "";
-						scene = createScene(container, manim, WIDTH, HEIGHT);
+						slot.reset();
 						rendered = false;
 						await execute(code, lastHandlers);
 						rendered = true;
@@ -161185,11 +161592,7 @@ _sys.modules["manim"] = _dsh_manim
 				},
 				dispose() {
 					disposed = true;
-					try {
-						scene.dispose();
-					} catch (error) {
-						console.error("[manim-live] scene dispose failed:", error);
-					}
+					slot.dispose();
 				}
 			};
 		}

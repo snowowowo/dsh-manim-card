@@ -49,13 +49,39 @@ class Demo(Scene):
 **常量**：`DL` `DOWN` `DR` `IN` `LEFT` `ORIGIN` `OUT` `RIGHT` `UL` `UP` `UR` `X_AXIS` `Y_AXIS` `Z_AXIS` `DEGREES` `PI` `TAU`
 **速率**：`double_smooth` `exponential_decay` `linear` `lingering` `not_quite_there` `running_start` `rush_from` `rush_into` `slow_into` `smooth` `smoothererstep` `smootherstep` `smoothstep` `there_and_back` `there_and_back_with_pause` `wiggle`
 **颜色**：`BLACK` `BLUE` `BLUE_A` `BLUE_B` `BLUE_C` `BLUE_D` `BLUE_E` `DARKER_GRAY` `DARK_BLUE` `DARK_BROWN` `DARK_GRAY` `GOLD` `GOLD_A` `GOLD_B` `GOLD_C` `GOLD_D` `GOLD_E` `GRAY` `GRAY_A` `GRAY_B` `GRAY_C` `GRAY_D` `GRAY_E` `GREEN` `GREEN_A` `GREEN_B` `GREEN_C` `GREEN_D` `GREEN_E` `GREY` `GREY_A` `GREY_B` `GREY_BROWN` `GREY_C` `GREY_D` `GREY_E` `LIGHTER_GRAY` `LIGHT_BROWN` `LIGHT_GRAY` `LIGHT_PINK` `MAROON` `MAROON_A` `MAROON_B` `MAROON_C` `MAROON_D` `MAROON_E` `ORANGE` `PINK` `PURE_BLUE` `PURE_GREEN` `PURE_RED` `PURPLE` `PURPLE_A` `PURPLE_B` `PURPLE_C` `PURPLE_D` `PURPLE_E` `RED` `RED_A` `RED_B` `RED_C` `RED_D` `RED_E` `TEAL` `TEAL_A` `TEAL_B` `TEAL_C` `TEAL_D` `TEAL_E` `WHITE` `YELLOW` `YELLOW_A` `YELLOW_B` `YELLOW_C` `YELLOW_D` `YELLOW_E`
-**照 CE 写、适配层自动翻译**：`set_stroke` → setStyle({ strokeColor, strokeWidth, strokeOpacity })；`set_opacity` → setStrokeOpacity(x) + setFillOpacity(x)；`put_start_and_end_on` → putStartAndEndOn(s, e)（Arrow/Vector）/ setStart(s) + setEnd(e)（Line）；`animate` → play(m.animate.x(...))；`m[i]` → getPart(i)（MathTex 取段）
+**照 CE 写、适配层自动翻译**：`set_stroke` → setStyle({ strokeColor, strokeWidth, strokeOpacity })；`set_opacity` → setStrokeOpacity(x) + setFillOpacity(x)；`put_start_and_end_on` → putStartAndEndOn(s, e)（Arrow/Vector）/ setStart(s) + setEnd(e)（Line）；`animate` → play(m.animate.x(...))；`m[i]` → getPart(i)（MathTex 取段）；`set_camera_orientation` → setCameraOrientation(phi, theta, distance)；`move_camera` → moveCamera({ phi, theta, distance, duration })；`begin_ambient_camera_rotation` → beginAmbientCameraRotation(rate)；`stop_ambient_camera_rotation` → stopAmbientCameraRotation()；`add_fixed_in_frame_mobjects` → addFixedInFrameMobjects(...mobjects)；`remove_fixed_in_frame_mobjects` → removeFixedInFrameMobjects(...mobjects)；`add_fixed_orientation_mobjects` → addFixedOrientationMobjects(...mobjects)；`remove_fixed_orientation_mobjects` → removeFixedOrientationMobjects(...mobjects)
 <!-- /gen:api-list -->
 
 清单里看不出来的两件事（手写）：
 
 - 坐标系取点一律 `ax.c2p(x, y, 0)`；轴标签 `ax.get_axis_labels(x_label="x", y_label="y")`。
 - `TracedPath` 接的是**要追踪的物体**（如 `traced = TracedPath(dot)`），不是取点函数——这点与 CE 不同。
+
+## 3D：用 `class X(ThreeDScene)`
+
+**只要画面里有 3D 物体（`Cube` / `Sphere` / `Cone` / `Cylinder` / `Torus` / `Prism` / 各种多面体 / `Dot3D` / `ThreeDAxes` / `Arrow3D` / `Line3D` / `ConvexHull3D`），场景类就必须写 `ThreeDScene`。**
+
+- `ThreeDScene` 是一块**真 3D 场景**：3D 相机 + 默认光照 + 深度测试。物体有明暗、有前后遮挡。
+- 把这些物体放进普通的 `Scene` 是**最典型的错**：普通场景里没有光、也不做深度，实心材质是吃光的——**画出来是一团纯黑**（不是"没实现"，是放错场景了）。`ThreeDAxes` 在 2D 场景里也会被拍平。
+- 相机默认是**斜视**（phi 70° / theta -135°，Z 轴朝上）。想让观众看到某个特定角度，自己摆：
+
+```python
+class Demo(ThreeDScene):
+    def construct(self):
+        axes = ThreeDAxes(x_range=[-3, 3, 1], y_range=[-3, 3, 1], z_range=[-3, 3, 1])
+        cube = Cube(side_length=2, color=BLUE, opacity=0.8)   # ← 3D 实体用 color / opacity
+        self.set_camera_orientation(phi=70 * DEGREES, theta=-135 * DEGREES)  # 立刻摆好
+        self.add(axes, cube)
+        self.move_camera(phi=60 * DEGREES, theta=-60 * DEGREES, run_time=2)   # 动画转过去
+        self.play(cube.animate.shift(UP))                                     # 3D 里一样能播动画
+```
+
+- **3D 实体的颜色 / 透明用构造参数 `color` / `opacity`**。CE 的 `fill_color` / `fill_opacity` 在 manim-web 的 3D 实体上**不生效**（实测被静默忽略：仍然是默认色、仍然不透明）——别照 CE 那套写。
+- **相机方法只在 `ThreeDScene` 上可用**：`set_camera_orientation(phi, theta, distance)`、`move_camera(...)`、`begin_ambient_camera_rotation(rate)` / `stop_ambient_camera_rotation()`（让相机一直慢慢转）。写在普通 `Scene` 里会当场报错。
+- manim-web 的相机只有 `phi` / `theta` / `distance` 三个参数（CE 的 `gamma` / `zoom` / `focal_distance` / `frame_center` 没有，写了会报错）。
+- **钉在屏幕上**（相机怎么转它都不动，标题 / 说明常用）：`self.add_fixed_in_frame_mobjects(title)`——它**自己就会把物体加进场景**（CE 就是这么做的），不用再 `self.add(title)`。
+- 想让文字**跟着某件 3D 物体、又始终正对镜头**（斜视下不被压扁）：`self.add_fixed_orientation_mobjects(label)`（位置仍随相机远近变化）。
+- 3D 是**透视**镜头：`phi` / `theta` 定方向、`distance` 定远近。默认距离对着「画面高 8 单位」取的，`side_length=2` 的立方体占画面高度约 1/4——东西显小就整体 `scale()`。
 
 ## 属性动画：`m.animate.*`
 
