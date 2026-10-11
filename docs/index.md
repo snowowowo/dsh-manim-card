@@ -4,7 +4,7 @@ layout: home
 hero:
   name: dsh-manim-live
   text: 聊天里的 Manim 动画
-  tagline: DeepSeek Harness 插件：在会话中让 AI 用 Manim 画动画——AI 提交 Python 代码后，聊天流中出现一张动画卡片，可播放、可查看代码、可导出 mp4。代码在浏览器内执行，基础功能离线可用。
+  tagline: "DeepSeek Harness 插件：AI 在会话里写标准 Manim（Python）代码，聊天流中当场出现可播放的动画卡片——可重播、可看代码、可导出 mp4。代码在浏览器内执行，无需本机 Python。"
   actions:
     - theme: brand
       text: 安装

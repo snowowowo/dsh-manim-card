@@ -4,7 +4,7 @@ layout: home
 hero:
   name: dsh-manim-live
   text: Manim animations in chat
-  tagline: "A DeepSeek Harness plugin: let AI draw Manim animations right in the session — once the AI submits Python code, an animation card appears in the chat stream that can be played, inspected for source code, and exported as mp4. The code runs in the browser; basic features work offline."
+  tagline: "A DeepSeek Harness plugin: the AI writes standard Manim (Python) code in the session and a playable animation card appears right in the chat stream — replayable, inspectable, exportable as mp4. The code runs in the browser; no local Python required."
   actions:
     - theme: brand
       text: Installation

@@ -4,7 +4,11 @@
 
 ## 一句话定位
 
-dsh-manim-live 是 DeepSeek Harness（下称「宿主」）的插件：AI 在会话里写 Manim（Python）代码，聊天流里当场出现可播放的动画。
+dsh-manim-live 是 DeepSeek Harness（下称「宿主」）的插件：AI 在会话里写**标准 Manim（Python）代码**，聊天流里当场出现可播放的动画。
+
+## 为什么不直接用原生 Manim 或 manim-web
+
+原生 Manim 跑的是真 Python，但渲染依赖本机环境（manim CLI + LaTeX + ffmpeg），进不了聊天流；manim-web 能在浏览器里渲染，但 API 是它自有的一套，AI 生成的标准 Manim 代码跑不了——**AI 的训练语料里全是标准 Manim 写法**。本插件的链路把两者优点拼齐：AI 写标准 Manim 代码，Pyodide 在浏览器里执行、manim-web 渲染，全程无需本机环境。对比细节见核心包文档的[它是什么](https://snowowowo.github.io/manim-live/guide/overview)。
 
 ## 三件事拆解
 

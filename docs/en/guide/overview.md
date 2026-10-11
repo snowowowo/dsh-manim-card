@@ -4,7 +4,11 @@ This page gives the positioning of dsh-manim-live, how the three parties on the 
 
 ## One-sentence positioning
 
-dsh-manim-live is a plugin for DeepSeek Harness ("the host"): AI writes Manim (Python) code in the conversation, and a playable animation appears right in the chat stream.
+dsh-manim-live is a plugin for DeepSeek Harness ("the host"): AI writes **standard Manim (Python) code** in the conversation, and a playable animation appears right in the chat stream.
+
+## Why not native Manim or manim-web directly
+
+Native Manim runs real Python, but rendering depends on a local environment (manim CLI + LaTeX + ffmpeg) — it cannot live inside a chat stream. manim-web renders in the browser, but its API is its own, and AI-generated standard Manim code won't run on it — **AI training corpora are full of standard Manim**. This plugin's pipeline combines both strengths: the AI writes standard Manim code, Pyodide executes it in the browser, and manim-web renders it — no local environment at any point. Details of the comparison are in the core package's [What It Is](https://snowowowo.github.io/manim-live/guide/overview).
 
 ## Three parties, three jobs
 
