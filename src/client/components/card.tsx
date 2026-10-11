@@ -116,11 +116,11 @@ export function decidePlay(input: {
  * 渲染卡片。聊天流与实验场页面**共用这一个组件**——页面不再自己维护画布，
  * 于是「重播 / 查看代码 / 复制」这些能力天然一致，不会再各改各的。
  *
- * - `label`  顶栏标签，缺省是聊天场景的「Manim 动画」（实验场传语料标题）。
- * - `onResult` 一次渲染结束的回调（成功失败都调），实验场用它把结果显示到语料条目上。
+ * - `label`  顶栏标签，缺省是聊天场景的「Manim 动画」（实验场传样例标题）。
+ * - `onResult` 一次渲染结束的回调（成功失败都调），实验场用它把结果显示到样例条目上。
  * - `autoStart` 不理会视口、挂载即渲染。聊天流靠 IntersectionObserver 保证「只有可见的那几张
  *   在跑」，但实验场一次只有一张卡、而它可能被滚出可视区（右侧栏往下翻看代码），
- *   那时再等视口就会让「全部渲染」卡住——所以那一侧显式关掉视口门控。
+ *   那时再等视口就会把页面吊在半路——所以那一侧显式关掉视口门控。
  * - `fast` 极速：不等 run_time / wait，直接落终态（实验场那个开关）。
  */
 export function ManimCard({ data, t, label, onResult, autoStart, fast }: {
@@ -377,7 +377,7 @@ export function ManimCard({ data, t, label, onResult, autoStart, fast }: {
     renderQueue.register(
       { callId: data.callId, seq: data.seq, stepKey: data.stepKey },
       // 实验场一次只挂一张卡、而它可能被滚出可视区（右侧栏往下翻看代码），那时再等视口
-      // 就会让「全部渲染」卡住——所以那一侧直接报「可见」，不摆观察者。
+      // 就会把页面吊在半路——所以那一侧直接报「可见」，不摆观察者。
       { visible: autoStart === true, willing: true, hasCanvas: false },
       { run, evict: dropSurface },
     )

@@ -4,10 +4,9 @@
  * 落盘本身也要能扛住 localStorage 不可用（隐私模式 / 配额满）。
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { clearGround, clearMarks, loadExports, loadGround, loadMarks, rememberExport, saveGround, saveMarks } from './storage'
+import { clearLab, loadExports, loadLab, rememberExport, saveLab } from './storage'
 
-const KEY = 'manim-live.ground.v1'
-const MARKS_KEY = 'manim-live.marks.v1'
+const KEY = 'manim-live.lab.v1'
 const EXPORTS_KEY = 'manim-live.exports.v1'
 
 function fakeStorage(initial: Record<string, string> = {}) {
@@ -46,16 +45,16 @@ afterEach(() => {
   vi.unstubAllGlobals()
 })
 
-describe('loadGround', () => {
+describe('loadLab', () => {
   it('没存过给空对象', () => {
     useStorage(fakeStorage())
-    expect(loadGround()).toEqual({})
+    expect(loadLab()).toEqual({})
   })
 
   it('存坏了（非法 JSON / 不是对象）当没存过，并打日志', () => {
     for (const raw of ['{坏', 'null', '42', '"x"']) {
       useStorage(fakeStorage({ [KEY]: raw }))
-      expect(loadGround(), `raw=${raw}`).toEqual({})
+      expect(loadLab(), `raw=${raw}`).toEqual({})
     }
     expect(console.error).toHaveBeenCalled()
   })
@@ -64,15 +63,15 @@ describe('loadGround', () => {
     useStorage(
       fakeStorage({
         [KEY]: JSON.stringify({
-          results: { a: { ok: true, text: '好' }, bad: { ok: 'yes' }, worse: null },
+          results: { a: { ok: true }, bad: { ok: 'yes' }, worse: null },
           fast: 'true', // 不是布尔 → 丢
           source: 'print(1)',
-          mode: 'nonsense', // 不是两种视图之一 → 丢
+          mode: 'nonsense', // 不是两种模式之一 → 丢
         }),
       }),
     )
-    expect(loadGround()).toEqual({
-      results: { a: { ok: true, text: '好' } },
+    expect(loadLab()).toEqual({
+      results: { a: { ok: true } },
       source: 'print(1)',
     })
   })
@@ -80,38 +79,38 @@ describe('loadGround', () => {
   it('results 类型不对就丢，不影响别的字段', () => {
     for (const results of [42, 'x', null, undefined]) {
       useStorage(fakeStorage({ [KEY]: JSON.stringify({ results, mode: 'free' }) }))
-      expect(loadGround(), `results=${String(results)}`).toEqual({ mode: 'free' })
+      expect(loadLab(), `results=${String(results)}`).toEqual({ mode: 'free' })
     }
   })
 
   it('results 歪成数组时只当空表，不牵连别的字段', () => {
     useStorage(fakeStorage({ [KEY]: JSON.stringify({ results: [], mode: 'free' }) }))
-    expect(loadGround()).toEqual({ results: {}, mode: 'free' })
+    expect(loadLab()).toEqual({ results: {}, mode: 'free' })
   })
 
   it('存储读不了也不炸（返回空对象）', () => {
     const storage = fakeStorage()
     storage.throwing = true
     useStorage(storage)
-    expect(loadGround()).toEqual({})
+    expect(loadLab()).toEqual({})
     expect(console.error).toHaveBeenCalled()
   })
 })
 
-describe('saveGround / clearGround', () => {
+describe('saveLab / clearLab', () => {
   it('存下去的是可读回的同一份', () => {
     const storage = fakeStorage()
     useStorage(storage)
-    const state = { results: { a: { ok: false, text: '错' } }, fast: true, source: 'x = 1', mode: 'free' as const }
-    saveGround(state)
+    const state = { results: { a: { ok: false } }, fast: true, source: 'x = 1', mode: 'free' as const }
+    saveLab(state)
     expect(JSON.parse(storage.map.get(KEY) ?? '')).toEqual(state)
-    expect(loadGround()).toEqual(state)
+    expect(loadLab()).toEqual(state)
   })
 
   it('清除就把键拿掉', () => {
     const storage = fakeStorage({ [KEY]: '{}' })
     useStorage(storage)
-    clearGround()
+    clearLab()
     expect(storage.map.has(KEY)).toBe(false)
   })
 
@@ -119,48 +118,15 @@ describe('saveGround / clearGround', () => {
     const storage = fakeStorage()
     storage.throwing = true
     useStorage(storage)
-    expect(() => saveGround({ results: {}, fast: false, source: '', mode: 'examples' })).not.toThrow()
-    expect(() => clearGround()).not.toThrow()
+    expect(() => saveLab({ results: {}, fast: false, source: '', mode: 'samples' })).not.toThrow()
+    expect(() => clearLab()).not.toThrow()
     expect(console.error).toHaveBeenCalled()
-  })
-})
-
-describe('人工标注（与自动结果分开存、分开清）', () => {
-  it('存下去的对 / 不对能读回同一份', () => {
-    const storage = fakeStorage()
-    useStorage(storage)
-    const marks = { 'basic-circle': 'pass', 'api-rates': 'fail' } as const
-    saveMarks(marks)
-    expect(loadMarks()).toEqual(marks)
-  })
-
-  it('坏形状的条目丢掉、不牵连别的', () => {
-    useStorage(fakeStorage({
-      [MARKS_KEY]: JSON.stringify({ a: 'pass', b: 'maybe', c: 7, d: null, e: 'fail' }),
-    }))
-    expect(loadMarks()).toEqual({ a: 'pass', e: 'fail' })
-  })
-
-  it('没存过 / 存坏了 / 不是对象 = 空，并打日志', () => {
-    for (const raw of [null, '{坏', '42', '"x"']) {
-      useStorage(raw === null ? fakeStorage() : fakeStorage({ [MARKS_KEY]: raw }))
-      expect(loadMarks(), `raw=${raw as string}`).toEqual({})
-    }
-    expect(console.error).toHaveBeenCalled()
-  })
-
-  it('clearMarks 只动人工标注的键，自动结果那条不动', () => {
-    const storage = fakeStorage({ [KEY]: '{"results":{}}', [MARKS_KEY]: '{"a":"pass"}' })
-    useStorage(storage)
-    clearMarks()
-    expect(storage.map.has(MARKS_KEY)).toBe(false)
-    expect(storage.map.has(KEY)).toBe(true)
   })
 })
 
 /**
  * 导出记录：卡片滚出视口就被卸载，组件状态活不过那一趟——记在 localStorage 里才恢复得回来。
- * 这里钉两件事：坏数据当没存过（同上前两组的口径）、条数有上限（实验场每渲染一次换个 callId，
+ * 这里钉两件事：坏数据当没存过（同上两组的口径）、条数有上限（实验场每渲染一次换个 callId，
  * 不限就会一直涨）。
  */
 describe('导出记录', () => {

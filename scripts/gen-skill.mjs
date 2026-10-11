@@ -118,17 +118,18 @@ function animateMethodList() {
  * 想增删模板就改语料文件的标记，这里不做任何二次筛选。
  *
  * 为什么内联而不是让模型自己去读文件：技能是整段正文注册的，模型一次就拿到全部，
- * 不必再赌它有文件访问权。这些文件同时是实验场的语料（回归跑过 + 真浏览器截过图），
+ * 不必再赌它有文件访问权。这些文件同时是回归网的语料（回归跑过 + 真浏览器截过图），
  * 所以内联的是**验过的**写法。
- * 语料本体在**核心包**仓的 `_dev/`（**包外**，位置与解析见核心包的 `src/testbench/corpus.ts`）——
- * 所以这一步只能在两个仓都检出的开发机上跑，正式安装里没有这条路径。
+ * 语料本体在**核心包**仓的 `corpus/examples/`（**包外**，位置与解析见核心包的
+ * `src/testbench/corpus.ts`）——所以这一步只能在两个仓都检出的开发机上跑，
+ * 正式安装里没有这条路径。
  */
 function templatesSection() {
   const { groups, examples } = collectCorpus()
   const groupTitle = new Map(groups.map((group) => [group.id, group.title]))
   const chosen = examples.filter((example) => example.template !== undefined)
   if (chosen.length === 0) {
-    throw new Error('没有任何语料带 @template 标记——模板区会是空的，先去 _dev/examples 里选几条')
+    throw new Error('没有任何语料带 @template 标记——模板区会是空的，先去 corpus/examples 里选几条')
   }
   const fence = '```'
   return chosen

@@ -10,7 +10,7 @@
  * 见顶层设计 §4.2），于是它独立出来。Host 半边是**免构建的 JS**（`src/host/*.js` 原样发布），
  * 所以它必须是 `.js`——两端都 import 得到，不需要为它再开一个构建产物。
  *
- * 为什么不止两条：抽包时顺手把散落在 `src/host/*.js` 与 `src/client/*.ts` 里的另外六条也收了进来。
+ * 为什么不止两条：抽包时顺手把散落在 `src/host/*.js` 与 `src/client/*.ts` 里的其余各条也收了进来。
  * **行为零变化**，只是把「同一个路径写两遍」这个坑一次填掉。它还有一个直接后果：
  * `src/client/service.ts` 要拿 Pyodide / KaTeX 两条作为配置传给核心包（`createManimRenderer`），
  * 值和 Host 注册的是同一份。
@@ -25,12 +25,6 @@
  * 客户端 bundle 注册的 id 是另一回事（由构建预设从 `package.json` 的 name 派生，见 tsdown.preset.ts）。
  */
 export const PREFIX = '/dsh-plugins/manim-live'
-
-/** 实验场语料清单：Host `register` 它，Client `fetch` 它。 */
-export const CORPUS_ROUTE = `${PREFIX}/corpus`
-
-/** 语料截图静态资源（`assetRoute(shotsRoot(), …)` 的挂载点）。图地址 = `${SHOTS_ROUTE}/${shot}`。 */
-export const SHOTS_ROUTE = `${PREFIX}/shots`
 
 /** Pyodide 本体与按需包。Client 侧作为 `pyodideIndexURL` 交给核心包（本体的取数根，末尾斜杠由核心包补）。 */
 export const PYODIDE_ROUTE = `${PREFIX}/pyodide`

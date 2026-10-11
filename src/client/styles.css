@@ -158,7 +158,6 @@
   cursor: pointer; background: transparent;
   color: var(--dsw-alias-label-secondary);
 }
-.mr-iconbtn-xs { width: 20px; height: 20px; }
 .mr-iconbtn:hover:not(:disabled) {
   background: var(--dsw-alias-interactive-bg-hover);
   color: var(--dsw-alias-label-primary);
@@ -186,46 +185,8 @@
 .mr-code-fill { flex: 1; min-height: 0; margin: 0; resize: none; }
 .mr-code:focus-visible { outline: 2px solid var(--dsw-alias-state-business-primary); outline-offset: 0; }
 
-/* ---- 实验场：语料清单 ---- */
+/* ---- 实验场：样例清单 ---- */
 
-.mr-ground-group { display: flex; flex-direction: column; gap: 2px; }
-
-/* 分组行：左边整块是折叠开关、右边是「渲染本组」——两个按钮，不能嵌套。 */
-.mr-ground-grouphead { display: flex; align-items: center; gap: 2px; }
-.mr-ground-toggle {
-  display: flex; align-items: center; gap: 6px; text-align: start;
-  box-sizing: border-box; flex: 1; min-width: 0; height: 24px; padding: 0 4px;
-  border: none; border-radius: var(--dsw-radius-sm);
-  background: transparent; cursor: pointer;
-  color: var(--dsw-alias-label-tertiary);
-}
-.mr-ground-toggle:hover { background: var(--dsw-alias-interactive-bg-hover); }
-.mr-ground-toggle:focus-visible { outline: 2px solid var(--dsw-alias-state-business-primary); outline-offset: -2px; }
-.mr-ground-grouptitle { font-size: 12px; line-height: 18px; font-weight: 500; }
-.mr-ground-gcount {
-  margin-left: auto; font-size: 11px; line-height: 16px;
-  font-variant-numeric: tabular-nums;
-}
-.mr-ground-gfail {
-  font-size: 11px; line-height: 16px; font-variant-numeric: tabular-nums;
-  color: var(--dsw-alias-state-error-primary);
-}
-/* 「需联网」标记：这一组要真联网取包（所以默认不进自动测试） */
-.mr-ground-net {
-  flex: none; font-size: 11px; line-height: 16px; padding: 0 4px;
-  border: 1px solid var(--dsw-alias-border-l3);
-  border-radius: var(--dsw-radius-sm);
-  color: var(--dsw-alias-label-secondary);
-}
-/* 语料不在时（正式安装）贴在编辑区上方的说明：是有意的降级，不做成错误样式 */
-.mr-ground-notice {
-  margin: 0; padding: 8px 10px; flex: none;
-  border: 1px solid var(--dsw-alias-border-l3);
-  border-radius: var(--dsw-radius-sm);
-  background: var(--dsw-alias-bg-layer-1);
-  font-size: 12px; line-height: 18px;
-  color: var(--dsw-alias-label-secondary);
-}
 /* 清缓存的结果回执（工具条右端，与计数同款字色） */
 .mr-toolbar-note { font-size: 12px; line-height: 18px; color: var(--dsw-alias-label-secondary); }
 .mr-ground-items { display: flex; flex-direction: column; }
@@ -256,12 +217,6 @@
 }
 
 .mr-ground-name { flex: none; font-size: 13px; line-height: 20px; }
-/* 人工标注徽标：清单里一眼看出哪条人看过、结论是什么（与左侧的自动结果点分开） */
-.mr-ground-mark {
-  flex: none; font-size: 11px; line-height: 16px; font-weight: 600;
-}
-.mr-ground-mark.is-pass { color: var(--dsw-alias-state-success-primary); }
-.mr-ground-mark.is-fail { color: var(--dsw-alias-state-error-primary); }
 .mr-ground-id {
   margin-left: auto; flex: 1; min-width: 0;
   overflow: hidden; text-overflow: ellipsis; white-space: nowrap; text-align: end;
@@ -269,7 +224,7 @@
   color: var(--dsw-alias-label-tertiary);
 }
 
-/* ---- 预期表现条 + 人工验证（挂在预览上方）---- */
+/* ---- 预期表现条（挂在预览上方，人工验收对照用）---- */
 
 .mr-expect {
   display: flex; align-items: baseline; gap: 8px;
@@ -285,37 +240,6 @@
 .mr-expect-text {
   flex: 1; min-width: 0; font-size: 12px; line-height: 18px;
   color: var(--dsw-alias-label-primary); overflow-wrap: break-word;
-}
-/* 人工验证按钮组：靠右；标的那个高亮成对应状态色 */
-.mr-expect-mark { flex: none; display: inline-flex; align-items: center; gap: 2px; }
-.mr-expect-marktitle {
-  font-size: 12px; line-height: 18px; color: var(--dsw-alias-label-tertiary);
-  margin-right: 4px; cursor: help;
-}
-.mr-expect-mark .mr-iconbtn[data-mark='pass'] {
-  color: var(--dsw-alias-state-success-primary);
-}
-.mr-expect-mark .mr-iconbtn[data-mark='fail'] {
-  color: var(--dsw-alias-state-error-primary);
-}
-
-/* ---- 上次截图（压在预期条下面、预览之上）---- */
-/* 只在本机开发仓里有图（`_dev/shots/`），所以这一块可能整块不出现——不留空位、不占高度。 */
-.mr-shot {
-  display: flex; align-items: center; gap: 8px;
-  box-sizing: border-box; margin: 8px 0 0;
-}
-.mr-shot-label {
-  flex: none; font-size: 12px; line-height: 18px;
-  color: var(--dsw-alias-label-secondary); cursor: help;
-}
-.mr-shot-link { flex: none; display: block; }
-.mr-shot-img {
-  display: block; height: 84px; width: auto;
-  border: 1px solid var(--dsw-alias-border-l3);
-  border-radius: var(--dsw-radius-sm);
-  /* 截图自带深色底（manim 默认底色），别让宿主主题透进来 */
-  background: #1c1c1c;
 }
 
 /* ---- 聊天卡片（conversation.chat.node）---- */

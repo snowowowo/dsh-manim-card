@@ -32,6 +32,6 @@ From "AI writes code" to "an animation in the chat", three parties each own one 
 | Animation cards | Chat stream | Appear after the AI submits code via `manim_render`; support playback, code viewing, mp4 export — see [Usage in Chat](/en/guide/usage) |
 | Dry-run pre-check | Inside the tool | The code is checked before the tool returns; syntax errors, undefined names, and unsupported constructs return `error` immediately |
 | Playback scheduling | Inside the plugin | New cards play once in full, remounts fall to the last frame, active canvases beyond 8 are reclaimed by distance, and one Python queue serves the whole page |
-| Laboratory | "Manim 渲染" in the left navigation | 19 groups / 236 corpus entries run one by one, plus free-form coding — see [Laboratory](/en/guide/lab) |
+| Laboratory | "Manim 渲染" in the left navigation | An acceptance bench with a built-in sample set plus free-form code — see [Laboratory](/en/guide/lab) |
 | Settings panel | "Manim 渲染" in host settings | Local environment probing and Python package cache management — see [Settings Panel](/en/guide/settings) |
 | manim service | `ctx.get('manim')` | For other plugins: check(python) dry-run pre-check + createSurface(container) canvas — see [Third-party Plugin Integration](/en/guide/integrating) |

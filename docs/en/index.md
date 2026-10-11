@@ -28,7 +28,7 @@ features:
     details: A new card plays through once when it enters the viewport, and remounts land directly on the final frame; when several cards are produced in parallel within one step, only the last one plays; the whole page shares one Python execution queue.
   - icon: 🧪
     title: Laboratory
-    details: A standalone page that runs 236 Manim corpus entries (19 groups) one by one with instant pass/fail marking; free-form code can be written and run as well.
+    details: An acceptance bench with a built-in sample set plus free-form code: verify card rendering, playback control, export, and pre-check errors one by one.
   - icon: ⚙️
     title: Settings panel
     details: Probes the local python3 / manim / ffmpeg environment (export depends on it) and manages the local cache of third-party libraries, with pre-caching and deletion.
@@ -46,7 +46,7 @@ features:
 | Getting Started | [What It Is](/en/guide/overview) | Positioning in one sentence, the three parties, the relationship with the core package manim-live, feature list |
 | Getting Started | [Installation](/en/guide/installation) | Install commands, bundled assets (Pyodide / KaTeX), which features need the network or local tools |
 | Getting Started | [Usage in Chat](/en/guide/usage) | How cards come into being, auto-playback rules, manual playback, code viewing, mp4 export |
-| Features | [Laboratory](/en/guide/lab) | The regression suite of 236 corpus entries: how to run, turbo mode, pass criteria |
+| Features | [Laboratory](/en/guide/lab) | An acceptance bench with a built-in sample set plus free-form code |
 | Features | [Settings Panel](/en/guide/settings) | Local environment probing and Python package cache management |
 | Integration | [Third-party Plugin Integration](/en/guide/integrating) | The manim service: check(python) dry-run pre-check + createSurface(container) canvas creation |
 | Development | [Development & Debugging](/en/dev/) | For this plugin's developers: build, tests, development installation, troubleshooting entry points |

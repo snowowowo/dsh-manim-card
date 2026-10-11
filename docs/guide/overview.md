@@ -32,6 +32,6 @@ dsh-manim-live 是 DeepSeek Harness（下称「宿主」）的插件：AI 在会
 | 动画卡片 | 聊天流 | AI 调用 `manim_render` 提交代码后出现；支持播放、查看源码、导出 mp4，详见[在聊天里用](/guide/usage) |
 | 干跑预检 | 工具内部 | 工具返回前检查代码，语法错误、未定义名称、不支持的写法当场返回 `error` |
 | 播放调度 | 插件内部 | 新卡片完整播放一次、重新挂载落末帧、活跃画布超 8 张按距阅读位置回收、全页一条 Python 执行队列 |
-| 实验场 | 左侧导航「Manim 渲染」 | 19 组 / 236 条语料逐条运行，也可自由编写代码，详见[实验场](/guide/lab) |
+| 实验场 | 左侧导航「Manim 渲染」 | 内置样例集 + 自由代码的功能验收台，详见[实验场](/guide/lab) |
 | 设置面板 | 宿主设置「Manim 渲染」一节 | 本机环境探测与 Python 包缓存管理，详见[设置面板](/guide/settings) |
 | manim 服务 | `ctx.get('manim')` | 面向其他插件：check(python) 干跑预检 + createSurface(container) 创建画布，详见[第三方插件接入](/guide/integrating) |

@@ -21,5 +21,6 @@ The npm publishing and GitHub direct-install paths have not yet been verified (s
 - Symptoms like artifact load failure / `duplicate factory registration`: first check that the client bundle's registration id equals the package name (derived from `package.json` by `tsdown.preset.ts`, never handwritten).
 - This plugin depends on the core package [manim-live](https://github.com/snowowowo/manim-live)
   ([docs site](https://snowowowo.github.io/manim-live/)): the real rendering-and-execution machinery lives there, so debugging "nothing renders" may require crossing into the core package — its troubleshooting and development pages are more detailed than this one.
+- Boundary: corpus regression belongs to the core package repository (`corpus/`); this plugin's laboratory only verifies its own features, with samples built into `src/client/samples.ts` (copied verbatim from the core package's corpus files — pick new ones over there).
 
 The single source of conventions and rules is the container repository `dsh-plugins`'s `AGENTS.md` and `.agents/skills/`; this page only points to them.

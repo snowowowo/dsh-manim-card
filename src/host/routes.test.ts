@@ -10,7 +10,7 @@
  *  - 技能注册：SKILL.md 的 frontmatter 被剥掉、正文原样交出去；服务缺席要优雅降级；
  *  - 常驻指引：注册到 systemPrompt；
  *  - KaTeX / Pyodide 两条静态资源路由：只放行 GET、越界拒绝、缓存优先于回源、回源失败给 502；
- *  - 语料路由 + 清包缓存路由（见下方两组）；
+ *  - 清包缓存路由（见下方那组）；
  *  - 设置页那两条：包清单（随包 / 已缓存 / 未缓存）与预缓存（跳过已在本地的、拒绝 lock 里没有的名字、
  *    校验不过就报错且不落盘、失败即停、坏正文给 400）；以及本机环境探测（计划不跑命令、找得到 python3、不认识的项 404）。
  *
@@ -49,7 +49,6 @@ const PLUGIN_DIR = join(dirname(fileURLToPath(import.meta.url)), '..', '..')
 const KATEX_DIR = join(PLUGIN_DIR, 'assets', 'katex')
 const PYODIDE_DIR = join(PLUGIN_DIR, 'assets', 'pyodide')
 
-const CORPUS_PATH = '/dsh-plugins/manim-live/corpus'
 const CACHE_PATH = '/dsh-plugins/manim-live/cache'
 const KATEX_PATH = '/dsh-plugins/manim-live/katex'
 const PYODIDE_PATH = '/dsh-plugins/manim-live/pyodide'
@@ -213,13 +212,13 @@ afterEach(() => {
 })
 
 describe('apply 接线', () => {
-  it('注册了工具 / 技能 / 常驻指引，以及五条路由', () => {
+  it('注册了工具 / 技能 / 常驻指引，以及全部路由', () => {
     apply(fakeCtx())
     expect(captured.tools).toHaveLength(1)
     expect(captured.skills).toHaveLength(1)
     expect(captured.sections).toHaveLength(1)
     expect(captured.routes.map((route) => route.path)).toEqual(
-      expect.arrayContaining([KATEX_PATH, PYODIDE_PATH, CORPUS_PATH, CACHE_PATH, ENV_PATH, EXPORT_PATH]),
+      expect.arrayContaining([KATEX_PATH, PYODIDE_PATH, CACHE_PATH, ENV_PATH, EXPORT_PATH]),
     )
   })
 
@@ -444,38 +443,6 @@ describe('Pyodide 资源路由', () => {
     apply(fakeCtx())
     const response = await callStream(routeAt(PYODIDE_PATH), 'GET', `${PYODIDE_PATH}/${remoteOnlyName()}`)
     expect(response.statusCode).toBe(502)
-  })
-})
-
-describe('语料路由', () => {
-  it('GET 给回语料 JSON（开发机上取得到）', async () => {
-    apply(fakeCtx())
-    const response = await call(routeAt(CORPUS_PATH), 'GET', CORPUS_PATH)
-    expect(response.statusCode).toBe(200)
-    expect(response.headers['content-type']).toContain('application/json')
-    // 语料在改，别让浏览器缓存住旧的
-    expect(response.headers['cache-control']).toBe('no-store')
-    const body = JSON.parse(response.body)
-    expect(body.groups.length).toBeGreaterThan(0)
-    expect(body.examples.length).toBeGreaterThan(0)
-  })
-
-  it('没有语料目录时给空表（正式安装的常态，不是错）', async () => {
-    process.env.MANIM_CORPUS = join(tmpdir(), 'manim-corpus-absent')
-    try {
-      apply(fakeCtx())
-      const response = await call(routeAt(CORPUS_PATH), 'GET', CORPUS_PATH)
-      expect(response.statusCode).toBe(200)
-      expect(JSON.parse(response.body)).toEqual({ groups: [], examples: [] })
-    } finally {
-      delete process.env.MANIM_CORPUS
-    }
-  })
-
-  it('非 GET 一律 405', async () => {
-    apply(fakeCtx())
-    const response = await call(routeAt(CORPUS_PATH), 'POST', CORPUS_PATH)
-    expect(response.statusCode).toBe(405)
   })
 })
 

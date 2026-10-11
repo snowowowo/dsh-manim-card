@@ -1,20 +1,20 @@
 // Host 半边（apply 组装）。根目录 index.js 仅 re-export 本模块。
-// 六件事：① manim_render 工具——AI 写一段 Manim Python，聊天流出现渲染卡片；
+// 五件事：① manim_render 工具——AI 写一段 Manim Python，聊天流出现渲染卡片；
 // ② 技能注册——把写法边界与 API 清单讲给模型听（不动手写代码，模型不知道边界在哪）；
 // ③ KaTeX 静态资源路由——MathTex 在浏览器里渲染成 KaTeX HTML；
 // ④ Pyodide 本体、按需取包、包缓存清单与预缓存——整块在 ./pyodide.js；静态资源那层在 ./assets.js；
-// ⑤ 实验场语料路由（GET，见 ./corpus.js）与本机环境探测（见 ./environment.js）；
-// ⑥ 导出视频路由（见 ./export.js）——本机 CLI 真渲染出 mp4，落「下载」文件夹；
-// ⑦ 语料截图路由——每条语料上次真渲染的 PNG（`_dev/shots/`），页面直接显示。
+// ⑤ 本机环境探测（见 ./environment.js）、导出视频路由（见 ./export.js）与清包缓存——
+//   导出走本机 CLI 真渲染出 mp4，落「下载」文件夹。
 // 工具返回前先干跑一遍（核心包 `manim-live/node`，与浏览器侧是同一个 Python 运行时）：
 // 语法错 / 未定义名 / manim-web 实测缺失项当场回给模型，同一回合自我修正；
 // 渲染期错误仍由卡片回显。
+// （实验场的样例集打进客户端产物、不需要路由；236 条语料回归网归核心包仓所有，不经本插件。）
 
 import { readFileSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { collectCorpus, createDryRunBridge, runPython, shotsRoot } from 'manim-live/node'
-import { CORPUS_ROUTE, KATEX_ROUTE, SHOTS_ROUTE } from '../routes.js'
+import { createDryRunBridge, runPython } from 'manim-live/node'
+import { KATEX_ROUTE } from '../routes.js'
 import { assetRoute } from './assets.js'
 import { environmentRoute } from './environment.js'
 import { exportRoute } from './export.js'
@@ -25,11 +25,9 @@ export const inject = ['tools', 'systemPrompt', 'webServer'];
 
 const PLUGIN_DIR = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
 const KATEX_DIR = join(PLUGIN_DIR, 'assets', 'katex');
-// 全部路由的真源在 src/routes.js——Client 的 fetch / <img> 用同一个值，
+// 全部路由的真源在 src/routes.js——Client 的 fetch 用同一个值，
 // 改一边忘一边的 404 从根上堵死。
 const KATEX_PATH = KATEX_ROUTE;
-const CORPUS_PATH = CORPUS_ROUTE;
-const SHOTS_PATH = SHOTS_ROUTE;
 const SKILL_DIR = join(PLUGIN_DIR, 'skills', 'manim-live');
 
 const GUIDE = [
@@ -42,39 +40,6 @@ const GUIDE = [
   '4. 画面由卡片负责，不要用文字复述画面内容；一张卡对应一次调用，要多个画面就多调用几次。',
   '5. **渲染成功后，在回复末尾补一句提醒**（卡片会随一轮的「过程」一起收起，用户可能根本看不到它）：这张动画卡片默认会被折叠收起，想一直看到它，可在「设置 → 工作步骤展示」里选「完全展开」。',
 ].join('\n');
-
-/**
- * 实验场语料路由：把**包外**的开发语料发给浏览器里的实验场。
- *
- * 为什么走路由而不是打进 client.js：这批语料是开发期的回归网（外加讲解模板的出处），
- * 不是产品功能——打进产物等于让每个用户都背上一个只有开发者才用的页面，还平白多几百 KB。
- * 正式安装里 `_dev/` 不存在，`collectCorpus()` 回一份空表，页面据此退化成「自定义代码」那一半。
- * 那是**有意的降级**，所以这里是 200 + 空表，不是 404——404 会在控制台留噪声，还会被当成故障。
- */
-function corpusRoute() {
-  return {
-    kind: 'prefix',
-    path: CORPUS_PATH,
-    handler: async (request, response) => {
-      try {
-        if (request.method !== 'GET') {
-          response.statusCode = 405;
-          response.end();
-          return;
-        }
-        const corpus = collectCorpus();
-        response.setHeader('content-type', 'application/json; charset=utf-8');
-        // 语料随时在改（开发期），别让浏览器缓存住旧的一份
-        response.setHeader('cache-control', 'no-store');
-        response.end(JSON.stringify(corpus));
-      } catch (error) {
-        console.error('[manim-live] 读取语料失败：', error);
-        response.statusCode = 500;
-        response.end();
-      }
-    },
-  };
-}
 
 export function apply(ctx) {
   const cacheDir = resolveCacheDir(ctx);
@@ -180,18 +145,7 @@ export function apply(ctx) {
     'manim-live: export route',
   );
 
-  // 实验场那三条：语料（包外的开发语料，正式安装里是空表）、语料截图、清包缓存。
-  ctx.effect(
-    () => ctx.webServer.register(corpusRoute()),
-    'manim-live: corpus route',
-  );
-  // 语料截图（`_dev/shots/<组>/<同名>.png`）：每条语料一条，由 scripts/shot-corpus.mjs 落盘。
-  // 复用静态资源那一层——「解析路径 → 越界拒绝 → 发流」与 KaTeX / Pyodide 完全同一份实现。
-  // 正式安装里这个目录不存在，整条路由退化成 404（页面也不会去请求：没有 shot 字段）。
-  ctx.effect(
-    () => ctx.webServer.register(assetRoute(shotsRoot(), SHOTS_PATH)),
-    'manim-live: corpus shots route',
-  );
+  // 实验场的清包缓存（验「首次取包」那条路要先把本机缓存清干净）。
   ctx.effect(
     () => ctx.webServer.register(clearCacheRoute(cacheDir)),
     'manim-live: cache clear route',

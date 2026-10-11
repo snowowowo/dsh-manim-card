@@ -56,7 +56,7 @@ describe('decidePlay：什么时候放动画', () => {
     expect(decidePlay(input({ skip: true, manual: true }))).toBe(false)
   })
 
-  it('实验场「全部渲染」的极速档不播动画（否则一套上百条要跑几分钟）', () => {
+  it('实验场的极速档不播动画（等真实 run_time / wait 太慢）', () => {
     expect(decidePlay(input({ fast: true }))).toBe(false)
   })
 })

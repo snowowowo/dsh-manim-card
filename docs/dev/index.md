@@ -27,5 +27,7 @@ npm 发布与 GitHub 直装两条链路尚未实测（见[安装](/guide/install
 - 本插件依赖核心包 [manim-live](https://github.com/snowowowo/manim-live)
   （[文档站](https://snowowowo.github.io/manim-live/)）：渲染执行的真本事在那里，
   排「画不出来」的问题可能要跨到核心包查——它的排障页与开发页比这里细。
+- 边界：语料回归由核心包仓承担（`corpus/`）；本插件实验场只验收自身功能，
+  样例内置在 `src/client/samples.ts`（逐字取自核心包仓的语料文件，换样例去那边挑）。
 
 约定与规范的唯一来源是容器仓 `dsh-plugins` 的 `AGENTS.md` 与 `.agents/skills/`，本页只做指针。
