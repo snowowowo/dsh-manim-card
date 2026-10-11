@@ -22,7 +22,10 @@
     "test": "vitest run --testTimeout=30000",
     "test:net": "MANIM_NET=1 vitest run --testTimeout=300000",
     "coverage": "vitest run --coverage --coverage.provider=v8 --coverage.include='src/**/*.{ts,tsx,js}' --coverage.exclude='src/**/*.test.ts' --coverage.exclude='src/**/*.generated.ts' --testTimeout=30000",
-    "gen-skill": "node scripts/gen-skill.mjs"
+    "gen-skill": "node scripts/gen-skill.mjs",
+    "docs": "pnpm --dir docs install --frozen-lockfile && pnpm --dir docs dev",
+    "docs:build": "pnpm --dir docs install --frozen-lockfile && pnpm --dir docs build",
+    "docs:preview": "pnpm --dir docs install --frozen-lockfile && pnpm --dir docs preview"
   },
   "peerDependencies": {
     "react": "^18.2.0",
