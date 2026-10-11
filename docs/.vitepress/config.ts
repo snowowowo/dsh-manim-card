@@ -38,6 +38,11 @@ export default defineConfig({
           { text: '第三方插件接入', link: '/guide/integrating' },
         ],
       },
+      // 开发调试内容单独一小节，排在最后——使用者用不到，别混进上面的使用指南。
+      {
+        text: '开发',
+        items: [{ text: '开发与调试', link: '/dev/' }],
+      },
     ],
 
     outline: { level: [2, 3], label: '本页目录' },

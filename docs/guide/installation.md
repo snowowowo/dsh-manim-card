@@ -24,8 +24,8 @@ dsh plugin add github:snowowowo/dsh-manim-live
 ```
 
 ::: tip 未实测项
-npm 发布与 GitHub 直装两条链路尚未走通验证过（仓库当前私有）；当前开发期用 profile 内软链 +
-patch 条目的方式安装，HMR 生效。落地时会更新本页。
+npm 发布与 GitHub 直装两条链路尚未走通验证过（仓库当前私有）。当前开发期的装法
+（软链 + patch 条目 + HMR）见[开发与调试](/dev/)。落地时会更新本页。
 :::
 
 ## 随包资源，不用另配
@@ -42,7 +42,7 @@ patch 条目的方式安装，HMR 生效。落地时会更新本页。
 
 ## 与核心包的关系
 
-执行 / 渲染的真本事（Pyodide 运行时、manim 适配层、支持面、画布）在独立 npm 包
+执行与渲染的核心能力（Pyodide 运行时、manim 适配层、支持面、画布）在独立 npm 包
 [manim-live](https://github.com/snowowowo/manim-live)（[文档站](https://snowowowo.github.io/manim-live/)）里；
-本插件负责宿主接入与资源分发，并在它之上做了预检、播放调度、实验场与导出。
-想脱离宿主、在自己的页面里用画布，直接看核心包的文档。
+本插件负责宿主接入与资源分发，并在其之上实现了预检、播放调度、实验场与导出。
+如需脱离宿主、在自己的页面中使用画布，请直接参阅核心包的文档。
