@@ -10,7 +10,7 @@ const BASE = '/dsh-manim-live/'
 export default defineConfig({
   base: BASE,
   title: 'dsh-manim-live',
-  description: '在 DeepSeek Harness 的聊天里直接渲染 Manim 动画——AI 写 Python，当场出画面，还能导出 mp4。',
+  description: 'DeepSeek Harness 插件：在会话中让 AI 用 Manim 画动画——聊天流中出现可播放、可查看代码、可导出 mp4 的动画卡片；代码在浏览器内执行，基础功能离线可用。',
   // 图标放在 public/ 下。head 里的 href **不会**被自动加 base（它不走 markdown 链接改写），
   // 所以这里手动拼上——顺手把它绑到上面那个 BASE，免得两处各改一次。
   head: [['link', { rel: 'icon', type: 'image/svg+xml', href: `${BASE}favicon.svg` }]],
@@ -29,19 +29,30 @@ export default defineConfig({
         // ⚠️ nav / sidebar 必须在 themeConfig 里。写在 defineConfig 顶层是无效的
         // ——不报错、也不出现，页面就是「既没顶部导航、又没左侧目录」（manim-live 踩过）。
         nav: [
-          { text: '指南', link: '/guide/installation', activeMatch: '^/guide/' },
+          { text: '指南', link: '/guide/overview', activeMatch: '^/guide/' },
         ],
 
         sidebar: [
+          // 信息梯度：开始 = 认识插件并装好就能用；功能 = 各功能的细节；
+          // 接入 = 给要在自己插件里用画布的开发者；开发 = 改代码的人才需要。
           {
-            text: '指南',
+            text: '开始',
             items: [
+              { text: '它是什么', link: '/guide/overview' },
               { text: '安装', link: '/guide/installation' },
               { text: '在聊天里用', link: '/guide/usage' },
+            ],
+          },
+          {
+            text: '功能',
+            items: [
               { text: '实验场', link: '/guide/lab' },
               { text: '设置面板', link: '/guide/settings' },
-              { text: '第三方插件接入', link: '/guide/integrating' },
             ],
+          },
+          {
+            text: '接入',
+            items: [{ text: '第三方插件接入', link: '/guide/integrating' }],
           },
           // 开发调试内容单独一小节，排在最后——使用者用不到，别混进上面的使用指南。
           {
@@ -79,23 +90,32 @@ export default defineConfig({
       lang: 'en-US',
       link: '/en/',
       title: 'dsh-manim-live',
-      description: 'Render Manim animations right inside DeepSeek Harness chats — AI writes Python, the picture appears on the spot, and mp4 export is supported.',
+      description: 'A DeepSeek Harness plugin: let AI draw Manim animations right in the session — playable, code-inspectable, mp4-exportable animation cards appear in the chat stream; code runs in the browser, and basic features work offline.',
 
       themeConfig: {
         nav: [
-          { text: 'Guide', link: '/en/guide/installation', activeMatch: '^/en/guide/' },
+          { text: 'Guide', link: '/en/guide/overview', activeMatch: '^/en/guide/' },
         ],
 
         sidebar: [
           {
-            text: 'Guide',
+            text: 'Getting Started',
             items: [
+              { text: 'What It Is', link: '/en/guide/overview' },
               { text: 'Installation', link: '/en/guide/installation' },
               { text: 'Usage in Chat', link: '/en/guide/usage' },
+            ],
+          },
+          {
+            text: 'Features',
+            items: [
               { text: 'Laboratory', link: '/en/guide/lab' },
               { text: 'Settings Panel', link: '/en/guide/settings' },
-              { text: 'Third-party Plugin Integration', link: '/en/guide/integrating' },
             ],
+          },
+          {
+            text: 'Integration',
+            items: [{ text: 'Third-party Plugin Integration', link: '/en/guide/integrating' }],
           },
           {
             text: 'Development',

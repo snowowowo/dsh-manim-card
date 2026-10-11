@@ -1,5 +1,7 @@
 # Usage in Chat
 
+This page covers every behavior of animation cards in the chat stream: how cards appear, when they auto-play, manual playback, viewing code, and exporting mp4. For installation see [Installation](/en/guide/installation).
+
 ## How cards come into being
 
 Ask the AI in a session to "draw … with Manim"; the AI submits a piece of Python code through the `manim_render` tool. Before the tool returns, a dry-run pre-check executes first: syntax errors, undefined names, and unsupported constructs return immediately as an `error`, so by the time a card appears its code has already passed the pre-check. On successful rendering the card rests on the final frame; on failure, manim's original error message is shown at the bottom of the card.

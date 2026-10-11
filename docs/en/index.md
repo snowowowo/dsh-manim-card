@@ -3,8 +3,8 @@ layout: home
 
 hero:
   name: dsh-manim-live
-  text: Render Manim animations in chat
-  tagline: "A DeepSeek Harness plugin: AI writes Manim (Python) code in the conversation, and a playable animation card appears instantly in the chat stream — real Python execution, WebGL rendering, mp4 export. Works out of the box; no other plugin required."
+  text: Manim animations in chat
+  tagline: "A DeepSeek Harness plugin: let AI draw Manim animations right in the session — once the AI submits Python code, an animation card appears in the chat stream that can be played, inspected for source code, and exported as mp4. The code runs in the browser; basic features work offline."
   actions:
     - theme: brand
       text: Installation
@@ -18,33 +18,35 @@ hero:
 
 features:
   - icon: 💬
-    title: Animation cards in the chat stream
-    details: "AI calls the manim_render tool and an animation card appears in the chat stream: real Python runs on Pyodide, plays on a WebGL canvas, with manual playback, code viewing, and export."
+    title: Animation cards
+    details: The AI submits code through the manim_render tool and an animation card with a WebGL canvas appears in the chat stream; manual replay, source viewing, and mp4 export are supported.
   - icon: 🩺
-    title: Dry-run pre-check before presenting
-    details: Before the tool returns, the code is dry-run against an empty bridge; syntax errors, undefined names, and unsupported constructs come back as an error on the spot — a card presented to the user never shows a blank screen.
+    title: Pre-check before presenting
+    details: Before the tool returns, the code is dry-run; syntax errors and unsupported constructs fail on the spot, so blank or broken cards never appear in the chat.
   - icon: 🎛️
-    title: Controlled playback scheduling
-    details: Only newly generated cards play through once; any remount lands directly on the final frame. When several cards are produced in parallel within one step, only the last one plays. The whole page shares a single Python queue and one render scheduler.
+    title: Playback scheduling
+    details: A new card plays through once when it enters the viewport, and remounts land directly on the final frame; when several cards are produced in parallel within one step, only the last one plays; the whole page shares one Python execution queue.
   - icon: 🧪
     title: Laboratory
-    details: "The "Manim 渲染" page in the left navigation is the laboratory: run 19 groups / 236 corpus entries one by one, or write code freely — it also serves as the plugin's manual acceptance page."
-
+    details: A standalone page that runs 236 Manim corpus entries (19 groups) one by one with instant pass/fail marking; free-form code can be written and run as well.
+  - icon: ⚙️
+    title: Settings panel
+    details: Probes the local python3 / manim / ffmpeg environment (export depends on it) and manages the local cache of third-party libraries, with pre-caching and deletion.
 ---
 
-## Getting Started
+## Quick Start
 
-Install the plugin into DeepSeek Harness desktop, then say in a session "用 Manim 画一个单位圆" (draw a unit circle with Manim) — once the AI generates the Python code, an animation card appears in the chat stream and rests on the final frame after playback.
-
-For installation methods, required runtime environment, and network behavior, see [Installation](/en/guide/installation); for playback rules, code viewing, and mp4 export, see [Usage in Chat](/en/guide/usage).
+1. Install the plugin into DeepSeek Harness desktop following [Installation](/en/guide/installation);
+2. Say "用 Manim 画一个单位圆" (draw a unit circle with Manim) in a session — once the AI submits the Python code, an animation card appears in the chat stream and rests on the final frame after playback.
 
 ## All Sections
 
-| Section | Content |
-| --- | --- |
-| [Installation](/en/guide/installation) | Installing the plugin, bundled assets (Pyodide / KaTeX), which features need network or local tools |
-| [Usage in Chat](/en/guide/usage) | How cards come into being, auto-playback rules, manual playback, mp4 export |
-| [Laboratory](/en/guide/lab) | The regression suite of 236 corpus entries: how to run, turbo mode, pass criteria |
-| [Settings Panel](/en/guide/settings) | Local environment probing and Python package cache management |
-| [Third-party Plugin Integration](/en/guide/integrating) | The `manim` service: `check(python)` dry-run pre-check + `createSurface(container)` canvas creation |
-| [Development & Debugging](/en/dev/) | For this plugin's developers: build, tests, development installation, troubleshooting entry points |
+| Group | Section | Content |
+| --- | --- | --- |
+| Getting Started | [What It Is](/en/guide/overview) | Positioning in one sentence, the three parties, the relationship with the core package manim-live, feature list |
+| Getting Started | [Installation](/en/guide/installation) | Install commands, bundled assets (Pyodide / KaTeX), which features need the network or local tools |
+| Getting Started | [Usage in Chat](/en/guide/usage) | How cards come into being, auto-playback rules, manual playback, code viewing, mp4 export |
+| Features | [Laboratory](/en/guide/lab) | The regression suite of 236 corpus entries: how to run, turbo mode, pass criteria |
+| Features | [Settings Panel](/en/guide/settings) | Local environment probing and Python package cache management |
+| Integration | [Third-party Plugin Integration](/en/guide/integrating) | The manim service: check(python) dry-run pre-check + createSurface(container) canvas creation |
+| Development | [Development & Debugging](/en/dev/) | For this plugin's developers: build, tests, development installation, troubleshooting entry points |

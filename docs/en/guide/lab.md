@@ -1,5 +1,7 @@
 # Laboratory
 
+The laboratory lives in the "Manim 渲染" page of the left navigation, used for corpus regression and free-form coding. This page covers its interface, toolbar, pass criteria, progress persistence, and where the corpus files live.
+
 The "Manim 渲染" page in the left navigation is the laboratory: the corpus list on the left, the render preview on the right. Click any entry to run it, or "Render all" to execute in order; pass / fail status is marked on each entry immediately. The laboratory is not a separately implemented debug page — **the canvas uses the same component as the chat cards**, so manual playback, code viewing, export, and other capabilities behave exactly as in chat.
 
 The top of the page offers two views: **Corpus laboratory** and **Custom code** (write and run a free-form piece of Python).

@@ -1,5 +1,7 @@
 # Installation
 
+This page covers the install commands, bundled resources, and network behavior — everything needed to get running. For what the plugin is and how it divides work with the core package manim-live, see [What It Is](/en/guide/overview).
+
 ## Prerequisites
 
 - **DeepSeek Harness desktop** (the plugin integrates through the host's slot / service mechanism; it is meaningless outside the host).

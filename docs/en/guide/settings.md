@@ -1,6 +1,6 @@
 # Settings Panel
 
-The "Manim 渲染" section of the host settings answers two questions: **export depends on the local Manim environment**, and **offline availability depends on which packages are cached locally**.
+The "Manim 渲染" section of the host settings answers two questions: **export depends on the local Manim environment**, and **offline availability depends on which packages are cached locally**. This page covers both: local environment probing and package cache management.
 
 ## Local environment
 

@@ -1,6 +1,6 @@
 # Third-party Plugin Integration
 
-This plugin provides the service `manim`: **runtime + canvas**. Other plugins obtain it via `ctx.get('manim')` — imports between plugins are forbidden; services are the only collaboration surface.
+This page is for developers who want to use the Manim runtime and canvas inside their own plugins. This plugin provides the service `manim`: **runtime + canvas**. Other plugins obtain it via `ctx.get('manim')` — imports between plugins are forbidden; services are the only collaboration surface.
 
 **Soft optional consumption**: when the service is absent (this plugin not installed or disabled), the caller degrades to "no canvas", **without erroring or blocking**:
 
