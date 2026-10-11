@@ -2,7 +2,7 @@
 //
 // 页面的定位是**验收本插件在宿主里的功能表现**——卡片渲染、播放控制、查看代码、导出 mp4、
 // 预检报错，全部走「样例 / 自定义代码」两种模式。样例是打进插件的一小集（见 ./samples），
-// 正式安装里照样可用；236 条那套语料回归网归核心包 manim-live 仓所有，与本页无关。
+// 正式安装里照样可用；239 条那套语料回归网归核心包 manim-live 仓所有，与本页无关。
 //
 // 画布**不在这里**——渲染一律交给 `ManimCard`（聊天流用的同一个组件），
 // 于是重播 / 查看代码 / 导出这些能力天然一致，不会再出现「页面这套和卡片那套不一样」。
@@ -12,6 +12,7 @@
 // 落 localStorage，中途崩了或刷新了不用从头再来。
 import { useEffect, useRef, useState } from 'react'
 import { Eraser, Info, Play, Square, Trash2, Zap } from 'lucide-react'
+import { stateOf, tally } from 'manim-live'
 import { ManimCard, type CardResult } from './components/card'
 import { Segmented } from './components/segmented'
 import { Tip } from './components/tip'
@@ -40,15 +41,6 @@ const TIMEOUT_MS = 60_000
 /** 请求渲染什么：某条样例，或自由编辑里的一段。`run` 是递增的批次号（换 key 才会重跑）。 */
 type Job = { kind: 'sample'; id: string } | { kind: 'free'; code: string }
 type Shown = Job & { run: number; fast: boolean }
-
-/**
- * 是否符合预期。**reject 样例的「失败」才是通过**——那条验的就是「当场拒掉、且说得清」，
- * 跑通了反而说明拦截失效了。红绿点、「通过 N 条」全走这一个判据。
- */
-function isPassed(sample: LabSample, result: LabResult | undefined): boolean {
-  if (result === undefined) return false
-  return sample.reject === true ? !result.ok : result.ok
-}
 
 export function ManimPage({ t }: { t: Translate }) {
   const [restored] = useState(() => loadLab())
@@ -196,8 +188,7 @@ export function ManimPage({ t }: { t: Translate }) {
       ? SAMPLES.find((item) => item.id === shown.id)
       : undefined
 
-  const tried = SAMPLES.filter((item) => results[item.id] !== undefined)
-  const failed = tried.filter((item) => !isPassed(item, results[item.id]))
+  const { tried, failed } = tally(SAMPLES, results)
 
   const fastToggle = (
     <Tip label={t('fastHint')} align="start">
@@ -235,7 +226,7 @@ export function ManimPage({ t }: { t: Translate }) {
           <Tip label={t('expectHint')} align="start">
             <span className="mr-expect-label">{t('expectLabel')}</span>
           </Tip>
-          <span className="mr-expect-text">{currentSample.expect}</span>
+          <span className="mr-expect-text">{currentSample.expectation}</span>
         </div>
       )}
       {current === null
@@ -295,11 +286,11 @@ export function ManimPage({ t }: { t: Translate }) {
               {fastToggle}
               {cacheButton}
               <span className="mr-toolbar-count">
-                {tried.length === 0
+                {tried === 0
                   ? t('sampleCountIdle')
                   : t('sampleCount', {
-                      passed: tried.length - failed.length,
-                      failed: failed.length,
+                      passed: tried - failed,
+                      failed,
                       total: SAMPLES.length,
                     })}
               </span>
@@ -309,8 +300,7 @@ export function ManimPage({ t }: { t: Translate }) {
             <div className="mr-side-scroll">
               <div className="mr-ground-items">
                 {SAMPLES.map((sample) => {
-                  const result = results[sample.id]
-                  const state = result === undefined ? 'idle' : isPassed(sample, result) ? 'ok' : 'fail'
+                  const state = stateOf(sample, results[sample.id])
                   return (
                     <button
                       className="mr-ground-item"
@@ -318,7 +308,7 @@ export function ManimPage({ t }: { t: Translate }) {
                       type="button"
                       data-state={state}
                       aria-pressed={shown?.kind === 'sample' && shown.id === sample.id}
-                      title={[sample.id, sample.expect].join('\n')}
+                      title={[sample.id, sample.expectation].join('\n')}
                       onClick={() => openSample(sample.id)}
                     >
                       <span className="mr-ground-dot" aria-hidden="true" />

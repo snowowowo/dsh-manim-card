@@ -2,7 +2,7 @@
 
 The laboratory lives in the "Manim 渲染" page of the left navigation. It is the **acceptance bench for this plugin's features**: card rendering, playback control, code viewing, mp4 export, and pre-check errors are all verified here. This page covers its interface, sample mode, custom code, and progress persistence.
 
-The samples are a **built-in** small set (bundled into the plugin, available in regular installations too); the 236-entry corpus regression suite belongs to the core package [manim-live](https://github.com/snowowowo/manim-live) repository (`corpus/`) — this plugin does not maintain a corpus.
+The samples are a **built-in** small set (bundled into the plugin, available in regular installations too); the 239-entry corpus regression suite belongs to the core package [manim-live](https://github.com/snowowowo/manim-live) repository (`corpus/`) — this plugin does not maintain a corpus.
 
 ## Interface
 

@@ -161820,6 +161820,28 @@ _sys.modules["manim"] = _dsh_manim
 				}
 			}
 		};
+		/**
+		* 是否符合预期。**`reject` 的「失败」才是通过**——那条验的就是「当场拒掉、且说得清」，
+		* 跑通了反而说明拦截失效了。红绿点、续跑、「通过 N 条」全走这一个判据。
+		*/
+		function isPassed(item, result) {
+			if (result === void 0) return false;
+			return item.expect === "reject" ? !result.ok : result.ok;
+		}
+		/** 清单上的三态（红绿点与徽章读它）。 */
+		function stateOf(item, result) {
+			if (result === void 0) return "idle";
+			return isPassed(item, result) ? "ok" : "fail";
+		}
+		function tally(items, results) {
+			const tried = items.filter((item) => results[item.id] !== void 0);
+			return {
+				tried: tried.length,
+				failed: tried.filter((item) => !isPassed(item, results[item.id])).length,
+				pending: items.filter((item) => !isPassed(item, results[item.id])),
+				untried: items.filter((item) => results[item.id] === void 0)
+			};
+		}
 		/** 已注入的 KaTeX 样式表（按 URL 去重，避免多实例重复插同一份）。 */
 		const katexLinks = /* @__PURE__ */ new Map();
 		/**
@@ -173951,7 +173973,8 @@ XID_Start XIDS`.split(/\s/).map((p) => [w(p), p]));
 			{
 				id: "basic-circle",
 				title: "画一个圆",
-				expect: "画面中央出现一个默认描边色的圆，Create 动画沿轮廓把它描出来。",
+				expect: "ok",
+				expectation: "画面中央出现一个默认描边色的圆，Create 动画沿轮廓把它描出来。",
 				python: String.raw`"""画一个圆
 
 @expect 画面中央出现一个默认描边色的圆，动画是 Create 沿轮廓描出来。"""
@@ -173969,7 +173992,8 @@ class CircleScene(Scene):
 			{
 				id: "animate-transform",
 				title: "Transform 变形",
-				expect: "蓝圆连续变形为黄方（形状与位置同时插值），全程是同一个物体。",
+				expect: "ok",
+				expectation: "蓝圆连续变形为黄方（形状与位置同时插值），全程是同一个物体。",
 				python: String.raw`"""Transform 变形
 
 @expect A 物体连续变形为 B 物体（形状与位置同时插值），过程中两者都是同一个物体。"""
@@ -173989,7 +174013,8 @@ class TransformScene(Scene):
 			{
 				id: "basic-axes-plot",
 				title: "坐标系 + 函数曲线",
-				expect: "一套坐标系上画出绿色抛物线，走势与函数一致、贴着坐标刻度。",
+				expect: "ok",
+				expectation: "一套坐标系上画出绿色抛物线，走势与函数一致、贴着坐标刻度。",
 				python: String.raw`"""坐标系 + 函数曲线
 
 @expect 一套坐标系上画出函数曲线，曲线走势与函数一致、贴着坐标刻度。
@@ -174010,7 +174035,8 @@ class AxesPlotScene(Scene):
 			{
 				id: "text-mathtex-frac",
 				title: "MathTex 分式与根号",
-				expect: "分式有横线、根号盖住被开方数，是公式排版（KaTeX 字体路由也要通）。",
+				expect: "ok",
+				expectation: "分式有横线、根号盖住被开方数，是公式排版（KaTeX 字体路由也要通）。",
 				python: String.raw`"""MathTex 分式与根号
 
 @expect 分式有横线、根号盖住被开方数，排版是公式排版。"""
@@ -174028,7 +174054,8 @@ class MathtexFracScene(Scene):
 			{
 				id: "text-bulleted-list",
 				title: "BulletedList 项目列表",
-				expect: "三行列表整体淡入，行首有项目符号、行距整齐、左对齐。",
+				expect: "ok",
+				expectation: "三行列表整体淡入，行首有项目符号、行距整齐、左对齐。",
 				python: String.raw`"""BulletedList 项目列表
 
 @expect 多行列表每行前有项目符号，行距整齐。
@@ -174054,7 +174081,8 @@ class BulletedListScene(Scene):
 			{
 				id: "graph-bar-chart",
 				title: "柱状图",
-				expect: "三根柱子红 / 蓝 / 绿三色、高低与数据一致、间距均匀，标题在图上方不压图。",
+				expect: "ok",
+				expectation: "三根柱子红 / 蓝 / 绿三色、高低与数据一致、间距均匀，标题在图上方不压图。",
 				python: String.raw`"""柱状图
 
 @expect 三根柱子红 / 蓝 / 绿三色、高低与数据一致、间距均匀，标题在图上方不压图。"""
@@ -174082,7 +174110,8 @@ class BarChartScene(Scene):
 			{
 				id: "updater-traced-path",
 				title: "TracedPath 跟随物体",
-				expect: "红点向右移动时，身后拖出一条黄色轨迹线，与走过的路径重合（极速档下轨迹也要被推进出来）。",
+				expect: "ok",
+				expectation: "红点向右移动时，身后拖出一条黄色轨迹线，与走过的路径重合（极速档下轨迹也要被推进出来）。",
 				python: String.raw`"""TracedPath 跟随物体
 
 @expect 点移动时身后拖出一条轨迹线，轨迹与走过的路径重合。
@@ -174104,7 +174133,8 @@ class TracedPathScene(Scene):
 			{
 				id: "updater-decimal",
 				title: "数字跟着 tracker 变",
-				expect: "右上角的数字实时从 0.0 变到 5.0（跟着 tracker 走，不是播完才跳终值）。",
+				expect: "ok",
+				expectation: "右上角的数字实时从 0.0 变到 5.0（跟着 tracker 走，不是播完才跳终值）。",
 				python: String.raw`"""数字跟着 tracker 变
 
 @expect 数字实时跟着 tracker 变（不是播完才跳到终值）。"""
@@ -174126,7 +174156,8 @@ class DecimalScene(Scene):
 			{
 				id: "lesson-space-cube-camera",
 				title: "空间直角坐标系与立方体",
-				expect: "斜视中的蓝色立方体三面明暗不同；相机先自转再转到另一侧，终帧看到另一组侧面；标题钉在左上角不跟相机跑。",
+				expect: "ok",
+				expectation: "斜视中的蓝色立方体三面明暗不同；相机先自转再转到另一侧，终帧看到另一组侧面；标题钉在左上角不跟相机跑。",
 				python: String.raw`"""空间直角坐标系与立方体
 
 @expect 斜视看一个棱长 2 的立方体：三个面同时可见、明暗各不同（有光有深度，不是一块黑）；
@@ -174176,8 +174207,8 @@ class SpaceCubeScene(ThreeDScene):
 			{
 				id: "reject-unknown-class",
 				title: "引用未定义的名字（应当被拒绝）",
-				expect: "不应当渲染：引用了 manim-web 没有的名字 FancyWidget，预检应当场报错并说明原因——这条渲染失败才算通过。",
-				reject: true,
+				expect: "reject",
+				expectation: "不应当渲染：引用了 manim-web 没有的名字 FancyWidget，预检应当场报错并说明原因——这条渲染失败才算通过。",
 				python: String.raw`"""manim-web 没有的类
 
 @expect 不渲染：预检应当**当场**拒绝，报错要提到「FancyWidget」并给出可读的原因或替代写法。
@@ -174210,14 +174241,6 @@ self.play(Write(eq))
 `;
 		/** 单次渲染的最长等待：卡住不能把页面吊死。 */
 		const TIMEOUT_MS = 6e4;
-		/**
-		* 是否符合预期。**reject 样例的「失败」才是通过**——那条验的就是「当场拒掉、且说得清」，
-		* 跑通了反而说明拦截失效了。红绿点、「通过 N 条」全走这一个判据。
-		*/
-		function isPassed(sample, result) {
-			if (result === void 0) return false;
-			return sample.reject === true ? !result.ok : result.ok;
-		}
 		function ManimPage({ t }) {
 			const [restored] = (0, react.useState)(() => loadLab());
 			const [mode, setMode] = (0, react.useState)(restored.mode ?? "samples");
@@ -174391,8 +174414,7 @@ self.play(Write(eq))
 			})();
 			/** 正在展示的这条样例（自由编辑时为 undefined）——expect 对照条挂在它上面。 */
 			const currentSample = shown !== null && shown.kind === "sample" && mode === "samples" ? SAMPLES.find((item) => item.id === shown.id) : void 0;
-			const tried = SAMPLES.filter((item) => results[item.id] !== void 0);
-			const failed = tried.filter((item) => !isPassed(item, results[item.id]));
+			const { tried, failed } = tally(SAMPLES, results);
 			const fastToggle = /* @__PURE__ */ (0, react_jsx_runtime.jsx)(Tip, {
 				label: t("fastHint"),
 				align: "start",
@@ -174437,7 +174459,7 @@ self.play(Write(eq))
 						})
 					}), /* @__PURE__ */ (0, react_jsx_runtime.jsx)("span", {
 						className: "mr-expect-text",
-						children: currentSample.expect
+						children: currentSample.expectation
 					})]
 				}), current === null ? /* @__PURE__ */ (0, react_jsx_runtime.jsx)("p", {
 					className: "mr-empty",
@@ -174524,9 +174546,9 @@ self.play(Write(eq))
 								cacheButton,
 								/* @__PURE__ */ (0, react_jsx_runtime.jsx)("span", {
 									className: "mr-toolbar-count",
-									children: tried.length === 0 ? t("sampleCountIdle") : t("sampleCount", {
-										passed: tried.length - failed.length,
-										failed: failed.length,
+									children: tried === 0 ? t("sampleCountIdle") : t("sampleCount", {
+										passed: tried - failed,
+										failed,
 										total: SAMPLES.length
 									})
 								}),
@@ -174541,14 +174563,13 @@ self.play(Write(eq))
 							children: /* @__PURE__ */ (0, react_jsx_runtime.jsx)("div", {
 								className: "mr-ground-items",
 								children: SAMPLES.map((sample) => {
-									const result = results[sample.id];
-									const state = result === void 0 ? "idle" : isPassed(sample, result) ? "ok" : "fail";
+									const state = stateOf(sample, results[sample.id]);
 									return /* @__PURE__ */ (0, react_jsx_runtime.jsxs)("button", {
 										className: "mr-ground-item",
 										type: "button",
 										"data-state": state,
 										"aria-pressed": shown?.kind === "sample" && shown.id === sample.id,
-										title: [sample.id, sample.expect].join("\n"),
+										title: [sample.id, sample.expectation].join("\n"),
 										onClick: () => openSample(sample.id),
 										children: [
 											/* @__PURE__ */ (0, react_jsx_runtime.jsx)("span", {

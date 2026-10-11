@@ -2,22 +2,26 @@
  * 实验场的**内置样例集**：一小组覆盖面齐全的 Manim 写法，打进插件、正式安装也可用。
  *
  * 来源：每条 python 逐字取自核心包 `manim-live` 仓 `corpus/examples/` 里的语料文件
- * （含文件头的 @expect/@note 断言，出处见每条上方的注释）；title 与 expect 也从
+ * （含文件头的 @expect/@note 断言，出处见每条上方的注释）；title 与 expectation 也从
  * 语料文件头提炼。想换样例就去那边挑一条搬过来——**不在这里新写代码**，搬进来的
  * 都是回归网跑过、真浏览器截图验过的写法。
  *
- * 语料回归网（236 条那套）归核心包仓所有，与本页无关：这里只验「本插件在宿主里的
+ * 语料回归网（239 条那套）归核心包仓所有，与本页无关：这里只验「本插件在宿主里的
  * 功能表现」（卡片渲染 / 播放控制 / 查看代码 / 导出 / 预检报错），所以十来条就够。
  */
+import type { VerdictCase } from 'manim-live'
 
-export interface LabSample {
+/**
+ * 字段名与核心包的 `ManimExample` 对齐（`expect` 是判据、`expectation` 是给人看的那句话），
+ * 于是这一份样例能**直接**喂给核心包的 `isPassed` / `stateOf` / `tally`——判定口径只有一处，
+ * 不会长成「插件这边算通过、演示台那边算失败」。
+ */
+export interface LabSample extends VerdictCase {
   id: string
   title: string
   /** 人工验收对照用的一句「应该看到什么」。 */
-  expect: string
+  expectation: string
   python: string
-  /** 坏代码样例：渲染失败才算通过（验的是预检当场拒绝并说明原因那条路）。 */
-  reject?: true
 }
 
 export const SAMPLES: readonly LabSample[] = [
@@ -25,7 +29,8 @@ export const SAMPLES: readonly LabSample[] = [
   {
     id: 'basic-circle',
     title: '画一个圆',
-    expect: '画面中央出现一个默认描边色的圆，Create 动画沿轮廓把它描出来。',
+    expect: 'ok',
+    expectation: '画面中央出现一个默认描边色的圆，Create 动画沿轮廓把它描出来。',
     python: String.raw`"""画一个圆
 
 @expect 画面中央出现一个默认描边色的圆，动画是 Create 沿轮廓描出来。"""
@@ -44,7 +49,8 @@ class CircleScene(Scene):
   {
     id: 'animate-transform',
     title: 'Transform 变形',
-    expect: '蓝圆连续变形为黄方（形状与位置同时插值），全程是同一个物体。',
+    expect: 'ok',
+    expectation: '蓝圆连续变形为黄方（形状与位置同时插值），全程是同一个物体。',
     python: String.raw`"""Transform 变形
 
 @expect A 物体连续变形为 B 物体（形状与位置同时插值），过程中两者都是同一个物体。"""
@@ -65,7 +71,8 @@ class TransformScene(Scene):
   {
     id: 'basic-axes-plot',
     title: '坐标系 + 函数曲线',
-    expect: '一套坐标系上画出绿色抛物线，走势与函数一致、贴着坐标刻度。',
+    expect: 'ok',
+    expectation: '一套坐标系上画出绿色抛物线，走势与函数一致、贴着坐标刻度。',
     python: String.raw`"""坐标系 + 函数曲线
 
 @expect 一套坐标系上画出函数曲线，曲线走势与函数一致、贴着坐标刻度。
@@ -87,7 +94,8 @@ class AxesPlotScene(Scene):
   {
     id: 'text-mathtex-frac',
     title: 'MathTex 分式与根号',
-    expect: '分式有横线、根号盖住被开方数，是公式排版（KaTeX 字体路由也要通）。',
+    expect: 'ok',
+    expectation: '分式有横线、根号盖住被开方数，是公式排版（KaTeX 字体路由也要通）。',
     python: String.raw`"""MathTex 分式与根号
 
 @expect 分式有横线、根号盖住被开方数，排版是公式排版。"""
@@ -106,7 +114,8 @@ class MathtexFracScene(Scene):
   {
     id: 'text-bulleted-list',
     title: 'BulletedList 项目列表',
-    expect: '三行列表整体淡入，行首有项目符号、行距整齐、左对齐。',
+    expect: 'ok',
+    expectation: '三行列表整体淡入，行首有项目符号、行距整齐、左对齐。',
     python: String.raw`"""BulletedList 项目列表
 
 @expect 多行列表每行前有项目符号，行距整齐。
@@ -133,7 +142,8 @@ class BulletedListScene(Scene):
   {
     id: 'graph-bar-chart',
     title: '柱状图',
-    expect: '三根柱子红 / 蓝 / 绿三色、高低与数据一致、间距均匀，标题在图上方不压图。',
+    expect: 'ok',
+    expectation: '三根柱子红 / 蓝 / 绿三色、高低与数据一致、间距均匀，标题在图上方不压图。',
     python: String.raw`"""柱状图
 
 @expect 三根柱子红 / 蓝 / 绿三色、高低与数据一致、间距均匀，标题在图上方不压图。"""
@@ -162,7 +172,8 @@ class BarChartScene(Scene):
   {
     id: 'updater-traced-path',
     title: 'TracedPath 跟随物体',
-    expect: '红点向右移动时，身后拖出一条黄色轨迹线，与走过的路径重合（极速档下轨迹也要被推进出来）。',
+    expect: 'ok',
+    expectation: '红点向右移动时，身后拖出一条黄色轨迹线，与走过的路径重合（极速档下轨迹也要被推进出来）。',
     python: String.raw`"""TracedPath 跟随物体
 
 @expect 点移动时身后拖出一条轨迹线，轨迹与走过的路径重合。
@@ -185,7 +196,8 @@ class TracedPathScene(Scene):
   {
     id: 'updater-decimal',
     title: '数字跟着 tracker 变',
-    expect: '右上角的数字实时从 0.0 变到 5.0（跟着 tracker 走，不是播完才跳终值）。',
+    expect: 'ok',
+    expectation: '右上角的数字实时从 0.0 变到 5.0（跟着 tracker 走，不是播完才跳终值）。',
     python: String.raw`"""数字跟着 tracker 变
 
 @expect 数字实时跟着 tracker 变（不是播完才跳到终值）。"""
@@ -208,7 +220,8 @@ class DecimalScene(Scene):
   {
     id: 'lesson-space-cube-camera',
     title: '空间直角坐标系与立方体',
-    expect: '斜视中的蓝色立方体三面明暗不同；相机先自转再转到另一侧，终帧看到另一组侧面；标题钉在左上角不跟相机跑。',
+    expect: 'ok',
+    expectation: '斜视中的蓝色立方体三面明暗不同；相机先自转再转到另一侧，终帧看到另一组侧面；标题钉在左上角不跟相机跑。',
     python: String.raw`"""空间直角坐标系与立方体
 
 @expect 斜视看一个棱长 2 的立方体：三个面同时可见、明暗各不同（有光有深度，不是一块黑）；
@@ -259,8 +272,9 @@ class SpaceCubeScene(ThreeDScene):
   {
     id: 'reject-unknown-class',
     title: '引用未定义的名字（应当被拒绝）',
-    expect: '不应当渲染：引用了 manim-web 没有的名字 FancyWidget，预检应当场报错并说明原因——这条渲染失败才算通过。',
-    reject: true,
+    // 坏代码样例：渲染**失败**才算通过（验的是预检当场拒绝并说明原因那条路）。
+    expect: 'reject',
+    expectation: '不应当渲染：引用了 manim-web 没有的名字 FancyWidget，预检应当场报错并说明原因——这条渲染失败才算通过。',
     python: String.raw`"""manim-web 没有的类
 
 @expect 不渲染：预检应当**当场**拒绝，报错要提到「FancyWidget」并给出可读的原因或替代写法。
