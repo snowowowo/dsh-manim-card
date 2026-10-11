@@ -160550,7 +160550,7 @@ _sys.modules["manim"] = _dsh_manim
 		* 这段运行在轮到自己时已经作废：调用方拆了画布、或压根没轮上（见下面的队列）。
 		*
 		* 单独一类而不是普通 Error：调用方要能把它和「用户代码跑错」分开——
-		* 前者一个字都不该显示，后者必须原样报出来。
+		* 前者不向用户显示，后者必须原样上报。
 		*/
 		var PyRunCancelled = class extends Error {
 			constructor() {
@@ -160627,7 +160627,7 @@ _sys.modules["manim"] = _dsh_manim
 		/**
 		* 预热：把解释器与适配层拉起来（Pyodide 本体 + numpy + manim shim）。
 		*
-		* 为什么要有它：Pyodide 是**约 20 MB** 的东西，不给预热，用户第一次点渲染会以为卡死了。
+		* 为什么要有它：Pyodide 核心约 13 MB、预热还会带上 numpy（约 3 MB）。不预热时，第一次渲染需等待完整下载结束，期间界面无进展。
 		* 走同一条队列，所以预热期间提交的代码会排在它后面，不会两段同时初始化。
 		* 不跑任何用户代码——只把运行时准备好。
 		*/
@@ -161506,7 +161506,7 @@ _sys.modules["manim"] = _dsh_manim
 			return {
 				run(code, handlers = {}) {
 					const job = tail.then(async () => {
-						if (handlers.context !== void 0) throw new Error("manim-live：执行上下文（run 的 context 参数）排在 Phase 3，尚未实现——现在每次 run 都是独立执行，变量不跨次保留。");
+						if (handlers.context !== void 0) throw new Error("manim-live：执行上下文（run 的 context 参数）尚未实现——现在每次 run 都是独立执行，变量不跨次保留。");
 						if (disposed) throw new PyRunCancelled();
 						await execute(code, handlers);
 						lastCode = code;
