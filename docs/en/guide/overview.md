@@ -6,16 +6,16 @@ This page gives the positioning of dsh-manim-live, how the three parties on the 
 
 dsh-manim-live is a plugin for DeepSeek Harness ("the host"): AI writes **standard Manim (Python) code** in the conversation, and a playable animation appears right in the chat stream.
 
-## Why not native Manim or manim-web directly
+## Why not native Manim directly
 
-Native Manim runs real Python, but rendering depends on a local environment (manim CLI + LaTeX + ffmpeg) — it cannot live inside a chat stream. manim-web renders in the browser, but its API is its own, and AI-generated standard Manim code won't run on it — **AI training corpora are full of standard Manim**. This plugin's pipeline combines both strengths: the AI writes standard Manim code, Pyodide executes it in the browser, and manim-web renders it — no local environment at any point. Details of the comparison are in the core package's [What It Is](https://snowowowo.github.io/manim-live/guide/overview).
+Native Manim rendering depends on a local environment (Python + manim + ffmpeg) and produces video files — it cannot live inside a chat stream, let alone keep up with an AI drawing while explaining. This plugin's pipeline: the AI writes **standard Manim code** and it is **rendered in real time in the browser** — the same code, with no local environment anywhere. A side-by-side comparison is in the core package's [What It Is](https://snowowowo.github.io/manim-live/guide/overview).
 
 ## Three parties, three jobs
 
 From "AI writes code" to "an animation in the chat", three parties each own one stretch of the path:
 
 - **The host provides the conversation and chat stream** — the AI produces code here and the animation cards appear here; the plugin integrates through the host's slot / service mechanism and is meaningless outside the host.
-- **The core package manim-live provides canvas and execution** — the Pyodide runtime (real CPython in the browser), the manim adapter layer, the supported surface, and the WebGL canvas all live in that independent npm package.
+- **The core package manim-live provides canvas and execution** — the full ability to execute Python in the browser and render to a WebGL canvas in real time lives in that independent npm package.
 - **This plugin provides host integration and the feature layer** — Host routes distribute the bundled resources (Pyodide / KaTeX) same-origin, registers the `manim_render` tool and the card UI, and builds pre-checks, playback scheduling, the laboratory, and mp4 export on top of the core package.
 
 ## Relationship with the core package manim-live

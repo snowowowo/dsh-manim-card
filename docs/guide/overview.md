@@ -6,17 +6,17 @@
 
 dsh-manim-live 是 DeepSeek Harness（下称「宿主」）的插件：AI 在会话里写**标准 Manim（Python）代码**，聊天流里当场出现可播放的动画。
 
-## 为什么不直接用原生 Manim 或 manim-web
+## 为什么不直接用原生 Manim
 
-原生 Manim 跑的是真 Python，但渲染依赖本机环境（manim CLI + LaTeX + ffmpeg），进不了聊天流；manim-web 能在浏览器里渲染，但 API 是它自有的一套，AI 生成的标准 Manim 代码跑不了——**AI 的训练语料里全是标准 Manim 写法**。本插件的链路把两者优点拼齐：AI 写标准 Manim 代码，Pyodide 在浏览器里执行、manim-web 渲染，全程无需本机环境。对比细节见核心包文档的[它是什么](https://snowowowo.github.io/manim-live/guide/overview)。
+原生 Manim 渲染依赖本机环境（Python + manim + ffmpeg），产出是视频文件——进不了聊天流，更跟不上 AI 边讲边画。本插件的链路：AI 写**标准 Manim 代码**，在浏览器里**实时渲染**——同一份代码，无需任何本机环境。逐项对比见核心包文档的[它是什么](https://snowowowo.github.io/manim-live/guide/overview)。
 
 ## 三件事拆解
 
 从「AI 写代码」到「聊天里看到动画」，链路上有三方，各管一段：
 
 - **宿主提供会话与聊天流**——AI 在这里产出代码，动画卡片也出现在这里；插件以宿主的 slot / 服务机制接入，离开宿主没有意义。
-- **核心包 manim-live 提供画布与执行**——Pyodide 运行时（浏览器内跑真 CPython）、manim 适配层、支持面与 WebGL 画布都在这个独立 npm 包里。
-- **本插件做宿主接入与功能层**——Host 路由同源分发随包资源（Pyodide / KaTeX），注册 `manim_render` 工具与卡片 UI，并在核心包之上实现预检、播放调度、实验场与 mp4 导出。
+- **核心包 manim-live 提供画布与执行**——在浏览器里执行 Python 并实时渲染 WebGL 画布的全部能力，都在这个独立 npm 包里。
+- **本插件做宿主接入与功能层**——Host 路由同源分发随包资源，注册 `manim_render` 工具与卡片 UI，并在核心包之上实现预检、播放调度、实验场与 mp4 导出。
 
 ## 与核心包 manim-live 的关系
 
