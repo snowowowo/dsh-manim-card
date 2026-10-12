@@ -15,8 +15,8 @@ importers:
         specifier: ^0.548.0
         version: 0.548.0(react@18.3.1)
       manim-live:
-        specifier: ^0.1.0
-        version: 0.1.0(@types/node@22.20.5)(react@18.3.1)(typescript@7.0.2)
+        specifier: ^0.2.0
+        version: 0.2.0(@types/node@22.20.5)(react@18.3.1)(typescript@7.0.2)
       react:
         specifier: ^18.2.0
         version: 18.3.1
@@ -1132,8 +1132,8 @@ packages:
   magicast@0.5.5:
     resolution: {integrity: sha512-UicdXN8zQ3JHlxVq+28afMXPr1z7WNY6+7EJnzTdQWkTAlMLF5fNCCKxJHBQwGaNGR11581EiQmQzx73+MvszA==}
 
-  manim-live@0.1.0:
-    resolution: {integrity: sha512-PX+s2mY1VhO2et16e0dYOhKqd/OjsYYOdM43Lm2bYIgLumyPC0c/FzmTugVHd58+6G72QbElAJj8n+KmvPfMuQ==}
+  manim-live@0.2.0:
+    resolution: {integrity: sha512-yjFIU9zDWuByAxiwsc31LakUT+ggvztinrJ/oZQQDIVifzyzl/EUqf/MgXY4FHns0v4ZoIlHQCC8jOr/9p6WxA==}
     engines: {node: '>=20'}
 
   manim-web@0.3.24:
@@ -2409,7 +2409,7 @@ snapshots:
       '@babel/types': 7.29.8
       source-map-js: 1.2.2
 
-  manim-live@0.1.0(@types/node@22.20.5)(react@18.3.1)(typescript@7.0.2):
+  manim-live@0.2.0(@types/node@22.20.5)(react@18.3.1)(typescript@7.0.2):
     dependencies:
       manim-web: 0.3.24(@types/node@22.20.5)(react@18.3.1)(typescript@7.0.2)
     transitivePeerDependencies:
