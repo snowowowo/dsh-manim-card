@@ -1,7 +1,7 @@
 # 文档站（VitePress）
 
 给 GitHub Pages 用的静态文档：插件怎么装、在聊天里怎么用、实验场与设置面板、
-第三方插件怎么接入 `manim` 服务。
+第三方插件怎么接入 `manim` 服务，以及 `manim` 服务与宿主工具的完整 API 参考。
 
 **它与插件的依赖图零关系**——本目录有自己的 `package.json`，依赖只有 `vitepress` 一项；
 不在插件的 `files` 白名单里，不进构建产物，`tsconfig.json` 也不覆盖它。

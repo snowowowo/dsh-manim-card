@@ -1,14 +1,22 @@
 # Installation
 
-This page covers the install commands, bundled resources, and network behavior — everything needed to get running. For what the plugin is and how it divides work with the core package manim-live, see [What It Is](/en/guide/overview).
+This page covers prerequisites, install commands, bundled assets and network behaviour. For what the plugin is and how it divides work with the core package manim-live, see [What It Is](/en/guide/overview).
 
 ## Prerequisites
 
-- **DeepSeek Harness desktop** (the plugin integrates through the host's slot / service mechanism; it is meaningless outside the host).
-- The browser side needs **WebGL** (the canvas renders with three.js) and **WebAssembly** (Pyodide runs real CPython) — the WebView bundled with the host desktop app satisfies both.
-- Basic features **do not require Python installed locally**: execution happens in Pyodide in the browser. Only two features touch the local machine:
-  - **mp4 export**: requires locally installed `manim` CLI + `ffmpeg` (whatever is missing is clearly stated by the settings panel and the export button);
-  - **On-demand fetching of third-party Python libraries** (things like `import pandas`): fetched over the network once on first use, then served offline from cache — see below.
+| Requirement | Notes |
+| --- | --- |
+| DeepSeek Harness desktop | The plugin integrates through the host's slot and service systems; it is meaningless outside the host |
+| **WebGL** | The canvas renders with three.js; without it no picture can be produced |
+| **WebAssembly** | The basis for Pyodide running real CPython; without it no rendering starts at all |
+| Local Python | **Not required.** Execution happens in Pyodide inside the browser |
+
+The WebView bundled with the host desktop app satisfies both WebGL and WebAssembly; both probe results are visible directly in the "Browser runtime" card of the Settings panel, see [Settings Panel](/en/guide/settings#browser-runtime).
+
+Only two things touch the local machine, and neither is about rendering:
+
+- **mp4 export**: requires the locally installed `manim` CLI and `ffmpeg`. Whatever is missing is stated plainly by the Settings panel and the export button, see [Usage in Chat](/en/guide/usage#mp4-export).
+- **On-demand fetching of third-party Python libraries** (things like `import pandas`): fetched once online on first use, then served offline from cache — see below.
 
 ## Install
 
@@ -26,23 +34,29 @@ dsh plugin add github:snowowowo/dsh-manim-live
 ```
 
 ::: tip Not yet verified
-The npm publishing and GitHub direct-install paths have not been verified end to end (the repository is currently private). For the current development-time setup
-(symlink + patch entry + HMR), see [Development & Debugging](/en/dev/). This page will be updated once they land.
+The npm publishing and GitHub direct-install paths have not been verified end to end (the repository is currently private). For the development-time setup (symlink + patch entry + HMR), see [Development & Debugging](/en/dev/). This page will be updated once they land.
 :::
 
-## Bundled assets — no extra setup
+## Bundled assets
 
-- **The Pyodide distribution ships with the package** (`assets/pyodide/`): core wasm + standard library + numpy / sympy / mpmath — after installing the plugin, basic figures can be drawn even offline.
-- **KaTeX styles and fonts ship with the package** (`assets/katex/`): used by `MathTex` formula rendering.
-- Both are served same-origin by the plugin's Host routes; no external CDN is involved.
+Two runtime assets ship with the plugin, so nothing else has to be prepared and no external CDN is involved:
+
+| Asset | Location | Purpose |
+| --- | --- | --- |
+| Pyodide distribution | `assets/pyodide/` | Core wasm + standard library + numpy / sympy / mpmath. Basic figures can be drawn offline |
+| KaTeX styles and fonts | `assets/katex/` | Needed by formulas typeset with `MathTex` / `Tex` |
+
+Both are served **same-origin** by the plugin's Host routes: the browser side never talks to a public CDN, and the fetch root is the plugin's own route.
+
+## What the first run waits for
+
+Before the first render, the Pyodide core (about 13 MB) and the bundled numpy (about 3 MB) have to be fetched into the browser; during that time the interface shows only a skeleton. That wait can be moved forward:
+
+- press "Warm up now" on the Laboratory status bar, see [Laboratory](/en/guide/lab#environment-status-bar);
+- or read the "Python runtime" row in the Settings panel's "Browser runtime" card, which reports the current phase.
 
 ## What needs the network, on demand
 
-**Third-party libraries not bundled with the package**, such as `import pandas`: fetched over the network on first use, verified by sha256, and stored in `~/.dsh/cache/manim-live/pyodide/`; afterwards served offline from cache. While fetching, the card shows a "loading X…" hint. To prefetch or clear these, go to the "Manim 渲染" section of the settings panel — see [Settings Panel](/en/guide/settings).
+**Third-party libraries not bundled with the package**, such as `import pandas`: fetched over the network on first use, verified by sha256, and stored in `~/.dsh/cache/manim-live/pyodide/`; afterwards served offline from cache. While fetching, the card shows a "loading X…" hint, and the outcome is also reflected in the package-fetch entry of the environment status.
 
-## Relationship with the core package
-
-The core execution and rendering capabilities (Pyodide runtime, manim adaptation layer, supported surface, canvas) live in the standalone npm package
-[manim-live](https://github.com/snowowowo/manim-live) ([docs site](https://snowowowo.github.io/manim-live/));
-this plugin handles host integration and asset distribution, and implements the pre-check, playback scheduling, laboratory, and export on top of it.
-To use the canvas outside the host, in your own pages, refer directly to the core package's documentation.
+To prefetch or clear these, go to the "Package cache" block of the Settings panel, see [Settings Panel](/en/guide/settings#package-cache). In an offline environment an uncached library cannot be fetched; rendering then fails with a fetch error whose reason is the same sentence as `packages.lastError` in the environment status.

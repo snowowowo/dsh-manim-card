@@ -1,37 +1,70 @@
 # What It Is
 
-This page gives the positioning of dsh-manim-live, how the three parties on the execution path divide the work, its relationship with the core package manim-live, and a feature list. If you just want to install and use it, go straight to [Installation](/en/guide/installation) and [Usage in Chat](/en/guide/usage).
+This page gives the positioning of dsh-manim-live, how the three parties on the execution path divide the work, its boundary with the core package manim-live, and the complete capability list. To install and use it, go straight to [Installation](/en/guide/installation) and [Usage in Chat](/en/guide/usage).
 
 ## One-sentence positioning
 
-dsh-manim-live is a plugin for DeepSeek Harness ("the host"): AI writes **standard Manim (Python) code** in the conversation, and a playable animation appears right in the chat stream.
+dsh-manim-live is a plugin for DeepSeek Harness ("the host"): AI writes **standard Manim (Python) code** in a conversation, and a playable, code-inspectable, mp4-exportable animation card appears right in the chat stream.
 
-## Why not native Manim directly
+## Compared with native Manim
 
-Native Manim rendering depends on a local environment (Python + manim + ffmpeg) and produces video files — it cannot live inside a chat stream, let alone keep up with an AI drawing while explaining. This plugin's pipeline: the AI writes **standard Manim code** and it is **rendered in real time in the browser** — the same code, with no local environment anywhere. A side-by-side comparison is in the core package's [What It Is](https://snowowowo.github.io/manim-live/guide/overview).
+The code is the same standard Manim Python; only "where it runs and how a picture comes out" differs:
+
+| | Native Manim (CLI) | This plugin |
+| --- | --- | --- |
+| Code written | Standard Manim Python | The same code, runnable as-is |
+| Execution environment | Python + manim + ffmpeg installed locally (plus LaTeX for formulas) | Pyodide inside the browser, zero local install |
+| How a picture comes out | Rendered offline to mp4; playback and embedding are a separate problem | Rendered live inside the chat stream — write it and it plays |
+| Pacing with the explanation | One render must wait for the whole pipeline | Plays when it enters the viewport; the precheck stops broken code before rendering |
+| mp4 export | Produced directly by the CLI | Reuses the local manim CLI for real rendering; the file lands in "Downloads" |
+| Deployment cost | Install the environment on every machine, or run a render server | Install one plugin; runtime assets ship with it and no external CDN is involved |
+
+The usable surface is the common subset of Manim CE; coverage and gaps follow the core package's [Support Surface](https://snowowowo.github.io/manim-live/en/guide/support).
 
 ## Three parties, three jobs
 
-From "AI writes code" to "an animation in the chat", three parties each own one stretch of the path:
+From "AI writes code" to "an animation in the chat", three parties each own one stretch:
 
-- **The host provides the conversation and chat stream** — the AI produces code here and the animation cards appear here; the plugin integrates through the host's slot / service mechanism and is meaningless outside the host.
-- **The core package manim-live provides canvas and execution** — the full ability to execute Python in the browser and render to a WebGL canvas in real time lives in that independent npm package.
-- **This plugin provides host integration and the feature layer** — Host routes distribute the bundled resources (Pyodide / KaTeX) same-origin, registers the `manim_render` tool and the card UI, and builds pre-checks, playback scheduling, the laboratory, and mp4 export on top of the core package.
+| Party | Owns | Does not own |
+| --- | --- | --- |
+| The host | The conversation and chat stream, the slot and service systems, invocation and logging of `manim_render` | Rendering, Manim syntax, the local environment |
+| Core package [manim-live](https://snowowowo.github.io/manim-live/) | Python execution in the browser, the manim adaptation layer, the WebGL canvas, environment status verdicts | Host integration, card UI, export, asset routes |
+| This plugin | Host integration (routes, tool, slots), cards and playback scheduling, the Laboratory, the Settings panel, mp4 export, the cross-plugin service | Rendering and execution themselves |
+
+Three outward surfaces are split by consumer: the [`manim_render` tool](/en/api/tool) for the model, the [manim service](/en/api/service) for other plugins, and the chat cards plus Laboratory for people. This plugin exports no JavaScript module that can be `import`ed — imports between plugins are forbidden by the host's convention.
 
 ## Relationship with the core package manim-live
 
 [manim-live](https://github.com/snowowowo/manim-live) ([docs](https://snowowowo.github.io/manim-live/)) is an independent npm package holding the core execution and rendering capabilities; this plugin is its integration layer inside the host. Choose by scenario:
 
-- Want the AI to draw animations in host conversations, see cards, and export mp4 — use this plugin;
-- Want the same canvas in your own page, outside the host — depend on the core package manim-live directly and read its docs.
+| You want | Use |
+| --- | --- |
+| AI drawing animations in host conversations, cards, mp4 export | This plugin |
+| The same canvas inside your own page or product, outside the host | The core package manim-live |
+| The canvas and runtime already inside the host, from your own plugin | This plugin's [manim service](/en/guide/integrating) |
+| Batch regression over a corpus (239 cases) | `corpus/` in the core package repository; this plugin maintains no corpus |
 
-## Feature list
+## Capability list
 
-| Feature | Entry | Notes |
+| Capability | Entry | Notes |
 | --- | --- | --- |
-| Animation cards | Chat stream | Appear after the AI submits code via `manim_render`; support playback, code viewing, mp4 export — see [Usage in Chat](/en/guide/usage) |
-| Dry-run pre-check | Inside the tool | The code is checked before the tool returns; syntax errors, undefined names, and unsupported constructs return `error` immediately |
-| Playback scheduling | Inside the plugin | New cards play once in full, remounts fall to the last frame, active canvases beyond 8 are reclaimed by distance, and one Python queue serves the whole page |
-| Laboratory | "Manim 渲染" in the left navigation | An acceptance bench with a built-in sample set plus free-form code — see [Laboratory](/en/guide/lab) |
-| Settings panel | "Manim 渲染" in host settings | Local environment probing and Python package cache management — see [Settings Panel](/en/guide/settings) |
-| manim service | `ctx.get('manim')` | For other plugins: check(python) dry-run pre-check + createSurface(container) canvas — see [Third-party Plugin Integration](/en/guide/integrating) |
+| Animation cards | Chat stream | Appear after the AI calls `manim_render`; support playback, code viewing, mp4 export. See [Usage in Chat](/en/guide/usage) |
+| Dry-run precheck | Inside the tool | Runs once in a real interpreter on the Node side before the tool returns; syntax errors, undefined names and unsupported constructs come back as `error` immediately. See [Host Tool](/en/api/tool) |
+| Playback scheduling | Inside the plugin | A new card plays once in full when it first enters the viewport, remounts land on the last frame, active canvases beyond 8 are reclaimed by distance, and one Python queue serves the whole page. See [Usage in Chat](/en/guide/usage#auto-playback-rules) |
+| Environment status | Laboratory status bar, Settings panel, `ctx.get('manim')` | Browser capabilities, runtime, formula stylesheet and package fetches — four condition groups with actionable hints. See [Laboratory](/en/guide/lab#environment-status-bar) |
+| Laboratory | "Manim 渲染" in the left navigation | An acceptance bench with a built-in sample set plus free-form code. See [Laboratory](/en/guide/lab) |
+| Settings panel | "Manim 渲染" in host settings | Browser runtime, local environment probing, package cache management. See [Settings Panel](/en/guide/settings) |
+| manim service | `ctx.get('manim')` | For other plugins: precheck, canvas, environment status snapshot and subscription. See [Third-party Plugin Integration](/en/guide/integrating) |
+
+## Not a fit for
+
+- Server-side batch video rendering: use the native manim CLI pipeline; this plugin's precheck and export depend on the host's Node-side runtime and the local CLI respectively, neither of which targets batch output.
+- Standalone products outside the host: depend on the core package manim-live directly.
+- The full Manim surface: follow the core package's support surface.
+
+## Where to start
+
+- Install it and get a first card → [Installation](/en/guide/installation), [Usage in Chat](/en/guide/usage)
+- Verify the plugin's features work → [Laboratory](/en/guide/lab)
+- Check this machine's conditions (can it render, can it export) → [Settings Panel](/en/guide/settings)
+- Use a canvas in your own plugin → [Third-party Plugin Integration](/en/guide/integrating), interface detail in the [API Reference](/en/api/)

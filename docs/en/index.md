@@ -31,7 +31,13 @@ features:
     details: "An acceptance bench with a built-in sample set plus free-form code: verify card rendering, playback control, export, and pre-check errors one by one."
   - icon: ⚙️
     title: Settings panel
-    details: Probes the local python3 / manim / ffmpeg environment (export depends on it) and manages the local cache of third-party libraries, with pre-caching and deletion.
+    details: The browser runtime (Python runtime / formula styles / WebGL / WASM) and the local python3 / manim / ffmpeg environment sit in two cards; the local cache of third-party libraries supports pre-caching and deletion.
+  - icon: 🚦
+    title: Environment status
+    details: The four condition groups deciding "can it render, can it export" are collected into one readable status, shared by the Laboratory status bar, the Settings panel and chat cards, with an actionable remedy for each unmet item.
+  - icon: 🔌
+    title: The manim service
+    details: Other plugins obtain the runtime and a canvas via ctx.get('manim') — dry-run precheck, canvas creation, environment status, and status subscription; when the service is absent callers neither error nor block.
 ---
 
 ## Quick Start
@@ -43,10 +49,14 @@ features:
 
 | Group | Section | Content |
 | --- | --- | --- |
-| Getting Started | [What It Is](/en/guide/overview) | Positioning in one sentence, the three parties, the relationship with the core package manim-live, feature list |
-| Getting Started | [Installation](/en/guide/installation) | Install commands, bundled assets (Pyodide / KaTeX), which features need the network or local tools |
-| Getting Started | [Usage in Chat](/en/guide/usage) | How cards come into being, auto-playback rules, manual playback, code viewing, mp4 export |
-| Features | [Laboratory](/en/guide/lab) | An acceptance bench with a built-in sample set plus free-form code |
-| Features | [Settings Panel](/en/guide/settings) | Local environment probing and Python package cache management |
-| Integration | [Third-party Plugin Integration](/en/guide/integrating) | The manim service: check(python) dry-run pre-check + createSurface(container) canvas creation |
-| Development | [Development & Debugging](/en/dev/) | For this plugin's developers: build, tests, development installation, troubleshooting entry points |
+| Getting Started | [What It Is](/en/guide/overview) | Positioning, the difference from native Manim, the three parties, the boundary with the core package manim-live, capability list |
+| Getting Started | [Installation](/en/guide/installation) | Prerequisites, install paths, bundled assets, what the first run waits for, what is fetched on demand |
+| Getting Started | [Usage in Chat](/en/guide/usage) | How cards come into being, auto-playback rules, manual playback, code viewing, mp4 export, and what a card says when the environment falls short |
+| Features | [Laboratory](/en/guide/lab) | An acceptance bench with a built-in sample set plus free-form code, including a permanent four-condition status bar |
+| Features | [Settings Panel](/en/guide/settings) | The browser runtime, local environment probing, and Python package cache management |
+| Integration | [Third-party Plugin Integration](/en/guide/integrating) | What the service gives you, how to get it, a minimal example, lifecycle and release, what it does not provide |
+| API Reference | [Overview and Entry Points](/en/api/) | The three outward surfaces, the object graph, obtaining the service, and why status must go through it |
+| API Reference | [The manim Service](/en/api/service) | All four members one by one: `check` / `createSurface` / `environmentStatus` / `onEnvironmentStatus` |
+| API Reference | [Data Types](/en/api/types) | Every field and value semantic of `CheckResult`, `EnvironmentStatus` and its substructures |
+| API Reference | [Host Tool](/en/api/tool) | Arguments and return of `manim_render`, its precheck boundary, and the companion skill and resident guide |
+| Development | [Development & Debugging](/en/dev/) | Source layering, build, tests, development installation, the core package dependency, troubleshooting entry points |
