@@ -1,6 +1,6 @@
 # API Reference: Host Tool
 
-This plugin registers one host tool, `manim_render`, called by the model to turn a piece of Manim Python into an animation card in the chat stream. It is not a JavaScript API (this plugin exports no importable module), but it is the first outward surface of the plugin, and both its arguments and its return are stable contracts, so it belongs in the API reference. For the service surface see [The manim Service](/en/api/service).
+This plugin registers one host tool, `manim_render`, called by the model to turn a piece of Manim Python into an animation card in the chat stream. It is not a JavaScript API (this plugin exports no importable module), but it is the first outward surface of the plugin, and both its arguments and its return are stable contracts, so it belongs in the API reference. For the service surface see [The manim-live Service](/en/api/service).
 
 ## manim_render
 

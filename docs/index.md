@@ -36,8 +36,8 @@ features:
     title: 环境状态
     details: 决定「能不能出画面、能不能导出」的四组条件收成一份可读的状态：实验场状态条、设置面板、聊天卡片同源，未满足项附可执行的处置。
   - icon: 🔌
-    title: manim 服务
-    details: 其他插件经 ctx.get('manim') 取用运行时与画布：干跑预检、创建画布、读环境状态、订阅状态变化；服务缺席时调用方不报错、不阻塞。
+    title: manim-live 服务
+    details: 其他插件经 ctx.get('manim-live') 取用运行时与画布：干跑预检、创建画布、读环境状态、订阅状态变化；服务缺席时调用方不报错、不阻塞。
 ---
 
 ## 快速开始
@@ -56,7 +56,7 @@ features:
 | 功能 | [设置面板](/guide/settings) | 浏览器运行时、本机环境探测、Python 包缓存管理 |
 | 接入 | [第三方插件接入](/guide/integrating) | 服务能给什么、怎么拿、最小可用例子、生命周期与释放、服务不提供什么 |
 | API 参考 | [总览与入口](/api/) | 三条对外面、对象关系、拿到服务、为什么状态必须走服务面 |
-| API 参考 | [manim 服务](/api/service) | 四个成员逐个：`check` / `createSurface` / `environmentStatus` / `onEnvironmentStatus` |
+| API 参考 | [manim-live 服务](/api/service) | 四个成员逐个：`check` / `createSurface` / `environmentStatus` / `onEnvironmentStatus` |
 | API 参考 | [数据类型](/api/types) | `CheckResult`、`EnvironmentStatus` 及其子结构的完整字段与取值语义 |
 | API 参考 | [宿主工具](/api/tool) | `manim_render` 的入参与返回、预检边界、配套注册的技能与常驻指引 |
 | 开发 | [开发与调试](/dev/) | 源码分层、构建、测试、开发期安装、依赖核心包的方式、排障入口 |

@@ -1,6 +1,6 @@
 # API 参考：宿主工具
 
-本插件向宿主注册一个工具 `manim_render`，由模型调用，把一段 Manim Python 变成聊天流里的动画卡片。它不属于 JavaScript API（本插件不导出可 `import` 的模块），但它是本插件对外的第一条面，入参与返回都是稳定契约，故收在 API 参考里。服务面见[manim 服务](/api/service)。
+本插件向宿主注册一个工具 `manim_render`，由模型调用，把一段 Manim Python 变成聊天流里的动画卡片。它不属于 JavaScript API（本插件不导出可 `import` 的模块），但它是本插件对外的第一条面，入参与返回都是稳定契约，故收在 API 参考里。服务面见[manim-live 服务](/api/service)。
 
 ## manim_render
 

@@ -1,6 +1,6 @@
 # API Reference: Overview and Entry Points
 
-This page covers what dsh-manim-live exposes, how to obtain it, and how long it lives. The remaining pages each cover one surface: service members in [The manim Service](/en/api/service), data structures in [Data Types](/en/api/types), and the model-facing call contract in [Host Tool](/en/api/tool).
+This page covers what dsh-manim-live exposes, how to obtain it, and how long it lives. The remaining pages each cover one surface: service members in [The manim-live Service](/en/api/service), data structures in [Data Types](/en/api/types), and the model-facing call contract in [Host Tool](/en/api/tool).
 
 For a first read, start with [What It Is](/en/guide/overview) and [Installation](/en/guide/installation); to use a canvas in your own plugin, start with [Third-party Plugin Integration](/en/guide/integrating).
 
@@ -11,7 +11,7 @@ The plugin has four kinds of consumers; interfaces are split by consumer and do 
 | Consumer | Interface | Form | Docs |
 | --- | --- | --- | --- |
 | Model inside the host | `manim_render` tool | Host tool taking a piece of Python source | [Host Tool](/en/api/tool) |
-| Other plugins | `ctx.get('manim')` | Cordis service returning `ManimService` | This page and [The manim Service](/en/api/service) |
+| Other plugins | `ctx.get('manim-live')` | Cordis service returning `ManimService` | This page and [The manim-live Service](/en/api/service) |
 | Users of the chat UI | Cards, Laboratory, Settings | UI, no programming | [Usage in Chat](/en/guide/usage), [Laboratory](/en/guide/lab), [Settings Panel](/en/guide/settings) |
 | Developers of this plugin and the core package | `pnpm` scripts, the `src/` layering | Source | [Development & Debugging](/en/dev/) |
 
@@ -19,10 +19,10 @@ The plugin has four kinds of consumers; interfaces are split by consumer and do 
 
 ## Object graph
 
-Everything starts at `ctx.get('manim')`. The returned `ManimService` is everything a caller can obtain:
+Everything starts at `ctx.get('manim-live')`. The returned `ManimService` is everything a caller can obtain:
 
 ```
-ctx.get('manim')                     → ManimService | undefined   undefined when the service is absent
+ctx.get('manim-live')                     → ManimService | undefined   undefined when the service is absent
 ├─ check(python)                     → Promise<CheckResult>
 ├─ createSurface(container)          → Promise<Surface>           one canvas per call
 │  ├─ run(code, handlers?)           → Promise<RunResult>         ← the five members below belong to the core package
@@ -38,7 +38,7 @@ Three notes on reading this graph:
 
 - All four members of `ManimService` are methods; there are no properties. A `Surface` can only be produced by `createSurface()` and cannot be constructed separately; its members and behavioural contracts belong to the core package, see [Canvas](https://snowowowo.github.io/manim-live/en/api/surface).
 - The service surface covers exactly three things: precheck, canvas, environment status. Card UI, the `manim_render` tool, playback scheduling, the Laboratory and export are this plugin's own entry points and are not part of the service — a caller that wants to display something must build its own UI.
-- Status has two exits: the outcome of a single run is in the return value of `check()` / `run()`, and page-level environment conditions are in `environmentStatus()` and its subscription, see [The manim Service](/en/api/service).
+- Status has two exits: the outcome of a single run is in the return value of `check()` / `run()`, and page-level environment conditions are in `environmentStatus()` and its subscription, see [The manim-live Service](/en/api/service).
 
 ## Obtaining the service
 
@@ -49,22 +49,22 @@ The service is `provide`d by this plugin's client half at load time. A caller fe
 export default {
   inject: ['slots'],
   apply(ctx) {
-    const manim = ctx.get('manim')
+    const manim = ctx.get('manim-live')
     if (!manim) return   // soft-optional: degrade gracefully when this plugin is absent
     // …use manim
   },
 }
 ```
 
-**Soft-optional consumption** is a hard contract of this service: when this plugin is not installed, is disabled, or has not loaded yet, `ctx.get('manim')` returns `undefined`. Use `ctx.get()` and **not** `inject` — in this version of Cordis `inject` is a hard dependency, and a missing service prevents the whole plugin from loading; this service is by definition "use it if it is there, otherwise do without", so `get()` is required.
+**Soft-optional consumption** is a hard contract of this service: when this plugin is not installed, is disabled, or has not loaded yet, `ctx.get('manim-live')` returns `undefined`. Use `ctx.get()` and **not** `inject` — in this version of Cordis `inject` is a hard dependency, and a missing service prevents the whole plugin from loading; this service is by definition "use it if it is there, otherwise do without", so `get()` is required.
 
-Callers must therefore guarantee that when `manim` is absent they fall back to their own presentation without erroring or blocking. Conversely, this plugin does not guarantee the service exists at all times — it appears after the plugin loads and disappears on unload, see below.
+Callers must therefore guarantee that when the service is absent they fall back to their own presentation without erroring or blocking. Conversely, this plugin does not guarantee the service exists at all times — it appears after the plugin loads and disappears on unload, see below.
 
 ## Lifecycle
 
 | Moment | What happens |
 | --- | --- |
-| This plugin loads | The renderer is wired to the host routes, then `provide('manim')` runs; from then on `ctx.get('manim')` works |
+| This plugin loads | The renderer is wired to the host routes, then `provide('manim-live')` runs; from then on `ctx.get('manim-live')` works |
 | Caller creates a canvas | `createSurface()` mounts a WebGL canvas into the container you provide; the container is not managed by this plugin |
 | Caller is done | You must call `surface.dispose()` yourself: a canvas holds a WebGL context, and not releasing it is a leak |
 | This plugin unloads | The service is released first, then the renderer is `dispose()`d — **every canvas it created becomes invalid**, and the injected KaTeX stylesheet is removed |
@@ -107,6 +107,6 @@ A canvas has a fixed 1280×720 resolution that does not follow its container; to
 ## Where to start
 
 - To use a canvas in your own plugin → [Third-party Plugin Integration](/en/guide/integrating)
-- Every member of the service, explained one by one → [The manim Service](/en/api/service)
+- Every member of the service, explained one by one → [The manim-live Service](/en/api/service)
 - Fields of `CheckResult` / `EnvironmentStatus` and friends → [Data Types](/en/api/types)
 - Arguments and return of the model-facing `manim_render` → [Host Tool](/en/api/tool)

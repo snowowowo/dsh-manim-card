@@ -4,7 +4,7 @@
 
 ## 服务给什么
 
-本插件对外提供 Cordis 服务 `manim`，返回一个 `ManimService`，四件事：
+本插件对外提供 Cordis 服务 `manim-live`，返回一个 `ManimService`，四件事：
 
 | 能力 | 方法 | 典型用途 |
 | --- | --- | --- |
@@ -23,7 +23,7 @@
 export default {
   inject: ['slots'],
   apply(ctx) {
-    const manim = ctx.get('manim')
+    const manim = ctx.get('manim-live')
     if (!manim) return   // 本插件未安装 / 被禁用 / 尚未加载：退化为自己的展示方式
     // …使用 manim
   },
@@ -117,5 +117,5 @@ import type { CheckResult, EnvironmentStatus, ManimService, Surface } from 'mani
 ## 接下去的阅读
 
 - [API 参考：总览与入口](/api/)：对象关系、拿到服务的方式、生命周期
-- [API 参考：manim 服务](/api/service)：四个成员逐个的参数、返回与边界
+- [API 参考：manim-live 服务](/api/service)：四个成员逐个的参数、返回与边界
 - [API 参考：数据类型](/api/types)：`CheckResult`、`EnvironmentStatus` 的全部字段

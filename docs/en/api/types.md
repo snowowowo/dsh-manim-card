@@ -4,7 +4,7 @@ The types involved in the service surface come in two halves: this plugin define
 
 | Type | Defined by | Purpose | Detail |
 | --- | --- | --- | --- |
-| `ManimService` | This plugin | The service itself | [The manim Service](/en/api/service) |
+| `ManimService` | This plugin | The service itself | [The manim-live Service](/en/api/service) |
 | `CheckResult` | This plugin | Return of `check()` | [manim.check()](/en/api/service#manim-check-python) |
 | `EnvironmentStatus` | Core package | Environment status snapshot | This page |
 | `EnvironmentCapabilities` | Core package | Browser capabilities inside the snapshot | This page |

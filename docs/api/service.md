@@ -1,6 +1,8 @@
-# API 参考：manim 服务
+# API 参考：manim-live 服务
 
-服务 `manim` 由本插件的 Client 端提供，其他插件经 `ctx.get('manim')` 取用。它有一个对象 `ManimService`、四个方法：预检、建画布、读环境状态、订阅环境状态变化。本页逐个讲清。怎么拿到服务、生命周期与协作边界见[总览](/api/)，类型字段见[数据类型](/api/types)。
+服务 `manim-live` 由本插件的 Client 端提供，其他插件经 `ctx.get('manim-live')` 取用。它有一个对象 `ManimService`、四个方法：预检、建画布、读环境状态、订阅环境状态变化。本页逐个讲清。怎么拿到服务、生命周期与协作边界见[总览](/api/)，类型字段见[数据类型](/api/types)。
+
+服务名带 `-live` 而不取裸 `manim`：服务名是**跨插件共享的命名空间**，取泛词等于把 `manim` 这个词占住，后来者（别的插件要暴露 manim 相关能力）只能绕开或撞名。它与入口 id、路由前缀、技能名、槽位 id 同一套；消费方按完整名字取，`ctx.get('manim')` 拿不到本服务。
 
 ```ts
 interface ManimService {
@@ -34,7 +36,7 @@ interface CheckResult {
 **例子**
 
 ```ts
-const manim = ctx.get('manim')
+const manim = ctx.get('manim-live')
 if (!manim) return
 
 const result = await manim.check(python)

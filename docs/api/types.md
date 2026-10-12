@@ -4,7 +4,7 @@
 
 | 类型 | 定义方 | 用途 | 详解 |
 | --- | --- | --- | --- |
-| `ManimService` | 本插件 | 服务本身 | [manim 服务](/api/service) |
+| `ManimService` | 本插件 | 服务本身 | [manim-live 服务](/api/service) |
 | `CheckResult` | 本插件 | `check()` 的返回 | [manim.check()](/api/service#manim-check-python) |
 | `EnvironmentStatus` | 核心包 | 环境状态快照 | 本页 |
 | `EnvironmentCapabilities` | 核心包 | 快照里的浏览器能力 | 本页 |

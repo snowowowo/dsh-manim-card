@@ -4,7 +4,7 @@ This page is for developers who want to use the Manim runtime and canvas inside 
 
 ## What the service gives you
 
-This plugin provides the Cordis service `manim`, returning a `ManimService` with four capabilities:
+This plugin provides the Cordis service `manim-live`, returning a `ManimService` with four capabilities:
 
 | Capability | Method | Typical use |
 | --- | --- | --- |
@@ -23,7 +23,7 @@ Fetch it inside your own client half's `apply(ctx)`, **soft-optionally**:
 export default {
   inject: ['slots'],
   apply(ctx) {
-    const manim = ctx.get('manim')
+    const manim = ctx.get('manim-live')
     if (!manim) return   // not installed / disabled / not loaded yet: degrade to your own presentation
     // …use manim
   },
@@ -117,5 +117,5 @@ If your goal is to use the same canvas **outside the host**, in your own page, y
 ## Further reading
 
 - [API Reference: Overview and Entry Points](/en/api/): object graph, obtaining the service, lifecycle
-- [API Reference: The manim Service](/en/api/service): all four members, their arguments, returns and boundaries
+- [API Reference: The manim-live Service](/en/api/service): all four members, their arguments, returns and boundaries
 - [API Reference: Data Types](/en/api/types): every field of `CheckResult` and `EnvironmentStatus`

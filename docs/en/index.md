@@ -36,8 +36,8 @@ features:
     title: Environment status
     details: The four condition groups deciding "can it render, can it export" are collected into one readable status, shared by the Laboratory status bar, the Settings panel and chat cards, with an actionable remedy for each unmet item.
   - icon: 🔌
-    title: The manim service
-    details: Other plugins obtain the runtime and a canvas via ctx.get('manim') — dry-run precheck, canvas creation, environment status, and status subscription; when the service is absent callers neither error nor block.
+    title: The manim-live service
+    details: Other plugins obtain the runtime and a canvas via ctx.get('manim-live') — dry-run precheck, canvas creation, environment status, and status subscription; when the service is absent callers neither error nor block.
 ---
 
 ## Quick Start
@@ -56,7 +56,7 @@ features:
 | Features | [Settings Panel](/en/guide/settings) | The browser runtime, local environment probing, and Python package cache management |
 | Integration | [Third-party Plugin Integration](/en/guide/integrating) | What the service gives you, how to get it, a minimal example, lifecycle and release, what it does not provide |
 | API Reference | [Overview and Entry Points](/en/api/) | The three outward surfaces, the object graph, obtaining the service, and why status must go through it |
-| API Reference | [The manim Service](/en/api/service) | All four members one by one: `check` / `createSurface` / `environmentStatus` / `onEnvironmentStatus` |
+| API Reference | [The manim-live Service](/en/api/service) | All four members one by one: `check` / `createSurface` / `environmentStatus` / `onEnvironmentStatus` |
 | API Reference | [Data Types](/en/api/types) | Every field and value semantic of `CheckResult`, `EnvironmentStatus` and its substructures |
 | API Reference | [Host Tool](/en/api/tool) | Arguments and return of `manim_render`, its precheck boundary, and the companion skill and resident guide |
 | Development | [Development & Debugging](/en/dev/) | Source layering, build, tests, development installation, the core package dependency, troubleshooting entry points |

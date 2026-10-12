@@ -59,7 +59,7 @@ export default defineConfig({
             text: 'API 参考',
             items: [
               { text: '总览与入口', link: '/api/' },
-              { text: 'manim 服务', link: '/api/service' },
+              { text: 'manim-live 服务', link: '/api/service' },
               { text: '数据类型', link: '/api/types' },
               { text: '宿主工具', link: '/api/tool' },
             ],
@@ -132,7 +132,7 @@ export default defineConfig({
             text: 'API Reference',
             items: [
               { text: 'Overview and Entry Points', link: '/en/api/' },
-              { text: 'The manim Service', link: '/en/api/service' },
+              { text: 'The manim-live Service', link: '/en/api/service' },
               { text: 'Data Types', link: '/en/api/types' },
               { text: 'Host Tool', link: '/en/api/tool' },
             ],
