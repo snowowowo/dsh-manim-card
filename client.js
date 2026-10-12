@@ -176261,7 +176261,7 @@ self.play(Write(eq))
 				ctx.effect(() => ctx.locale.register(NS, DICT), "manim-live: dictionaries");
 				const t = ctx.locale.bind(NS);
 				ctx.effect(() => {
-					const release = ctx.provide("manim", createManimService());
+					const release = ctx.provide("manim-live", createManimService());
 					return () => {
 						release();
 						disposeManimRenderer();

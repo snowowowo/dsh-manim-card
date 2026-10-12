@@ -54,6 +54,10 @@ export default {
     // 对外服务：给别的插件（将来的黑板）「运行时 + 一块画布」——插件间禁止 import，只此一条路。
     // 不含卡片 UI / Host 工具 / 分步播放：那些是本插件的入口或调用方自己的事（顶层设计 §5、§6）。
     //
+    // 服务名是 `manim-live` 而不是裸 `manim`：服务名是**跨插件共享的命名空间**，取泛词等于把
+    // `manim` 这个词占住，后来者（别的插件要暴露 manim 相关能力）只能绕开或撞名。与入口 id、
+    // 路由前缀、技能名、槽位 id 同一套。**改名代价**：消费方 `ctx.get('manim-live')` 要跟着改。
+    //
     // 这一句同时把渲染器建起来（核心包 `manim-live` 的工厂）：**KaTeX 样式与 Pyodide 取数根**
     // 都由它按配置一并登记（见 ./service.ts），所以这里不再单独挂那份 `<link>` ——
     // 以前那一段是「插件自己拼地址、自己注入」，现在地址仍是插件的（src/routes.js），
@@ -61,7 +65,7 @@ export default {
     // 卸载时连渲染器一起释放：它持有 WASM / WebGL 与注入的样式，漏一次就是一次内存泄漏
     //（顶层设计 §5 的「销毁契约」）。
     ctx.effect(() => {
-      const release = ctx.provide('manim', createManimService())
+      const release = ctx.provide('manim-live', createManimService())
       return () => {
         release()
         disposeManimRenderer()
