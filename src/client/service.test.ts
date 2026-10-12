@@ -8,14 +8,29 @@
  * 与 Host 注册路由用的是同一个值。写错一边的表现是「Pyodide 卡在加载」或「公式变豆腐块」，
  * 而且只会在真机出现——所以这里的断言对着常量写，**不抄第二遍字面量**（抄了就失去意义）。
  *
+ * 第三件是环境状态那两个成员：它们是转发而不是重算，**必须是核心包模块级函数本身**。
+ * 这一层若自己造一份状态（或让调用方去 import 第二份核心包），读数会与真实运行时脱节，
+ * 而症状是「黑板永远显示未加载」这种不报错、只显示错的形态——所以在这里钉死「同一份」。
+ *
  * `manim-live` 整块被替身接走：本文件测的是「接线」，不是渲染；真运行时的行为在核心包自己的
  * 套件里（pyodide / runtime / bridge / headless）。
  */
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
-vi.mock('manim-live', () => ({ createManimRenderer: vi.fn() }))
+vi.mock('manim-live', () => ({
+  createManimRenderer: vi.fn(),
+  environmentStatus: vi.fn(),
+  onEnvironmentStatus: vi.fn(),
+}))
 
-import { createManimRenderer, type ManimRenderer, type Surface } from 'manim-live'
+import {
+  createManimRenderer,
+  environmentStatus,
+  onEnvironmentStatus,
+  type EnvironmentStatus,
+  type ManimRenderer,
+  type Surface,
+} from 'manim-live'
 import { KATEX_ROUTE, PYODIDE_ROUTE } from '../routes.js'
 import { createManimService, disposeManimRenderer, manimRenderer } from './service'
 
@@ -33,12 +48,27 @@ function stubRenderer(): ManimRenderer {
 
 let renderer: ManimRenderer
 
+/** 一份最小可用快照（形状照 `EnvironmentStatus` 写，字段含义不在这里测）。 */
+function stubStatus(): EnvironmentStatus {
+  return {
+    capabilities: { wasm: true, webgl: true, mediaRecorder: true },
+    runtime: { phase: 'idle', indexURL: PYODIDE_ROUTE },
+    katex: { baseURL: KATEX_ROUTE, phase: 'loaded' },
+    packages: { fetching: [] },
+    hints: [],
+  }
+}
+
 beforeEach(() => {
   // 单例是模块级的，上一条用例留下的必须清掉，否则后一条拿到的是别人的替身
   disposeManimRenderer()
   vi.mocked(createManimRenderer).mockReset()
   renderer = stubRenderer()
   vi.mocked(createManimRenderer).mockReturnValue(renderer)
+  vi.mocked(environmentStatus).mockReset()
+  vi.mocked(environmentStatus).mockReturnValue(stubStatus())
+  vi.mocked(onEnvironmentStatus).mockReset()
+  vi.mocked(onEnvironmentStatus).mockReturnValue(() => {})
   vi.spyOn(console, 'error').mockImplementation(() => {})
 })
 
@@ -104,5 +134,35 @@ describe('createSurface：就一件事——转交给渲染器', () => {
     await createManimService().createSurface({ tagName: 'DIV' } as unknown as HTMLDivElement)
     expect(renderer.createSurface).toHaveBeenCalledTimes(1)
     expect(createManimRenderer).toHaveBeenCalledTimes(1)
+  })
+})
+
+describe('环境状态：转发核心包的模块级函数，不经渲染器实例', () => {
+  it('快照原样回传——调用方拿到的是本插件这一份的读数，不是自己 import 的第二份', () => {
+    const status = stubStatus()
+    vi.mocked(environmentStatus).mockReturnValue(status)
+    expect(createManimService().environmentStatus()).toBe(status)
+    expect(environmentStatus).toHaveBeenCalledTimes(1)
+  })
+
+  it('订阅把回调原样交给核心，退订函数原样回传（退订这条不能在本层被吞掉）', () => {
+    const unsubscribe = vi.fn()
+    vi.mocked(onEnvironmentStatus).mockReturnValue(unsubscribe)
+    const cb = vi.fn()
+
+    const service = createManimService()
+    expect(service.onEnvironmentStatus(cb)).toBe(unsubscribe)
+    expect(onEnvironmentStatus).toHaveBeenCalledWith(cb)
+    // 服务这层只是转发：退订真身由核心包持有，本层不许自己再包一层或换一个函数
+    service.onEnvironmentStatus(cb)()
+    expect(unsubscribe).toHaveBeenCalledTimes(1)
+  })
+
+  it('读状态与建渲染器是两件独立的事——不建渲染器也读得到（服务还是把渲染器一起建起来，那是有意的）', () => {
+    createManimService().environmentStatus()
+    expect(environmentStatus).toHaveBeenCalledTimes(1)
+    // 渲染器这两个成员一个都不该碰：状态不属于某块画布
+    expect(renderer.createSurface).not.toHaveBeenCalled()
+    expect(renderer.check).not.toHaveBeenCalled()
   })
 })

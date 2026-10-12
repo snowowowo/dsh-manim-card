@@ -1,14 +1,24 @@
-// 对外服务 `manim`：别的插件（将来的黑板）经 `ctx.get('manim')` 拿到的一件事——**运行时 + 一块画布**。
-//
-// 就两件：干跑预检与造画布。卡片 UI、Host 工具、分步播放/播放头/旁白都不在这里——
-// 前两件是本插件自己的入口，后一类是调用方（黑板）自己的事（见顶层设计 §5、§6）。
+// 对外服务 `manim`：别的插件（将来的黑板）经 `ctx.get('manim')` 拿到的四件事——**预检、
+// 画布、环境状态快照、环境状态订阅**。卡片 UI、Host 工具、分步播放/播放头/旁白都不在这里——
+// 前者是本插件自己的入口，后者是调用方（黑板）自己的事（见顶层设计 §5、§6）。
 // 插件之间禁止 import，所以这是唯一的协作面：服务缺席时调用方退化成「没有画布」，不报错、不阻塞。
 //
-// 抽包（Phase 1）之后这一层只剩「接线」：真本事（Pyodide 运行时、manim 适配层、支持面、画布）
-// 全在核心包 `manim-live`。本插件要做的只有一件核心包做不到的事——**告诉它资源挂在哪**：
+// 抽包（Phase 1）之后这一层只剩「接线」：真本事（Pyodide 运行时、manim 适配层、支持面、画布、
+// 环境状态）全在核心包 `manim-live`。本插件要做的只有一件核心包做不到的事——**告诉它资源挂在哪**：
 // Pyodide 与 KaTeX 都由本插件的 Host 路由分发，核心包不知道（也不该知道）这个前缀。
-// `ManimService` 的签名**一个字没改**，消费方（黑板）不需要跟着改。
-import { createManimRenderer, type ManimRenderer, type Surface } from 'manim-live'
+//
+// 状态这两个成员**必须**走服务面，不能由调用方自己 import 核心包读：插件各自打包，调用方
+// 直接 import 会打进**第二份**核心包，那份里的运行时阶段、订阅表、Pyodide 单例都是另一个实例，
+// 读数永远停在 idle——真正在跑的那一份在本插件的 bundle 里（详见 docs/api/index.md）。
+// 类型例外：`import type { EnvironmentStatus } from 'manim-live'` 编译后消失，不产生第二份运行时。
+import {
+  createManimRenderer,
+  environmentStatus as coreEnvironmentStatus,
+  onEnvironmentStatus as coreOnEnvironmentStatus,
+  type EnvironmentStatus,
+  type ManimRenderer,
+  type Surface,
+} from 'manim-live'
 import { KATEX_ROUTE, PYODIDE_ROUTE } from '../routes.js'
 
 export interface CheckResult {
@@ -23,6 +33,15 @@ export interface ManimService {
   check(python: string): Promise<CheckResult>
   /** 在给定容器里造一块 manim 画布；容器由调用方给、生命周期也由调用方管。 */
   createSurface(container: HTMLDivElement): Promise<Surface>
+  /**
+   * 环境状态快照：浏览器能力 / Pyodide 运行时 / KaTeX 样式 / 按需取包，四组条件加 `hints`。
+   *
+   * 是**本插件这一份**运行时与样式注入的读数（与实验场状态条、设置页那张卡同一份数据），
+   * 不是调用方自己 import 核心包读出来的那份。不发起任何加载或探测请求，只读已发生的状态。
+   */
+  environmentStatus(): EnvironmentStatus
+  /** 订阅环境状态变化；返回退订函数。调用方卸载时记得调。 */
+  onEnvironmentStatus(cb: (status: EnvironmentStatus) => void): () => void
 }
 
 /**
@@ -80,6 +99,14 @@ export function createManimService(): ManimService {
     },
     createSurface(container: HTMLDivElement): Promise<Surface> {
       return instance.createSurface(container)
+    },
+    // 以下两条直接转发核心包的**模块级**函数，不经渲染器实例：环境状态不属于某块画布，
+    // 而是整页共享的那一份运行时与样式注入——渲染器上本来也没有这两个方法。
+    environmentStatus(): EnvironmentStatus {
+      return coreEnvironmentStatus()
+    },
+    onEnvironmentStatus(cb: (status: EnvironmentStatus) => void): () => void {
+      return coreOnEnvironmentStatus(cb)
     },
   }
 }

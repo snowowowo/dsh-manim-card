@@ -162149,6 +162149,12 @@ _sys.modules["manim"] = _dsh_manim
 				},
 				createSurface(container) {
 					return instance.createSurface(container);
+				},
+				environmentStatus() {
+					return environmentStatus();
+				},
+				onEnvironmentStatus(cb) {
+					return onEnvironmentStatus(cb);
 				}
 			};
 		}
