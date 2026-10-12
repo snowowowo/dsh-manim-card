@@ -14,6 +14,8 @@ import { KATEX_ROUTE, PYODIDE_ROUTE } from '../routes.js'
 export interface CheckResult {
   ok: boolean
   error?: string
+  /** 不阻断渲染的提醒（如「代码含公式但公式样式没配」）；没有提醒时缺席。原样透传核心包的结论。 */
+  warnings?: string[]
 }
 
 export interface ManimService {
@@ -56,6 +58,17 @@ export function manimRenderer(): ManimRenderer {
 export function disposeManimRenderer(): void {
   renderer?.dispose()
   renderer = null
+}
+
+/**
+ * 预热：把 Pyodide 本体与随包件（numpy 等，合计约 16 MB）先拉起来。
+ *
+ * 谁用：实验场状态条上那枚「立即预热」——不预热的话，第一次渲染要等它整段下载完，
+ * 期间界面只有一个骨架屏。走的是与渲染同一条串行队列（见核心包 `py/runtime.ts` 的 queue），
+ * 所以预热期间点渲染也不会两段同时初始化。
+ */
+export function warmupManim(): Promise<void> {
+  return manimRenderer().warmup()
 }
 
 export function createManimService(): ManimService {

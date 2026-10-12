@@ -34,6 +34,69 @@
 .mr-head-title { display: flex; align-items: center; gap: 2px; min-width: 0; }
 .mr-page-title { margin: 0; font-size: 20px; font-weight: 500; line-height: 28px; }
 
+/* ---- 环境状态条（页头下面一条，四枚 chip + 展开的待处理项）------------------
+ * chip 的几何照抄宿主 ui-primitives/ConnectionIndicator.module.css（28px 高、12px/18px、
+ * 500 字重、radius-sm、一格 14px 装状态点），配色照 Tag 的 tone：满足的那几枚走中性
+ * （四枚全绿会把整条读成告警），不满足的才上色。色值一律 color-mix 自 --dsw-* token，
+ * 明暗两套自动成立。
+ */
+.mr-envbar-wrap { width: 100%; max-width: 1160px; flex: none; padding-top: 10px; }
+.mr-envbar { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+
+.mr-chip {
+  box-sizing: border-box;
+  display: inline-flex; align-items: center; gap: 6px;
+  height: 28px; padding: 0 8px;
+  border: 0.5px solid transparent; border-radius: var(--dsw-radius-sm);
+  background: transparent;
+  font: inherit; font-size: 12px; line-height: 18px; font-weight: 500;
+  white-space: nowrap;
+  color: var(--dsw-alias-label-secondary);
+}
+.mr-chip-name { color: var(--dsw-alias-label-tertiary); font-weight: 400; }
+.mr-chip-value { font-variant-numeric: tabular-nums; }
+/* 可点的那几枚（不满足 / 有动作可做）：hover 出底、键位焦点环照宿主 */
+button.mr-chip { cursor: pointer; }
+button.mr-chip:hover { background: var(--dsw-alias-interactive-bg-hover); }
+button.mr-chip:focus-visible { outline: 2px solid var(--dsw-alias-state-business-primary); outline-offset: 2px; }
+
+/* 满足：中性边 + 白底（眼睛先找的是「哪一枚不对劲」） */
+.mr-chip[data-tone='ok'] { border-color: var(--dsw-alias-border-l4); color: var(--dsw-alias-label-secondary); }
+/* 还没开始 / 没配置：只描边不着色——不是错，是「还没有」 */
+.mr-chip[data-tone='empty'] { border-color: var(--dsw-alias-border-l4); color: var(--dsw-alias-label-secondary); }
+/* 进行中：同样的中性边，状态点在转 */
+.mr-chip[data-tone='busy'] { border-color: var(--dsw-alias-border-l4); }
+/* 查不到（Host 没起来之类）：中性底，别当成失败 */
+.mr-chip[data-tone='idle'] { background: var(--dsw-alias-bg-module-platform); color: var(--dsw-alias-label-secondary); }
+/* 要注意：琥珀底（照宿主的 warning 档） */
+.mr-chip[data-tone='warn'] {
+  background: var(--dsw-alias-state-warn-tertiary);
+  border-color: color-mix(in srgb, var(--dsw-alias-state-warn-label) 20%, transparent);
+  color: var(--dsw-alias-state-warn-label);
+}
+/* 错：红字 + 10% 红底 */
+.mr-chip[data-tone='error'] {
+  background: color-mix(in srgb, var(--dsw-alias-state-error-primary) 10%, transparent);
+  border-color: color-mix(in srgb, var(--dsw-alias-state-error-primary) 20%, transparent);
+  color: var(--dsw-alias-state-error-primary);
+}
+
+/* 预热回执：与 chip 同高，跟在最后一枚后面 */
+.mr-envbar-note { font-size: 12px; line-height: 18px; color: var(--dsw-alias-label-secondary); }
+
+/* 展开的待处理项：一句话一条，下面是能立刻做的动作 */
+.mr-envpanel {
+  margin-top: 8px; padding: 10px 12px;
+  border: 0.5px solid var(--dsw-alias-border-l2);
+  border-radius: var(--dsw-radius-md);
+  background: var(--dsw-alias-bg-layer-1);
+}
+.mr-envpanel-list { margin: 0; padding-left: 18px; }
+.mr-envpanel-list > li { font-size: 12px; line-height: 18px; color: var(--dsw-alias-label-secondary); }
+.mr-envpanel-list > li + li { margin-top: 4px; }
+.mr-envpanel-empty { margin: 0; font-size: 12px; line-height: 18px; color: var(--dsw-alias-label-tertiary); }
+.mr-envpanel-acts { display: flex; align-items: center; gap: 8px; margin-top: 8px; }
+
 .mr-workspace {
   flex: 1; min-height: 0;
   display: grid; grid-template-columns: minmax(240px, 300px) minmax(0, 1fr);
@@ -145,6 +208,12 @@
 .mr-btn:disabled { cursor: not-allowed; opacity: 0.4; }
 .mr-btn.primary { background: var(--dsw-alias-button-primary-fill); color: var(--dsw-alias-label-primary-foreground); }
 .mr-btn.primary:hover:not(:disabled) { background: var(--dsw-alias-button-primary-hover); }
+/* 描边的文字键（宿主 outline 配方）：与 .mr-set-act 同一档配方，页面上的次要动作走它 */
+.mr-btn.outline {
+  border: 0.5px solid var(--dsw-alias-border-l2);
+  color: var(--dsw-alias-label-primary);
+}
+.mr-btn.outline:hover:not(:disabled) { background: var(--dsw-alias-interactive-bg-hover); }
 .mr-btn:focus-visible { outline: 2px solid var(--dsw-alias-state-business-primary); outline-offset: 2px; }
 
 /* 跟 36px 的输入框同高：矮一截的键放在旁边，整行就立不住 */
@@ -279,6 +348,13 @@
 }
 .mr-chatcard-footrow.is-error > svg { margin-top: 3px; }
 .mr-chatcard-footrow > svg, .mr-chatcard-footrow > .mr-spinner { flex: none; }
+/* 环境说明那条：整块多行（一句引子 + 逐条 hint），图标跟着第一行 */
+.mr-chatcard-footrow.is-envhint { align-items: flex-start; }
+.mr-chatcard-footrow.is-envhint > svg { margin-top: 3px; }
+.mr-chatcard-envhint { min-width: 0; }
+.mr-chatcard-envlist { margin: 4px 0 0; padding-left: 16px; }
+.mr-chatcard-envlist > li { overflow-wrap: anywhere; }
+.mr-chatcard-envlist > li + li { margin-top: 2px; }
 
 /* 导出路径：本身就是「在文件夹中显示」的入口（悬浮给气泡与下划线），长了截断。
    气泡套在外层，所以那一层也要跟着占满剩余宽度——**只认带 pathwrap 的那条**：

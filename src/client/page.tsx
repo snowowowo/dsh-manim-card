@@ -14,6 +14,7 @@ import { useEffect, useRef, useState } from 'react'
 import { Eraser, Info, Play, Square, Trash2, Zap } from 'lucide-react'
 import { stateOf, tally } from 'manim-live'
 import { ManimCard, type CardResult } from './components/card'
+import { EnvBar } from './components/env-bar'
 import { Segmented } from './components/segmented'
 import { Tip } from './components/tip'
 import { clearPackageCache } from './packages'
@@ -266,6 +267,10 @@ export function ManimPage({ t }: { t: Translate }) {
           ]}
         />
       </header>
+
+      {/* 环境读数：渲染要的与导出要的条件都在这儿，出问题的那一枚可点开（见 ./components/env-bar）。
+          两种模式共用——它说的是这台机器，不随「看样例 / 写代码」变。 */}
+      <EnvBar t={t} />
 
       {mode === 'samples' ? (
         <div className="mr-workspace">

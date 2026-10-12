@@ -10,6 +10,15 @@ The sample list sits on the left, the render preview on the right: click any ent
 
 The top of the page offers two modes: **Samples** and **Custom code** (write and run a free-form piece of Python).
 
+## Environment status bar
+
+A permanent environment readout sits below the page header with four chips: **local Manim** (which mp4 export goes through), **runtime**, **formula styles**, and **browser capabilities**. These four conditions decide whether a picture can be produced and whether an mp4 can be exported.
+
+- Satisfied conditions are neutral labels; unsatisfied ones are coloured (amber = attention needed, red = failure) and can be opened.
+- Opening one shows the same panel either way: every pending condition on this machine listed one by one (the browser-side sentences come from the core package; the local side states which items are missing), followed by what can be done right away — **warm up now** (start the runtime early; the first render waits for ~13 MB to download, and warming up removes that wait) and **re-detect** (ask the local environment again).
+- A runtime that is "not loaded" and formula styles that are "unconfigured" are not errors, just "not yet": the former is a click away from warming up, the latter needs `katexBaseURL` passed when creating the renderer.
+- The readout refreshes itself as state changes: on the browser side (runtime phase, package fetch results, formula-style load results) it updates the moment anything changes; the local side is queried once when entering the page and again on "re-detect" (the Host caches the answer, so dozens of cards asking at once still run one probe).
+
 ## Sample mode
 
 The sample set has about ten entries covering basic shapes, transforms, axes and curves, MathTex formulas, text lists, bar charts, TracedPath trajectories, 3D scenes, and **one piece of bad code that should be rejected by the pre-check**.

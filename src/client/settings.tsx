@@ -19,42 +19,16 @@
 import { useCallback, useEffect, useId, useMemo, useRef, useState, type KeyboardEvent } from 'react'
 // ⓘ 图标取名 InfoIcon：本文件自己的 Info 组件（说明的收口）占了这个名字。
 import { Info as InfoIcon, RefreshCw } from 'lucide-react'
+import { Dot } from './components/dot'
 import { Tip } from './components/tip'
 import { loadEnvPlan, probeEnv, type EnvCheck, type EnvPlan, type EnvResult, type EnvStatus } from './environment'
+// 状态点的语义、色调映射与取词表都在 ./runtime-status（实验场状态条要共用同一份）。
+import { capabilityTone, KATEX_PHRASE, katexTone, RUNTIME_PHRASE, runtimeTone, useEnvironmentStatus, type StatusTone as Tone } from './runtime-status'
 import {
   cachePackage, clearPackage, COMMON_PACKAGES, completionFor, findPackage, formatBytes, loadPackages, prefetchPlan,
   type PackageEntry, type PackageInventory, type PackageState,
 } from './packages'
 import type { Translate } from './i18n'
-
-/** 状态点的语义（与宿主 StateDot 同一套）：绿=好、黄=要注意、红=错、灰=中性、空环=没有、转圈=进行中。 */
-type Tone = 'ok' | 'warn' | 'error' | 'idle' | 'empty' | 'busy'
-
-/**
- * 状态点：宿主 `StateDot` 的配方抄一份——宿主 UI 包禁止 import（引了槽位会整体崩）。
- * 进行中是那只 1.5 秒一圈的环；空环（`empty`）表示「本地没有」，与灰色实心的「中性」区分开。
- *
- * `label` 给了就是**有语义的状态点**（读屏念得出、鼠标悬浮有原生提示）；不给就当装饰，
- * 因为旁边已经有文字把状态说清了（环境行的版本号、库行那个键）。
- */
-function Dot({ tone, label }: { tone: Tone; label?: string }) {
-  if (tone === 'busy') {
-    return (
-      <svg className="mr-set-spin" width="14" height="14" viewBox="0 0 24 24" aria-hidden="true">
-        <g className="mr-set-spin-rotor">
-          <circle className="mr-set-spin-track" cx="12" cy="12" r="9.5" />
-          <circle className="mr-set-spin-arc" cx="12" cy="12" r="9.5" />
-        </g>
-      </svg>
-    )
-  }
-  return (
-    <span className="mr-set-dot" data-tone={tone}
-      role={label === undefined ? undefined : 'img'}
-      aria-label={label}
-      aria-hidden={label === undefined ? true : undefined} />
-  )
-}
 
 /** 库的三态：已缓存在本机=绿实心；随包自带=灰实心（在，但不归这里管）；还没缓存=空心环。 */
 const pkgTone = (state: PackageState): Tone => (state === 'cached' ? 'ok' : state === 'bundled' ? 'idle' : 'empty')
@@ -64,6 +38,62 @@ const pkgStateKey = (state: PackageState): string =>
   (state === 'cached' ? 'pkgStateCached' : state === 'bundled' ? 'pkgBundled' : 'pkgStateAbsent')
 
 const envTone = (status: EnvStatus): Tone => (status === 'ok' ? 'ok' : status === 'missing' ? 'warn' : 'error')
+
+/**
+ * 浏览器运行时卡片：数据全在核心包的环境状态里（订阅 `onEnvironmentStatus`），不走 Host 路由——
+ * 这些事发生在浏览器里，Host 问不到。与「本机环境」同属「环境」组：一个管渲染、一个管导出。
+ */
+function RuntimeCard({ t }: { t: Translate }) {
+  const status = useEnvironmentStatus()
+  const rows = [
+    {
+      id: 'runtime',
+      tone: runtimeTone(status.runtime.phase),
+      label: t('rtRuntime'),
+      value: t(RUNTIME_PHRASE[status.runtime.phase]),
+      info:
+        status.runtime.error ??
+        (status.runtime.indexURL === null ? t('rtNoLoader') : t('rtIndexWhy', { url: status.runtime.indexURL })),
+    },
+    {
+      id: 'katex',
+      tone: katexTone(status.katex.phase),
+      label: t('rtKatex'),
+      value: t(KATEX_PHRASE[status.katex.phase]),
+      info: status.katex.error ?? (status.katex.baseURL === null ? t('rtKatexWhy') : t('rtKatexAt', { url: status.katex.baseURL })),
+    },
+    { id: 'webgl', tone: capabilityTone(status.capabilities.webgl), label: t('rtWebgl'), value: t(status.capabilities.webgl ? 'rtYes' : 'rtNo'), info: t('rtWebglWhy') },
+    { id: 'wasm', tone: capabilityTone(status.capabilities.wasm), label: t('rtWasm'), value: t(status.capabilities.wasm ? 'rtYes' : 'rtNo'), info: t('rtWasmWhy') },
+    { id: 'recorder', tone: capabilityTone(status.capabilities.mediaRecorder), label: t('rtRecorder'), value: t(status.capabilities.mediaRecorder ? 'rtYes' : 'rtNo'), info: t('rtRecorderWhy') },
+  ]
+  const subline = status.hints.length > 0 ? t('rtHints', { count: status.hints.length }) : t('rtAllReady')
+  return (
+    <section className="mr-set-card">
+      <header className="mr-set-cardhead">
+        <div className="mr-set-cardheadtext">
+          <h3 className="mr-set-cardtitle">{t('rtTitle')}</h3>
+          <p className={status.hints.length > 0 ? 'mr-set-cardsub is-error' : 'mr-set-cardsub'} role="status">{subline}</p>
+        </div>
+      </header>
+      <div className="mr-set-rows">
+        {rows.map((row) => (
+          <div key={row.id} className="mr-set-row">
+            <span className="mr-set-cell is-check">
+              <span className="mr-set-name">{row.label}</span>
+              <Info name={row.label} text={row.info} />
+            </span>
+            <span className="mr-set-cell is-status">
+              <Dot tone={row.tone} />
+              <span>{row.value}</span>
+            </span>
+          </div>
+        ))}
+      </div>
+      {/* hints 是核心包给的可执行句（缺能力 / 运行时或 KaTeX 加载失败 / 取包失败），原样摆出来 */}
+      {status.hints.length > 0 && <p className="mr-set-cardfoot is-error" role="status">{status.hints.join('\n')}</p>}
+    </section>
+  )
+}
 
 /**
  * 探测项 id → 文案键。**写死这张表**是为了不去拼键名（拼出来的键查不到就成了空白文案）。
@@ -499,11 +529,17 @@ function PackagesCard({ t }: { t: Translate }) {
   )
 }
 
-/** 设置页正文：两块内容，样式与留白由外层设置面板给（这里只管内容）。 */
+/** 设置页正文：环境组两张卡（浏览器运行时 + 本机环境），库组一张卡加一张补库卡。 */
 export function ManimSettingsPage({ t }: { t: Translate }) {
   return (
     <section className="mr-set" aria-label={t('nav')}>
-      <EnvCard t={t} />
+      <section className="mr-set-group" aria-label={t('envGroup')}>
+        <h2 className="mr-set-groupname">{t('envGroup')}</h2>
+        <div className="mr-set-stack">
+          <RuntimeCard t={t} />
+          <EnvCard t={t} />
+        </div>
+      </section>
       <PackagesCard t={t} />
     </section>
   )

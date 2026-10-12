@@ -108,6 +108,55 @@ export const DICT = {
     envDvisvgm: 'dvisvgm',
     envDvisvgmWhy: 'LaTeX 转 SVG 的那一步 —— Manim 渲染公式的第二半。',
 
+    // ---- 设置页：浏览器运行时 / 实验场状态条 / 卡片的环境提示 ----
+    // 这一侧说的是**渲染**的条件（浏览器里的事，Host 问不到），与上面「本机环境」（导出那一侧）
+    // 合起来才是完整的一台机器。词一律用日常说法：不出现 Pyodide、WASM 这类底层名词。
+    rtTitle: '浏览器运行时',
+    rtRuntime: 'Python 运行时',
+    rtKatex: '公式样式',
+    rtWebgl: 'WebGL',
+    rtWasm: 'WebAssembly',
+    rtRecorder: '屏幕录制',
+    rtYes: '可用',
+    rtNo: '不可用',
+    rtReady: '就绪',
+    rtIdle: '未加载',
+    rtLoading: '加载中',
+    rtError: '失败',
+    rtLoaded: '已加载',
+    rtUnconfigured: '未配置',
+    rtHints: '{count} 项待处理',
+    rtAllReady: '各项就绪',
+    rtNoLoader: '加载器还没装上（本页还没人用过渲染器）',
+    rtIndexWhy: '取数地址：{url}',
+    rtKatexWhy: '没有配置公式样式的地址，公式会以无样式形态渲染。',
+    rtKatexAt: '取数地址：{url}',
+    rtWebglWhy: 'WebGL 是画面本身的出口；没有它，卡片渲染不出任何东西。',
+    rtWasmWhy: 'WebAssembly 是 Python 解释器的运行基础；没有它，所有渲染都起不来。',
+    rtRecorderWhy: '有它才能在浏览器里直接录屏导出；缺它只影响这一种导出方式，渲染与导出 mp4 都不受影响。',
+
+    // 状态条：四枚 chip 并排，所以「组名 + 状态词」都必须短
+    envbarLabel: '环境状态',
+    chipLocal: '本机 Manim',
+    chipRuntime: '运行时',
+    chipKatex: '公式样式',
+    chipCaps: '浏览器能力',
+    chipReady: '就绪',
+    chipChecking: '检测中…',
+    chipMissing: '缺 {count} 项',
+    chipUnknown: '查不到',
+    chipLocalMissing: '本机还缺：{items}（导出 mp4 要用这些）。',
+    chipRuntimeCold: '运行时还没加载：第一次渲染要先把它下载下来（约 13 MB），可以先按「立即预热」拉起来。',
+    envbarWarmup: '立即预热',
+    envbarWarming: '正在预热…',
+    envbarWarmed: '运行时已就绪',
+    envbarWarmFailed: '预热失败：{message}',
+    envbarReprobe: '重新检测',
+    envbarClose: '收起',
+
+    // 卡片底部：渲染失败、且环境里确有挡住渲染的硬伤时，补一句解释
+    renderEnvBlocked: '这台机器上还有条件没满足，可能正是它渲染不出来的原因：',
+
     // ---- 设置页：Python 库（第三方库按需缓存） ----
     // 分组标签用 pkgTitle；卡片标题另有其名（pkgCardTitle / pkgAddTitle）
     // 用词一律「缓存」不用「下载」：这些包本来就是运行时联网取的，这里做的是「提前存到本机」，

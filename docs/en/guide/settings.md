@@ -1,6 +1,18 @@
 # Settings Panel
 
-The "Manim 渲染" section of the host settings answers two questions: **export depends on the local Manim environment**, and **offline availability depends on which packages are cached locally**. This page covers both: local environment probing and package cache management.
+The "Manim 渲染" section of the host settings answers two questions: **what rendering needs** (the browser-side runtime, formula styles, and capabilities) and **what export needs** (the local Manim environment), plus a third block for the **package cache** (offline availability depends on which packages are already local). This page covers all three.
+
+## Browser runtime
+
+The runtime itself and four browser conditions live in one card, read from **the current page** rather than through the Host: these things happen in the browser, and the Host cannot see them.
+
+- **Python runtime**: not loaded / loading / ready / failed. "Not loaded" is the normal initial state — before the first render it downloads ~13 MB of core; on failure the ⓘ shows the original error and the current fetch address.
+- **Formula styles**: unconfigured / loading / loaded / failed. Unconfigured means no `katexBaseURL` was passed when creating the renderer; `MathTex` / `Tex` still render, but the formulas come out as bare un-styled typesetting. This plugin always passes one, so the state here is only "loaded" or "failed".
+- **WebGL**: the exit for the picture itself; without it the card renders nothing at all.
+- **WebAssembly**: the foundation the Python interpreter runs on; without it nothing renders at all.
+- **Screen recording**: affects only the "record in the browser" export route; missing it affects neither rendering nor mp4 export.
+
+When anything is unsatisfied, the card header shows a count of pending items and the card footer lists **actionable remedies** one by one (for instance "the current browser has no usable WebGL: manim-web cannot produce a picture", "the Pyodide runtime failed to start: … first confirm the fetch address really opens and its files are complete"). Those sentences come from the core package under one shared wording, so the settings page and the laboratory's status bar say the same thing.
 
 ## Local environment
 

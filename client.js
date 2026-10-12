@@ -155454,7 +155454,7 @@ void main() {
 			init_src_Cc3xTIkV();
 		}));
 		//#endregion
-		//#region node_modules/.pnpm/manim-live@0.1.0_@types+node@22.20.5_react@18.3.1_typescript@7.0.2/node_modules/manim-live/dist/index.js
+		//#region node_modules/.pnpm/manim-live@0.2.0_@types+node@22.20.5_react@18.3.1_typescript@7.0.2/node_modules/manim-live/dist/index.js
 		/**
 		* Manim ↔ JS 桥：Python 侧的 manim 适配层只能通过下面这组基元去驱动真正的 manim-web 对象。
 		* runtime.ts 把它们注册成 Python 里可直呼的内置函数（_mb_*），适配层（manim-shim.ts）再用它写出
@@ -160468,6 +160468,14 @@ async def _run_source(source):
 		function setPackageDiagnoser(next) {
 			diagnoser = next;
 		}
+		let runtimePhaseListener = null;
+		function setRuntimePhaseListener(next) {
+			runtimePhaseListener = next;
+		}
+		let packageStatusListener = null;
+		function setPackageStatusListener(next) {
+			packageStatusListener = next;
+		}
 		/** print 的落点；每次 runPython 覆盖，跑完清空。 */
 		let outputSink = () => {};
 		/**
@@ -160533,13 +160541,20 @@ _sys.modules["manim"] = _dsh_manim
 		async function getRuntime() {
 			if (!loader) throw new Error("manim-live：未注入 Pyodide 加载器，无法执行 Python");
 			runtimePromise ??= (async () => {
-				const runtime = await loader();
-				await runtime.loadPackage("numpy");
-				runtime.setStdout({ batched: (text) => outputSink(text) });
-				runtime.globals.set("_dsh_manim_src", MANIM_SHIM_SOURCE);
-				await runtime.runPythonAsync(BRIDGE_BOOTSTRAP);
-				await runtime.runPythonAsync(MANIM_MODULE_SETUP);
-				return runtime;
+				runtimePhaseListener?.("loading");
+				try {
+					const runtime = await loader();
+					await runtime.loadPackage("numpy");
+					runtime.setStdout({ batched: (text) => outputSink(text) });
+					runtime.globals.set("_dsh_manim_src", MANIM_SHIM_SOURCE);
+					await runtime.runPythonAsync(BRIDGE_BOOTSTRAP);
+					await runtime.runPythonAsync(MANIM_MODULE_SETUP);
+					runtimePhaseListener?.("ready");
+					return runtime;
+				} catch (error) {
+					runtimePhaseListener?.("error", error instanceof Error ? error.message : String(error));
+					throw error;
+				}
 			})();
 			runtimePromise.catch(() => {
 				runtimePromise = null;
@@ -160675,17 +160690,24 @@ _sys.modules["manim"] = _dsh_manim
 						const match = LOADING.exec(text.trim());
 						if (match === null) return;
 						announced = true;
-						onLoading?.(match[1].split(",").map((name) => name.trim()));
+						const names = match[1].split(",").map((name) => name.trim());
+						onLoading?.(names);
+						packageStatusListener?.(names);
 					},
 					errorCallback: (text) => failures.push(text)
 				});
 			} catch (error) {
 				failures.push(error instanceof Error ? error.message : String(error));
 			} finally {
-				if (announced) onLoading?.([]);
+				if (announced) {
+					onLoading?.([]);
+					packageStatusListener?.([]);
+				}
 			}
 			if (failures.length === 0) return;
-			throw new PyRuntimeError(packageFailureMessage(failures, await diagnoseQuietly(failedPackageNames(failures))));
+			const message = packageFailureMessage(failures, await diagnoseQuietly(failedPackageNames(failures)));
+			packageStatusListener?.([], message);
+			throw new PyRuntimeError(message);
 		}
 		/**
 		* 诊断是**锦上添花**：它自己出岔子不该把真正的失败盖掉——问不出来就退回默认文案。
@@ -161698,6 +161720,118 @@ _sys.modules["manim"] = _dsh_manim
 			if (unreachable.length > 0) return `连不上 ${base}（探测 ${unreachable[0]?.file ?? ""} 时没拿到任何状态码）——浏览器侧 Pyodide 只认这一个地址、不会回落官方 CDN，所以它必须真能打开。`;
 			return `${base} 下的文件在、HTTP 也正常，但取包时字节与 pyodide-lock.json 里的 sha256 对不上（取包这一步带 SRI 完整性校验）——换一份与这份 lock 配套的 wheel。`;
 		}
+		let runtimePhase = "idle";
+		let runtimeError;
+		let katexBaseURL = null;
+		let katexPhase = "unconfigured";
+		let katexError;
+		let fetching = [];
+		let packagesLastError;
+		let capabilitiesCache = null;
+		function probeWebgl() {
+			if (typeof document === "undefined") return false;
+			try {
+				const canvas = document.createElement("canvas");
+				return canvas.getContext("webgl2") !== null || canvas.getContext("webgl") !== null;
+			} catch {
+				return false;
+			}
+		}
+		function probeCapabilities() {
+			capabilitiesCache ??= {
+				wasm: typeof WebAssembly === "object" && WebAssembly !== null,
+				webgl: probeWebgl(),
+				mediaRecorder: typeof MediaRecorder !== "undefined"
+			};
+			return capabilitiesCache;
+		}
+		function collectHints() {
+			const out = [];
+			const caps = probeCapabilities();
+			if (typeof document !== "undefined") {
+				if (!caps.wasm) out.push("当前浏览器不支持 WebAssembly：Pyodide 无法启动，请换现代桌面浏览器。");
+				if (!caps.webgl) out.push("当前浏览器没有可用 WebGL：manim-web 出不了画面。");
+				if (!caps.mediaRecorder) out.push("当前浏览器没有 MediaRecorder：browser-recorder 导出不可用（不影响渲染）。");
+			}
+			if (runtimePhase === "error") out.push(`Pyodide 运行时启动失败：${runtimeError ?? "原因未知"}。先确认 pyodideIndexURL 的地址真能打开、其下文件完整。`);
+			if (katexPhase === "error") out.push(`KaTeX 样式加载失败：${katexError ?? "原因未知"}。检查 katexBaseURL 下有没有 katex.min.css 与字体文件。`);
+			if (packagesLastError !== void 0) out.push(packagesLastError);
+			return out;
+		}
+		function snapshot() {
+			return {
+				capabilities: probeCapabilities(),
+				runtime: {
+					phase: runtimePhase,
+					...runtimeError === void 0 ? {} : { error: runtimeError },
+					indexURL: currentPyodideIndexURL()
+				},
+				katex: {
+					baseURL: katexBaseURL,
+					phase: katexPhase,
+					...katexError === void 0 ? {} : { error: katexError }
+				},
+				packages: {
+					fetching: [...fetching],
+					...packagesLastError === void 0 ? {} : { lastError: packagesLastError }
+				},
+				hints: collectHints()
+			};
+		}
+		const subscribers = /* @__PURE__ */ new Set();
+		function emit() {
+			if (subscribers.size === 0) return;
+			const status = snapshot();
+			for (const cb of subscribers) try {
+				cb(status);
+			} catch (error) {
+				console.error("[manim-live] environment status subscriber threw:", error);
+			}
+		}
+		/** 当前环境状态快照。不发起任何加载或探测请求，只读已发生的状态。 */
+		function environmentStatus() {
+			return snapshot();
+		}
+		/** 订阅环境状态变化（运行时阶段、KaTeX 加载结果、取包进展任一变动都播一次）；返回退订函数。 */
+		function onEnvironmentStatus(cb) {
+			subscribers.add(cb);
+			return () => {
+				subscribers.delete(cb);
+			};
+		}
+		function noteRuntimePhase(phase, error) {
+			runtimePhase = phase;
+			runtimeError = phase === "loading" ? void 0 : error;
+			emit();
+		}
+		function noteKatexInjecting(baseURL) {
+			katexBaseURL = baseURL;
+			katexPhase = "loading";
+			katexError = void 0;
+			emit();
+		}
+		function noteKatexLoaded() {
+			katexPhase = "loaded";
+			emit();
+		}
+		function noteKatexError(error) {
+			katexPhase = "error";
+			katexError = error;
+			emit();
+		}
+		function noteKatexRemoved() {
+			katexBaseURL = null;
+			katexPhase = "unconfigured";
+			katexError = void 0;
+			emit();
+		}
+		function notePackages(nextFetching, lastError) {
+			fetching = [...nextFetching];
+			if (lastError !== void 0) packagesLastError = lastError;
+			emit();
+		}
+		setRuntimePhaseListener((phase, error) => noteRuntimePhase(phase, error));
+		setPackageStatusListener((names, lastError) => notePackages(names, lastError));
 		/** 候选编码，按「体积/兼容」优先排序；实际用哪个由 `isTypeSupported` 定。 */
 		const MIME_CANDIDATES = [
 			"video/webm;codecs=vp9",
@@ -161844,6 +161978,8 @@ _sys.modules["manim"] = _dsh_manim
 		}
 		/** 已注入的 KaTeX 样式表（按 URL 去重，避免多实例重复插同一份）。 */
 		const katexLinks = /* @__PURE__ */ new Map();
+		/** 代码里是否用了走 KaTeX 的公式物体（`MathTex(` / `Tex(`；`Text(` 不算）。 */
+		const TEX_SOURCE = /\b(MathTex|Tex)\s*\(/;
 		/**
 		* 注入 KaTeX 样式（幂等；同一 URL 只插一次）。
 		* 单独导出是为了让「不经过工厂」的使用者也能用同一条路径。
@@ -161855,15 +161991,20 @@ _sys.modules["manim"] = _dsh_manim
 			const link = document.createElement("link");
 			link.rel = "stylesheet";
 			link.href = href;
+			noteKatexInjecting(baseURL);
+			link.addEventListener("load", () => noteKatexLoaded());
+			link.addEventListener("error", () => noteKatexError(href));
 			document.head.append(link);
 			katexLinks.set(href, link);
 		}
 		/** 摘掉本模块注入的 KaTeX 样式（dispose 用；只摘自己插的，不动使用者自己加的）。 */
 		function removeKatexStyles() {
+			if (katexLinks.size === 0) return;
 			for (const [href, link] of katexLinks) {
 				link.remove();
 				katexLinks.delete(href);
 			}
+			noteKatexRemoved();
 		}
 		/**
 		* 造一个渲染器。契约（见文件头）：多实例共享页面级单例；dispose 要真释放。
@@ -161879,15 +162020,20 @@ _sys.modules["manim"] = _dsh_manim
 				},
 				async check(python) {
 					if (python.trim().length === 0) return { ok: true };
+					const warnings = options.katexBaseURL === void 0 && TEX_SOURCE.test(python) ? ["代码含 MathTex / Tex 但未配置 KaTeX 样式：公式将以无样式形态渲染。创建渲染器时传 katexBaseURL 即可注入。"] : [];
+					const withWarnings = (result) => warnings.length === 0 ? result : {
+						...result,
+						warnings
+					};
 					try {
 						await runPython(python, createDryRunBridge());
-						return { ok: true };
+						return withWarnings({ ok: true });
 					} catch (error) {
 						console.info("[manim-live] check rejected:", error instanceof Error ? error.message : String(error));
-						return {
+						return withWarnings({
 							ok: false,
 							error: error instanceof Error ? error.message : String(error)
-						};
+						});
 					}
 				},
 				async createSurface(container, surfaceOptions = {}) {
@@ -161983,6 +162129,16 @@ _sys.modules["manim"] = _dsh_manim
 		function disposeManimRenderer() {
 			renderer?.dispose();
 			renderer = null;
+		}
+		/**
+		* 预热：把 Pyodide 本体与随包件（numpy 等，合计约 16 MB）先拉起来。
+		*
+		* 谁用：实验场状态条上那枚「立即预热」——不预热的话，第一次渲染要等它整段下载完，
+		* 期间界面只有一个骨架屏。走的是与渲染同一条串行队列（见核心包 `py/runtime.ts` 的 queue），
+		* 所以预热期间点渲染也不会两段同时初始化。
+		*/
+		function warmupManim() {
+			return manimRenderer().warmup();
 		}
 		function createManimService() {
 			const instance = manimRenderer();
@@ -162085,6 +162241,187 @@ _sys.modules["manim"] = _dsh_manim
 				code: !ok && code === "" ? "failed" : code,
 				error: text$2(value.error)
 			};
+		}
+		//#endregion
+		//#region src/client/runtime-status.ts
+		/**
+		* 环境状态进界面的一层：核心包 `environmentStatus()` 的快照 / 订阅，加上「状态 → 状态点颜色」
+		* 与「状态 → 待处理项」的纯映射。
+		*
+		* 为什么单独一个文件：设置卡、实验场状态条、聊天卡片都要看同一份状态（订阅只能写一处），
+		* 而映射与选择器是纯函数——能被测试按住，不碰 DOM 也不碰 React 渲染结果。
+		*
+		* 两套环境在这里合流，因为它们回答的是同一个问题「这台机器还缺什么」：
+		* - **浏览器侧**（核心包）：WebAssembly / WebGL / 录屏能力、Python 运行时、公式样式、按需取包 —— 管**渲染**；
+		* - **本机侧**（Host 路由）：本机的 Manim / Python / FFmpeg / LaTeX —— 管**导出 mp4**。
+		* 前者的事发生在浏览器里，Host 问不到；后者发生在操作系统里，浏览器探测不了。所以两条取数路径，一个界面出口。
+		*/
+		/** 运行时阶段 → 色调：没加载是「还没有」（空环），不是错。 */
+		function runtimeTone(phase) {
+			if (phase === "ready") return "ok";
+			if (phase === "loading") return "busy";
+			if (phase === "error") return "error";
+			return "empty";
+		}
+		/** KaTeX → 色调：未配置是「没有」（空环）；公式用不用得上由代码决定，这里不猜。 */
+		function katexTone(phase) {
+			if (phase === "loaded") return "ok";
+			if (phase === "loading") return "busy";
+			if (phase === "error") return "error";
+			return "empty";
+		}
+		/** 能力项 → 色调：缺能力是硬伤，红。 */
+		function capabilityTone(present) {
+			return present ? "ok" : "error";
+		}
+		/** 阶段 → 文案键（写死表，不拼键名）。设置卡与状态条共用这一份。 */
+		const RUNTIME_PHRASE = {
+			idle: "rtIdle",
+			loading: "rtLoading",
+			ready: "rtReady",
+			error: "rtError"
+		};
+		const KATEX_PHRASE = {
+			unconfigured: "rtUnconfigured",
+			loading: "rtLoading",
+			loaded: "rtLoaded",
+			error: "rtError"
+		};
+		/** 订阅浏览器环境状态；卸载自动退订。首值取快照，所以第一帧就有内容、不闪空。 */
+		function useEnvironmentStatus() {
+			const [status, setStatus] = (0, react.useState)(environmentStatus);
+			(0, react.useEffect)(() => onEnvironmentStatus(setStatus), []);
+			return status;
+		}
+		/**
+		* 取本机环境的就绪结论。走的是卡片导出按钮用的那条路（Host 侧带 TTL 缓存），
+		* 所以整页同时挂几十张卡也不会各跑一遍探测；`refresh()` 强制再问一次。
+		*/
+		function useLocalEnv() {
+			const [state, setState] = (0, react.useState)({ phase: "checking" });
+			const [attempt, setAttempt] = (0, react.useState)(0);
+			(0, react.useEffect)(() => {
+				let alive = true;
+				setState({ phase: "checking" });
+				loadExportReadiness().then((value) => {
+					if (!alive) return;
+					setState(value.ready ? { phase: "ready" } : {
+						phase: "missing",
+						missing: value.missing
+					});
+				}).catch((error) => {
+					console.error("[manim-live] 本机环境就绪结论取不到:", error);
+					if (alive) setState({ phase: "unknown" });
+				});
+				return () => {
+					alive = false;
+				};
+			}, [attempt]);
+			return {
+				state,
+				refresh: () => setAttempt((n) => n + 1)
+			};
+		}
+		/** 缺哪几项浏览器能力。顺序固定，便于对照测试与界面稳定。 */
+		function missingCapabilities(caps) {
+			const out = [];
+			if (!caps.wasm) out.push("wasm");
+			if (!caps.webgl) out.push("webgl");
+			if (!caps.mediaRecorder) out.push("recorder");
+			return out;
+		}
+		/**
+		* 环境里有没有**会挡住渲染**的硬伤：解释器起不来 / WebAssembly 与 WebGL 缺席 / 取包失败。
+		*
+		* 缺 MediaRecorder **不算**——它只影响「浏览器直接录屏」那一种导出方式，
+		* 渲染与导出 mp4 都不走它（核心包的 hint 里也写明了这一点）。
+		*/
+		function blocksRender(status) {
+			return !status.capabilities.wasm || !status.capabilities.webgl || status.runtime.phase === "error" || status.packages.lastError !== void 0;
+		}
+		/**
+		* 渲染失败时该补的说明：环境里真有硬伤才给（把核心包给的可执行句原样摆出来）。
+		* 拿去即用——判据全在上面的 `blocksRender`，卡片那侧不再自己判一遍。
+		*/
+		function renderBlockHints() {
+			const status = environmentStatus();
+			return blocksRender(status) ? status.hints : [];
+		}
+		/**
+		* 探测项 id → 设置页同款可读名。卡片与状态条**共用这一张表**：
+		* 两处各写一张的话，Host 加一项探测就会出现「卡片认得出、状态条只显示 id」。
+		*/
+		const MISSING_NAMES = {
+			python3: "envPython3",
+			manim: "envManim",
+			manimModule: "envManimModule",
+			ffmpeg: "envFfmpeg",
+			latex: "envLatex",
+			dvisvgm: "envDvisvgm"
+		};
+		/** 缺的那几项拼成一句话里的一段（表里没有的 id 原样显示，比空着强）。 */
+		function missingLabels(missing, t) {
+			return missing.map((item) => {
+				const key = MISSING_NAMES[item.id];
+				return key === void 0 ? item.id : t(key);
+			}).join("、");
+		}
+		/**
+		* 四条条件 → 四枚 chip。纯函数（`t` 只是取词）：同一个快照进来，出去的东西每次都一样，
+		* 于是能拿假 `t` 把「哪种状态算可点、文案怎么取」钉在测试里。
+		*/
+		function chipsOf(input) {
+			const { t, status, local } = input;
+			const caps = missingCapabilities(status.capabilities);
+			const localMissing = local.phase === "missing" ? local.missing : [];
+			return [
+				{
+					id: "local",
+					tone: local.phase === "checking" ? "busy" : local.phase === "ready" ? "ok" : local.phase === "missing" ? "warn" : "idle",
+					label: t("chipLocal"),
+					value: local.phase === "checking" ? t("chipChecking") : local.phase === "ready" ? t("chipReady") : local.phase === "missing" ? t("chipMissing", { count: localMissing.length }) : t("chipUnknown"),
+					...localMissing.length === 0 ? {} : { detail: t("chipLocalMissing", { items: missingLabels(localMissing, t) }) },
+					actionable: localMissing.length > 0 || local.phase === "unknown"
+				},
+				{
+					id: "runtime",
+					tone: runtimeTone(status.runtime.phase),
+					label: t("chipRuntime"),
+					value: t(RUNTIME_PHRASE[status.runtime.phase]),
+					detail: status.runtime.error ?? t("rtIndexWhy", { url: status.runtime.indexURL ?? "" }),
+					actionable: status.runtime.phase === "idle" || status.runtime.phase === "error"
+				},
+				{
+					id: "katex",
+					tone: katexTone(status.katex.phase),
+					label: t("chipKatex"),
+					value: t(KATEX_PHRASE[status.katex.phase]),
+					detail: status.katex.error ?? (status.katex.baseURL === null ? t("rtKatexWhy") : t("rtKatexAt", { url: status.katex.baseURL })),
+					actionable: status.katex.phase === "error"
+				},
+				{
+					id: "caps",
+					tone: caps.length > 0 ? "error" : "ok",
+					label: t("chipCaps"),
+					value: caps.length > 0 ? t("chipMissing", { count: caps.length }) : t("chipReady"),
+					...caps.length === 0 ? {} : { detail: caps.map((name) => t(name === "wasm" ? "rtWasmWhy" : name === "webgl" ? "rtWebglWhy" : "rtRecorderWhy")).join(" ") },
+					actionable: caps.length > 0
+				}
+			];
+		}
+		/**
+		* 状态条展开后要说的全部话：浏览器侧的可执行句在前面（核心包给的，原样），
+		* 本机侧与「运行时还没起来」这两条在后面。
+		*
+		* 为什么把浏览器侧与运行时那句也收进来：这一栏是「这台机器还缺什么」的唯一出口，
+		* 点开哪一枚都该看到全景——分成四份各说各的，用户还得逐枚点过去才能拼出全貌。
+		*/
+		function pendingHints(input) {
+			const { t, status, local } = input;
+			const out = [...status.hints];
+			if (status.runtime.phase === "idle") out.push(t("chipRuntimeCold"));
+			if (local.phase === "missing" && local.missing.length > 0) out.push(t("chipLocalMissing", { items: missingLabels(local.missing, t) }));
+			return out;
 		}
 		//#endregion
 		//#region src/client/storage.ts
@@ -173115,18 +173452,6 @@ XID_Start XIDS`.split(/\s/).map((p) => [w(p), p]));
 		}
 		//#endregion
 		//#region src/client/components/card.tsx
-		/** 探测项 id → 设置页同款可读名：悬停提示里「缺什么」要让人看得懂，不能甩 id。 */
-		function missingNames(missing, t) {
-			const NAMES = {
-				python3: t("envPython3"),
-				manim: t("envManim"),
-				manimModule: t("envManimModule"),
-				ffmpeg: t("envFfmpeg"),
-				latex: t("envLatex"),
-				dvisvgm: t("envDvisvgm")
-			};
-			return missing.map((item) => NAMES[item.id] ?? item.id).join("、");
-		}
 		/**
 		* 底部状态栏的一行：图标 + 内容。
 		*
@@ -173137,7 +173462,7 @@ XID_Start XIDS`.split(/\s/).map((p) => [w(p), p]));
 		*
 		* warn 是给「这次调用被中断」那类：不是代码错，但也不该当作什么都没发生。
 		*/
-		function FootRow({ tone, role, children }) {
+		function FootRow({ tone, role, className, children }) {
 			const icon = tone === "busy" ? /* @__PURE__ */ (0, react_jsx_runtime.jsx)("span", {
 				className: "mr-spinner",
 				"aria-hidden": "true"
@@ -173155,7 +173480,7 @@ XID_Start XIDS`.split(/\s/).map((p) => [w(p), p]));
 				"aria-hidden": "true"
 			});
 			return /* @__PURE__ */ (0, react_jsx_runtime.jsxs)("div", {
-				className: `mr-chatcard-footrow is-${tone}`,
+				className: className === void 0 ? `mr-chatcard-footrow is-${tone}` : `mr-chatcard-footrow is-${tone} ${className}`,
 				role,
 				children: [icon, children]
 			});
@@ -173209,6 +173534,11 @@ XID_Start XIDS`.split(/\s/).map((p) => [w(p), p]));
 		function ManimCard({ data, t, label, onResult, autoStart, fast }) {
 			const stageRef = (0, react.useRef)(null);
 			const [status, setStatus] = (0, react.useState)(null);
+			/**
+			* 渲染失败时环境那边的硬伤（核心包给的可执行句）。空数组 = 失败与环境无关（多半是代码问题）。
+			* 与状态一起被清掉，所以重跑一次就重新判一次。
+			*/
+			const [envHints, setEnvHints] = (0, react.useState)([]);
 			const [showCode, setShowCode] = (0, react.useState)(false);
 			/** 画布上已经有一幅画好的终态画面了（跑完那一刻置位；被作废 / 被淘汰时清零）。 */
 			const [rendered, setRendered] = (0, react.useState)(false);
@@ -173240,6 +173570,7 @@ XID_Start XIDS`.split(/\s/).map((p) => [w(p), p]));
 			onResultRef.current = onResult;
 			/** 状态既落在卡片上，也回给调用方（实验场用它点亮语料条目的红绿点）。 */
 			const report = (next) => {
+				setEnvHints(next.ok ? [] : renderBlockHints());
 				setStatus(next);
 				onResultRef.current?.(next);
 			};
@@ -173302,7 +173633,7 @@ XID_Start XIDS`.split(/\s/).map((p) => [w(p), p]));
 						});
 						rememberExport(data.callId, result.file);
 					} else {
-						const error = result.reason === "environment" ? missingNames(result.missing ?? [], t) : result.error ?? t("fail");
+						const error = result.reason === "environment" ? missingLabels(result.missing ?? [], t) : result.error ?? t("fail");
 						setExportNote({
 							ok: false,
 							text: t("exportFailed", { error })
@@ -173529,7 +173860,7 @@ XID_Start XIDS`.split(/\s/).map((p) => [w(p), p]));
 			});
 			const loadingNames = loading === null ? null : loading.join("、");
 			const takingPackages = slowLoading && loadingNames !== null;
-			const exportTip = readiness === null ? t("exportChecking") : readiness.ready ? t("exportReadyHint") : readiness.missing.length > 0 ? t("exportMissingHint", { missing: missingNames(readiness.missing, t) }) : t("exportUnknownHint");
+			const exportTip = readiness === null ? t("exportChecking") : readiness.ready ? t("exportReadyHint") : readiness.missing.length > 0 ? t("exportMissingHint", { missing: missingLabels(readiness.missing, t) }) : t("exportUnknownHint");
 			const exportButton = /* @__PURE__ */ (0, react_jsx_runtime.jsx)(Tip, {
 				label: exportTip,
 				align: "end",
@@ -173644,6 +173975,18 @@ XID_Start XIDS`.split(/\s/).map((p) => [w(p), p]));
 								role: "alert",
 								children: status.text
 							}),
+							renderFailed && envHints.length > 0 && /* @__PURE__ */ (0, react_jsx_runtime.jsx)(FootRow, {
+								tone: "warn",
+								role: "status",
+								className: "is-envhint",
+								children: /* @__PURE__ */ (0, react_jsx_runtime.jsxs)("div", {
+									className: "mr-chatcard-envhint",
+									children: [/* @__PURE__ */ (0, react_jsx_runtime.jsx)("span", { children: t("renderEnvBlocked") }), /* @__PURE__ */ (0, react_jsx_runtime.jsx)("ul", {
+										className: "mr-chatcard-envlist",
+										children: envHints.map((hint) => /* @__PURE__ */ (0, react_jsx_runtime.jsx)("li", { children: hint }, hint))
+									})]
+								})
+							}),
 							interrupted && /* @__PURE__ */ (0, react_jsx_runtime.jsx)(FootRow, {
 								tone: "warn",
 								role: "status",
@@ -173681,6 +174024,151 @@ XID_Start XIDS`.split(/\s/).map((p) => [w(p), p]));
 						]
 					})
 				]
+			});
+		}
+		//#endregion
+		//#region src/client/components/dot.tsx
+		/**
+		* @param tone  `ok` 绿 / `warn` 黄 / `error` 红 / `idle` 灰实心 / `empty` 空环 / `busy` 转圈。
+		* @param label 给了就是**有语义的状态点**（读屏念得出、鼠标悬浮有原生提示）；不给就当装饰，
+		*              因为旁边已经有文字把状态说清了（环境行的版本号、库行那个键、状态条上的状态词）。
+		*/
+		function Dot({ tone, label }) {
+			if (tone === "busy") return /* @__PURE__ */ (0, react_jsx_runtime.jsx)("svg", {
+				className: "mr-set-spin",
+				width: "14",
+				height: "14",
+				viewBox: "0 0 24 24",
+				"aria-hidden": "true",
+				children: /* @__PURE__ */ (0, react_jsx_runtime.jsxs)("g", {
+					className: "mr-set-spin-rotor",
+					children: [/* @__PURE__ */ (0, react_jsx_runtime.jsx)("circle", {
+						className: "mr-set-spin-track",
+						cx: "12",
+						cy: "12",
+						r: "9.5"
+					}), /* @__PURE__ */ (0, react_jsx_runtime.jsx)("circle", {
+						className: "mr-set-spin-arc",
+						cx: "12",
+						cy: "12",
+						r: "9.5"
+					})]
+				})
+			});
+			return /* @__PURE__ */ (0, react_jsx_runtime.jsx)("span", {
+				className: "mr-set-dot",
+				"data-tone": tone,
+				role: label === void 0 ? void 0 : "img",
+				"aria-label": label,
+				"aria-hidden": label === void 0 ? true : void 0
+			});
+		}
+		//#endregion
+		//#region src/client/components/env-bar.tsx
+		function EnvBar({ t }) {
+			const status = useEnvironmentStatus();
+			const local = useLocalEnv();
+			/** 展开的是哪一枚（null = 收起）。四枚共用一个面板，因为面板说的是同一件事：这台机器还缺什么。 */
+			const [open, setOpen] = (0, react.useState)(null);
+			const [warming, setWarming] = (0, react.useState)(false);
+			/** 预热回执（null = 还没按过）。成功也要说一声：预热没有画面回执，不说就不知道按了有没有用。 */
+			const [warmNote, setWarmNote] = (0, react.useState)(null);
+			const chips = chipsOf({
+				t,
+				status,
+				local: local.state
+			});
+			const pending = pendingHints({
+				t,
+				status,
+				local: local.state
+			});
+			const canWarm = status.runtime.phase === "idle" || status.runtime.phase === "error";
+			const localBroken = local.state.phase === "missing" || local.state.phase === "unknown";
+			const warm = async () => {
+				if (warming) return;
+				setWarming(true);
+				setWarmNote(null);
+				try {
+					await warmupManim();
+					setWarmNote(t("envbarWarmed"));
+				} catch (error) {
+					console.error("[manim-live] 预热失败:", error);
+					setWarmNote(t("envbarWarmFailed", { message: error instanceof Error ? error.message : String(error) }));
+				} finally {
+					setWarming(false);
+				}
+			};
+			return /* @__PURE__ */ (0, react_jsx_runtime.jsxs)("div", {
+				className: "mr-envbar-wrap",
+				children: [/* @__PURE__ */ (0, react_jsx_runtime.jsxs)("div", {
+					className: "mr-envbar",
+					role: "group",
+					"aria-label": t("envbarLabel"),
+					children: [chips.map((chip) => {
+						const body = /* @__PURE__ */ (0, react_jsx_runtime.jsxs)(react_jsx_runtime.Fragment, { children: [
+							/* @__PURE__ */ (0, react_jsx_runtime.jsx)(Dot, { tone: chip.tone }),
+							/* @__PURE__ */ (0, react_jsx_runtime.jsx)("span", {
+								className: "mr-chip-name",
+								children: chip.label
+							}),
+							/* @__PURE__ */ (0, react_jsx_runtime.jsx)("span", {
+								className: "mr-chip-value",
+								children: chip.value
+							})
+						] });
+						return chip.actionable ? /* @__PURE__ */ (0, react_jsx_runtime.jsx)("button", {
+							className: "mr-chip",
+							type: "button",
+							"data-tone": chip.tone,
+							"aria-expanded": open === chip.id,
+							title: chip.detail,
+							onClick: () => setOpen((current) => current === chip.id ? null : chip.id),
+							children: body
+						}, chip.id) : /* @__PURE__ */ (0, react_jsx_runtime.jsx)("span", {
+							className: "mr-chip",
+							"data-tone": chip.tone,
+							title: chip.detail,
+							children: body
+						}, chip.id);
+					}), warmNote !== null && /* @__PURE__ */ (0, react_jsx_runtime.jsx)("span", {
+						className: "mr-envbar-note",
+						role: "status",
+						children: warmNote
+					})]
+				}), open !== null && /* @__PURE__ */ (0, react_jsx_runtime.jsxs)("div", {
+					className: "mr-envpanel",
+					children: [pending.length === 0 ? /* @__PURE__ */ (0, react_jsx_runtime.jsx)("p", {
+						className: "mr-envpanel-empty",
+						children: t("chipUnknown")
+					}) : /* @__PURE__ */ (0, react_jsx_runtime.jsx)("ul", {
+						className: "mr-envpanel-list",
+						children: pending.map((line) => /* @__PURE__ */ (0, react_jsx_runtime.jsx)("li", { children: line }, line))
+					}), /* @__PURE__ */ (0, react_jsx_runtime.jsxs)("div", {
+						className: "mr-envpanel-acts",
+						children: [
+							canWarm && /* @__PURE__ */ (0, react_jsx_runtime.jsx)("button", {
+								className: "mr-btn outline",
+								type: "button",
+								disabled: warming,
+								onClick: () => void warm(),
+								children: warming ? t("envbarWarming") : t("envbarWarmup")
+							}),
+							localBroken && /* @__PURE__ */ (0, react_jsx_runtime.jsx)("button", {
+								className: "mr-btn outline",
+								type: "button",
+								onClick: local.refresh,
+								children: t("envbarReprobe")
+							}),
+							/* @__PURE__ */ (0, react_jsx_runtime.jsx)("button", {
+								className: "mr-btn outline",
+								type: "button",
+								onClick: () => setOpen(null),
+								children: t("envbarClose")
+							})
+						]
+					})]
+				})]
 			});
 		}
 		//#endregion
@@ -174475,188 +174963,192 @@ self.play(Write(eq))
 			});
 			return /* @__PURE__ */ (0, react_jsx_runtime.jsxs)("div", {
 				className: "mr-page",
-				children: [/* @__PURE__ */ (0, react_jsx_runtime.jsxs)("header", {
-					className: "mr-page-head",
-					children: [/* @__PURE__ */ (0, react_jsx_runtime.jsxs)("div", {
-						className: "mr-head-title",
-						children: [/* @__PURE__ */ (0, react_jsx_runtime.jsx)("h1", {
-							className: "mr-page-title",
-							children: t("title")
-						}), /* @__PURE__ */ (0, react_jsx_runtime.jsx)(Tip, {
-							label: t("lead"),
-							align: "start",
-							children: /* @__PURE__ */ (0, react_jsx_runtime.jsx)("button", {
-								className: "mr-iconbtn",
-								type: "button",
-								"aria-label": t("lead"),
-								children: /* @__PURE__ */ (0, react_jsx_runtime.jsx)(Info$2, {
-									size: 15,
-									strokeWidth: 1.6
-								})
-							})
-						})]
-					}), /* @__PURE__ */ (0, react_jsx_runtime.jsx)(Segmented, {
-						value: mode,
-						onChange: switchMode,
-						label: t("modeLabel"),
-						options: [{
-							value: "samples",
-							label: t("modeSamples")
-						}, {
-							value: "free",
-							label: t("modeFree")
-						}]
-					})]
-				}), mode === "samples" ? /* @__PURE__ */ (0, react_jsx_runtime.jsxs)("div", {
-					className: "mr-workspace",
-					children: [/* @__PURE__ */ (0, react_jsx_runtime.jsxs)("aside", {
-						className: "mr-side",
+				children: [
+					/* @__PURE__ */ (0, react_jsx_runtime.jsxs)("header", {
+						className: "mr-page-head",
 						children: [/* @__PURE__ */ (0, react_jsx_runtime.jsxs)("div", {
-							className: "mr-toolbar",
-							children: [
-								running && /* @__PURE__ */ (0, react_jsx_runtime.jsx)(Tip, {
-									label: t("stopHint"),
-									align: "start",
-									children: /* @__PURE__ */ (0, react_jsx_runtime.jsx)("button", {
-										className: "mr-iconbtn",
-										type: "button",
-										"aria-label": t("stop"),
-										onClick: stop,
-										children: /* @__PURE__ */ (0, react_jsx_runtime.jsx)(Square, {
-											size: 14,
-											strokeWidth: 1.6
-										})
-									})
-								}),
-								/* @__PURE__ */ (0, react_jsx_runtime.jsx)(Tip, {
-									label: t("clearRecordHint"),
-									align: "start",
-									children: /* @__PURE__ */ (0, react_jsx_runtime.jsx)("button", {
-										className: "mr-iconbtn",
-										type: "button",
-										"aria-label": t("clearRecord"),
-										onClick: clearRecord,
-										children: /* @__PURE__ */ (0, react_jsx_runtime.jsx)(Trash2, {
-											size: 15,
-											strokeWidth: 1.6
-										})
-									})
-								}),
-								fastToggle,
-								cacheButton,
-								/* @__PURE__ */ (0, react_jsx_runtime.jsx)("span", {
-									className: "mr-toolbar-count",
-									children: tried === 0 ? t("sampleCountIdle") : t("sampleCount", {
-										passed: tried - failed,
-										failed,
-										total: SAMPLES.length
-									})
-								}),
-								cacheNote !== null && /* @__PURE__ */ (0, react_jsx_runtime.jsx)("span", {
-									className: "mr-toolbar-note",
-									role: "status",
-									children: cacheNote
-								})
-							]
-						}), /* @__PURE__ */ (0, react_jsx_runtime.jsx)("div", {
-							className: "mr-side-scroll",
-							children: /* @__PURE__ */ (0, react_jsx_runtime.jsx)("div", {
-								className: "mr-ground-items",
-								children: SAMPLES.map((sample) => {
-									const state = stateOf(sample, results[sample.id]);
-									return /* @__PURE__ */ (0, react_jsx_runtime.jsxs)("button", {
-										className: "mr-ground-item",
-										type: "button",
-										"data-state": state,
-										"aria-pressed": shown?.kind === "sample" && shown.id === sample.id,
-										title: [sample.id, sample.expectation].join("\n"),
-										onClick: () => openSample(sample.id),
-										children: [
-											/* @__PURE__ */ (0, react_jsx_runtime.jsx)("span", {
-												className: "mr-ground-dot",
-												"aria-hidden": "true"
-											}),
-											/* @__PURE__ */ (0, react_jsx_runtime.jsx)("span", {
-												className: "mr-ground-name",
-												children: sample.title
-											}),
-											/* @__PURE__ */ (0, react_jsx_runtime.jsx)("span", {
-												className: "mr-ground-id",
-												children: sample.id
-											})
-										]
-									}, sample.id);
-								})
-							})
-						})]
-					}), /* @__PURE__ */ (0, react_jsx_runtime.jsx)("main", {
-						className: "mr-main",
-						children: preview
-					})]
-				}) : /* @__PURE__ */ (0, react_jsx_runtime.jsxs)("div", {
-					className: "mr-workspace mr-workspace-free",
-					children: [/* @__PURE__ */ (0, react_jsx_runtime.jsxs)("aside", {
-						className: "mr-side",
-						children: [/* @__PURE__ */ (0, react_jsx_runtime.jsx)("textarea", {
-							className: "mr-code mr-code-fill",
-							spellCheck: false,
-							value: source,
-							onChange: (event) => setSource(event.target.value)
-						}), /* @__PURE__ */ (0, react_jsx_runtime.jsxs)("div", {
-							className: "mr-toolbar",
-							children: [
-								running && /* @__PURE__ */ (0, react_jsx_runtime.jsx)(Tip, {
-									label: t("stopHint"),
-									align: "start",
-									children: /* @__PURE__ */ (0, react_jsx_runtime.jsx)("button", {
-										className: "mr-iconbtn",
-										type: "button",
-										"aria-label": t("stop"),
-										onClick: stop,
-										children: /* @__PURE__ */ (0, react_jsx_runtime.jsx)(Square, {
-											size: 14,
-											strokeWidth: 1.6
-										})
-									})
-								}),
-								/* @__PURE__ */ (0, react_jsx_runtime.jsxs)("button", {
-									className: "mr-btn primary",
+							className: "mr-head-title",
+							children: [/* @__PURE__ */ (0, react_jsx_runtime.jsx)("h1", {
+								className: "mr-page-title",
+								children: t("title")
+							}), /* @__PURE__ */ (0, react_jsx_runtime.jsx)(Tip, {
+								label: t("lead"),
+								align: "start",
+								children: /* @__PURE__ */ (0, react_jsx_runtime.jsx)("button", {
+									className: "mr-iconbtn",
 									type: "button",
-									disabled: emptySource,
-									onClick: renderFree,
-									children: [/* @__PURE__ */ (0, react_jsx_runtime.jsx)(Play, {
-										size: 13,
-										strokeWidth: 1.8,
-										"aria-hidden": "true"
-									}), t("render")]
-								}),
-								/* @__PURE__ */ (0, react_jsx_runtime.jsx)(Tip, {
-									label: t("sourceHint"),
-									align: "start",
-									children: /* @__PURE__ */ (0, react_jsx_runtime.jsx)("button", {
-										className: "mr-iconbtn",
-										type: "button",
-										"aria-label": t("sourceHint"),
-										children: /* @__PURE__ */ (0, react_jsx_runtime.jsx)(Info$2, {
-											size: 15,
-											strokeWidth: 1.6
-										})
+									"aria-label": t("lead"),
+									children: /* @__PURE__ */ (0, react_jsx_runtime.jsx)(Info$2, {
+										size: 15,
+										strokeWidth: 1.6
 									})
-								}),
-								fastToggle,
-								cacheButton,
-								cacheNote !== null && /* @__PURE__ */ (0, react_jsx_runtime.jsx)("span", {
-									className: "mr-toolbar-note",
-									role: "status",
-									children: cacheNote
 								})
-							]
+							})]
+						}), /* @__PURE__ */ (0, react_jsx_runtime.jsx)(Segmented, {
+							value: mode,
+							onChange: switchMode,
+							label: t("modeLabel"),
+							options: [{
+								value: "samples",
+								label: t("modeSamples")
+							}, {
+								value: "free",
+								label: t("modeFree")
+							}]
 						})]
-					}), /* @__PURE__ */ (0, react_jsx_runtime.jsx)("main", {
-						className: "mr-main",
-						children: preview
-					})]
-				})]
+					}),
+					/* @__PURE__ */ (0, react_jsx_runtime.jsx)(EnvBar, { t }),
+					mode === "samples" ? /* @__PURE__ */ (0, react_jsx_runtime.jsxs)("div", {
+						className: "mr-workspace",
+						children: [/* @__PURE__ */ (0, react_jsx_runtime.jsxs)("aside", {
+							className: "mr-side",
+							children: [/* @__PURE__ */ (0, react_jsx_runtime.jsxs)("div", {
+								className: "mr-toolbar",
+								children: [
+									running && /* @__PURE__ */ (0, react_jsx_runtime.jsx)(Tip, {
+										label: t("stopHint"),
+										align: "start",
+										children: /* @__PURE__ */ (0, react_jsx_runtime.jsx)("button", {
+											className: "mr-iconbtn",
+											type: "button",
+											"aria-label": t("stop"),
+											onClick: stop,
+											children: /* @__PURE__ */ (0, react_jsx_runtime.jsx)(Square, {
+												size: 14,
+												strokeWidth: 1.6
+											})
+										})
+									}),
+									/* @__PURE__ */ (0, react_jsx_runtime.jsx)(Tip, {
+										label: t("clearRecordHint"),
+										align: "start",
+										children: /* @__PURE__ */ (0, react_jsx_runtime.jsx)("button", {
+											className: "mr-iconbtn",
+											type: "button",
+											"aria-label": t("clearRecord"),
+											onClick: clearRecord,
+											children: /* @__PURE__ */ (0, react_jsx_runtime.jsx)(Trash2, {
+												size: 15,
+												strokeWidth: 1.6
+											})
+										})
+									}),
+									fastToggle,
+									cacheButton,
+									/* @__PURE__ */ (0, react_jsx_runtime.jsx)("span", {
+										className: "mr-toolbar-count",
+										children: tried === 0 ? t("sampleCountIdle") : t("sampleCount", {
+											passed: tried - failed,
+											failed,
+											total: SAMPLES.length
+										})
+									}),
+									cacheNote !== null && /* @__PURE__ */ (0, react_jsx_runtime.jsx)("span", {
+										className: "mr-toolbar-note",
+										role: "status",
+										children: cacheNote
+									})
+								]
+							}), /* @__PURE__ */ (0, react_jsx_runtime.jsx)("div", {
+								className: "mr-side-scroll",
+								children: /* @__PURE__ */ (0, react_jsx_runtime.jsx)("div", {
+									className: "mr-ground-items",
+									children: SAMPLES.map((sample) => {
+										const state = stateOf(sample, results[sample.id]);
+										return /* @__PURE__ */ (0, react_jsx_runtime.jsxs)("button", {
+											className: "mr-ground-item",
+											type: "button",
+											"data-state": state,
+											"aria-pressed": shown?.kind === "sample" && shown.id === sample.id,
+											title: [sample.id, sample.expectation].join("\n"),
+											onClick: () => openSample(sample.id),
+											children: [
+												/* @__PURE__ */ (0, react_jsx_runtime.jsx)("span", {
+													className: "mr-ground-dot",
+													"aria-hidden": "true"
+												}),
+												/* @__PURE__ */ (0, react_jsx_runtime.jsx)("span", {
+													className: "mr-ground-name",
+													children: sample.title
+												}),
+												/* @__PURE__ */ (0, react_jsx_runtime.jsx)("span", {
+													className: "mr-ground-id",
+													children: sample.id
+												})
+											]
+										}, sample.id);
+									})
+								})
+							})]
+						}), /* @__PURE__ */ (0, react_jsx_runtime.jsx)("main", {
+							className: "mr-main",
+							children: preview
+						})]
+					}) : /* @__PURE__ */ (0, react_jsx_runtime.jsxs)("div", {
+						className: "mr-workspace mr-workspace-free",
+						children: [/* @__PURE__ */ (0, react_jsx_runtime.jsxs)("aside", {
+							className: "mr-side",
+							children: [/* @__PURE__ */ (0, react_jsx_runtime.jsx)("textarea", {
+								className: "mr-code mr-code-fill",
+								spellCheck: false,
+								value: source,
+								onChange: (event) => setSource(event.target.value)
+							}), /* @__PURE__ */ (0, react_jsx_runtime.jsxs)("div", {
+								className: "mr-toolbar",
+								children: [
+									running && /* @__PURE__ */ (0, react_jsx_runtime.jsx)(Tip, {
+										label: t("stopHint"),
+										align: "start",
+										children: /* @__PURE__ */ (0, react_jsx_runtime.jsx)("button", {
+											className: "mr-iconbtn",
+											type: "button",
+											"aria-label": t("stop"),
+											onClick: stop,
+											children: /* @__PURE__ */ (0, react_jsx_runtime.jsx)(Square, {
+												size: 14,
+												strokeWidth: 1.6
+											})
+										})
+									}),
+									/* @__PURE__ */ (0, react_jsx_runtime.jsxs)("button", {
+										className: "mr-btn primary",
+										type: "button",
+										disabled: emptySource,
+										onClick: renderFree,
+										children: [/* @__PURE__ */ (0, react_jsx_runtime.jsx)(Play, {
+											size: 13,
+											strokeWidth: 1.8,
+											"aria-hidden": "true"
+										}), t("render")]
+									}),
+									/* @__PURE__ */ (0, react_jsx_runtime.jsx)(Tip, {
+										label: t("sourceHint"),
+										align: "start",
+										children: /* @__PURE__ */ (0, react_jsx_runtime.jsx)("button", {
+											className: "mr-iconbtn",
+											type: "button",
+											"aria-label": t("sourceHint"),
+											children: /* @__PURE__ */ (0, react_jsx_runtime.jsx)(Info$2, {
+												size: 15,
+												strokeWidth: 1.6
+											})
+										})
+									}),
+									fastToggle,
+									cacheButton,
+									cacheNote !== null && /* @__PURE__ */ (0, react_jsx_runtime.jsx)("span", {
+										className: "mr-toolbar-note",
+										role: "status",
+										children: cacheNote
+									})
+								]
+							})]
+						}), /* @__PURE__ */ (0, react_jsx_runtime.jsx)("main", {
+							className: "mr-main",
+							children: preview
+						})]
+					})
+				]
 			});
 		}
 		//#endregion
@@ -174725,48 +175217,99 @@ self.play(Write(eq))
 		}
 		//#endregion
 		//#region src/client/settings.tsx
-		/**
-		* 状态点：宿主 `StateDot` 的配方抄一份——宿主 UI 包禁止 import（引了槽位会整体崩）。
-		* 进行中是那只 1.5 秒一圈的环；空环（`empty`）表示「本地没有」，与灰色实心的「中性」区分开。
-		*
-		* `label` 给了就是**有语义的状态点**（读屏念得出、鼠标悬浮有原生提示）；不给就当装饰，
-		* 因为旁边已经有文字把状态说清了（环境行的版本号、库行那个键）。
-		*/
-		function Dot({ tone, label }) {
-			if (tone === "busy") return /* @__PURE__ */ (0, react_jsx_runtime.jsx)("svg", {
-				className: "mr-set-spin",
-				width: "14",
-				height: "14",
-				viewBox: "0 0 24 24",
-				"aria-hidden": "true",
-				children: /* @__PURE__ */ (0, react_jsx_runtime.jsxs)("g", {
-					className: "mr-set-spin-rotor",
-					children: [/* @__PURE__ */ (0, react_jsx_runtime.jsx)("circle", {
-						className: "mr-set-spin-track",
-						cx: "12",
-						cy: "12",
-						r: "9.5"
-					}), /* @__PURE__ */ (0, react_jsx_runtime.jsx)("circle", {
-						className: "mr-set-spin-arc",
-						cx: "12",
-						cy: "12",
-						r: "9.5"
-					})]
-				})
-			});
-			return /* @__PURE__ */ (0, react_jsx_runtime.jsx)("span", {
-				className: "mr-set-dot",
-				"data-tone": tone,
-				role: label === void 0 ? void 0 : "img",
-				"aria-label": label,
-				"aria-hidden": label === void 0 ? true : void 0
-			});
-		}
 		/** 库的三态：已缓存在本机=绿实心；随包自带=灰实心（在，但不归这里管）；还没缓存=空心环。 */
 		const pkgTone = (state) => state === "cached" ? "ok" : state === "bundled" ? "idle" : "empty";
 		/** 状态点的读屏名（点的颜色与虚实是给眼睛看的，读屏得有一句话；内置那个词与键上的一致）。 */
 		const pkgStateKey = (state) => state === "cached" ? "pkgStateCached" : state === "bundled" ? "pkgBundled" : "pkgStateAbsent";
 		const envTone = (status) => status === "ok" ? "ok" : status === "missing" ? "warn" : "error";
+		/**
+		* 浏览器运行时卡片：数据全在核心包的环境状态里（订阅 `onEnvironmentStatus`），不走 Host 路由——
+		* 这些事发生在浏览器里，Host 问不到。与「本机环境」同属「环境」组：一个管渲染、一个管导出。
+		*/
+		function RuntimeCard({ t }) {
+			const status = useEnvironmentStatus();
+			const rows = [
+				{
+					id: "runtime",
+					tone: runtimeTone(status.runtime.phase),
+					label: t("rtRuntime"),
+					value: t(RUNTIME_PHRASE[status.runtime.phase]),
+					info: status.runtime.error ?? (status.runtime.indexURL === null ? t("rtNoLoader") : t("rtIndexWhy", { url: status.runtime.indexURL }))
+				},
+				{
+					id: "katex",
+					tone: katexTone(status.katex.phase),
+					label: t("rtKatex"),
+					value: t(KATEX_PHRASE[status.katex.phase]),
+					info: status.katex.error ?? (status.katex.baseURL === null ? t("rtKatexWhy") : t("rtKatexAt", { url: status.katex.baseURL }))
+				},
+				{
+					id: "webgl",
+					tone: capabilityTone(status.capabilities.webgl),
+					label: t("rtWebgl"),
+					value: t(status.capabilities.webgl ? "rtYes" : "rtNo"),
+					info: t("rtWebglWhy")
+				},
+				{
+					id: "wasm",
+					tone: capabilityTone(status.capabilities.wasm),
+					label: t("rtWasm"),
+					value: t(status.capabilities.wasm ? "rtYes" : "rtNo"),
+					info: t("rtWasmWhy")
+				},
+				{
+					id: "recorder",
+					tone: capabilityTone(status.capabilities.mediaRecorder),
+					label: t("rtRecorder"),
+					value: t(status.capabilities.mediaRecorder ? "rtYes" : "rtNo"),
+					info: t("rtRecorderWhy")
+				}
+			];
+			const subline = status.hints.length > 0 ? t("rtHints", { count: status.hints.length }) : t("rtAllReady");
+			return /* @__PURE__ */ (0, react_jsx_runtime.jsxs)("section", {
+				className: "mr-set-card",
+				children: [
+					/* @__PURE__ */ (0, react_jsx_runtime.jsx)("header", {
+						className: "mr-set-cardhead",
+						children: /* @__PURE__ */ (0, react_jsx_runtime.jsxs)("div", {
+							className: "mr-set-cardheadtext",
+							children: [/* @__PURE__ */ (0, react_jsx_runtime.jsx)("h3", {
+								className: "mr-set-cardtitle",
+								children: t("rtTitle")
+							}), /* @__PURE__ */ (0, react_jsx_runtime.jsx)("p", {
+								className: status.hints.length > 0 ? "mr-set-cardsub is-error" : "mr-set-cardsub",
+								role: "status",
+								children: subline
+							})]
+						})
+					}),
+					/* @__PURE__ */ (0, react_jsx_runtime.jsx)("div", {
+						className: "mr-set-rows",
+						children: rows.map((row) => /* @__PURE__ */ (0, react_jsx_runtime.jsxs)("div", {
+							className: "mr-set-row",
+							children: [/* @__PURE__ */ (0, react_jsx_runtime.jsxs)("span", {
+								className: "mr-set-cell is-check",
+								children: [/* @__PURE__ */ (0, react_jsx_runtime.jsx)("span", {
+									className: "mr-set-name",
+									children: row.label
+								}), /* @__PURE__ */ (0, react_jsx_runtime.jsx)(Info, {
+									name: row.label,
+									text: row.info
+								})]
+							}), /* @__PURE__ */ (0, react_jsx_runtime.jsxs)("span", {
+								className: "mr-set-cell is-status",
+								children: [/* @__PURE__ */ (0, react_jsx_runtime.jsx)(Dot, { tone: row.tone }), /* @__PURE__ */ (0, react_jsx_runtime.jsx)("span", { children: row.value })]
+							})]
+						}, row.id))
+					}),
+					status.hints.length > 0 && /* @__PURE__ */ (0, react_jsx_runtime.jsx)("p", {
+						className: "mr-set-cardfoot is-error",
+						role: "status",
+						children: status.hints.join("\n")
+					})
+				]
+			});
+		}
 		/**
 		* 探测项 id → 文案键。**写死这张表**是为了不去拼键名（拼出来的键查不到就成了空白文案）。
 		* Host 加了新探测项而这张表还没跟上时，退化成直接显示 id —— 比空着强，也一眼看得出要补文案。
@@ -175321,12 +175864,22 @@ self.play(Write(eq))
 				})]
 			});
 		}
-		/** 设置页正文：两块内容，样式与留白由外层设置面板给（这里只管内容）。 */
+		/** 设置页正文：环境组两张卡（浏览器运行时 + 本机环境），库组一张卡加一张补库卡。 */
 		function ManimSettingsPage({ t }) {
 			return /* @__PURE__ */ (0, react_jsx_runtime.jsxs)("section", {
 				className: "mr-set",
 				"aria-label": t("nav"),
-				children: [/* @__PURE__ */ (0, react_jsx_runtime.jsx)(EnvCard, { t }), /* @__PURE__ */ (0, react_jsx_runtime.jsx)(PackagesCard, { t })]
+				children: [/* @__PURE__ */ (0, react_jsx_runtime.jsxs)("section", {
+					className: "mr-set-group",
+					"aria-label": t("envGroup"),
+					children: [/* @__PURE__ */ (0, react_jsx_runtime.jsx)("h2", {
+						className: "mr-set-groupname",
+						children: t("envGroup")
+					}), /* @__PURE__ */ (0, react_jsx_runtime.jsxs)("div", {
+						className: "mr-set-stack",
+						children: [/* @__PURE__ */ (0, react_jsx_runtime.jsx)(RuntimeCard, { t }), /* @__PURE__ */ (0, react_jsx_runtime.jsx)(EnvCard, { t })]
+					})]
+				}), /* @__PURE__ */ (0, react_jsx_runtime.jsx)(PackagesCard, { t })]
 			});
 		}
 		//#endregion
@@ -175591,6 +176144,47 @@ self.play(Write(eq))
 			envLatexWhy: "MathTex / Tex 用它排版公式；缺了这些写法会直接报错。",
 			envDvisvgm: "dvisvgm",
 			envDvisvgmWhy: "LaTeX 转 SVG 的那一步 —— Manim 渲染公式的第二半。",
+			rtTitle: "浏览器运行时",
+			rtRuntime: "Python 运行时",
+			rtKatex: "公式样式",
+			rtWebgl: "WebGL",
+			rtWasm: "WebAssembly",
+			rtRecorder: "屏幕录制",
+			rtYes: "可用",
+			rtNo: "不可用",
+			rtReady: "就绪",
+			rtIdle: "未加载",
+			rtLoading: "加载中",
+			rtError: "失败",
+			rtLoaded: "已加载",
+			rtUnconfigured: "未配置",
+			rtHints: "{count} 项待处理",
+			rtAllReady: "各项就绪",
+			rtNoLoader: "加载器还没装上（本页还没人用过渲染器）",
+			rtIndexWhy: "取数地址：{url}",
+			rtKatexWhy: "没有配置公式样式的地址，公式会以无样式形态渲染。",
+			rtKatexAt: "取数地址：{url}",
+			rtWebglWhy: "WebGL 是画面本身的出口；没有它，卡片渲染不出任何东西。",
+			rtWasmWhy: "WebAssembly 是 Python 解释器的运行基础；没有它，所有渲染都起不来。",
+			rtRecorderWhy: "有它才能在浏览器里直接录屏导出；缺它只影响这一种导出方式，渲染与导出 mp4 都不受影响。",
+			envbarLabel: "环境状态",
+			chipLocal: "本机 Manim",
+			chipRuntime: "运行时",
+			chipKatex: "公式样式",
+			chipCaps: "浏览器能力",
+			chipReady: "就绪",
+			chipChecking: "检测中…",
+			chipMissing: "缺 {count} 项",
+			chipUnknown: "查不到",
+			chipLocalMissing: "本机还缺：{items}（导出 mp4 要用这些）。",
+			chipRuntimeCold: "运行时还没加载：第一次渲染要先把它下载下来（约 13 MB），可以先按「立即预热」拉起来。",
+			envbarWarmup: "立即预热",
+			envbarWarming: "正在预热…",
+			envbarWarmed: "运行时已就绪",
+			envbarWarmFailed: "预热失败：{message}",
+			envbarReprobe: "重新检测",
+			envbarClose: "收起",
+			renderEnvBlocked: "这台机器上还有条件没满足，可能正是它渲染不出来的原因：",
 			pkgTitle: "Python 库",
 			pkgCardTitle: "已缓存的库",
 			pkgCountsShort: "{cached} 个 · {bytes}",
@@ -175618,7 +176212,7 @@ self.play(Write(eq))
 		} };
 		//#endregion
 		//#region \0plugin-css:src/client/styles.css.mjs
-		const css = "/*! tailwindcss v4.3.3 | MIT License | https://tailwindcss.com */\n@layer properties{@supports (((-webkit-hyphens:none)) and (not (margin-trim:inline))) or ((-moz-orient:inline) and (not (color:rgb(from red r g b)))){*,:before,:after,::backdrop{--tw-rotate-x:initial;--tw-rotate-y:initial;--tw-rotate-z:initial;--tw-skew-x:initial;--tw-skew-y:initial;--tw-border-style:solid;--tw-ordinal:initial;--tw-slashed-zero:initial;--tw-numeric-figure:initial;--tw-numeric-spacing:initial;--tw-numeric-fraction:initial;--tw-shadow:0 0 #0000;--tw-shadow-color:initial;--tw-shadow-alpha:100%;--tw-inset-shadow:0 0 #0000;--tw-inset-shadow-color:initial;--tw-inset-shadow-alpha:100%;--tw-ring-color:initial;--tw-ring-shadow:0 0 #0000;--tw-inset-ring-color:initial;--tw-inset-ring-shadow:0 0 #0000;--tw-ring-inset:initial;--tw-ring-offset-width:0px;--tw-ring-offset-color:#fff;--tw-ring-offset-shadow:0 0 #0000;--tw-outline-style:solid;--tw-blur:initial;--tw-brightness:initial;--tw-contrast:initial;--tw-grayscale:initial;--tw-hue-rotate:initial;--tw-invert:initial;--tw-opacity:initial;--tw-saturate:initial;--tw-sepia:initial;--tw-drop-shadow:initial;--tw-drop-shadow-color:initial;--tw-drop-shadow-alpha:100%;--tw-drop-shadow-size:initial;--tw-ease:initial}}}@layer theme{:root,:host{--spacing:.25rem;--ease-in-out:cubic-bezier(.4, 0, .2, 1);--default-transition-duration:.15s;--default-transition-timing-function:cubic-bezier(.4, 0, .2, 1)}}@layer utilities{.invisible{visibility:hidden}.visible{visibility:visible}.absolute{position:absolute}.fixed{position:fixed}.relative{position:relative}.static{position:static}.sticky{position:sticky}.container{width:100%;@media (width>=40rem){max-width:40rem}@media (width>=48rem){max-width:48rem}@media (width>=64rem){max-width:64rem}@media (width>=80rem){max-width:80rem}@media (width>=96rem){max-width:96rem}}.block{display:block}.contents{display:contents}.flex{display:flex}.grid{display:grid}.hidden{display:none}.inline{display:inline}.inline-block{display:inline-block}.table{display:table}.table\\!{display:table!important}.table-cell{display:table-cell}.size-1{width:var(--spacing);height:var(--spacing)}.h-40{height:calc(var(--spacing) * 40)}.h-84{height:calc(var(--spacing) * 84)}.h-120{height:calc(var(--spacing) * 120)}.flex-shrink,.shrink{flex-shrink:1}.grow{flex-grow:1}.transform{transform:var(--tw-rotate-x,) var(--tw-rotate-y,) var(--tw-rotate-z,) var(--tw-skew-x,) var(--tw-skew-y,)}.resize{resize:both}.truncate{text-overflow:ellipsis;white-space:nowrap;overflow:hidden}.rounded{border-radius:.25rem}.border{border-style:var(--tw-border-style);border-width:1px}.capitalize{text-transform:capitalize}.lowercase{text-transform:lowercase}.uppercase{text-transform:uppercase}.italic{font-style:italic}.ordinal{--tw-ordinal:ordinal;font-variant-numeric:var(--tw-ordinal,) var(--tw-slashed-zero,) var(--tw-numeric-figure,) var(--tw-numeric-spacing,) var(--tw-numeric-fraction,)}.line-through{text-decoration-line:line-through}.overline{text-decoration-line:overline}.underline{text-decoration-line:underline}.shadow{--tw-shadow:0 1px 3px 0 var(--tw-shadow-color,#0000001a), 0 1px 2px -1px var(--tw-shadow-color,#0000001a);box-shadow:var(--tw-inset-shadow), var(--tw-inset-ring-shadow), var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow)}.ring{--tw-ring-shadow:var(--tw-ring-inset,) 0 0 0 calc(1px + var(--tw-ring-offset-width)) var(--tw-ring-color,currentcolor);box-shadow:var(--tw-inset-shadow), var(--tw-inset-ring-shadow), var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow)}.outline{outline-style:var(--tw-outline-style);outline-width:1px}.blur{--tw-blur:blur(8px);filter:var(--tw-blur,) var(--tw-brightness,) var(--tw-contrast,) var(--tw-grayscale,) var(--tw-hue-rotate,) var(--tw-invert,) var(--tw-saturate,) var(--tw-sepia,) var(--tw-drop-shadow,)}.grayscale{--tw-grayscale:grayscale(100%);filter:var(--tw-blur,) var(--tw-brightness,) var(--tw-contrast,) var(--tw-grayscale,) var(--tw-hue-rotate,) var(--tw-invert,) var(--tw-saturate,) var(--tw-sepia,) var(--tw-drop-shadow,)}.invert{--tw-invert:invert(100%);filter:var(--tw-blur,) var(--tw-brightness,) var(--tw-contrast,) var(--tw-grayscale,) var(--tw-hue-rotate,) var(--tw-invert,) var(--tw-saturate,) var(--tw-sepia,) var(--tw-drop-shadow,)}.filter{filter:var(--tw-blur,) var(--tw-brightness,) var(--tw-contrast,) var(--tw-grayscale,) var(--tw-hue-rotate,) var(--tw-invert,) var(--tw-saturate,) var(--tw-sepia,) var(--tw-drop-shadow,)}.transition{transition-property:color,background-color,border-color,outline-color,text-decoration-color,fill,stroke,--tw-gradient-from,--tw-gradient-via,--tw-gradient-to,opacity,box-shadow,transform,translate,scale,rotate,filter,-webkit-backdrop-filter,backdrop-filter,display,content-visibility,overlay,pointer-events;transition-timing-function:var(--tw-ease,var(--default-transition-timing-function));transition-duration:var(--tw-duration,var(--default-transition-duration))}.ease-in-out{--tw-ease:var(--ease-in-out);transition-timing-function:var(--ease-in-out)}}.mr-page{box-sizing:border-box;height:100%;color:var(--dsw-alias-label-primary);flex-direction:column;align-items:center;padding:0 clamp(24px,4vw,48px);display:flex;overflow:hidden}.mr-page-head,.mr-workspace{width:100%;max-width:1160px}.mr-page-head{box-sizing:border-box;flex:none;justify-content:space-between;align-items:center;gap:16px;padding-top:28px;display:flex}[data-platform=darwin] .mr-page-head{padding-top:calc(28px + var(--dsh-frame-top-clearance,0px))}.mr-head-title{align-items:center;gap:2px;min-width:0;display:flex}.mr-page-title{margin:0;font-size:20px;font-weight:500;line-height:28px}.mr-workspace{flex:1;grid-template-columns:minmax(240px,300px) minmax(0,1fr);gap:16px;min-height:0;padding:16px 0 24px;display:grid}.mr-workspace-free{grid-template-columns:minmax(300px,1fr) minmax(0,1.25fr)}.mr-side{flex-direction:column;gap:8px;min-width:0;min-height:0;display:flex}.mr-side-scroll{flex-direction:column;flex:1;gap:10px;min-height:0;padding-right:4px;display:flex;overflow:auto}.mr-main{flex-direction:column;gap:16px;min-width:0;min-height:0;padding-right:4px;display:flex;overflow:auto}.mr-preview{flex:none}.mr-empty{text-align:center;color:var(--dsw-alias-label-tertiary);margin:0;padding:48px 0;font-size:13px;line-height:20px}.mr-toolbar{z-index:5;flex-wrap:wrap;flex:none;align-items:center;gap:4px;display:flex;position:relative}.mr-toolbar-count{color:var(--dsw-alias-label-tertiary);font-variant-numeric:tabular-nums;margin-left:auto;font-size:12px;line-height:18px}.mr-tip{display:inline-flex;position:relative}.mr-tip-bubble{z-index:40;pointer-events:none;box-sizing:border-box;border-radius:var(--dsw-radius-sm);background:var(--dsw-alias-tooltip-bg);width:max-content;max-width:300px;color:var(--dsw-static-neutral-bluish-00);white-space:pre-line;overflow-wrap:break-word;opacity:0;visibility:hidden;padding:3px 7px;font-size:13px;font-weight:400;line-height:20px;position:absolute;top:calc(100% + 6px);left:50%;transform:translate(-50%)}.mr-tip[data-align=start] .mr-tip-bubble{left:0;transform:none}.mr-tip[data-align=end] .mr-tip-bubble{left:auto;right:0;transform:none}.mr-tip:hover .mr-tip-bubble,.mr-tip>:focus-visible~.mr-tip-bubble{opacity:1;visibility:visible}.mr-tip-bubble.is-wide{max-width:440px}.mr-seg{border-radius:var(--dsw-radius-md);background:var(--dsw-alias-interactive-bg-hover);flex:none;grid-auto-columns:1fr;grid-auto-flow:column;gap:2px;padding:4px;display:inline-grid;position:relative}.mr-seg-indicator{width:calc((100% - 8px - 2px * (var(--mr-seg-count,2) - 1)) / var(--mr-seg-count,2));border-radius:var(--dsw-radius-sm);background:var(--dsw-alias-bg-layer-1);height:calc(100% - 8px);box-shadow:var(--dsw-elevation-soft);transform:translateX(calc(var(--mr-seg-index,0) * (100% + 2px)));pointer-events:none;border:0;transition:transform .16s;position:absolute;top:4px;left:4px}.mr-seg-tab{box-sizing:border-box;z-index:1;border-radius:var(--dsw-radius-sm);height:28px;color:var(--dsw-alias-label-secondary);font:inherit;white-space:nowrap;cursor:pointer;background:0 0;border:0;padding:0 16px;font-size:13px;font-weight:500;line-height:20px;transition:color .12s;position:relative}.mr-seg-tab:hover:not(:disabled),.mr-seg-tab[aria-selected=true]{color:var(--dsw-alias-label-primary)}.mr-seg-tab:disabled{cursor:default;opacity:.4}.mr-seg-tab:focus-visible{outline:var(--dsw-focus-ring-width,2px) solid var(--dsw-alias-state-business-primary);outline-offset:-2px}@media (prefers-reduced-motion:reduce){.mr-seg-indicator,.mr-seg-tab{transition:none}}.mr-btn{box-sizing:border-box;cursor:pointer;border-radius:var(--dsw-radius-sm);height:28px;color:var(--dsw-alias-label-primary);background:0 0;border:none;justify-content:center;align-items:center;gap:4px;padding:0 10px;font-size:12px;line-height:18px;display:inline-flex}.mr-btn:disabled{cursor:not-allowed;opacity:.4}.mr-btn.primary{background:var(--dsw-alias-button-primary-fill);color:var(--dsw-alias-label-primary-foreground)}.mr-btn.primary:hover:not(:disabled){background:var(--dsw-alias-button-primary-hover)}.mr-btn:focus-visible{outline:2px solid var(--dsw-alias-state-business-primary);outline-offset:2px}.mr-btn.tall{border-radius:var(--dsw-radius-md);height:36px;padding:0 16px;font-size:14px;line-height:22px}.mr-iconbtn{box-sizing:border-box;border-radius:var(--dsw-radius-sm);cursor:pointer;width:24px;height:24px;color:var(--dsw-alias-label-secondary);background:0 0;border:none;flex:none;justify-content:center;align-items:center;padding:0;display:inline-flex}.mr-iconbtn:hover:not(:disabled){background:var(--dsw-alias-interactive-bg-hover);color:var(--dsw-alias-label-primary)}.mr-iconbtn:disabled{cursor:not-allowed;opacity:.4}.mr-iconbtn:focus-visible{outline:2px solid var(--dsw-alias-state-business-primary);outline-offset:2px}.mr-iconbtn[aria-pressed=true]{background:var(--dsw-alias-interactive-bg-hover);color:var(--dsw-alias-state-business-primary)}.mr-code{box-sizing:border-box;resize:vertical;border:.5px solid var(--dsw-alias-border-l4);border-radius:var(--dsw-radius-md);background:var(--dsw-alias-bg-layer-1);width:100%;min-height:190px;color:var(--dsw-alias-label-primary);font-family:var(--ds-font-family-code);tab-size:2;padding:8px 10px;font-size:12px;line-height:18px;display:block}.mr-code-fill{resize:none;flex:1;min-height:0;margin:0}.mr-code:focus-visible{outline:2px solid var(--dsw-alias-state-business-primary);outline-offset:0}.mr-toolbar-note{color:var(--dsw-alias-label-secondary);font-size:12px;line-height:18px}.mr-ground-items{flex-direction:column;display:flex}.mr-ground-item{text-align:start;box-sizing:border-box;border-radius:var(--dsw-radius-sm);cursor:pointer;width:100%;height:28px;color:var(--dsw-alias-label-primary);background:0 0;border:none;align-items:center;gap:8px;padding:0 8px;display:flex}.mr-ground-item:hover,.mr-ground-item[aria-pressed=true]{background:var(--dsw-alias-interactive-bg-hover)}.mr-ground-item:focus-visible{outline:2px solid var(--dsw-alias-state-business-primary);outline-offset:-2px}.mr-ground-dot{border:.5px solid var(--dsw-alias-border-l3);background:0 0;border-radius:50%;flex:none;width:7px;height:7px}.mr-ground-item[data-state=ok] .mr-ground-dot{border-color:var(--dsw-alias-state-success-primary);background:var(--dsw-alias-state-success-primary)}.mr-ground-item[data-state=fail] .mr-ground-dot{border-color:var(--dsw-alias-state-error-primary);background:var(--dsw-alias-state-error-primary)}.mr-ground-name{flex:none;font-size:13px;line-height:20px}.mr-ground-id{text-overflow:ellipsis;white-space:nowrap;text-align:end;min-width:0;font-family:var(--ds-font-family-code);color:var(--dsw-alias-label-tertiary);flex:1;margin-left:auto;font-size:11px;line-height:16px;overflow:hidden}.mr-expect{box-sizing:border-box;border:1px solid var(--dsw-alias-border-l3);border-radius:var(--dsw-radius-sm);background:var(--dsw-alias-bg-layer-1);align-items:baseline;gap:8px;padding:8px 10px;display:flex}.mr-expect-label{color:var(--dsw-alias-label-secondary);cursor:help;flex:none;font-size:12px;font-weight:500;line-height:18px}.mr-expect-text{min-width:0;color:var(--dsw-alias-label-primary);overflow-wrap:break-word;flex:1;font-size:12px;line-height:18px}.mr-chatcard-body{margin-top:12px;position:relative}.mr-chatcard{box-sizing:border-box;border:.5px solid var(--dsw-alias-settings-card-stroke);border-radius:var(--dsw-radius-xl);background:var(--dsw-alias-settings-card-fill);color:var(--dsw-alias-label-primary);margin:6px 0;padding:10px 12px}.mr-chatcard-head{align-items:center;gap:6px;height:32px;display:flex}.mr-chatcard-label{flex:none;font-size:13px;font-weight:500;line-height:20px}.mr-chatcard-spacer{flex:1;min-width:0}.mr-chatcard-foot{flex-direction:column;gap:4px;margin-top:8px;display:flex}.mr-chatcard-footrow{align-items:center;gap:6px;font-size:13px;line-height:20px;display:flex}.mr-chatcard-footrow.is-ok{color:var(--dsw-alias-state-success-primary)}.mr-chatcard-footrow.is-busy{color:var(--dsw-alias-label-secondary)}.mr-chatcard-footrow.is-warn{color:var(--dsw-alias-state-warn-primary)}.mr-chatcard-footrow.is-error{white-space:pre-wrap;word-break:break-word;color:var(--dsw-alias-state-error-primary);align-items:flex-start}.mr-chatcard-footrow.is-error>svg{margin-top:3px}.mr-chatcard-footrow>svg,.mr-chatcard-footrow>.mr-spinner{flex:none}.mr-chatcard-pathwrap{flex:1;min-width:0;display:flex}.mr-chatcard-path{min-width:0;font:inherit;color:inherit;text-align:left;text-overflow:ellipsis;white-space:nowrap;cursor:pointer;background:0 0;border:0;flex:1;padding:0;overflow:hidden}.mr-chatcard-path:hover{text-decoration:underline}.mr-chatcard-path:focus-visible{outline:2px solid var(--dsw-alias-state-business-primary);outline-offset:2px;border-radius:var(--dsw-radius-sm)}.mr-stage{aspect-ratio:16/9;border:.5px solid var(--dsw-alias-border-l3);border-radius:var(--dsw-radius-md);background:var(--dsw-alias-bg-layer-1);width:100%;margin-top:12px;position:relative;overflow:hidden}.mr-chatcard-body>.mr-stage{margin-top:0}.mr-stage canvas{display:block;width:100%!important;height:100%!important}.mr-canvas-skeleton{z-index:3;box-sizing:border-box;border:.5px solid var(--dsw-alias-border-l3);border-radius:var(--dsw-radius-md);background:var(--dsw-alias-bg-layer-1);flex-direction:row;justify-content:center;align-items:center;gap:28px;display:flex;position:absolute;inset:0}.mr-skel{background:var(--dsw-alias-bg-layer-2);flex:none;width:52px;height:52px;animation:1.4s ease-in-out infinite mr-skel-breathe;display:block}.mr-skel-circle{border-radius:50%}.mr-skel-square{border-radius:4px}.mr-skel-triangle{clip-path:polygon(50% 0%,100% 100%,0% 100%)}@keyframes mr-skel-breathe{0%,to{opacity:.45}50%{opacity:.9}}@media (prefers-reduced-motion:reduce){.mr-skel{opacity:.6;animation:none}}.mr-canvas-loading{z-index:4;box-sizing:border-box;pointer-events:none;justify-content:center;align-items:center;padding:12px;display:flex;position:absolute;inset:0}.mr-canvas-loading-pill{box-sizing:border-box;background:var(--dsw-alias-tooltip-bg);min-width:0;max-width:100%;color:var(--dsw-static-neutral-bluish-00);border-radius:999px;align-items:center;gap:8px;padding:6px 12px;font-size:13px;line-height:20px;display:flex}.mr-canvas-loading-text{text-overflow:ellipsis;white-space:nowrap;min-width:0;overflow:hidden}.mr-spinner{box-sizing:border-box;border:1.5px solid #ffffff40;border-top-color:currentColor;border-radius:50%;flex:none;width:14px;height:14px;animation:.8s linear infinite mr-spin}@keyframes mr-spin{to{transform:rotate(360deg)}}@media (prefers-reduced-motion:reduce){.mr-spinner{animation:none}}.mr-code-pane{border:.5px solid var(--dsw-alias-border-l3);border-radius:var(--dsw-radius-md);background:var(--dsw-alias-bg-layer-1);position:absolute;inset:0;overflow:auto}.mr-codeview{font-family:var(--ds-font-family-code);color:var(--dsw-alias-label-primary);white-space:pre-wrap;word-break:break-word;tab-size:2;margin:0;padding:10px 12px;font-size:12px;line-height:18px}.mr-codeview code{counter-reset:source-line;display:block}.mr-codeview code>.line{min-height:1lh;counter-increment:source-line;padding-inline-start:calc(var(--mr-codeview-gutter,2ch) + 12px);display:block;position:relative}.mr-codeview code>.line:before{width:var(--mr-codeview-gutter,2ch);color:var(--dsw-alias-label-tertiary);text-align:end;content:counter(source-line);user-select:none;position:absolute;inset-inline-start:0}.mr-codepane-actions{z-index:2;justify-content:flex-end;height:0;padding:6px 8px 0 0;display:flex;position:sticky;top:0}.mr-codepane-actions .mr-iconbtn{background:var(--dsw-alias-bg-layer-1);border:.5px solid var(--dsw-alias-border-l3);width:22px;height:22px}.mr-chatcard-code{border:.5px solid var(--dsw-alias-border-l4);border-radius:var(--dsw-radius-md);background:var(--dsw-alias-bg-layer-1);max-height:180px;margin-top:8px;overflow:auto}.mr-chatcard-code>.mr-codeview{padding:8px 10px}.mr-set{max-width:760px;color:var(--dsw-alias-label-primary);flex-direction:column;gap:32px;display:flex}.mr-set-group{flex-direction:column;gap:10px;display:flex}.mr-set-groupname{color:var(--dsw-alias-label-secondary);margin:0;font-size:13px;font-weight:500;line-height:20px}.mr-set-stack{flex-direction:column;gap:16px;display:flex}.mr-set-card{border:.5px solid var(--dsw-alias-settings-card-stroke);border-radius:var(--dsw-radius-xl);background:var(--dsw-alias-settings-card-fill);flex-direction:column;display:flex}.mr-set-cardhead{align-items:center;gap:16px;padding:14px 16px;display:flex}.mr-set-cardheadtext{flex:1;min-width:0}.mr-set-cardtitle{align-items:baseline;gap:8px;margin:0;font-size:14px;font-weight:500;line-height:22px;display:flex}.mr-set-cardcount{color:var(--dsw-alias-label-tertiary);font-variant-numeric:tabular-nums;font-size:12px;font-weight:400;line-height:18px}.mr-set-cardsub{text-overflow:ellipsis;white-space:nowrap;color:var(--dsw-alias-label-tertiary);margin:2px 0 0;font-size:12px;line-height:18px;overflow:hidden}.mr-set-cardsub.is-error{color:var(--dsw-alias-state-error-primary)}.mr-set-cardacts{flex:none;align-items:center;gap:8px;display:flex}.mr-set-act{box-sizing:border-box;cursor:pointer;border:.5px solid var(--dsw-alias-border-l2);border-radius:var(--dsw-radius-md);height:30px;font:inherit;color:var(--dsw-alias-label-primary);background:0 0;justify-content:center;align-items:center;gap:6px;padding:0 12px;font-size:13px;line-height:18px;display:inline-flex}.mr-set-act:hover:not(:disabled){background:var(--dsw-alias-interactive-bg-hover)}.mr-set-act:disabled{cursor:not-allowed;opacity:.4}.mr-set-act:focus-visible{outline:2px solid var(--dsw-alias-state-business-primary);outline-offset:2px}.mr-set-act.is-sm{height:26px;color:var(--dsw-alias-label-secondary);padding:0 10px;font-size:12px;line-height:18px}.mr-set-act.is-sm:hover:not(:disabled){color:var(--dsw-alias-label-primary)}.mr-set-rows{border-top:.5px solid var(--dsw-alias-border-l2);flex-direction:column;display:flex}.mr-set-row{box-sizing:border-box;align-items:center;gap:16px;min-height:44px;padding:8px 16px;display:flex}.mr-set-row+.mr-set-row{border-top:.5px solid var(--dsw-alias-border-l2)}.mr-set-rows.is-light .mr-set-row{min-height:34px;padding:4px 16px}.mr-set-cell{flex:none;min-width:0}.mr-set-cell.is-name{min-width:0;font-family:var(--ds-font-family-code);flex:1;align-items:center;gap:8px;font-size:13px;line-height:20px;display:flex}.mr-set-cell.is-check{flex:1;align-items:center;min-width:0;font-size:13px;line-height:20px;display:flex}.mr-set-name{text-overflow:ellipsis;white-space:nowrap;min-width:0;overflow:hidden}.mr-set-cell.is-act{flex:none;justify-content:flex-end;align-items:center;display:flex}.mr-set-cell.is-size{text-align:end;min-width:60px;color:var(--dsw-alias-label-tertiary);font-variant-numeric:tabular-nums;flex:none;font-size:12px;line-height:18px}.mr-set-cell.is-status{font-variant-numeric:tabular-nums;flex:none;justify-content:flex-end;align-items:center;gap:6px;font-size:13px;line-height:20px;display:flex}.mr-set-info{cursor:default;color:var(--dsw-alias-label-tertiary);background:0 0;border:none;flex:none;align-items:center;margin-left:5px;padding:0;display:inline-flex}.mr-set-info:hover,.mr-set-info:focus-visible{color:var(--dsw-alias-label-secondary)}.mr-set-info:focus-visible{outline:2px solid var(--dsw-alias-state-business-primary);outline-offset:1px;border-radius:var(--dsw-radius-sm)}.mr-set-cardfoot{color:var(--dsw-alias-label-tertiary);overflow-wrap:anywhere;margin:0;padding:0 16px 14px;font-size:12px;line-height:18px}.mr-set-cardfoot.is-error{color:var(--dsw-alias-state-error-primary)}.mr-set-rows+.mr-set-cardfoot{padding-top:10px}.mr-set-addrow{align-items:center;gap:8px;padding:0 16px 14px;display:flex}.mr-set-field{box-sizing:border-box;border:.5px solid var(--dsw-alias-border-l4);border-radius:var(--dsw-radius-md);background:var(--dsw-alias-bg-layer-1);min-width:0;height:36px;color:var(--dsw-alias-label-tertiary);flex:1;align-items:center;gap:6px;padding:0 12px;display:flex;position:relative}.mr-set-field:focus-within{border-color:var(--dsw-alias-state-business-primary)}.mr-set-fieldinput{z-index:1;min-width:0;font:inherit;color:var(--dsw-alias-label-primary);background:0 0;border:none;outline:none;flex:1;margin:0;padding:0;font-size:14px;line-height:22px;position:relative}.mr-set-fieldinput::placeholder{color:var(--dsw-alias-label-dimmed)}.mr-set-mirror{white-space:pre;pointer-events:none;align-items:center;padding:0 12px;font-size:14px;line-height:22px;display:flex;position:absolute;inset:0;overflow:hidden}.mr-set-typed{visibility:hidden}.mr-set-ghost{color:var(--dsw-alias-label-dimmed)}.mr-set-dot{box-sizing:border-box;border:.5px solid var(--dsw-alias-border-l3);background:0 0;border-radius:50%;flex:none;width:8px;height:8px}.mr-set-dot[data-tone=ok]{border-color:var(--dsw-alias-state-success-primary);background:var(--dsw-alias-state-success-primary)}.mr-set-dot[data-tone=warn]{border-color:var(--dsw-alias-state-warn-primary);background:var(--dsw-alias-state-warn-primary)}.mr-set-dot[data-tone=error]{border-color:var(--dsw-alias-state-error-primary);background:var(--dsw-alias-state-error-primary)}.mr-set-dot[data-tone=idle]{border-color:var(--dsw-alias-state-idle-primary);background:var(--dsw-alias-state-idle-primary)}.mr-set-spin{color:var(--dsw-alias-label-tertiary);flex:none}.mr-set-spin-rotor{transform-origin:50%;animation:1.5s linear infinite mr-set-spin}.mr-set-spin-track,.mr-set-spin-arc{fill:none;stroke:currentColor;stroke-width:2px;stroke-linecap:round}.mr-set-spin-track{opacity:.25}.mr-set-spin-arc{stroke-dasharray:12 150;animation:1.5s ease-in-out infinite mr-set-dash}@keyframes mr-set-spin{to{transform:rotate(360deg)}}@keyframes mr-set-dash{0%{stroke-dasharray:12 150;stroke-dashoffset:0}50%{stroke-dasharray:24 150;stroke-dashoffset:-6px}to{stroke-dasharray:12 150;stroke-dashoffset:0}}@media (prefers-reduced-motion:reduce){.mr-set-spin-rotor,.mr-set-spin-arc{animation:none}.mr-set-spin-arc{stroke-dasharray:18 150;stroke-dashoffset:-3px}}@property --tw-rotate-x{syntax:\"*\";inherits:false}@property --tw-rotate-y{syntax:\"*\";inherits:false}@property --tw-rotate-z{syntax:\"*\";inherits:false}@property --tw-skew-x{syntax:\"*\";inherits:false}@property --tw-skew-y{syntax:\"*\";inherits:false}@property --tw-border-style{syntax:\"*\";inherits:false;initial-value:solid}@property --tw-ordinal{syntax:\"*\";inherits:false}@property --tw-slashed-zero{syntax:\"*\";inherits:false}@property --tw-numeric-figure{syntax:\"*\";inherits:false}@property --tw-numeric-spacing{syntax:\"*\";inherits:false}@property --tw-numeric-fraction{syntax:\"*\";inherits:false}@property --tw-shadow{syntax:\"*\";inherits:false;initial-value:0 0 #0000}@property --tw-shadow-color{syntax:\"*\";inherits:false}@property --tw-shadow-alpha{syntax:\"<percentage>\";inherits:false;initial-value:100%}@property --tw-inset-shadow{syntax:\"*\";inherits:false;initial-value:0 0 #0000}@property --tw-inset-shadow-color{syntax:\"*\";inherits:false}@property --tw-inset-shadow-alpha{syntax:\"<percentage>\";inherits:false;initial-value:100%}@property --tw-ring-color{syntax:\"*\";inherits:false}@property --tw-ring-shadow{syntax:\"*\";inherits:false;initial-value:0 0 #0000}@property --tw-inset-ring-color{syntax:\"*\";inherits:false}@property --tw-inset-ring-shadow{syntax:\"*\";inherits:false;initial-value:0 0 #0000}@property --tw-ring-inset{syntax:\"*\";inherits:false}@property --tw-ring-offset-width{syntax:\"<length>\";inherits:false;initial-value:0}@property --tw-ring-offset-color{syntax:\"*\";inherits:false;initial-value:#fff}@property --tw-ring-offset-shadow{syntax:\"*\";inherits:false;initial-value:0 0 #0000}@property --tw-outline-style{syntax:\"*\";inherits:false;initial-value:solid}@property --tw-blur{syntax:\"*\";inherits:false}@property --tw-brightness{syntax:\"*\";inherits:false}@property --tw-contrast{syntax:\"*\";inherits:false}@property --tw-grayscale{syntax:\"*\";inherits:false}@property --tw-hue-rotate{syntax:\"*\";inherits:false}@property --tw-invert{syntax:\"*\";inherits:false}@property --tw-opacity{syntax:\"*\";inherits:false}@property --tw-saturate{syntax:\"*\";inherits:false}@property --tw-sepia{syntax:\"*\";inherits:false}@property --tw-drop-shadow{syntax:\"*\";inherits:false}@property --tw-drop-shadow-color{syntax:\"*\";inherits:false}@property --tw-drop-shadow-alpha{syntax:\"<percentage>\";inherits:false;initial-value:100%}@property --tw-drop-shadow-size{syntax:\"*\";inherits:false}@property --tw-ease{syntax:\"*\";inherits:false}";
+		const css = "/*! tailwindcss v4.3.3 | MIT License | https://tailwindcss.com */\n@layer properties{@supports (((-webkit-hyphens:none)) and (not (margin-trim:inline))) or ((-moz-orient:inline) and (not (color:rgb(from red r g b)))){*,:before,:after,::backdrop{--tw-rotate-x:initial;--tw-rotate-y:initial;--tw-rotate-z:initial;--tw-skew-x:initial;--tw-skew-y:initial;--tw-border-style:solid;--tw-ordinal:initial;--tw-slashed-zero:initial;--tw-numeric-figure:initial;--tw-numeric-spacing:initial;--tw-numeric-fraction:initial;--tw-shadow:0 0 #0000;--tw-shadow-color:initial;--tw-shadow-alpha:100%;--tw-inset-shadow:0 0 #0000;--tw-inset-shadow-color:initial;--tw-inset-shadow-alpha:100%;--tw-ring-color:initial;--tw-ring-shadow:0 0 #0000;--tw-inset-ring-color:initial;--tw-inset-ring-shadow:0 0 #0000;--tw-ring-inset:initial;--tw-ring-offset-width:0px;--tw-ring-offset-color:#fff;--tw-ring-offset-shadow:0 0 #0000;--tw-outline-style:solid;--tw-blur:initial;--tw-brightness:initial;--tw-contrast:initial;--tw-grayscale:initial;--tw-hue-rotate:initial;--tw-invert:initial;--tw-opacity:initial;--tw-saturate:initial;--tw-sepia:initial;--tw-drop-shadow:initial;--tw-drop-shadow-color:initial;--tw-drop-shadow-alpha:100%;--tw-drop-shadow-size:initial;--tw-ease:initial}}}@layer theme{:root,:host{--spacing:.25rem;--ease-in-out:cubic-bezier(.4, 0, .2, 1);--default-transition-duration:.15s;--default-transition-timing-function:cubic-bezier(.4, 0, .2, 1)}}@layer utilities{.invisible{visibility:hidden}.visible{visibility:visible}.absolute{position:absolute}.fixed{position:fixed}.relative{position:relative}.static{position:static}.sticky{position:sticky}.container{width:100%;@media (width>=40rem){max-width:40rem}@media (width>=48rem){max-width:48rem}@media (width>=64rem){max-width:64rem}@media (width>=80rem){max-width:80rem}@media (width>=96rem){max-width:96rem}}.block{display:block}.contents{display:contents}.flex{display:flex}.grid{display:grid}.hidden{display:none}.inline{display:inline}.inline-block{display:inline-block}.table{display:table}.table\\!{display:table!important}.table-cell{display:table-cell}.size-1{width:var(--spacing);height:var(--spacing)}.h-40{height:calc(var(--spacing) * 40)}.h-84{height:calc(var(--spacing) * 84)}.h-120{height:calc(var(--spacing) * 120)}.flex-shrink,.shrink{flex-shrink:1}.grow{flex-grow:1}.transform{transform:var(--tw-rotate-x,) var(--tw-rotate-y,) var(--tw-rotate-z,) var(--tw-skew-x,) var(--tw-skew-y,)}.resize{resize:both}.truncate{text-overflow:ellipsis;white-space:nowrap;overflow:hidden}.rounded{border-radius:.25rem}.border{border-style:var(--tw-border-style);border-width:1px}.capitalize{text-transform:capitalize}.lowercase{text-transform:lowercase}.uppercase{text-transform:uppercase}.italic{font-style:italic}.ordinal{--tw-ordinal:ordinal;font-variant-numeric:var(--tw-ordinal,) var(--tw-slashed-zero,) var(--tw-numeric-figure,) var(--tw-numeric-spacing,) var(--tw-numeric-fraction,)}.line-through{text-decoration-line:line-through}.overline{text-decoration-line:overline}.underline{text-decoration-line:underline}.shadow{--tw-shadow:0 1px 3px 0 var(--tw-shadow-color,#0000001a), 0 1px 2px -1px var(--tw-shadow-color,#0000001a);box-shadow:var(--tw-inset-shadow), var(--tw-inset-ring-shadow), var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow)}.ring{--tw-ring-shadow:var(--tw-ring-inset,) 0 0 0 calc(1px + var(--tw-ring-offset-width)) var(--tw-ring-color,currentcolor);box-shadow:var(--tw-inset-shadow), var(--tw-inset-ring-shadow), var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow)}.outline{outline-style:var(--tw-outline-style);outline-width:1px}.blur{--tw-blur:blur(8px);filter:var(--tw-blur,) var(--tw-brightness,) var(--tw-contrast,) var(--tw-grayscale,) var(--tw-hue-rotate,) var(--tw-invert,) var(--tw-saturate,) var(--tw-sepia,) var(--tw-drop-shadow,)}.grayscale{--tw-grayscale:grayscale(100%);filter:var(--tw-blur,) var(--tw-brightness,) var(--tw-contrast,) var(--tw-grayscale,) var(--tw-hue-rotate,) var(--tw-invert,) var(--tw-saturate,) var(--tw-sepia,) var(--tw-drop-shadow,)}.invert{--tw-invert:invert(100%);filter:var(--tw-blur,) var(--tw-brightness,) var(--tw-contrast,) var(--tw-grayscale,) var(--tw-hue-rotate,) var(--tw-invert,) var(--tw-saturate,) var(--tw-sepia,) var(--tw-drop-shadow,)}.filter{filter:var(--tw-blur,) var(--tw-brightness,) var(--tw-contrast,) var(--tw-grayscale,) var(--tw-hue-rotate,) var(--tw-invert,) var(--tw-saturate,) var(--tw-sepia,) var(--tw-drop-shadow,)}.transition{transition-property:color,background-color,border-color,outline-color,text-decoration-color,fill,stroke,--tw-gradient-from,--tw-gradient-via,--tw-gradient-to,opacity,box-shadow,transform,translate,scale,rotate,filter,-webkit-backdrop-filter,backdrop-filter,display,content-visibility,overlay,pointer-events;transition-timing-function:var(--tw-ease,var(--default-transition-timing-function));transition-duration:var(--tw-duration,var(--default-transition-duration))}.ease-in-out{--tw-ease:var(--ease-in-out);transition-timing-function:var(--ease-in-out)}}.mr-page{box-sizing:border-box;height:100%;color:var(--dsw-alias-label-primary);flex-direction:column;align-items:center;padding:0 clamp(24px,4vw,48px);display:flex;overflow:hidden}.mr-page-head,.mr-workspace{width:100%;max-width:1160px}.mr-page-head{box-sizing:border-box;flex:none;justify-content:space-between;align-items:center;gap:16px;padding-top:28px;display:flex}[data-platform=darwin] .mr-page-head{padding-top:calc(28px + var(--dsh-frame-top-clearance,0px))}.mr-head-title{align-items:center;gap:2px;min-width:0;display:flex}.mr-page-title{margin:0;font-size:20px;font-weight:500;line-height:28px}.mr-envbar-wrap{flex:none;width:100%;max-width:1160px;padding-top:10px}.mr-envbar{flex-wrap:wrap;align-items:center;gap:6px;display:flex}.mr-chip{box-sizing:border-box;border-radius:var(--dsw-radius-sm);height:28px;font:inherit;white-space:nowrap;color:var(--dsw-alias-label-secondary);background:0 0;border:.5px solid #0000;align-items:center;gap:6px;padding:0 8px;font-size:12px;font-weight:500;line-height:18px;display:inline-flex}.mr-chip-name{color:var(--dsw-alias-label-tertiary);font-weight:400}.mr-chip-value{font-variant-numeric:tabular-nums}button.mr-chip{cursor:pointer}button.mr-chip:hover{background:var(--dsw-alias-interactive-bg-hover)}button.mr-chip:focus-visible{outline:2px solid var(--dsw-alias-state-business-primary);outline-offset:2px}.mr-chip[data-tone=ok],.mr-chip[data-tone=empty]{border-color:var(--dsw-alias-border-l4);color:var(--dsw-alias-label-secondary)}.mr-chip[data-tone=busy]{border-color:var(--dsw-alias-border-l4)}.mr-chip[data-tone=idle]{background:var(--dsw-alias-bg-module-platform);color:var(--dsw-alias-label-secondary)}.mr-chip[data-tone=warn]{background:var(--dsw-alias-state-warn-tertiary);border-color:var(--dsw-alias-state-warn-label);@supports (color:color-mix(in lab, red, red)){border-color:color-mix(in srgb, var(--dsw-alias-state-warn-label) 20%, transparent)}color:var(--dsw-alias-state-warn-label)}.mr-chip[data-tone=error]{background:var(--dsw-alias-state-error-primary);@supports (color:color-mix(in lab, red, red)){background:color-mix(in srgb, var(--dsw-alias-state-error-primary) 10%, transparent)}border-color:var(--dsw-alias-state-error-primary);@supports (color:color-mix(in lab, red, red)){border-color:color-mix(in srgb, var(--dsw-alias-state-error-primary) 20%, transparent)}color:var(--dsw-alias-state-error-primary)}.mr-envbar-note{color:var(--dsw-alias-label-secondary);font-size:12px;line-height:18px}.mr-envpanel{border:.5px solid var(--dsw-alias-border-l2);border-radius:var(--dsw-radius-md);background:var(--dsw-alias-bg-layer-1);margin-top:8px;padding:10px 12px}.mr-envpanel-list{margin:0;padding-left:18px}.mr-envpanel-list>li{color:var(--dsw-alias-label-secondary);font-size:12px;line-height:18px}.mr-envpanel-list>li+li{margin-top:4px}.mr-envpanel-empty{color:var(--dsw-alias-label-tertiary);margin:0;font-size:12px;line-height:18px}.mr-envpanel-acts{align-items:center;gap:8px;margin-top:8px;display:flex}.mr-workspace{flex:1;grid-template-columns:minmax(240px,300px) minmax(0,1fr);gap:16px;min-height:0;padding:16px 0 24px;display:grid}.mr-workspace-free{grid-template-columns:minmax(300px,1fr) minmax(0,1.25fr)}.mr-side{flex-direction:column;gap:8px;min-width:0;min-height:0;display:flex}.mr-side-scroll{flex-direction:column;flex:1;gap:10px;min-height:0;padding-right:4px;display:flex;overflow:auto}.mr-main{flex-direction:column;gap:16px;min-width:0;min-height:0;padding-right:4px;display:flex;overflow:auto}.mr-preview{flex:none}.mr-empty{text-align:center;color:var(--dsw-alias-label-tertiary);margin:0;padding:48px 0;font-size:13px;line-height:20px}.mr-toolbar{z-index:5;flex-wrap:wrap;flex:none;align-items:center;gap:4px;display:flex;position:relative}.mr-toolbar-count{color:var(--dsw-alias-label-tertiary);font-variant-numeric:tabular-nums;margin-left:auto;font-size:12px;line-height:18px}.mr-tip{display:inline-flex;position:relative}.mr-tip-bubble{z-index:40;pointer-events:none;box-sizing:border-box;border-radius:var(--dsw-radius-sm);background:var(--dsw-alias-tooltip-bg);width:max-content;max-width:300px;color:var(--dsw-static-neutral-bluish-00);white-space:pre-line;overflow-wrap:break-word;opacity:0;visibility:hidden;padding:3px 7px;font-size:13px;font-weight:400;line-height:20px;position:absolute;top:calc(100% + 6px);left:50%;transform:translate(-50%)}.mr-tip[data-align=start] .mr-tip-bubble{left:0;transform:none}.mr-tip[data-align=end] .mr-tip-bubble{left:auto;right:0;transform:none}.mr-tip:hover .mr-tip-bubble,.mr-tip>:focus-visible~.mr-tip-bubble{opacity:1;visibility:visible}.mr-tip-bubble.is-wide{max-width:440px}.mr-seg{border-radius:var(--dsw-radius-md);background:var(--dsw-alias-interactive-bg-hover);flex:none;grid-auto-columns:1fr;grid-auto-flow:column;gap:2px;padding:4px;display:inline-grid;position:relative}.mr-seg-indicator{width:calc((100% - 8px - 2px * (var(--mr-seg-count,2) - 1)) / var(--mr-seg-count,2));border-radius:var(--dsw-radius-sm);background:var(--dsw-alias-bg-layer-1);height:calc(100% - 8px);box-shadow:var(--dsw-elevation-soft);transform:translateX(calc(var(--mr-seg-index,0) * (100% + 2px)));pointer-events:none;border:0;transition:transform .16s;position:absolute;top:4px;left:4px}.mr-seg-tab{box-sizing:border-box;z-index:1;border-radius:var(--dsw-radius-sm);height:28px;color:var(--dsw-alias-label-secondary);font:inherit;white-space:nowrap;cursor:pointer;background:0 0;border:0;padding:0 16px;font-size:13px;font-weight:500;line-height:20px;transition:color .12s;position:relative}.mr-seg-tab:hover:not(:disabled),.mr-seg-tab[aria-selected=true]{color:var(--dsw-alias-label-primary)}.mr-seg-tab:disabled{cursor:default;opacity:.4}.mr-seg-tab:focus-visible{outline:var(--dsw-focus-ring-width,2px) solid var(--dsw-alias-state-business-primary);outline-offset:-2px}@media (prefers-reduced-motion:reduce){.mr-seg-indicator,.mr-seg-tab{transition:none}}.mr-btn{box-sizing:border-box;cursor:pointer;border-radius:var(--dsw-radius-sm);height:28px;color:var(--dsw-alias-label-primary);background:0 0;border:none;justify-content:center;align-items:center;gap:4px;padding:0 10px;font-size:12px;line-height:18px;display:inline-flex}.mr-btn:disabled{cursor:not-allowed;opacity:.4}.mr-btn.primary{background:var(--dsw-alias-button-primary-fill);color:var(--dsw-alias-label-primary-foreground)}.mr-btn.primary:hover:not(:disabled){background:var(--dsw-alias-button-primary-hover)}.mr-btn.outline{border:.5px solid var(--dsw-alias-border-l2);color:var(--dsw-alias-label-primary)}.mr-btn.outline:hover:not(:disabled){background:var(--dsw-alias-interactive-bg-hover)}.mr-btn:focus-visible{outline:2px solid var(--dsw-alias-state-business-primary);outline-offset:2px}.mr-btn.tall{border-radius:var(--dsw-radius-md);height:36px;padding:0 16px;font-size:14px;line-height:22px}.mr-iconbtn{box-sizing:border-box;border-radius:var(--dsw-radius-sm);cursor:pointer;width:24px;height:24px;color:var(--dsw-alias-label-secondary);background:0 0;border:none;flex:none;justify-content:center;align-items:center;padding:0;display:inline-flex}.mr-iconbtn:hover:not(:disabled){background:var(--dsw-alias-interactive-bg-hover);color:var(--dsw-alias-label-primary)}.mr-iconbtn:disabled{cursor:not-allowed;opacity:.4}.mr-iconbtn:focus-visible{outline:2px solid var(--dsw-alias-state-business-primary);outline-offset:2px}.mr-iconbtn[aria-pressed=true]{background:var(--dsw-alias-interactive-bg-hover);color:var(--dsw-alias-state-business-primary)}.mr-code{box-sizing:border-box;resize:vertical;border:.5px solid var(--dsw-alias-border-l4);border-radius:var(--dsw-radius-md);background:var(--dsw-alias-bg-layer-1);width:100%;min-height:190px;color:var(--dsw-alias-label-primary);font-family:var(--ds-font-family-code);tab-size:2;padding:8px 10px;font-size:12px;line-height:18px;display:block}.mr-code-fill{resize:none;flex:1;min-height:0;margin:0}.mr-code:focus-visible{outline:2px solid var(--dsw-alias-state-business-primary);outline-offset:0}.mr-toolbar-note{color:var(--dsw-alias-label-secondary);font-size:12px;line-height:18px}.mr-ground-items{flex-direction:column;display:flex}.mr-ground-item{text-align:start;box-sizing:border-box;border-radius:var(--dsw-radius-sm);cursor:pointer;width:100%;height:28px;color:var(--dsw-alias-label-primary);background:0 0;border:none;align-items:center;gap:8px;padding:0 8px;display:flex}.mr-ground-item:hover,.mr-ground-item[aria-pressed=true]{background:var(--dsw-alias-interactive-bg-hover)}.mr-ground-item:focus-visible{outline:2px solid var(--dsw-alias-state-business-primary);outline-offset:-2px}.mr-ground-dot{border:.5px solid var(--dsw-alias-border-l3);background:0 0;border-radius:50%;flex:none;width:7px;height:7px}.mr-ground-item[data-state=ok] .mr-ground-dot{border-color:var(--dsw-alias-state-success-primary);background:var(--dsw-alias-state-success-primary)}.mr-ground-item[data-state=fail] .mr-ground-dot{border-color:var(--dsw-alias-state-error-primary);background:var(--dsw-alias-state-error-primary)}.mr-ground-name{flex:none;font-size:13px;line-height:20px}.mr-ground-id{text-overflow:ellipsis;white-space:nowrap;text-align:end;min-width:0;font-family:var(--ds-font-family-code);color:var(--dsw-alias-label-tertiary);flex:1;margin-left:auto;font-size:11px;line-height:16px;overflow:hidden}.mr-expect{box-sizing:border-box;border:1px solid var(--dsw-alias-border-l3);border-radius:var(--dsw-radius-sm);background:var(--dsw-alias-bg-layer-1);align-items:baseline;gap:8px;padding:8px 10px;display:flex}.mr-expect-label{color:var(--dsw-alias-label-secondary);cursor:help;flex:none;font-size:12px;font-weight:500;line-height:18px}.mr-expect-text{min-width:0;color:var(--dsw-alias-label-primary);overflow-wrap:break-word;flex:1;font-size:12px;line-height:18px}.mr-chatcard-body{margin-top:12px;position:relative}.mr-chatcard{box-sizing:border-box;border:.5px solid var(--dsw-alias-settings-card-stroke);border-radius:var(--dsw-radius-xl);background:var(--dsw-alias-settings-card-fill);color:var(--dsw-alias-label-primary);margin:6px 0;padding:10px 12px}.mr-chatcard-head{align-items:center;gap:6px;height:32px;display:flex}.mr-chatcard-label{flex:none;font-size:13px;font-weight:500;line-height:20px}.mr-chatcard-spacer{flex:1;min-width:0}.mr-chatcard-foot{flex-direction:column;gap:4px;margin-top:8px;display:flex}.mr-chatcard-footrow{align-items:center;gap:6px;font-size:13px;line-height:20px;display:flex}.mr-chatcard-footrow.is-ok{color:var(--dsw-alias-state-success-primary)}.mr-chatcard-footrow.is-busy{color:var(--dsw-alias-label-secondary)}.mr-chatcard-footrow.is-warn{color:var(--dsw-alias-state-warn-primary)}.mr-chatcard-footrow.is-error{white-space:pre-wrap;word-break:break-word;color:var(--dsw-alias-state-error-primary);align-items:flex-start}.mr-chatcard-footrow.is-error>svg{margin-top:3px}.mr-chatcard-footrow>svg,.mr-chatcard-footrow>.mr-spinner{flex:none}.mr-chatcard-footrow.is-envhint{align-items:flex-start}.mr-chatcard-footrow.is-envhint>svg{margin-top:3px}.mr-chatcard-envhint{min-width:0}.mr-chatcard-envlist{margin:4px 0 0;padding-left:16px}.mr-chatcard-envlist>li{overflow-wrap:anywhere}.mr-chatcard-envlist>li+li{margin-top:2px}.mr-chatcard-pathwrap{flex:1;min-width:0;display:flex}.mr-chatcard-path{min-width:0;font:inherit;color:inherit;text-align:left;text-overflow:ellipsis;white-space:nowrap;cursor:pointer;background:0 0;border:0;flex:1;padding:0;overflow:hidden}.mr-chatcard-path:hover{text-decoration:underline}.mr-chatcard-path:focus-visible{outline:2px solid var(--dsw-alias-state-business-primary);outline-offset:2px;border-radius:var(--dsw-radius-sm)}.mr-stage{aspect-ratio:16/9;border:.5px solid var(--dsw-alias-border-l3);border-radius:var(--dsw-radius-md);background:var(--dsw-alias-bg-layer-1);width:100%;margin-top:12px;position:relative;overflow:hidden}.mr-chatcard-body>.mr-stage{margin-top:0}.mr-stage canvas{display:block;width:100%!important;height:100%!important}.mr-canvas-skeleton{z-index:3;box-sizing:border-box;border:.5px solid var(--dsw-alias-border-l3);border-radius:var(--dsw-radius-md);background:var(--dsw-alias-bg-layer-1);flex-direction:row;justify-content:center;align-items:center;gap:28px;display:flex;position:absolute;inset:0}.mr-skel{background:var(--dsw-alias-bg-layer-2);flex:none;width:52px;height:52px;animation:1.4s ease-in-out infinite mr-skel-breathe;display:block}.mr-skel-circle{border-radius:50%}.mr-skel-square{border-radius:4px}.mr-skel-triangle{clip-path:polygon(50% 0%,100% 100%,0% 100%)}@keyframes mr-skel-breathe{0%,to{opacity:.45}50%{opacity:.9}}@media (prefers-reduced-motion:reduce){.mr-skel{opacity:.6;animation:none}}.mr-canvas-loading{z-index:4;box-sizing:border-box;pointer-events:none;justify-content:center;align-items:center;padding:12px;display:flex;position:absolute;inset:0}.mr-canvas-loading-pill{box-sizing:border-box;background:var(--dsw-alias-tooltip-bg);min-width:0;max-width:100%;color:var(--dsw-static-neutral-bluish-00);border-radius:999px;align-items:center;gap:8px;padding:6px 12px;font-size:13px;line-height:20px;display:flex}.mr-canvas-loading-text{text-overflow:ellipsis;white-space:nowrap;min-width:0;overflow:hidden}.mr-spinner{box-sizing:border-box;border:1.5px solid #ffffff40;border-top-color:currentColor;border-radius:50%;flex:none;width:14px;height:14px;animation:.8s linear infinite mr-spin}@keyframes mr-spin{to{transform:rotate(360deg)}}@media (prefers-reduced-motion:reduce){.mr-spinner{animation:none}}.mr-code-pane{border:.5px solid var(--dsw-alias-border-l3);border-radius:var(--dsw-radius-md);background:var(--dsw-alias-bg-layer-1);position:absolute;inset:0;overflow:auto}.mr-codeview{font-family:var(--ds-font-family-code);color:var(--dsw-alias-label-primary);white-space:pre-wrap;word-break:break-word;tab-size:2;margin:0;padding:10px 12px;font-size:12px;line-height:18px}.mr-codeview code{counter-reset:source-line;display:block}.mr-codeview code>.line{min-height:1lh;counter-increment:source-line;padding-inline-start:calc(var(--mr-codeview-gutter,2ch) + 12px);display:block;position:relative}.mr-codeview code>.line:before{width:var(--mr-codeview-gutter,2ch);color:var(--dsw-alias-label-tertiary);text-align:end;content:counter(source-line);user-select:none;position:absolute;inset-inline-start:0}.mr-codepane-actions{z-index:2;justify-content:flex-end;height:0;padding:6px 8px 0 0;display:flex;position:sticky;top:0}.mr-codepane-actions .mr-iconbtn{background:var(--dsw-alias-bg-layer-1);border:.5px solid var(--dsw-alias-border-l3);width:22px;height:22px}.mr-chatcard-code{border:.5px solid var(--dsw-alias-border-l4);border-radius:var(--dsw-radius-md);background:var(--dsw-alias-bg-layer-1);max-height:180px;margin-top:8px;overflow:auto}.mr-chatcard-code>.mr-codeview{padding:8px 10px}.mr-set{max-width:760px;color:var(--dsw-alias-label-primary);flex-direction:column;gap:32px;display:flex}.mr-set-group{flex-direction:column;gap:10px;display:flex}.mr-set-groupname{color:var(--dsw-alias-label-secondary);margin:0;font-size:13px;font-weight:500;line-height:20px}.mr-set-stack{flex-direction:column;gap:16px;display:flex}.mr-set-card{border:.5px solid var(--dsw-alias-settings-card-stroke);border-radius:var(--dsw-radius-xl);background:var(--dsw-alias-settings-card-fill);flex-direction:column;display:flex}.mr-set-cardhead{align-items:center;gap:16px;padding:14px 16px;display:flex}.mr-set-cardheadtext{flex:1;min-width:0}.mr-set-cardtitle{align-items:baseline;gap:8px;margin:0;font-size:14px;font-weight:500;line-height:22px;display:flex}.mr-set-cardcount{color:var(--dsw-alias-label-tertiary);font-variant-numeric:tabular-nums;font-size:12px;font-weight:400;line-height:18px}.mr-set-cardsub{text-overflow:ellipsis;white-space:nowrap;color:var(--dsw-alias-label-tertiary);margin:2px 0 0;font-size:12px;line-height:18px;overflow:hidden}.mr-set-cardsub.is-error{color:var(--dsw-alias-state-error-primary)}.mr-set-cardacts{flex:none;align-items:center;gap:8px;display:flex}.mr-set-act{box-sizing:border-box;cursor:pointer;border:.5px solid var(--dsw-alias-border-l2);border-radius:var(--dsw-radius-md);height:30px;font:inherit;color:var(--dsw-alias-label-primary);background:0 0;justify-content:center;align-items:center;gap:6px;padding:0 12px;font-size:13px;line-height:18px;display:inline-flex}.mr-set-act:hover:not(:disabled){background:var(--dsw-alias-interactive-bg-hover)}.mr-set-act:disabled{cursor:not-allowed;opacity:.4}.mr-set-act:focus-visible{outline:2px solid var(--dsw-alias-state-business-primary);outline-offset:2px}.mr-set-act.is-sm{height:26px;color:var(--dsw-alias-label-secondary);padding:0 10px;font-size:12px;line-height:18px}.mr-set-act.is-sm:hover:not(:disabled){color:var(--dsw-alias-label-primary)}.mr-set-rows{border-top:.5px solid var(--dsw-alias-border-l2);flex-direction:column;display:flex}.mr-set-row{box-sizing:border-box;align-items:center;gap:16px;min-height:44px;padding:8px 16px;display:flex}.mr-set-row+.mr-set-row{border-top:.5px solid var(--dsw-alias-border-l2)}.mr-set-rows.is-light .mr-set-row{min-height:34px;padding:4px 16px}.mr-set-cell{flex:none;min-width:0}.mr-set-cell.is-name{min-width:0;font-family:var(--ds-font-family-code);flex:1;align-items:center;gap:8px;font-size:13px;line-height:20px;display:flex}.mr-set-cell.is-check{flex:1;align-items:center;min-width:0;font-size:13px;line-height:20px;display:flex}.mr-set-name{text-overflow:ellipsis;white-space:nowrap;min-width:0;overflow:hidden}.mr-set-cell.is-act{flex:none;justify-content:flex-end;align-items:center;display:flex}.mr-set-cell.is-size{text-align:end;min-width:60px;color:var(--dsw-alias-label-tertiary);font-variant-numeric:tabular-nums;flex:none;font-size:12px;line-height:18px}.mr-set-cell.is-status{font-variant-numeric:tabular-nums;flex:none;justify-content:flex-end;align-items:center;gap:6px;font-size:13px;line-height:20px;display:flex}.mr-set-info{cursor:default;color:var(--dsw-alias-label-tertiary);background:0 0;border:none;flex:none;align-items:center;margin-left:5px;padding:0;display:inline-flex}.mr-set-info:hover,.mr-set-info:focus-visible{color:var(--dsw-alias-label-secondary)}.mr-set-info:focus-visible{outline:2px solid var(--dsw-alias-state-business-primary);outline-offset:1px;border-radius:var(--dsw-radius-sm)}.mr-set-cardfoot{color:var(--dsw-alias-label-tertiary);overflow-wrap:anywhere;margin:0;padding:0 16px 14px;font-size:12px;line-height:18px}.mr-set-cardfoot.is-error{color:var(--dsw-alias-state-error-primary)}.mr-set-rows+.mr-set-cardfoot{padding-top:10px}.mr-set-addrow{align-items:center;gap:8px;padding:0 16px 14px;display:flex}.mr-set-field{box-sizing:border-box;border:.5px solid var(--dsw-alias-border-l4);border-radius:var(--dsw-radius-md);background:var(--dsw-alias-bg-layer-1);min-width:0;height:36px;color:var(--dsw-alias-label-tertiary);flex:1;align-items:center;gap:6px;padding:0 12px;display:flex;position:relative}.mr-set-field:focus-within{border-color:var(--dsw-alias-state-business-primary)}.mr-set-fieldinput{z-index:1;min-width:0;font:inherit;color:var(--dsw-alias-label-primary);background:0 0;border:none;outline:none;flex:1;margin:0;padding:0;font-size:14px;line-height:22px;position:relative}.mr-set-fieldinput::placeholder{color:var(--dsw-alias-label-dimmed)}.mr-set-mirror{white-space:pre;pointer-events:none;align-items:center;padding:0 12px;font-size:14px;line-height:22px;display:flex;position:absolute;inset:0;overflow:hidden}.mr-set-typed{visibility:hidden}.mr-set-ghost{color:var(--dsw-alias-label-dimmed)}.mr-set-dot{box-sizing:border-box;border:.5px solid var(--dsw-alias-border-l3);background:0 0;border-radius:50%;flex:none;width:8px;height:8px}.mr-set-dot[data-tone=ok]{border-color:var(--dsw-alias-state-success-primary);background:var(--dsw-alias-state-success-primary)}.mr-set-dot[data-tone=warn]{border-color:var(--dsw-alias-state-warn-primary);background:var(--dsw-alias-state-warn-primary)}.mr-set-dot[data-tone=error]{border-color:var(--dsw-alias-state-error-primary);background:var(--dsw-alias-state-error-primary)}.mr-set-dot[data-tone=idle]{border-color:var(--dsw-alias-state-idle-primary);background:var(--dsw-alias-state-idle-primary)}.mr-set-spin{color:var(--dsw-alias-label-tertiary);flex:none}.mr-set-spin-rotor{transform-origin:50%;animation:1.5s linear infinite mr-set-spin}.mr-set-spin-track,.mr-set-spin-arc{fill:none;stroke:currentColor;stroke-width:2px;stroke-linecap:round}.mr-set-spin-track{opacity:.25}.mr-set-spin-arc{stroke-dasharray:12 150;animation:1.5s ease-in-out infinite mr-set-dash}@keyframes mr-set-spin{to{transform:rotate(360deg)}}@keyframes mr-set-dash{0%{stroke-dasharray:12 150;stroke-dashoffset:0}50%{stroke-dasharray:24 150;stroke-dashoffset:-6px}to{stroke-dasharray:12 150;stroke-dashoffset:0}}@media (prefers-reduced-motion:reduce){.mr-set-spin-rotor,.mr-set-spin-arc{animation:none}.mr-set-spin-arc{stroke-dasharray:18 150;stroke-dashoffset:-3px}}@property --tw-rotate-x{syntax:\"*\";inherits:false}@property --tw-rotate-y{syntax:\"*\";inherits:false}@property --tw-rotate-z{syntax:\"*\";inherits:false}@property --tw-skew-x{syntax:\"*\";inherits:false}@property --tw-skew-y{syntax:\"*\";inherits:false}@property --tw-border-style{syntax:\"*\";inherits:false;initial-value:solid}@property --tw-ordinal{syntax:\"*\";inherits:false}@property --tw-slashed-zero{syntax:\"*\";inherits:false}@property --tw-numeric-figure{syntax:\"*\";inherits:false}@property --tw-numeric-spacing{syntax:\"*\";inherits:false}@property --tw-numeric-fraction{syntax:\"*\";inherits:false}@property --tw-shadow{syntax:\"*\";inherits:false;initial-value:0 0 #0000}@property --tw-shadow-color{syntax:\"*\";inherits:false}@property --tw-shadow-alpha{syntax:\"<percentage>\";inherits:false;initial-value:100%}@property --tw-inset-shadow{syntax:\"*\";inherits:false;initial-value:0 0 #0000}@property --tw-inset-shadow-color{syntax:\"*\";inherits:false}@property --tw-inset-shadow-alpha{syntax:\"<percentage>\";inherits:false;initial-value:100%}@property --tw-ring-color{syntax:\"*\";inherits:false}@property --tw-ring-shadow{syntax:\"*\";inherits:false;initial-value:0 0 #0000}@property --tw-inset-ring-color{syntax:\"*\";inherits:false}@property --tw-inset-ring-shadow{syntax:\"*\";inherits:false;initial-value:0 0 #0000}@property --tw-ring-inset{syntax:\"*\";inherits:false}@property --tw-ring-offset-width{syntax:\"<length>\";inherits:false;initial-value:0}@property --tw-ring-offset-color{syntax:\"*\";inherits:false;initial-value:#fff}@property --tw-ring-offset-shadow{syntax:\"*\";inherits:false;initial-value:0 0 #0000}@property --tw-outline-style{syntax:\"*\";inherits:false;initial-value:solid}@property --tw-blur{syntax:\"*\";inherits:false}@property --tw-brightness{syntax:\"*\";inherits:false}@property --tw-contrast{syntax:\"*\";inherits:false}@property --tw-grayscale{syntax:\"*\";inherits:false}@property --tw-hue-rotate{syntax:\"*\";inherits:false}@property --tw-invert{syntax:\"*\";inherits:false}@property --tw-opacity{syntax:\"*\";inherits:false}@property --tw-saturate{syntax:\"*\";inherits:false}@property --tw-sepia{syntax:\"*\";inherits:false}@property --tw-drop-shadow{syntax:\"*\";inherits:false}@property --tw-drop-shadow-color{syntax:\"*\";inherits:false}@property --tw-drop-shadow-alpha{syntax:\"<percentage>\";inherits:false;initial-value:100%}@property --tw-drop-shadow-size{syntax:\"*\";inherits:false}@property --tw-ease{syntax:\"*\";inherits:false}";
 		const tagId = "dsh-manim-live/styles.css";
 		if (typeof document !== "undefined" && document.querySelector("style[data-plugin-css=" + JSON.stringify(tagId) + "]") === null) {
 			const tag = document.createElement("style");

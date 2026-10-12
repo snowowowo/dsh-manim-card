@@ -17,6 +17,7 @@ import type { ManimCardData } from '../definition'
 import type { Translate } from '../i18n'
 import { manimRenderer } from '../service'
 import { loadExportReadiness, requestExport, revealExport, type ExportReadiness } from '../export'
+import { missingLabels, renderBlockHints } from '../runtime-status'
 import { loadExports, rememberExport } from '../storage'
 import { renderQueue } from '../render-queue'
 import { CodeView } from './code-view'
@@ -25,19 +26,6 @@ import { Tip } from './tip'
 export interface CardResult {
   ok: boolean
   text: string
-}
-
-/** 探测项 id → 设置页同款可读名：悬停提示里「缺什么」要让人看得懂，不能甩 id。 */
-function missingNames(missing: ExportReadiness['missing'], t: Translate): string {
-  const NAMES: Record<string, string> = {
-    python3: t('envPython3'),
-    manim: t('envManim'),
-    manimModule: t('envManimModule'),
-    ffmpeg: t('envFfmpeg'),
-    latex: t('envLatex'),
-    dvisvgm: t('envDvisvgm'),
-  }
-  return missing.map((item) => NAMES[item.id] ?? item.id).join('、')
 }
 
 /**
@@ -50,7 +38,7 @@ function missingNames(missing: ExportReadiness['missing'], t: Translate): string
  *
  * warn 是给「这次调用被中断」那类：不是代码错，但也不该当作什么都没发生。
  */
-function FootRow({ tone, role, children }: { tone: 'ok' | 'error' | 'busy' | 'warn'; role?: 'status' | 'alert'; children: ReactNode }) {
+function FootRow({ tone, role, className, children }: { tone: 'ok' | 'error' | 'busy' | 'warn'; role?: 'status' | 'alert'; className?: string; children: ReactNode }) {
   const icon = tone === 'busy'
     ? <span className="mr-spinner" aria-hidden="true" />
     : tone === 'ok'
@@ -59,7 +47,7 @@ function FootRow({ tone, role, children }: { tone: 'ok' | 'error' | 'busy' | 'wa
         ? <TriangleAlert size={14} strokeWidth={1.8} aria-hidden="true" />
         : <CircleX size={14} strokeWidth={1.8} aria-hidden="true" />
   return (
-    <div className={`mr-chatcard-footrow is-${tone}`} role={role}>
+    <div className={className === undefined ? `mr-chatcard-footrow is-${tone}` : `mr-chatcard-footrow is-${tone} ${className}`} role={role}>
       {icon}
       {children}
     </div>
@@ -133,6 +121,11 @@ export function ManimCard({ data, t, label, onResult, autoStart, fast }: {
 }) {
   const stageRef = useRef<HTMLDivElement>(null)
   const [status, setStatus] = useState<CardResult | null>(null)
+  /**
+   * 渲染失败时环境那边的硬伤（核心包给的可执行句）。空数组 = 失败与环境无关（多半是代码问题）。
+   * 与状态一起被清掉，所以重跑一次就重新判一次。
+   */
+  const [envHints, setEnvHints] = useState<string[]>([])
   const [showCode, setShowCode] = useState(false)
   /** 画布上已经有一幅画好的终态画面了（跑完那一刻置位；被作废 / 被淘汰时清零）。 */
   const [rendered, setRendered] = useState(false)
@@ -175,6 +168,9 @@ export function ManimCard({ data, t, label, onResult, autoStart, fast }: {
 
   /** 状态既落在卡片上，也回给调用方（实验场用它点亮语料条目的红绿点）。 */
   const report = (next: CardResult): void => {
+    // 失败时顺手看一眼环境：有硬伤（起不了解释器 / 没有 WebGL / 取包失败）就把话摆出来。
+    // 一次失败只取一次——不订阅环境状态，几十张卡各挂一个订阅不划算，而失败那一刻的读数就够用了。
+    setEnvHints(next.ok ? [] : renderBlockHints())
     setStatus(next)
     onResultRef.current?.(next)
   }
@@ -239,7 +235,7 @@ export function ManimCard({ data, t, label, onResult, autoStart, fast }: {
           rememberExport(data.callId, result.file)
         } else {
           const error = result.reason === 'environment'
-            ? missingNames(result.missing ?? [], t)
+            ? missingLabels(result.missing ?? [], t)
             : result.error ?? t('fail')
           setExportNote({ ok: false, text: t('exportFailed', { error }) })
         }
@@ -472,7 +468,7 @@ export function ManimCard({ data, t, label, onResult, autoStart, fast }: {
     : readiness.ready
       ? t('exportReadyHint')
       : readiness.missing.length > 0
-        ? t('exportMissingHint', { missing: missingNames(readiness.missing, t) })
+        ? t('exportMissingHint', { missing: missingLabels(readiness.missing, t) })
         : t('exportUnknownHint')
   const exportButton = (
     <Tip label={exportTip} align="end">
@@ -496,6 +492,7 @@ export function ManimCard({ data, t, label, onResult, autoStart, fast }: {
   // 三者都在时上下几行。
   const renderFailed = status !== null && !status.ok
   const hasFoot = renderFailed || interrupted || exporting || exportNote !== null
+
   // 被中断的卡在「还没手动播过」之前连画布都不摆——一块空边框看着像渲染坏了，
   // 跟未通过预检那张卡一个形状（头 + 说明）反而更清楚。
   const showStage = !interrupted || attempts > 0
@@ -569,6 +566,18 @@ export function ManimCard({ data, t, label, onResult, autoStart, fast }: {
       {hasFoot && (
         <div className="mr-chatcard-foot">
           {renderFailed && <FootRow tone="error" role="alert">{status.text}</FootRow>}
+          {/* 失败与环境有关时补一条：错在代码还是错在机器，用户要能当场分开——
+              否则「渲染失败」这四个字只会把人引去改代码，而缺的是 WebGL 或那 13 MB 的运行时常量。 */}
+          {renderFailed && envHints.length > 0 && (
+            <FootRow tone="warn" role="status" className="is-envhint">
+              <div className="mr-chatcard-envhint">
+                <span>{t('renderEnvBlocked')}</span>
+                <ul className="mr-chatcard-envlist">
+                  {envHints.map((hint) => <li key={hint}>{hint}</li>)}
+                </ul>
+              </div>
+            </FootRow>
+          )}
           {interrupted && (
             <FootRow tone="warn" role="status">
               <Tip label={t('interruptedHint')} align="start" wide>{t('interrupted')}</Tip>
