@@ -1,6 +1,6 @@
 # Installation
 
-This page covers prerequisites, install commands, bundled assets and network behaviour. For what the plugin is and how it divides work with the core package manim-live, see [What It Is](/en/guide/overview).
+This page covers prerequisites, install methods, bundled assets and network behaviour. For what the plugin is and how it divides work with the core package manim-live, see [What It Is](/en/guide/overview); for what to do once it is installed, see [Usage in Chat](/en/guide/usage).
 
 ## Prerequisites
 
@@ -20,22 +20,19 @@ Only two things touch the local machine, and neither is about rendering:
 
 ## Install
 
-Pick one (run in the host's CLI / plugin management):
+Pick one in the host's CLI / plugin management:
 
-```bash
-# From npm (available once published)
-dsh plugin add dsh-manim-live
+| Method | Command | Status |
+| --- | --- | --- |
+| From npm | `dsh plugin add dsh-manim-live` | Available once published |
+| From a tarball | `dsh plugin add ./dsh-manim-live-<version>.tgz` | Same |
+| Direct install from the GitHub repository | `dsh plugin add github:snowowowo/dsh-manim-live` | Repo root is the package |
 
-# From a tarball
-dsh plugin add ./dsh-manim-live-<version>.tgz
-
-# Direct install from the GitHub repository (repo root is the package)
-dsh plugin add github:snowowowo/dsh-manim-live
-```
-
-::: tip Not yet verified
-The npm publishing and GitHub direct-install paths have not been verified end to end (the repository is currently private). For the development-time setup (symlink + patch entry + HMR), see [Development & Debugging](/en/dev/). This page will be updated once they land.
+::: tip Two paths not yet verified
+The npm publishing and GitHub direct-install paths have not been verified end to end (the repository is currently private); this page will be updated once they land. The development-time setup is a symlink inside the profile plus a patch entry, see [Development & Debugging](/en/dev/).
 :::
+
+After installing, refresh the host page: a "Manim 渲染" entry appears both in the **left navigation** and in the **host settings**.
 
 ## Bundled assets
 
@@ -60,3 +57,16 @@ Before the first render, the Pyodide core (about 13 MB) and the bundled numpy (a
 **Third-party libraries not bundled with the package**, such as `import pandas`: fetched over the network on first use, verified by sha256, and stored in `~/.dsh/cache/manim-live/pyodide/`; afterwards served offline from cache. While fetching, the card shows a "loading X…" hint, and the outcome is also reflected in the package-fetch entry of the environment status.
 
 To prefetch or clear these, go to the "Package cache" block of the Settings panel, see [Settings Panel](/en/guide/settings#package-cache). In an offline environment an uncached library cannot be fetched; rendering then fails with a fetch error whose reason is the same sentence as `packages.lastError` in the environment status.
+
+## Uninstall
+
+- **Development-time symlink installs**: remove the symlink from the profile and this plugin's line from `cordis.patch.yml`.
+- **CLI or marketplace installs**: uninstall through the host's plugin management.
+
+The cache directory `~/.dsh/cache/manim-live/pyodide/` lives outside the plugin directory and is not touched by uninstalling the plugin; delete that directory by hand to reclaim the space.
+
+## Next steps
+
+- Get a first card in a session → [Usage in Chat](/en/guide/usage)
+- Verify the plugin's features one by one → [Laboratory](/en/guide/lab)
+- Check this machine's conditions → [Settings Panel](/en/guide/settings)

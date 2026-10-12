@@ -4,7 +4,7 @@ layout: home
 hero:
   name: dsh-manim-live
   text: Manim animations in chat
-  tagline: "A DeepSeek Harness plugin: the AI writes standard Manim (Python) code in the session and a playable animation card appears right in the chat stream — replayable, inspectable, exportable as mp4. The code runs in the browser; no local Python required."
+  tagline: "A DeepSeek Harness plugin: the AI writes standard Manim (Python) code in the session and a playable animation card appears right in the chat stream — replayable, code-inspectable, exportable as mp4. The code runs in the browser, so no local Python is required; the ~13 MB runtime and the formula fonts ship with the plugin, so basic figures work offline."
   actions:
     - theme: brand
       text: Installation
@@ -19,31 +19,51 @@ hero:
 features:
   - icon: 💬
     title: Animation cards
-    details: The AI submits code through the manim_render tool and an animation card with a WebGL canvas appears in the chat stream; manual replay, source viewing, and mp4 export are supported.
+    details: After the AI submits code, a card appears in the chat stream — one title line, a WebGL canvas, and three buttons on the right (replay / view source / export mp4).
   - icon: 🩺
     title: Pre-check before presenting
-    details: Before the tool returns, the code is dry-run; syntax errors and unsupported constructs fail on the spot, so blank or broken cards never appear in the chat.
+    details: The code is dry-run in a real interpreter on the Node side first, so syntax errors and unsupported constructs are reported immediately; no blank or broken card is left in the chat.
   - icon: 🎛️
     title: Playback scheduling
-    details: A new card plays through once when it enters the viewport, and remounts land directly on the final frame; when several cards are produced in parallel within one step, only the last one plays; the whole page shares one Python execution queue.
+    details: A new card plays through once when it enters the viewport, and remounts land directly on the final frame; when several cards are produced in one step, only the last one plays.
   - icon: 🧪
     title: Laboratory
-    details: "An acceptance bench with a built-in sample set plus free-form code: verify card rendering, playback control, export, and pre-check errors one by one."
+    details: A page under "Manim 渲染" in the left navigation — about ten built-in samples plus a free-form code box, with a pass / fail marker beside each sample.
   - icon: ⚙️
     title: Settings panel
-    details: The browser runtime (Python runtime / formula styles / WebGL / WASM) and the local python3 / manim / ffmpeg environment sit in two cards; the local cache of third-party libraries supports pre-caching and deletion.
+    details: One section in the host settings — the browser runtime and the local python3 / manim / ffmpeg environment in two cards, plus a cache list of eleven common third-party libraries that can be cached or deleted.
   - icon: 🚦
     title: Environment status
-    details: The four condition groups deciding "can it render, can it export" are collected into one readable status, shared by the Laboratory status bar, the Settings panel and chat cards, with an actionable remedy for each unmet item.
+    details: '"Can it render, can it export" collapsed into one reading, shared by the Laboratory status bar, the Settings panel and chat cards, with an actionable remedy for every unmet item.'
   - icon: 🔌
     title: The manim-live service
-    details: Other plugins obtain the runtime and a canvas via ctx.get('manim-live') — dry-run precheck, canvas creation, environment status, and status subscription; when the service is absent callers neither error nor block.
+    details: Other plugins obtain precheck, a canvas and environment status via ctx.get('manim-live'); when this plugin is absent, callers neither error nor block.
 ---
 
-## Quick Start
+## What a card looks like
+
+Say "draw a unit circle with Manim" in a session: the AI submits Python through the `manim_render` tool, and a card appears in the chat stream. The card is laid out like this (schematic):
+
+```
+┌──────────────────────────────────────────────┐
+│ Manim animation                ↻   ⟨⟩   ⤓    │  ← replay / view source / export mp4
+├──────────────────────────────────────────────┤
+│                                              │
+│          (a 1280×720 WebGL canvas)           │
+│          rests on the final frame            │
+│                                              │
+└──────────────────────────────────────────────┘
+```
+
+- The card and the Laboratory use **the same component**, so manual playback, viewing the source and export behave identically in both places.
+- Before rendering, the code is dry-run in a real interpreter on the Node side; syntax errors come back to the model as `error` and are corrected in the same turn, instead of turning into a blank card.
+- When the picture cannot be produced, one actionable line is added at the bottom of the card, see [Usage in Chat](/en/guide/usage#when-the-environment-falls-short).
+
+## Install
 
 1. Install the plugin into DeepSeek Harness desktop following [Installation](/en/guide/installation);
-2. Say "用 Manim 画一个单位圆" (draw a unit circle with Manim) in a session — once the AI submits the Python code, an animation card appears in the chat stream and rests on the final frame after playback.
+2. Refresh the host page;
+3. Say "draw a unit circle with Manim" in a session.
 
 ## All Sections
 
@@ -59,4 +79,4 @@ features:
 | API Reference | [The manim-live Service](/en/api/service) | All four members one by one: `check` / `createSurface` / `environmentStatus` / `onEnvironmentStatus` |
 | API Reference | [Data Types](/en/api/types) | Every field and value semantic of `CheckResult`, `EnvironmentStatus` and its substructures |
 | API Reference | [Host Tool](/en/api/tool) | Arguments and return of `manim_render`, its precheck boundary, and the companion skill and resident guide |
-| Development | [Development & Debugging](/en/dev/) | Source layering, build, tests, development installation, the core package dependency, troubleshooting entry points |
+| Development | [Development & Debugging](/en/dev/) | Tech stack, directory layout, development flow, tests, installing into the host, troubleshooting entry points |
