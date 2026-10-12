@@ -10,7 +10,7 @@
 
 写法上除属性动画 `self.play(m.animate.x(...))`（可链的方法由探针实测 manim-web 的 animate 代理生成，不在表里的当场报错并列出可用项）外，`rate_func=` / `run_time=`、`m[i]` 取段、`m.width` 这类属性读取、`self.clear()` 也都已接线——「这个写法支不支持」的判定与真执行取同一份支持面（核心包 `manim-live` 的 `src/py/surface.ts`），所以**预检放行的，真桥不会当场拒**。**方法改写**（`surface.ts` 的 `METHOD_REWRITES`）负责「CE 有、manim-web 换了形状」的那批：`set_stroke(color=, width=, opacity=)` → 颜色走**属性写**、`_color` 与 `strokeColor` 各写一份（渲染层读前者、回读走后者，见第六轮第 7 条）、宽 / 透明度走专属 setter——**不能**落 `setStyle`：manim-web 的 set color 存取器会把 fillColor 一起冲掉（见第四轮 (b) 的色板事故）；`set_opacity(x)` → stroke + fill 两个 setter、`put_start_and_end_on(a, b)` → Arrow 走同名方法、Line 走 `setStart` + `setEnd`。物体/动画的归类按 manim-web 的**实测原型链**定，不看 CE 把它挂在哪个模块下（CE 把 `TracedPath` / `AnimatedBoundary` 放在 `animation/` 里，两者其实是物体）；「包住一个物体」的写法（`TracedPath(dot)` / `SurroundingRectangle(text)` / `Union(a, b)` …）也走同一份构造规则。`self.add(...)` 收到动画会当场给出可读报错（校验在 Python 侧，预检也拦得住）。左侧导航「Manim 渲染」是**实验场**（见下节）——本插件功能的肉眼验收台。
 
-顶层设计见 `_docs/工作文档/2026-10-09-01-manim渲染插件/顶层设计.md`。
+顶层设计见容器仓 `_docs/dsh-manim-live/2026-10-09-01-manim渲染插件/顶层设计.md`。
 
 ### 实验场（功能验收台）
 
@@ -288,7 +288,7 @@ src/
     └── styles.css        皮肤（只引 --dsw-* token）
 ```
 
-**运行时 / 适配层 / 渲染引擎 / 语料 / 支持面都不在本仓**——它们在核心包 `manim-live`（`src/py/` 运行时链、`src/engine/` 渲染机制、`src/testbench/` 测试台逻辑、`corpus/` 语料与截图）。本仓只剩两件事：**DSH 侧的接线（`src/host/`）+ 本插件自己的 UI（`src/client/`）**，外加一份 `src/routes.js`（六条路由地址的唯一真源）。这是 Phase 1 抽包的结论，见 `_docs/工作文档/manim-live/2026-10-10-01-抽出核心包/`。
+**运行时 / 适配层 / 渲染引擎 / 语料 / 支持面都不在本仓**——它们在核心包 `manim-live`（`src/py/` 运行时链、`src/engine/` 渲染机制、`src/testbench/` 测试台逻辑、`corpus/` 语料与截图）。本仓只剩两件事：**DSH 侧的接线（`src/host/`）+ 本插件自己的 UI（`src/client/`）**，外加一份 `src/routes.js`（六条路由地址的唯一真源）。这是 Phase 1 抽包的结论，见容器仓 `_docs/manim-live/2026-10-10-01-抽出核心包/`。
 
 **注意 `src/host/**` 是免构建的原样 JS**：改它不用 `pnpm build`，宿主的热重载直接生效；只有 `src/client/**` 要打包成 `client.js`。
 
