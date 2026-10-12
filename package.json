@@ -48,7 +48,7 @@
   "dependencies": {
     "@shikijs/langs": "^4.3.1",
     "lucide-react": "^0.548.0",
-    "manim-live": "link:../manim-live",
+    "manim-live": "^0.1.0",
     "shiki": "^4.3.1"
   },
   "dsh": {

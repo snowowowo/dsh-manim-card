@@ -380,7 +380,7 @@ window.__ModuleLoader__.load({
 			key: "1xq2db"
 		}]]);
 		//#endregion
-		//#region ../manim-live/node_modules/.pnpm/three@0.184.0/node_modules/three/build/three.core.js
+		//#region node_modules/.pnpm/three@0.184.0/node_modules/three/build/three.core.js
 		/**
 		* @license
 		* Copyright 2010-2026 Three.js Authors
@@ -37476,7 +37476,7 @@ levels: {
 			}
 		}));
 		//#endregion
-		//#region ../manim-live/node_modules/.pnpm/three@0.184.0/node_modules/three/build/three.module.js
+		//#region node_modules/.pnpm/three@0.184.0/node_modules/three/build/three.module.js
 		var three_module_exports = /* @__PURE__ */ __exportAll({
 			ACESFilmicToneMapping: () => 4,
 			AddEquation: () => 100,
@@ -48684,7 +48684,7 @@ void main() {
 			};
 		}));
 		//#endregion
-		//#region ../manim-live/node_modules/.pnpm/manim-web@0.3.24_@types+node@22.20.5_react@19.3.0_typescript@7.0.2/node_modules/manim-web/dist/MathJaxBundle-xSidSV0E.js
+		//#region node_modules/.pnpm/manim-web@0.3.24_@types+node@22.20.5_react@18.3.1_typescript@7.0.2/node_modules/manim-web/dist/MathJaxBundle-xSidSV0E.js
 		var MathJaxBundle_xSidSV0E_exports = /* @__PURE__ */ __exportAll({
 			RegisterHTMLHandler: () => As$1,
 			SVG: () => ko$1,
@@ -88669,7 +88669,7 @@ void main() {
 			});
 		}));
 		//#endregion
-		//#region ../manim-live/node_modules/.pnpm/manim-web@0.3.24_@types+node@22.20.5_react@19.3.0_typescript@7.0.2/node_modules/manim-web/dist/src-Cc3xTIkV.js
+		//#region node_modules/.pnpm/manim-web@0.3.24_@types+node@22.20.5_react@18.3.1_typescript@7.0.2/node_modules/manim-web/dist/src-Cc3xTIkV.js
 		function Pt(e, t, n) {
 			let r = new Nt({ preamble: [
 				`\\usepackage[${t}]{fontenc}`,
@@ -154859,7 +154859,7 @@ void main() {
 			Mw = { ...jw };
 		}));
 		//#endregion
-		//#region ../manim-live/node_modules/.pnpm/manim-web@0.3.24_@types+node@22.20.5_react@19.3.0_typescript@7.0.2/node_modules/manim-web/dist/index.js
+		//#region node_modules/.pnpm/manim-web@0.3.24_@types+node@22.20.5_react@18.3.1_typescript@7.0.2/node_modules/manim-web/dist/index.js
 		var dist_exports = /* @__PURE__ */ __exportAll({
 			Add: () => _C,
 			AddTextLetterByLetter: () => Ty,
@@ -155454,7 +155454,7 @@ void main() {
 			init_src_Cc3xTIkV();
 		}));
 		//#endregion
-		//#region ../manim-live/dist/index.js
+		//#region node_modules/.pnpm/manim-live@0.1.0_@types+node@22.20.5_react@18.3.1_typescript@7.0.2/node_modules/manim-live/dist/index.js
 		/**
 		* Manim ↔ JS 桥：Python 侧的 manim 适配层只能通过下面这组基元去驱动真正的 manim-web 对象。
 		* runtime.ts 把它们注册成 Python 里可直呼的内置函数（_mb_*），适配层（manim-shim.ts）再用它写出
