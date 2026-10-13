@@ -4,7 +4,6 @@ import { ManimPage } from './page'
 import { ManimSettingsPage } from './settings'
 import { ManimCard } from './components/card'
 import { definition, type ManimCardData } from './definition'
-import { NavIcon } from './navicon'
 import { createManimService, disposeManimRenderer } from './service'
 import { DICT, NS, type Translate } from './i18n'
 import './styles.css'
@@ -72,26 +71,23 @@ export default {
       }
     }, 'manim-live: provide service')
 
-    // 左侧导航项（图标 + 名称）
-    ctx.slots.inject('sidebar.panellist', () => ctx.slots.register({
-      name: 'sidebar.panellist', id: 'manim-live', order: 2000, label: () => t('nav'),
-    }, (props: { size: number; active: boolean }) =>
-      <SlotErrorBoundary><NavIcon {...props} /></SlotErrorBoundary>))
+    // 调试面板：实验场（内置样例集 + 自定义代码的功能验收台）不占自己的导航，以 devpanel
+    // 服务交给开发台（dsh-devbench）聚合；开发台缺席时无人读它，零可见（真功能页才注册槽位）。
+    // label 一律插件自己的英文名（入口短名），不自起中文名。
+    ctx.effect(() => ctx.provide('devpanel.manim-live', {
+      label: 'manim-live',
+      component: () => <SlotErrorBoundary><ManimPage t={t} /></SlotErrorBoundary>,
+    }), 'manim-live: devpanel')
 
-    // 整页内容
-    ctx.slots.inject('main', () => ctx.slots.register(
-      { name: 'main', key: 'manim-live' },
-      () => <SlotErrorBoundary><ManimPage t={t} /></SlotErrorBoundary>,
-    ))
-
-    // 设置分区：设置面板里的一个整页（本机环境 + 包缓存）。
+    // 设置分区：设置面板里的一个整页（本机环境 + 包缓存）。这是**真功能**（用户要用的），
+    // 照常注册槽位、常显；label 用插件英文名。
     //
     // 落座点**只在这一行**，面板本体（./settings.tsx）只收一个取词函数——不接 close、
     // 不假设容器宽高、不读设置面板的 store。所以「这块面板摆在哪」是这里一行的事：
     // 想搬到别处（比如以后那个把各插件摆到一起的工作台）只改这一行，面板一行都不用动。
-    // 取词命名空间沿用本插件的 NS，所以 label 与页面文案同一份词典。
+    // 取词命名空间沿用本插件的 NS。
     ctx.slots.inject('settings.section', () => ctx.slots.register({
-      name: 'settings.section', id: 'manim-live', order: 60, label: () => t('nav'), locale: NS,
+      name: 'settings.section', id: 'manim-live', order: 60, label: 'manim-live', locale: NS,
     }, (props: { t?: Translate }) => <SlotErrorBoundary><ManimSettingsPage t={props.t ?? t} /></SlotErrorBoundary>))
 
     // 聊天卡片：manim_render 的 tool/call 折叠成一张卡（定义见 ./definition.ts）。

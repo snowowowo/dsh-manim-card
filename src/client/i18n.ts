@@ -12,7 +12,6 @@ export type Translate = (key: string, params?: Record<string, string | number>) 
 
 export const DICT = {
   zh: {
-    nav: 'Manim 渲染',
     title: 'Manim 渲染',
     lead: '本页验收本插件在宿主里的功能：卡片渲染、播放控制、查看代码、导出 mp4、预检报错。样例是内置的一小集（打进插件，正式安装也可用）；语料回归网在核心包 manim-live 仓（corpus/），与本页无关。',
 

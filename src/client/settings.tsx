@@ -532,7 +532,7 @@ function PackagesCard({ t }: { t: Translate }) {
 /** 设置页正文：环境组两张卡（浏览器运行时 + 本机环境），库组一张卡加一张补库卡。 */
 export function ManimSettingsPage({ t }: { t: Translate }) {
   return (
-    <section className="mr-set" aria-label={t('nav')}>
+    <section className="mr-set" aria-label="manim-live">
       <section className="mr-set-group" aria-label={t('envGroup')}>
         <h2 className="mr-set-groupname">{t('envGroup')}</h2>
         <div className="mr-set-stack">

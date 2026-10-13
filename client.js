@@ -175874,7 +175874,7 @@ self.play(Write(eq))
 		function ManimSettingsPage({ t }) {
 			return /* @__PURE__ */ (0, react_jsx_runtime.jsxs)("section", {
 				className: "mr-set",
-				"aria-label": t("nav"),
+				"aria-label": "manim-live",
 				children: [/* @__PURE__ */ (0, react_jsx_runtime.jsxs)("section", {
 					className: "mr-set-group",
 					"aria-label": t("envGroup"),
@@ -176031,40 +176031,6 @@ self.play(Write(eq))
 			}
 		};
 		//#endregion
-		//#region src/client/navicon.tsx
-		/**
-		* 左侧导航图标：只画 currentColor，颜色与选中态由侧栏那一行控制（不在图标里自己上色）；
-		* 描边 1.3px 对齐宿主的 Medium 图标。图形 = 坐标轴 + 圆 + 圆上动点。
-		*/
-		function NavIcon({ size }) {
-			return /* @__PURE__ */ (0, react_jsx_runtime.jsxs)("svg", {
-				width: size,
-				height: size,
-				viewBox: "0 0 24 24",
-				fill: "none",
-				"aria-hidden": true,
-				stroke: "currentColor",
-				strokeWidth: 1.3,
-				strokeLinecap: "round",
-				strokeLinejoin: "round",
-				children: [
-					/* @__PURE__ */ (0, react_jsx_runtime.jsx)("path", { d: "M4 20h16M4 20V4" }),
-					/* @__PURE__ */ (0, react_jsx_runtime.jsx)("circle", {
-						cx: "13",
-						cy: "11",
-						r: "5"
-					}),
-					/* @__PURE__ */ (0, react_jsx_runtime.jsx)("circle", {
-						cx: "13",
-						cy: "6",
-						r: "1.2",
-						fill: "currentColor",
-						stroke: "none"
-					})
-				]
-			});
-		}
-		//#endregion
 		//#region src/client/i18n.ts
 		/**
 		* 本插件可见文案。宿主 locale 只维护中文（英文缺失时回退行为以实测为准），
@@ -176075,7 +176041,6 @@ self.play(Write(eq))
 		*/
 		const NS = "manimRenderer";
 		const DICT = { zh: {
-			nav: "Manim 渲染",
 			title: "Manim 渲染",
 			lead: "本页验收本插件在宿主里的功能：卡片渲染、播放控制、查看代码、导出 mp4、预检报错。样例是内置的一小集（打进插件，正式安装也可用）；语料回归网在核心包 manim-live 仓（corpus/），与本页无关。",
 			modeLabel: "模式",
@@ -176267,21 +176232,15 @@ self.play(Write(eq))
 						disposeManimRenderer();
 					};
 				}, "manim-live: provide service");
-				ctx.slots.inject("sidebar.panellist", () => ctx.slots.register({
-					name: "sidebar.panellist",
-					id: "manim-live",
-					order: 2e3,
-					label: () => t("nav")
-				}, (props) => /* @__PURE__ */ (0, react_jsx_runtime.jsx)(SlotErrorBoundary, { children: /* @__PURE__ */ (0, react_jsx_runtime.jsx)(NavIcon, { ...props }) })));
-				ctx.slots.inject("main", () => ctx.slots.register({
-					name: "main",
-					key: "manim-live"
-				}, () => /* @__PURE__ */ (0, react_jsx_runtime.jsx)(SlotErrorBoundary, { children: /* @__PURE__ */ (0, react_jsx_runtime.jsx)(ManimPage, { t }) })));
+				ctx.effect(() => ctx.provide("devpanel.manim-live", {
+					label: "manim-live",
+					component: () => /* @__PURE__ */ (0, react_jsx_runtime.jsx)(SlotErrorBoundary, { children: /* @__PURE__ */ (0, react_jsx_runtime.jsx)(ManimPage, { t }) })
+				}), "manim-live: devpanel");
 				ctx.slots.inject("settings.section", () => ctx.slots.register({
 					name: "settings.section",
 					id: "manim-live",
 					order: 60,
-					label: () => t("nav"),
+					label: "manim-live",
 					locale: NS
 				}, (props) => /* @__PURE__ */ (0, react_jsx_runtime.jsx)(SlotErrorBoundary, { children: /* @__PURE__ */ (0, react_jsx_runtime.jsx)(ManimSettingsPage, { t: props.t ?? t }) })));
 				ctx.effect(() => ctx.uiConversation.events.register(definition), "manim-live: conversation definition");
