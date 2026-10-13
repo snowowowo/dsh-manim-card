@@ -25,7 +25,8 @@
     "gen-skill": "node scripts/gen-skill.mjs",
     "docs": "pnpm --dir docs install --frozen-lockfile && pnpm --dir docs dev",
     "docs:build": "pnpm --dir docs install --frozen-lockfile && pnpm --dir docs build",
-    "docs:preview": "pnpm --dir docs install --frozen-lockfile && pnpm --dir docs preview"
+    "docs:preview": "pnpm --dir docs install --frozen-lockfile && pnpm --dir docs preview",
+    "docs:offline": "pnpm --dir docs install --frozen-lockfile && pnpm --dir docs offline"
   },
   "peerDependencies": {
     "react": "^18.2.0",

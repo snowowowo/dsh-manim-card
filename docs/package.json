@@ -5,6 +5,7 @@
   "scripts": {
     "dev": "vitepress dev",
     "build": "vitepress build",
+    "offline": "vitepress build && node offline.mjs",
     "preview": "vitepress preview"
   },
   "devDependencies": {
