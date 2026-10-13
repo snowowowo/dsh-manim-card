@@ -380,7 +380,7 @@ window.__ModuleLoader__.load({
 			key: "1xq2db"
 		}]]);
 		//#endregion
-		//#region node_modules/.pnpm/three@0.184.0/node_modules/three/build/three.core.js
+		//#region ../manim-live/node_modules/.pnpm/three@0.184.0/node_modules/three/build/three.core.js
 		/**
 		* @license
 		* Copyright 2010-2026 Three.js Authors
@@ -37476,7 +37476,7 @@ levels: {
 			}
 		}));
 		//#endregion
-		//#region node_modules/.pnpm/three@0.184.0/node_modules/three/build/three.module.js
+		//#region ../manim-live/node_modules/.pnpm/three@0.184.0/node_modules/three/build/three.module.js
 		var three_module_exports = /* @__PURE__ */ __exportAll({
 			ACESFilmicToneMapping: () => 4,
 			AddEquation: () => 100,
@@ -48684,7 +48684,7 @@ void main() {
 			};
 		}));
 		//#endregion
-		//#region node_modules/.pnpm/manim-web@0.3.24_@types+node@22.20.5_react@18.3.1_typescript@7.0.2/node_modules/manim-web/dist/MathJaxBundle-xSidSV0E.js
+		//#region ../manim-live/node_modules/.pnpm/manim-web@0.3.24_@types+node@22.20.5_react@19.3.0_typescript@7.0.2/node_modules/manim-web/dist/MathJaxBundle-xSidSV0E.js
 		var MathJaxBundle_xSidSV0E_exports = /* @__PURE__ */ __exportAll({
 			RegisterHTMLHandler: () => As$1,
 			SVG: () => ko$1,
@@ -88669,7 +88669,7 @@ void main() {
 			});
 		}));
 		//#endregion
-		//#region node_modules/.pnpm/manim-web@0.3.24_@types+node@22.20.5_react@18.3.1_typescript@7.0.2/node_modules/manim-web/dist/src-Cc3xTIkV.js
+		//#region ../manim-live/node_modules/.pnpm/manim-web@0.3.24_@types+node@22.20.5_react@19.3.0_typescript@7.0.2/node_modules/manim-web/dist/src-Cc3xTIkV.js
 		function Pt(e, t, n) {
 			let r = new Nt({ preamble: [
 				`\\usepackage[${t}]{fontenc}`,
@@ -154859,7 +154859,7 @@ void main() {
 			Mw = { ...jw };
 		}));
 		//#endregion
-		//#region node_modules/.pnpm/manim-web@0.3.24_@types+node@22.20.5_react@18.3.1_typescript@7.0.2/node_modules/manim-web/dist/index.js
+		//#region ../manim-live/node_modules/.pnpm/manim-web@0.3.24_@types+node@22.20.5_react@19.3.0_typescript@7.0.2/node_modules/manim-web/dist/index.js
 		var dist_exports = /* @__PURE__ */ __exportAll({
 			Add: () => _C,
 			AddTextLetterByLetter: () => Ty,
@@ -155454,7 +155454,7 @@ void main() {
 			init_src_Cc3xTIkV();
 		}));
 		//#endregion
-		//#region node_modules/.pnpm/manim-live@0.2.0_@types+node@22.20.5_react@18.3.1_typescript@7.0.2/node_modules/manim-live/dist/index.js
+		//#region ../manim-live/dist/index.js
 		/**
 		* Manim ↔ JS 桥：Python 侧的 manim 适配层只能通过下面这组基元去驱动真正的 manim-web 对象。
 		* runtime.ts 把它们注册成 Python 里可直呼的内置函数（_mb_*），适配层（manim-shim.ts）再用它写出
@@ -160442,6 +160442,154 @@ async def _run_source(source):
     await _run(namespace)
 
 
+# ===== 会话（黑板步进）：持久命名空间 + 常驻场景，段只增不改 =====
+#
+# 与一次性运行的隔离**刻意相反**：命名空间与 updater 包装表跨段保留；桥由 JS 侧
+# 每会话建一块并全程复用（句柄跨段有效）。会话内不定义场景类——self 绑定常驻场景。
+
+
+class _SegmentAwait(_AwaitTransform):
+    """段式改写：顶层语句视同 construct 体——play / wait / move_camera 自动补 await、
+    排版类构造自动 flush；嵌套函数体照旧不动（用户函数里的 await 自己写，见复用规则）。"""
+
+    def __init__(self):
+        _AwaitTransform.__init__(self)
+        self._in_construct = True
+
+    def _visit_function(self, node):
+        previous = self._in_construct
+        self._in_construct = False
+        node = self.generic_visit(node)
+        self._in_construct = previous
+        return node
+
+
+def _compile_segment(source, filename):
+    """编译一段会话代码：顶层 await 生效（eval 驱动 play 的协程），行号与原文一致。"""
+    tree = _ast.parse(source, filename)
+    tree = _SegmentAwait().visit(tree)
+    _ast.fix_missing_locations(tree)
+    # 带 PyCF_ALLOW_TOP_LEVEL_AWAIT 的 code 对象不能 exec、只能 eval（CPython 约定）
+    return compile(
+        tree, filename, "exec",
+        flags=_ast.PyCF_ALLOW_TOP_LEVEL_AWAIT, dont_inherit=True,
+    )
+
+
+class _AnyStub(object):
+    """干跑存根：可调用、属性宽容、算术退化为 0——拦得住「名字不存在」，
+    也不误伤「调用已提交的函数」（调用结果参与 + - * / 时按 0 走，形状校验尽力而为）。"""
+
+    def __call__(self, *args, **kwargs):
+        return _AnyStub()
+
+    def __getattr__(self, name):
+        if name.startswith("_"):
+            raise AttributeError(name)
+        return _AnyStub()
+
+    def __add__(self, other):
+        return 0.0
+
+    def __radd__(self, other):
+        return 0.0
+
+    def __sub__(self, other):
+        return 0.0
+
+    def __rsub__(self, other):
+        return 0.0
+
+    def __mul__(self, other):
+        return 0.0
+
+    def __rmul__(self, other):
+        return 0.0
+
+    def __truediv__(self, other):
+        return 0.0
+
+    def __rtruediv__(self, other):
+        return 0.0
+
+    def __neg__(self):
+        return 0.0
+
+    def __abs__(self):
+        return 0.0
+
+    def __float__(self):
+        return 0.0
+
+    def __int__(self):
+        return 0
+
+
+async def _run_segment(code, ns):
+    """执行一段：含顶层 await 的 code 对象由 eval 折成协程再驱动；纯同步段
+    eval 直接跑完返回 None——不分辨的话 await None 会炸（实测）。"""
+    result = eval(code, ns)
+    if _inspect.iscoroutine(result):
+        await result
+
+
+_SESSIONS = {}
+
+
+def _fresh_namespace():
+    ns = {"__name__": "__main__"}
+    exec(_compile("from manim import *", "<manim>"), ns)
+    return ns
+
+
+def _session_begin(sid):
+    """开一场会话：持久命名空间 + 常驻场景（self 绑定到当前画布场景，句柄恒为 0）。"""
+    _session_end(sid)
+    ns = _fresh_namespace()
+    ns["self"] = Scene()
+    _SESSIONS[sid] = ns
+
+
+async def _session_exec(sid, source):
+    """追加执行一段：顶层语句的 await 由 _compile_segment 补好，_run_segment 驱动。"""
+    await _run_segment(_compile_segment(source, "<manim>"), _SESSIONS[sid])
+
+
+async def _session_check(sid, source):
+    """干跑预检一段：在**临时命名空间**里执行。已提交名字按种类造存根——函数可调用、
+    数值存原值（算术不误伤）、物体在**当前桥**上现造（真会话的句柄在这张干跑桥上无效）。
+    """
+    live = _SESSIONS[sid]
+    ns = _fresh_namespace()
+    ns["self"] = Scene()
+    for name, value in list(live.items()):
+        if name.startswith("_") or name in ns:
+            continue
+        if isinstance(value, Mobject):
+            ns[name] = Mobject()
+        elif callable(value):
+            ns[name] = _AnyStub()
+        elif isinstance(value, (bool, int, float, str)):
+            ns[name] = value
+        else:
+            ns[name] = _AnyStub()
+    await _run_segment(_compile_segment(source, "<manim>"), ns)
+
+
+def _session_reset(sid):
+    """回滚的前半段：换新命名空间并清场（桥与画布不动；重演由后续 _session_exec 完成）。"""
+    _session_end(sid)
+    ns = _fresh_namespace()
+    scene = Scene()
+    scene.clear()
+    ns["self"] = scene
+    _SESSIONS[sid] = ns
+
+
+def _session_end(sid):
+    _SESSIONS.pop(sid, None)
+
+
 # ===== 以下由 api-map.generated.ts（探针实测）生成，勿手改：重跑探针即更新 =====
 
 `.replace("    # __GENERATED_MEMBERS__\n", `${memberSection()}\n`)}${animateAliases()}\n\n${rateAliases()}\n\n${colorAliases()}\n\n${objectAliases()}\n\n${sceneAliases()}\n\n${sceneKindSet()}\n\n${missingAliases()}\n`;
@@ -160538,6 +160686,13 @@ _sys.modules["manim"] = _dsh_manim
 `;
 		const RUN_SNIPPET = "import manim as _dsh_manim\nawait _dsh_manim._run_source(_dsh_src)\n";
 		const EXEC_SNIPPET = "import manim as _dsh_manim\n_dsh_manim._exec_source(_dsh_src)\n";
+		const SESSION_SNIPPETS = {
+			begin: "import manim as _dsh_manim\n_dsh_manim._session_begin(_dsh_sid)\n",
+			exec: "import manim as _dsh_manim\nawait _dsh_manim._session_exec(_dsh_sid, _dsh_src)\n",
+			check: "import manim as _dsh_manim\nawait _dsh_manim._session_check(_dsh_sid, _dsh_src)\n",
+			reset: "import manim as _dsh_manim\n_dsh_manim._session_reset(_dsh_sid)\n",
+			end: "import manim as _dsh_manim\n_dsh_manim._session_end(_dsh_sid)\n"
+		};
 		async function getRuntime() {
 			if (!loader) throw new Error("manim-live：未注入 Pyodide 加载器，无法执行 Python");
 			runtimePromise ??= (async () => {
@@ -160637,6 +160792,28 @@ _sys.modules["manim"] = _dsh_manim
 			return enqueue(async () => {
 				if (options.active?.() === false) throw new PyRunCancelled();
 				return execute(code, bridge, options);
+			});
+		}
+		/**
+		* 会话操作：begin / exec / check / reset / end——与 runPython 同一条全局队列、同样的
+		* 逐次桥注入（`_dsh_bridge`），区别只在驱动片段与会话状态（`_dsh_sid`）的传递。
+		*/
+		async function runSessionOp(op, sid, source, bridge, options = {}) {
+			return enqueue(async () => {
+				if (options.active?.() === false) throw new PyRunCancelled();
+				const runtime = await getRuntime();
+				await loadImports(runtime, source ?? "pass", options.onLoading);
+				outputSink = options.output ?? (() => {});
+				runtime.globals.set("_dsh_bridge", bridge);
+				runtime.globals.set("_dsh_sid", sid);
+				if (source !== void 0) runtime.globals.set("_dsh_src", source);
+				try {
+					await runtime.runPythonAsync(SESSION_SNIPPETS[op]);
+				} catch (error) {
+					throw toPyRuntimeError(error, 0);
+				} finally {
+					outputSink = () => {};
+				}
 			});
 		}
 		/**
@@ -161144,7 +161321,7 @@ _sys.modules["manim"] = _dsh_manim
 		}
 		function createManimWebBridge(options) {
 			const { manim, scene } = options;
-			const fast = options.fast === true;
+			let fast = options.fast === true;
 			const objects = /* @__PURE__ */ new Map();
 			const SCENE_HANDLE = 0;
 			objects.set(SCENE_HANDLE, scene);
@@ -161404,6 +161581,9 @@ _sys.modules["manim"] = _dsh_manim
 				},
 				async flush() {
 					await flushRenders();
+				},
+				setFast(next) {
+					fast = next;
 				}
 			};
 		}
@@ -161501,6 +161681,116 @@ _sys.modules["manim"] = _dsh_manim
 			cached ??= Promise.resolve().then(() => (init_dist(), dist_exports));
 			return cached;
 		}
+		/**
+		* 场景会话（黑板步进）：一块画布上的**持久执行上下文**。
+		*
+		* - 命名空间跨段保留（第 2 段直接引用第 1 段建的 `circle`）、`self` 绑定常驻场景；
+		* - 段提交协议：干跑预检（带已提交名字表）→ 上画布执行 → **成功才入档**；
+		*   失败自动回滚——新命名空间 + 清场 + **同一块桥上极速重演**已提交段
+		*   （句柄的连续性要求桥不能换，所以极速档做成运行期可切换的 `setFast`）；
+		* - 会话全程复用一块桥、一块画布（不闪、不换 canvas 元素）。
+		*
+		* 机制的边界（什么不在这儿）：旁白、节奏、文稿 manifest、步截图——那些归壳
+		* （判据见核心包页「边界判据」）。
+		*/
+		/** 会话 id（页内唯一即可）：Python 侧 `_SESSIONS` 字典的键。 */
+		let nextSid = 0;
+		const message = (error) => error instanceof Error ? error.message : String(error);
+		async function createPySession(options) {
+			const bridge = createManimWebBridge({
+				manim: options.manim,
+				scene: options.scene,
+				sceneFor: options.sceneFor,
+				fast: options.fast === true
+			});
+			const sid = `session-${++nextSid}`;
+			const committed = [];
+			const surface = options.enqueueOnSurface ?? ((job) => job());
+			const output = options.onOutput ?? (() => {});
+			let disposed = false;
+			const active = () => !disposed;
+			const runOp = (op, source, use = bridge) => runSessionOp(op, sid, source, use, {
+				active,
+				output
+			});
+			await runOp("begin");
+			const rollback = async () => {
+				bridge.setFast?.(true);
+				try {
+					await runOp("reset");
+					for (const segment of committed) await runOp("exec", segment);
+				} finally {
+					bridge.setFast?.(false);
+				}
+			};
+			const check = async (code) => {
+				if (disposed) return {
+					ok: false,
+					cancelled: true
+				};
+				try {
+					await runSessionOp("check", sid, code, createDryRunBridge(), { active });
+					return { ok: true };
+				} catch (error) {
+					if (error instanceof PyRunCancelled) return {
+						ok: false,
+						cancelled: true
+					};
+					console.info("[manim-live] session check rejected:", message(error));
+					return {
+						ok: false,
+						error: message(error)
+					};
+				}
+			};
+			return {
+				check,
+				async append(code) {
+					if (disposed) return {
+						ok: false,
+						cancelled: true
+					};
+					const verdict = await check(code);
+					if (!verdict.ok) return verdict;
+					try {
+						await surface(() => runOp("exec", code));
+						committed.push(code);
+						return {
+							ok: true,
+							step: committed.length
+						};
+					} catch (error) {
+						if (error instanceof PyRunCancelled) return {
+							ok: false,
+							cancelled: true
+						};
+						console.error("[manim-live] session append failed, rolling back:", error);
+						try {
+							await surface(() => rollback());
+						} catch (rollbackError) {
+							console.error("[manim-live] session rollback failed:", rollbackError);
+						}
+						return {
+							ok: false,
+							error: message(error)
+						};
+					}
+				},
+				get count() {
+					return committed.length;
+				},
+				source() {
+					return committed.join("\n\n");
+				},
+				dispose() {
+					if (disposed) return;
+					disposed = true;
+					runSessionOp("end", sid, void 0, bridge, {}).catch((error) => {
+						console.error("[manim-live] session end failed:", error);
+					});
+				}
+			};
+		}
 		const WIDTH = 1280;
 		const HEIGHT = 720;
 		/** 在给定容器里造一块画布。契约：容器由调用方给、由调用方管生命周期。 */
@@ -161512,6 +161802,7 @@ _sys.modules["manim"] = _dsh_manim
 			let lastCode = null;
 			let lastHandlers = {};
 			let rendered = false;
+			let endSession = null;
 			/** 跑一段（在 tail 排队内调用）。 */
 			const execute = async (code, handlers) => {
 				await runPython(code, createManimWebBridge({
@@ -161548,6 +161839,23 @@ _sys.modules["manim"] = _dsh_manim
 						};
 					});
 				},
+				async createSession() {
+					if (disposed) throw new Error("manim-live：画布已销毁，不能再开会话");
+					endSession?.();
+					const session = await createPySession({
+						manim,
+						scene: slot.scene(),
+						sceneFor: slot.sceneFor,
+						fast: options.fast === true,
+						enqueueOnSurface: (job) => {
+							const next = tail.then(job, job);
+							tail = next.then(() => void 0, () => void 0);
+							return next;
+						}
+					});
+					endSession = () => session.dispose();
+					return session;
+				},
 				async replay() {
 					const code = lastCode;
 					if (code === null) throw new Error("manim-live：还没跑过任何代码，没得重播");
@@ -161570,6 +161878,8 @@ _sys.modules["manim"] = _dsh_manim
 				},
 				dispose() {
 					disposed = true;
+					endSession?.();
+					endSession = null;
 					slot.dispose();
 				}
 			};
@@ -161954,6 +162264,237 @@ _sys.modules["manim"] = _dsh_manim
 				}
 			}
 		};
+		/**
+		* Pyodide 包缓存的**客户端**半边：清单解析、依赖闭包、输入补全、字节数成人话，
+		* 加一个把「清单 / 预缓存 / 清缓存」三条 HTTP 接口收拢的取数客户端。
+		*
+		* 从 dsh-manim-live 插件整体下沉而来（插件里只剩路由绑定那一层薄壳）：任何消费
+		* Pyodide 运行时的插件（黑板、别的壳）都要问「哪些包在本地、怎么提前取、怎么清」，
+		* 这层答案与「谁在问」无关——所以住核心包，路由地址由调用方注入。
+		*
+		* 为什么「取一个包要连依赖一起取」在**客户端**算：Host 只回答「每个包现在在本地是什么
+		* 状态」，而依赖关系是 lock 里的静态数据（跟着清单一起发过来）。算在客户端，取的时候
+		* 就能**一个一个来**——进度、失败、停下来都在这一层看得见，而不是让 Host 闷头取完
+		* 一大串才回话。
+		*
+		* 名字一律过 `canonicalPackageName` 再比：lock 里包名有三种写法（见 ../py/pkg-names.ts），
+		* 用户也会按自己记得的样子打字（`Pillow` / `scikit_learn`），归一化之后这些都能落到
+		* 同一个包上。
+		*/
+		function strings(value) {
+			return Array.isArray(value) ? value.filter((item) => typeof item === "string") : [];
+		}
+		/**
+		* 一条包记录。**响应是不可信输入**（本机路由也会随插件换版而变），逐字段过一遍。
+		* 单条不合格就丢这一条，而不是整表作废——一个包名变了不该让整个页面空掉。
+		*/
+		function parseEntry(raw) {
+			if (raw === null || typeof raw !== "object") return null;
+			const value = raw;
+			if (typeof value.name !== "string" || value.name.length === 0) return null;
+			if (typeof value.fileName !== "string" || value.fileName.length === 0) return null;
+			const state = value.state;
+			if (state !== "bundled" && state !== "cached" && state !== "absent") return null;
+			return {
+				name: value.name,
+				version: typeof value.version === "string" ? value.version : "",
+				fileName: value.fileName,
+				kind: typeof value.kind === "string" ? value.kind : "package",
+				depends: strings(value.depends),
+				imports: strings(value.imports),
+				state,
+				bytes: typeof value.bytes === "number" && Number.isFinite(value.bytes) ? value.bytes : null
+			};
+		}
+		/** 把清单响应收成形状确定的值；形状不对回 null（调用方据此报错）。 */
+		function parseInventory(payload) {
+			if (payload === null || typeof payload !== "object") return null;
+			const value = payload;
+			if (typeof value.cacheDir !== "string" || !Array.isArray(value.entries)) return null;
+			const entries = value.entries.map(parseEntry).filter((entry) => entry !== null);
+			return {
+				cacheDir: value.cacheDir,
+				pyodideVersion: typeof value.pyodideVersion === "string" ? value.pyodideVersion : "",
+				entries
+			};
+		}
+		/** 按名字（任一写法：`Pillow` / `scikit_learn`…）找一条清单记录；找不到回 undefined。 */
+		function findPackage(entries, name) {
+			const wanted = canonicalPackageName(name);
+			return entries.find((entry) => canonicalPackageName(entry.name) === wanted);
+		}
+		/**
+		* 输入框的「虚影」补全：按**名字前缀**（不分大小写）找第一个能接上的库。
+		*
+		* 只做前缀匹配，不做模糊/包含匹配：补全要能一眼看出「接上之后是什么」，前缀才是可预期的
+		* ——打成 `illow` 被补成 `pillow` 那种（往中间插）在虚影上没法表达，宁可不补。
+		* 清单是按名字排好序发过来的，所以「第一个」就是字典序第一个，同一份输入永远同一个结果。
+		*
+		* @returns 完整名字与后缀；输入为空、或已经是个完整名字时回 null（界面上就没有虚影）。
+		*/
+		function completionFor(entries, input) {
+			const typed = input.toLowerCase();
+			if (typed.length === 0) return null;
+			const match = entries.find((entry) => entry.name.toLowerCase().startsWith(typed));
+			if (match === void 0 || match.name.length === typed.length) return null;
+			return {
+				name: match.name,
+				suffix: match.name.slice(typed.length)
+			};
+		}
+		/**
+		* 取一个包要连哪些一起取：它自己的依赖闭包，**依赖排在前面**。
+		*
+		* 两个细节：
+		*  - 已经在本地的（随包 / 已缓存）不进计划——但它的**依赖仍要往下看**，
+		*    否则「A 缓存了、A 的依赖没缓存」这种半拉状态会被漏过去；
+		*  - 顺序是后序（先依赖后本体），于是中途停下来时，已经落地的部分是一个**自洽的前缀**。
+		* @param entries - Host 给的清单。
+		* @param name - 想取的包名（任一写法）。
+		* @returns 要取的名字；清单里没有这个包时回空数组（调用方据此说「不认识的包」）。
+		*/
+		function prefetchPlan(entries, name) {
+			const byName = new Map(entries.map((entry) => [canonicalPackageName(entry.name), entry]));
+			const root = byName.get(canonicalPackageName(name));
+			if (root === void 0) return [];
+			const ordered = [];
+			const seen = /* @__PURE__ */ new Set();
+			const visit = (entry) => {
+				if (seen.has(entry.name)) return;
+				seen.add(entry.name);
+				for (const dependency of entry.depends) {
+					const next = byName.get(canonicalPackageName(dependency));
+					if (next !== void 0) visit(next);
+				}
+				if (entry.state === "absent") ordered.push(entry.name);
+			};
+			visit(root);
+			return ordered;
+		}
+		/** 字节数成人话（清单里最大的包几十 MB，用两位有效数字足够）。 */
+		function formatBytes(bytes) {
+			if (bytes < 1024) return `${bytes} B`;
+			const units = [
+				"KB",
+				"MB",
+				"GB"
+			];
+			let value = bytes / 1024;
+			let unit = 0;
+			while (value >= 1024 && unit < units.length - 1) {
+				value /= 1024;
+				unit += 1;
+			}
+			return `${value >= 100 ? Math.round(value) : value.toFixed(1)} ${units[unit]}`;
+		}
+		function createPackagesClient(options) {
+			const packagesUrl = options.packagesUrl;
+			const cacheUrl = options.cacheUrl;
+			return {
+				async loadPackages() {
+					const response = await fetch(packagesUrl);
+					if (!response.ok) throw new Error(`HTTP ${response.status}`);
+					const inventory = parseInventory(await response.json());
+					if (inventory === null) throw new Error("清单形状不对（插件版本与宿主对不上？）");
+					return inventory;
+				},
+				async cachePackage(name) {
+					let response;
+					try {
+						response = await fetch(`${packagesUrl}/cache`, {
+							method: "POST",
+							headers: { "content-type": "application/json" },
+							body: JSON.stringify({ names: [name] })
+						});
+					} catch (error) {
+						console.error(`[manim-live] 取包失败（${name}）：`, error);
+						return {
+							ok: false,
+							bytes: 0,
+							error: error instanceof Error ? error.message : String(error)
+						};
+					}
+					if (!response.ok) {
+						console.error(`[manim-live] 取包失败（${name}）：HTTP ${response.status}`);
+						return {
+							ok: false,
+							bytes: 0,
+							error: `HTTP ${response.status}`
+						};
+					}
+					const body = await response.json();
+					const first = Array.isArray(body.results) ? body.results[0] : void 0;
+					if (first === null || typeof first !== "object") return {
+						ok: false,
+						bytes: 0,
+						error: "Host 没有回报结果"
+					};
+					const result = first;
+					if (typeof result.error === "string" && result.error.length > 0) {
+						console.error(`[manim-live] 取包失败（${name}）：${result.error}`);
+						return {
+							ok: false,
+							bytes: 0,
+							error: result.error
+						};
+					}
+					return {
+						ok: true,
+						bytes: typeof result.bytes === "number" ? result.bytes : 0,
+						error: ""
+					};
+				},
+				async clearPackage(name) {
+					return clearCache([name]);
+				},
+				async clearPackageCache() {
+					return clearCache();
+				}
+			};
+			/**
+			* 清缓存。给了 `names` 就只清这几个（设置页按行清理），不给就清掉缓存目录里全部包（实验场工具条）。
+			* Host 只删自己缓存目录里的包文件，回被删掉的文件名；失败抛给调用方去显示。
+			*/
+			async function clearCache(names) {
+				const response = await fetch(cacheUrl, {
+					method: "POST",
+					...names === void 0 ? {} : {
+						headers: { "content-type": "application/json" },
+						body: JSON.stringify({ names })
+					}
+				});
+				if (!response.ok) throw new Error(`HTTP ${response.status}`);
+				const body = await response.json();
+				if (body === null || typeof body !== "object") return [];
+				const removed = body.removed;
+				return Array.isArray(removed) ? removed.filter((name) => typeof name === "string") : [];
+			}
+		}
+		/**
+		* 设置页上摆出来的**常用包**（画图 / 数值 / 数据这条线上最常被 import 的十一个）。
+		*
+		* 这不是白名单——只是把常见的摆出来，免得用户在一个三百行的清单里找。任意其他包
+		* 直接写名字就能取（走同一条预缓存通道）。
+		*
+		* 前三个是**随包**的（numpy / sympy / mpmath，装机即可用），列出来是为了让「哪些已经在了」
+		* 一眼可见——它们不会出现在「未缓存」里，但用户会想知道它们在不在。
+		*
+		* 名字必须与 lock 的**键**一致（`scikit-learn` 而不是 `sklearn`、`pillow` 而不是 `PIL`），
+		* 所以有测试对着 lock 逐个核（离线就能核）——否则界面上那一行永远是「未缓存」且点了报错。
+		*/
+		const COMMON_PACKAGES = [
+			"numpy",
+			"sympy",
+			"mpmath",
+			"matplotlib",
+			"pandas",
+			"scipy",
+			"scikit-learn",
+			"statsmodels",
+			"networkx",
+			"pillow",
+			"opencv-python"
+		];
 		/**
 		* 是否符合预期。**`reject` 的「失败」才是通过**——那条验的就是「当场拒掉、且说得清」，
 		* 跑通了反而说明拦截失效了。红绿点、续跑、「通过 N 条」全走这一个判据。
@@ -174232,235 +174773,14 @@ XID_Start XIDS`.split(/\s/).map((p) => [w(p), p]));
 		}
 		//#endregion
 		//#region src/client/packages.ts
-		/**
-		* Pyodide 包缓存：清单、预缓存、清缓存——设置页与实验场共用这一层。
-		*
-		* 为什么「取一个包要连依赖一起取」在**客户端**算：Host 只回答「每个包现在在本地是什么状态」，
-		* 而依赖关系是 lock 里的静态数据（跟着清单一起发过来）。算在客户端，取的时候就能**一个一个来**——
-		* 进度、失败、停下来都在这一层看得见，而不是让 Host 闷头取完一大串才回话。
-		*
-		* 名字一律过 `canonicalPackageName` 再比：lock 里包名有三种写法（见核心包 `manim-live` 的
-		* `src/py/pkg-names.ts`），用户也会按自己记得的样子打字（`Pillow` / `scikit_learn`），
-		* 归一化之后这些都能落到同一个包上。
-		*/
-		const PACKAGES_URL = PACKAGES_ROUTE;
-		const CACHE_URL = CACHE_ROUTE;
-		function strings(value) {
-			return Array.isArray(value) ? value.filter((item) => typeof item === "string") : [];
-		}
-		/**
-		* 一条包记录。**响应是不可信输入**（本机路由也会随插件换版而变），逐字段过一遍。
-		* 单条不合格就丢这一条，而不是整表作废——一个包名变了不该让整个页面空掉。
-		*/
-		function parseEntry(raw) {
-			if (raw === null || typeof raw !== "object") return null;
-			const value = raw;
-			if (typeof value.name !== "string" || value.name.length === 0) return null;
-			if (typeof value.fileName !== "string" || value.fileName.length === 0) return null;
-			const state = value.state;
-			if (state !== "bundled" && state !== "cached" && state !== "absent") return null;
-			return {
-				name: value.name,
-				version: typeof value.version === "string" ? value.version : "",
-				fileName: value.fileName,
-				kind: typeof value.kind === "string" ? value.kind : "package",
-				depends: strings(value.depends),
-				imports: strings(value.imports),
-				state,
-				bytes: typeof value.bytes === "number" && Number.isFinite(value.bytes) ? value.bytes : null
-			};
-		}
-		/** 把清单响应收成形状确定的值；形状不对回 null（调用方据此报错）。 */
-		function parseInventory(payload) {
-			if (payload === null || typeof payload !== "object") return null;
-			const value = payload;
-			if (typeof value.cacheDir !== "string" || !Array.isArray(value.entries)) return null;
-			const entries = value.entries.map(parseEntry).filter((entry) => entry !== null);
-			return {
-				cacheDir: value.cacheDir,
-				pyodideVersion: typeof value.pyodideVersion === "string" ? value.pyodideVersion : "",
-				entries
-			};
-		}
-		/** 读一次包清单。失败抛错给调用方去显示（这是用户主动触发的动作，不该静默）。 */
-		async function loadPackages() {
-			const response = await fetch(PACKAGES_URL);
-			if (!response.ok) throw new Error(`HTTP ${response.status}`);
-			const inventory = parseInventory(await response.json());
-			if (inventory === null) throw new Error("清单形状不对（插件版本与宿主对不上？）");
-			return inventory;
-		}
-		/** 按名字（任一写法：`Pillow` / `scikit_learn`…）找一条清单记录；找不到回 undefined。 */
-		function findPackage(entries, name) {
-			const wanted = canonicalPackageName(name);
-			return entries.find((entry) => canonicalPackageName(entry.name) === wanted);
-		}
-		/**
-		* 输入框的「虚影」补全：按**名字前缀**（不分大小写）找第一个能接上的库。
-		*
-		* 只做前缀匹配，不做模糊/包含匹配：补全要能一眼看出「接上之后是什么」，前缀才是可预期的
-		* ——打成 `illow` 被补成 `pillow` 那种（往中间插）在虚影上没法表达，宁可不补。
-		* 清单是按名字排好序发过来的，所以「第一个」就是字典序第一个，同一份输入永远同一个结果。
-		*
-		* @returns 完整名字与后缀；输入为空、或已经是个完整名字时回 null（界面上就没有虚影）。
-		*/
-		function completionFor(entries, input) {
-			const typed = input.toLowerCase();
-			if (typed.length === 0) return null;
-			const match = entries.find((entry) => entry.name.toLowerCase().startsWith(typed));
-			if (match === void 0 || match.name.length === typed.length) return null;
-			return {
-				name: match.name,
-				suffix: match.name.slice(typed.length)
-			};
-		}
-		/**
-		* 取一个包要连哪些一起取：它自己的依赖闭包，**依赖排在前面**。
-		*
-		* 两个细节：
-		*  - 已经在本地的（随包 / 已缓存）不进计划——但它的**依赖仍要往下看**，
-		*    否则「A 缓存了、A 的依赖没缓存」这种半拉状态会被漏过去；
-		*  - 顺序是后序（先依赖后本体），于是中途停下来时，已经落地的部分是一个**自洽的前缀**。
-		* @param entries - Host 给的清单。
-		* @param name - 想取的包名（任一写法）。
-		* @returns 要取的名字；清单里没有这个包时回空数组（调用方据此说「不认识的包」）。
-		*/
-		function prefetchPlan(entries, name) {
-			const byName = new Map(entries.map((entry) => [canonicalPackageName(entry.name), entry]));
-			const root = byName.get(canonicalPackageName(name));
-			if (root === void 0) return [];
-			const ordered = [];
-			const seen = /* @__PURE__ */ new Set();
-			const visit = (entry) => {
-				if (seen.has(entry.name)) return;
-				seen.add(entry.name);
-				for (const dependency of entry.depends) {
-					const next = byName.get(canonicalPackageName(dependency));
-					if (next !== void 0) visit(next);
-				}
-				if (entry.state === "absent") ordered.push(entry.name);
-			};
-			visit(root);
-			return ordered;
-		}
-		/**
-		* 按名字取一个包（一个包一次请求）。
-		* 失败不抛、改成回一句结果——批量取的时候一次失败不该把整轮断在半路，
-		* 调用方拿 `ok` 决定是继续还是收摊。
-		*/
-		async function cachePackage(name) {
-			let response;
-			try {
-				response = await fetch(`${PACKAGES_URL}/cache`, {
-					method: "POST",
-					headers: { "content-type": "application/json" },
-					body: JSON.stringify({ names: [name] })
-				});
-			} catch (error) {
-				console.error(`[manim-live] 取包失败（${name}）：`, error);
-				return {
-					ok: false,
-					bytes: 0,
-					error: error instanceof Error ? error.message : String(error)
-				};
-			}
-			if (!response.ok) {
-				console.error(`[manim-live] 取包失败（${name}）：HTTP ${response.status}`);
-				return {
-					ok: false,
-					bytes: 0,
-					error: `HTTP ${response.status}`
-				};
-			}
-			const body = await response.json();
-			const first = Array.isArray(body.results) ? body.results[0] : void 0;
-			if (first === null || typeof first !== "object") return {
-				ok: false,
-				bytes: 0,
-				error: "Host 没有回报结果"
-			};
-			const result = first;
-			if (typeof result.error === "string" && result.error.length > 0) {
-				console.error(`[manim-live] 取包失败（${name}）：${result.error}`);
-				return {
-					ok: false,
-					bytes: 0,
-					error: result.error
-				};
-			}
-			return {
-				ok: true,
-				bytes: typeof result.bytes === "number" ? result.bytes : 0,
-				error: ""
-			};
-		}
-		/**
-		* 清缓存。给了 `names` 就只清这几个（设置页按行清理），不给就清掉缓存目录里全部包（实验场工具条）。
-		* Host 只删自己缓存目录里的包文件，回被删掉的文件名；失败抛给调用方去显示。
-		*/
-		async function clearCache(names) {
-			const response = await fetch(CACHE_URL, {
-				method: "POST",
-				...names === void 0 ? {} : {
-					headers: { "content-type": "application/json" },
-					body: JSON.stringify({ names })
-				}
-			});
-			if (!response.ok) throw new Error(`HTTP ${response.status}`);
-			const body = await response.json();
-			if (body === null || typeof body !== "object") return [];
-			const removed = body.removed;
-			return Array.isArray(removed) ? removed.filter((name) => typeof name === "string") : [];
-		}
-		/** 清掉本机缓存的全部按需包。 */
-		function clearPackageCache() {
-			return clearCache();
-		}
-		/** 清掉**一个**包的本机缓存（名字任一写法）。它下次被用到会重新联网取一次。 */
-		function clearPackage(name) {
-			return clearCache([name]);
-		}
-		/** 字节数成人话（清单里最大的包几十 MB，用两位有效数字足够）。 */
-		function formatBytes(bytes) {
-			if (bytes < 1024) return `${bytes} B`;
-			const units = [
-				"KB",
-				"MB",
-				"GB"
-			];
-			let value = bytes / 1024;
-			let unit = 0;
-			while (value >= 1024 && unit < units.length - 1) {
-				value /= 1024;
-				unit += 1;
-			}
-			return `${value >= 100 ? Math.round(value) : value.toFixed(1)} ${units[unit]}`;
-		}
-		/**
-		* 设置页上摆出来的**常用包**（画图 / 数值 / 数据这条线上最常被 import 的十一个）。
-		*
-		* 这不是白名单——只是把常见的摆出来，免得用户在一个三百行的清单里找。任意其他包
-		* 直接写名字就能取（走同一条预缓存通道）。
-		*
-		* 前三个是**随包**的（numpy / sympy / mpmath，装机即可用），列出来是为了让「哪些已经在了」
-		* 一眼可见——它们不会出现在「未缓存」里，但用户会想知道它们在不在。
-		*
-		* 名字必须与 lock 的**键**一致（`scikit-learn` 而不是 `sklearn`、`pillow` 而不是 `PIL`），
-		* 所以有测试对着 lock 逐个核（离线就能核）——否则界面上那一行永远是「未缓存」且点了报错。
-		*/
-		const COMMON_PACKAGES = [
-			"numpy",
-			"sympy",
-			"mpmath",
-			"matplotlib",
-			"pandas",
-			"scipy",
-			"scikit-learn",
-			"statsmodels",
-			"networkx",
-			"pillow",
-			"opencv-python"
-		];
+		const client = createPackagesClient({
+			packagesUrl: PACKAGES_ROUTE,
+			cacheUrl: CACHE_ROUTE
+		});
+		const loadPackages = () => client.loadPackages();
+		const cachePackage = (name) => client.cachePackage(name);
+		const clearPackageCache = () => client.clearPackageCache();
+		const clearPackage = (name) => client.clearPackage(name);
 		//#endregion
 		//#region src/client/samples.ts
 		const SAMPLES = [

@@ -1,20 +1,15 @@
 // Pyodide：本体的静态路由、按需取包，以及给设置页用的「清单 + 预缓存」两条接口。
 //
-// 三件事都围着同一个目录转（`<dsh home>/cache/manim-live/pyodide`），所以放一个文件里：
-//   ① `/pyodide` 静态路由——随包目录 → 缓存目录 → 回源下载（按 lock 的 sha256 校验）；
-//   ② `/cache` 清缓存——只删自己缓存目录里的包文件（实验场验「首次取包」要用）；
-//   ③ `/packages` 清单与预缓存——设置页看得到哪些包在本地、能提前取回来（之后离线可用）。
-//
-// 随包只带 numpy / sympy，其余包按需从官方发行通道取回；文件名与 sha256 一律以随包的
-// pyodide-lock.json 为准，不另写一份清单——两份清单早晚会对不上。
+// 供给线的**本事**（lock 目录化、下载校验、缓存盘点、Node 装载）在核心包
+// `manim-live/node` 的 `createPyodideSupply`——黑板等其它消费者同样能用，不必依赖本插件。
+// 本文件只剩插件自己的两件事：dsh 缓存目录的落位（resolveCacheDir）、把供给线接到
+// 本插件的三条 HTTP 路由上（`/pyodide` / `/cache` / `/packages`）。
 
-import { createHash } from 'node:crypto'
-import { existsSync, readFileSync, readdirSync, statSync } from 'node:fs'
-import { copyFile, link, mkdir, rename, unlink, writeFile } from 'node:fs/promises'
+import { extname, dirname, join, resolve } from 'node:path'
 import { homedir } from 'node:os'
-import { dirname, extname, join, resolve } from 'node:path'
-import { fileURLToPath, pathToFileURL } from 'node:url'
-import { setPyodideLoader, canonicalPackageName } from 'manim-live/node'
+import { fileURLToPath } from 'node:url'
+import { unlink } from 'node:fs/promises'
+import { createPyodideSupply, setPyodideLoader } from 'manim-live/node'
 import { CACHE_ROUTE, PACKAGES_ROUTE, PYODIDE_ROUTE } from '../routes.js'
 import { MIME, serveAsset } from './assets.js'
 import { BadRequest, readJsonBody, sendJson } from './http.js'
@@ -25,52 +20,10 @@ const PYODIDE_PATH = PYODIDE_ROUTE;
 const CACHE_PATH = CACHE_ROUTE;
 export const PACKAGES_PATH = PACKAGES_ROUTE;
 
-const PYODIDE_LOCK = JSON.parse(readFileSync(join(PYODIDE_DIR, 'pyodide-lock.json'), 'utf8'));
-const PYODIDE_CDN = `https://cdn.jsdelivr.net/pyodide/v${PYODIDE_LOCK.info.version}/full/`;
-/** 文件名 → sha256（回源校验用）。lock 是静态的，建一次就够。 */
-const DIGESTS = new Map(Object.values(PYODIDE_LOCK.packages).map((entry) => [entry.file_name, entry.sha256]));
-
-/**
- * 可以从官方通道取回的条目：有 `.whl` / `.zip` 产物的那些。
- *
- * 为什么不是「全部 lock 条目」：`*-tests` 的产物是 `.tar`（不装进运行时），
- * 被后缀天然滤掉；而 `cpython_module`（`hashlib` 之类）确实是独立的 whl，
- * 用户代码 `import hashlib` 时 Pyodide 会去取它——所以保留，别自作主张当「内置」。
- *
- * **名字用 lock 的键**（不是条目里的 `name` 字段）：两者有 21 条不一致（键 `pillow` /
- * 字段 `Pillow`），而 `depends` 里两种写法都出现。键是 Pyodide 自己的标识，
- * 也让「用户输入的名字」有个唯一落点。
- *
- * **`sha256` 必须带上**：这条记录就是「把这个包取回来」所需的全部信息。曾经漏了它，
- * 下载校验拿到的期望值恒为 `undefined`，于是**每一次预缓存都必然失败**、报错还只说
- * 「期望 undefined」（测试也没拦下：当时只有「摘要对不上要报错」的用例，没有「对得上要成功」的）。
- */
-const DOWNLOADABLE = Object.entries(PYODIDE_LOCK.packages)
-  .filter(([, entry]) => typeof entry.file_name === 'string' && /\.(whl|zip)$/u.test(entry.file_name));
-
-/**
- * 归一化名 → lock 键。依赖引用与用户输入都先过这里，再落到目录里的 `name` 上。
- * 归一化规则见核心包 `manim-live/node` 的 `canonicalPackageName`（两端同一份），原因也写在那一处。
- */
-const KEY_BY_CANONICAL = new Map(DOWNLOADABLE.map(([key]) => [canonicalPackageName(key), key]));
-
-const CATALOG = DOWNLOADABLE
-  .map(([key, entry]) => ({
-    name: key,
-    version: typeof entry.version === 'string' ? entry.version : '',
-    fileName: entry.file_name,
-    kind: entry.package_type ?? 'package',
-    // 依赖先归一化再落成**键**，解析不到的直接丢掉：发出去的都是能取的，
-    // 客户端那边才算得准闭包（原来按字段名发，matplotlib 的 `pillow` 会对不上而漏掉）。
-    depends: (Array.isArray(entry.depends) ? entry.depends : [])
-      .map((ref) => KEY_BY_CANONICAL.get(canonicalPackageName(ref)))
-      .filter((ref) => typeof ref === 'string'),
-    imports: Array.isArray(entry.imports) ? entry.imports : [],
-    sha256: typeof entry.sha256 === 'string' ? entry.sha256 : '',
-  }))
-  .sort((left, right) => left.name.localeCompare(right.name));
-export { CATALOG };
-const CATALOG_BY_NAME = new Map(CATALOG.map((entry) => [canonicalPackageName(entry.name), entry]));
+const supply = createPyodideSupply({ pyodideDir: PYODIDE_DIR });
+export { supply };
+// 路由测试还在对着目录核不变量（sha256 一个不缺）——真身已在核心包，这里只是转发。
+export const CATALOG = supply.catalog;
 
 /**
  * 按需 wheel 的落盘位置：用户级缓存，**绝不写进插件目录**（那是随包产物，还可能是软链出去的仓库）。
@@ -86,76 +39,9 @@ export function resolveCacheDir(ctx) {
   return join(configured ? resolve(configured) : join(homedir(), '.dsh'), 'cache', 'manim-live', 'pyodide');
 }
 
-/**
- * 把随包的 wheel 在缓存目录里就位。
- *
- * 为什么需要这一步：`packageCacheDir` 一旦给出，Pyodide 在 Node 侧就**只从那里读**
- * （源码里 `let n = isNode ? config.packageCacheDir : config.indexURL`），不再回看 indexURL。
- * 不先就位的话，连随包的 numpy 都会被当成缺包去 CDN 下（本轮实测：`Didn't find package numpy locally`）。
- * 优先硬链接省一份空间，跨卷时才退回复制。失败不致命——最坏退化成从 CDN 取。
- */
-async function seedBundledPackages(cacheDir) {
-  let names;
-  try {
-    names = readdirSync(PYODIDE_DIR).filter((name) => name.endsWith('.whl'));
-  } catch (error) {
-    console.error('[manim-live] 读取随包 wheel 失败：', error);
-    return;
-  }
-  if (names.length === 0) return;
-  try {
-    await mkdir(cacheDir, { recursive: true });
-  } catch (error) {
-    console.error(`[manim-live] 建缓存目录失败（${cacheDir}）：`, error);
-    return;
-  }
-  for (const name of names) {
-    const target = join(cacheDir, name);
-    if (existsSync(target)) continue;
-    try {
-      await link(join(PYODIDE_DIR, name), target);
-    } catch {
-      try {
-        await copyFile(join(PYODIDE_DIR, name), target);
-      } catch (error) {
-        console.error(`[manim-live] 随包件就位失败（${name}）：`, error);
-      }
-    }
-  }
-}
-
-/**
- * Host 预检也用真 Python：Node 侧直接从 vendored 目录加载 Pyodide。
- * 用 pathToFileURL + 动态 import，让 pyodide.mjs 留在文件系统上、不进任何产物。
- *
- * ⚠️ packageCacheDir 必须显式给：默认值就是 indexURL，不给时下载的 wheel 会写进随包的
- * assets/pyodide/（本轮真机事故：跑一次按需加载就多出 6 个 whl、约 21 MB）。
- */
+/** Host 预检装载：加载器由核心包造（本体从随包目录加载、包只认缓存目录），这里只做接线。 */
 export function installPyodideLoader(cacheDir) {
-  setPyodideLoader(async () => {
-    await seedBundledPackages(cacheDir);
-    const { loadPyodide } = await import(pathToFileURL(join(PYODIDE_DIR, 'pyodide.mjs')).href);
-    return loadPyodide({ indexURL: PYODIDE_DIR, packageCacheDir: cacheDir });
-  });
-}
-
-/** 从官方发行通道取一个 wheel/zip，按随包 lock 的 sha256 校验，原子写进缓存目录。 */
-async function downloadPackage(fileName, sha256, cacheDir) {
-  // 没有期望摘要就**不下**：`undefined` 会让 `actual !== sha256` 恒成立，白白下一遍再报一句
-  // 看不懂的「期望 undefined」——宁可在发请求之前就停下，把话说清楚。
-  if (typeof sha256 !== 'string' || sha256.length === 0) throw new Error(`没有 ${fileName} 的 sha256，拒绝下载`);
-  const response = await fetch(PYODIDE_CDN + fileName);
-  if (!response.ok) throw new Error(`下载 ${fileName} 失败：HTTP ${response.status}`);
-  const bytes = Buffer.from(await response.arrayBuffer());
-  const actual = createHash('sha256').update(bytes).digest('hex');
-  if (actual !== sha256) throw new Error(`下载 ${fileName} 校验不过：期望 ${sha256}，实际 ${actual}`);
-  await mkdir(cacheDir, { recursive: true });
-  const target = join(cacheDir, fileName);
-  // 先写临时名再改名：中途失败不会留下半截文件冒充「已缓存」。
-  await writeFile(`${target}.part`, bytes);
-  await rename(`${target}.part`, target);
-  console.info(`[manim-live] 已缓存 ${fileName}（${(bytes.length / 1048576).toFixed(1)} MB）`);
-  return bytes;
+  setPyodideLoader(supply.createNodeLoader(cacheDir));
 }
 
 /**
@@ -188,7 +74,7 @@ export function pyodideRoute(cacheDir) {
           file.stream.pipe(response);
           return;
         }
-        const digest = name ? DIGESTS.get(name) : undefined;
+        const digest = name ? supply.digestOf(name) : undefined;
         if (digest === undefined) {
           response.statusCode = 404;
           response.end();
@@ -197,7 +83,7 @@ export function pyodideRoute(cacheDir) {
         // 同一个包只下一次：浏览器可能为同一个文件并发发起多个请求。
         let pending = inflight.get(name);
         if (pending === undefined) {
-          pending = downloadPackage(name, digest, cacheDir).finally(() => inflight.delete(name));
+          pending = supply.download(name, cacheDir).finally(() => inflight.delete(name));
           inflight.set(name, pending);
         }
         const bytes = await pending;
@@ -242,7 +128,7 @@ export function clearCacheRoute(cacheDir) {
         const names = Array.isArray(body?.names)
           ? body.names.filter((name) => typeof name === 'string' && name.length > 0)
           : [];
-        const targets = names.length === 0 ? cachedPackageFiles(cacheDir) : cachedFilesFor(cacheDir, names);
+        const targets = names.length === 0 ? supply.cachedFiles(cacheDir) : supply.filesForNames(cacheDir, names);
         const removed = [];
         for (const name of targets) {
           try {
@@ -264,127 +150,6 @@ export function clearCacheRoute(cacheDir) {
   };
 }
 
-/** 缓存目录里现有的包文件（只看 `.whl` / `.zip`、只认普通文件）。目录没建过 = 没缓存过，回空表。 */
-function cachedPackageFiles(cacheDir) {
-  let names;
-  try {
-    names = readdirSync(cacheDir);
-  } catch {
-    return [];
-  }
-  const files = [];
-  for (const name of names) {
-    if (!/\.(whl|zip)$/u.test(name)) continue;
-    try {
-      if (statSync(join(cacheDir, name)).isFile()) files.push(name);
-    } catch {
-      // 期间被别人删了，当没有
-    }
-  }
-  return files;
-}
-
-/** 按包名挑出缓存目录里的文件：不在缓存里的、名字对不上的都静默跳过。 */
-function cachedFilesFor(cacheDir, names) {
-  const present = new Set(cachedPackageFiles(cacheDir));
-  const targets = new Set();
-  for (const name of names) {
-    const entry = CATALOG_BY_NAME.get(canonicalPackageName(name));
-    if (entry !== undefined && present.has(entry.fileName)) targets.add(entry.fileName);
-  }
-  return [...targets];
-}
-
-/** 缓存目录现状：文件名 → 字节数。目录不存在时回空表（= 还没缓存过，不是错）。 */
-function readCacheFiles(cacheDir) {
-  const sizes = new Map();
-  let names;
-  try {
-    names = readdirSync(cacheDir);
-  } catch {
-    return sizes;
-  }
-  for (const name of names) {
-    try {
-      const stat = statSync(join(cacheDir, name));
-      if (stat.isFile()) sizes.set(name, stat.size);
-    } catch (error) {
-      console.error(`[manim-live] 读缓存文件失败（${name}）：`, error);
-    }
-  }
-  return sizes;
-}
-
-/** 随包目录里的文件名集合（只用来判断「这个包是不是跟着插件来的」）。 */
-function readBundledNames() {
-  try {
-    return new Set(readdirSync(PYODIDE_DIR));
-  } catch (error) {
-    console.error('[manim-live] 读随包目录失败：', error);
-    return new Set();
-  }
-}
-
-/**
- * 一个包在本地的状态：`bundled` 随包来 / `cached` 本机取回来的 / `absent` 要用就得联网。
- *
- * 判定顺序不能反：随包的 wheel 会被 `seedBundledPackages` 硬链接进缓存目录，
- * 先看缓存就会把随包件算成「用户缓存」，于是「已缓存几个」这个数一开始就是虚的。
- */
-function stateOf(fileName, bundled, cached) {
-  if (bundled.has(fileName)) return 'bundled';
-  if (cached.has(fileName)) return 'cached';
-  return 'absent';
-}
-
-/** 设置页要看的清单：每个可下载的包，现在在本地是什么状态、占多少字节。 */
-export function packageInventory(cacheDir) {
-  const cached = readCacheFiles(cacheDir);
-  const bundled = readBundledNames();
-  return {
-    cacheDir,
-    pyodideVersion: typeof PYODIDE_LOCK.info?.version === 'string' ? PYODIDE_LOCK.info.version : '',
-    entries: CATALOG.map((entry) => ({
-      ...entry,
-      state: stateOf(entry.fileName, bundled, cached),
-      bytes: cached.get(entry.fileName) ?? null,
-    })),
-  };
-}
-
-/**
- * 把给定的包取到本地缓存。**顺序取、失败即停**——一个失败多半是网络或磁盘的系统性问题，
- * 继续往下只会把同一个错重复 N 遍，还把界面吊在那儿。
- * 每个包都按 lock 的 sha256 校验（见 downloadPackage），已经在本地的直接跳过、不重下。
- * @returns 每个包的结果：取完的状态、是否真的下了、字节数；失败带 `error`。
- */
-async function cachePackages(cacheDir, names, bundled, cached) {
-  const results = [];
-  for (const name of names) {
-    // 名字按归一化对（`Pillow` / `scikit_learn` 这类写法都落到同一个包上），
-    // 回执里用目录里的名字，好和清单对上。
-    const entry = CATALOG_BY_NAME.get(canonicalPackageName(name));
-    if (entry === undefined) {
-      results.push({ name, state: 'unknown', downloaded: false, error: '这个包不在随包 lock 里' });
-      break;
-    }
-    const state = stateOf(entry.fileName, bundled, cached);
-    if (state !== 'absent') {
-      results.push({ name: entry.name, state, downloaded: false, bytes: cached.get(entry.fileName) ?? 0 });
-      continue;
-    }
-    try {
-      const bytes = await downloadPackage(entry.fileName, entry.sha256, cacheDir);
-      results.push({ name, state: 'cached', downloaded: true, bytes: bytes.length });
-    } catch (error) {
-      console.error(`[manim-live] 预缓存 ${name} 失败：`, error);
-      results.push({ name, state: 'absent', downloaded: false, error: error instanceof Error ? error.message : String(error) });
-      break;
-    }
-  }
-  return results;
-}
-
 /**
  * 设置页那两条接口（同一条前缀路由）：
  *  - `GET  /packages`       → 清单（每个包在本地是什么状态）
@@ -392,7 +157,7 @@ async function cachePackages(cacheDir, names, bundled, cached) {
  *
  * 为什么按包名（`matplotlib`）而不是文件名：用户想的是「我要用 matplotlib」，
  * 文件名（`matplotlib-3.8.4-cp312-cp312-pyodide_2024_0_wasm32.whl`）是实现细节。
- * 文件名的解析与 sha256 都在这里做，客户端只认包名——也顺带保证**只取 lock 里有的名字**，
+ * 文件名的解析与 sha256 都在核心包那一侧做，这里只认包名——也顺带保证**只取 lock 里有的名字**，
  * 这个接口因此不可以被用来下载任意 URL。
  */
 export function packagesRoute(cacheDir) {
@@ -408,7 +173,7 @@ export function packagesRoute(cacheDir) {
             response.end();
             return;
           }
-          sendJson(response, 200, packageInventory(cacheDir));
+          sendJson(response, 200, supply.inventory(cacheDir));
           return;
         }
         if (action === 'cache') {
@@ -423,7 +188,7 @@ export function packagesRoute(cacheDir) {
             sendJson(response, 400, { error: 'names 不能为空' });
             return;
           }
-          const results = await cachePackages(cacheDir, names, readBundledNames(), readCacheFiles(cacheDir));
+          const results = await supply.cachePackages(cacheDir, names);
           sendJson(response, 200, { results });
           return;
         }

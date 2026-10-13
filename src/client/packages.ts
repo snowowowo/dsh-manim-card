@@ -1,258 +1,36 @@
-/**
- * Pyodide 包缓存：清单、预缓存、清缓存——设置页与实验场共用这一层。
- *
- * 为什么「取一个包要连依赖一起取」在**客户端**算：Host 只回答「每个包现在在本地是什么状态」，
- * 而依赖关系是 lock 里的静态数据（跟着清单一起发过来）。算在客户端，取的时候就能**一个一个来**——
- * 进度、失败、停下来都在这一层看得见，而不是让 Host 闷头取完一大串才回话。
- *
- * 名字一律过 `canonicalPackageName` 再比：lock 里包名有三种写法（见核心包 `manim-live` 的
- * `src/py/pkg-names.ts`），用户也会按自己记得的样子打字（`Pillow` / `scikit_learn`），
- * 归一化之后这些都能落到同一个包上。
- */
-import { canonicalPackageName } from 'manim-live'
+// Pyodide 包缓存：清单、预缓存、清缓存——设置页与实验场共用这一层。
+//
+// 本层只剩「把核心包的包管理客户端绑到本插件的路由上」：解析 / 依赖闭包 / 补全 /
+// 取数全在核心包 `manim-live`（任何消费 Pyodide 运行时的插件都能用，黑板不必依赖本插件）。
+// 函数名与搬迁前一致，调用方（设置页 / 实验场）零改动。
+import {
+  createPackagesClient,
+  type PackageInventory,
+  type PackagesClient,
+} from 'manim-live'
 import { CACHE_ROUTE, PACKAGES_ROUTE } from '../routes.js'
 
-const PACKAGES_URL = PACKAGES_ROUTE
-const CACHE_URL = CACHE_ROUTE
+const client: PackagesClient = createPackagesClient({
+  packagesUrl: PACKAGES_ROUTE,
+  cacheUrl: CACHE_ROUTE,
+})
 
-/** 一个包在本地的三种状态：随包来 / 本机取回来的 / 要用得联网。 */
-export type PackageState = 'bundled' | 'cached' | 'absent'
+export const loadPackages = (): Promise<PackageInventory> => client.loadPackages()
+export const cachePackage = (name: string) => client.cachePackage(name)
+export const clearPackageCache = () => client.clearPackageCache()
+export const clearPackage = (name: string) => client.clearPackage(name)
 
-export interface PackageEntry {
-  name: string
-  version: string
-  fileName: string
-  /** lock 里的 `package_type`：`package` / `shared_library` / `cpython_module`。 */
-  kind: string
-  /** 依赖的包名。取一个包时要把它们一起取，否则「提前缓存」等于没做。 */
-  depends: string[]
-  /** 能 `import` 的名字，通常与包名一致，少数不一致（如 `pillow` → `PIL`）。 */
-  imports: string[]
-  state: PackageState
-  /** 本机占用的字节数；没在本地（或随包件还没就位）时是 null。 */
-  bytes: number | null
-}
-
-export interface PackageInventory {
-  cacheDir: string
-  pyodideVersion: string
-  entries: PackageEntry[]
-}
-
-/** 预缓存一个包的结果。 */
-export interface PrefetchOutcome {
-  ok: boolean
-  /** 这次真的下了多少字节（本来就在本地的包是 0）。 */
-  bytes: number
-  /** 失败原因（已成人话）；成功时是空串。 */
-  error: string
-}
-
-function strings(value: unknown): string[] {
-  return Array.isArray(value) ? value.filter((item): item is string => typeof item === 'string') : []
-}
-
-/**
- * 一条包记录。**响应是不可信输入**（本机路由也会随插件换版而变），逐字段过一遍。
- * 单条不合格就丢这一条，而不是整表作废——一个包名变了不该让整个页面空掉。
- */
-function parseEntry(raw: unknown): PackageEntry | null {
-  if (raw === null || typeof raw !== 'object') return null
-  const value = raw as Record<string, unknown>
-  if (typeof value.name !== 'string' || value.name.length === 0) return null
-  if (typeof value.fileName !== 'string' || value.fileName.length === 0) return null
-  const state = value.state
-  if (state !== 'bundled' && state !== 'cached' && state !== 'absent') return null
-  return {
-    name: value.name,
-    version: typeof value.version === 'string' ? value.version : '',
-    fileName: value.fileName,
-    kind: typeof value.kind === 'string' ? value.kind : 'package',
-    depends: strings(value.depends),
-    imports: strings(value.imports),
-    state,
-    bytes: typeof value.bytes === 'number' && Number.isFinite(value.bytes) ? value.bytes : null,
-  }
-}
-
-/** 把清单响应收成形状确定的值；形状不对回 null（调用方据此报错）。 */
-export function parseInventory(payload: unknown): PackageInventory | null {
-  if (payload === null || typeof payload !== 'object') return null
-  const value = payload as Record<string, unknown>
-  if (typeof value.cacheDir !== 'string' || !Array.isArray(value.entries)) return null
-  const entries = value.entries.map(parseEntry).filter((entry): entry is PackageEntry => entry !== null)
-  return {
-    cacheDir: value.cacheDir,
-    pyodideVersion: typeof value.pyodideVersion === 'string' ? value.pyodideVersion : '',
-    entries,
-  }
-}
-
-/** 读一次包清单。失败抛错给调用方去显示（这是用户主动触发的动作，不该静默）。 */
-export async function loadPackages(): Promise<PackageInventory> {
-  const response = await fetch(PACKAGES_URL)
-  if (!response.ok) throw new Error(`HTTP ${response.status}`)
-  const inventory = parseInventory(await response.json())
-  if (inventory === null) throw new Error('清单形状不对（插件版本与宿主对不上？）')
-  return inventory
-}
-
-/** 按名字（任一写法：`Pillow` / `scikit_learn`…）找一条清单记录；找不到回 undefined。 */
-export function findPackage(entries: readonly PackageEntry[], name: string): PackageEntry | undefined {
-  const wanted = canonicalPackageName(name)
-  return entries.find((entry) => canonicalPackageName(entry.name) === wanted)
-}
-
-/** 输入框补全用的候选：完整名字 + 界面上要接在光标后面的那一段。 */
-export interface Completion {
-  name: string
-  suffix: string
-}
-
-/**
- * 输入框的「虚影」补全：按**名字前缀**（不分大小写）找第一个能接上的库。
- *
- * 只做前缀匹配，不做模糊/包含匹配：补全要能一眼看出「接上之后是什么」，前缀才是可预期的
- * ——打成 `illow` 被补成 `pillow` 那种（往中间插）在虚影上没法表达，宁可不补。
- * 清单是按名字排好序发过来的，所以「第一个」就是字典序第一个，同一份输入永远同一个结果。
- *
- * @returns 完整名字与后缀；输入为空、或已经是个完整名字时回 null（界面上就没有虚影）。
- */
-export function completionFor(entries: readonly PackageEntry[], input: string): Completion | null {
-  // 用**原样的**输入去比、也按原样算后缀：虚影是照输入框里的字往后接的，
-  // 中间先 trim 一道会让它对不齐（比如前面多打了个空格）。
-  const typed = input.toLowerCase()
-  if (typed.length === 0) return null
-  const match = entries.find((entry) => entry.name.toLowerCase().startsWith(typed))
-  if (match === undefined || match.name.length === typed.length) return null
-  return { name: match.name, suffix: match.name.slice(typed.length) }
-}
-
-/**
- * 取一个包要连哪些一起取：它自己的依赖闭包，**依赖排在前面**。
- *
- * 两个细节：
- *  - 已经在本地的（随包 / 已缓存）不进计划——但它的**依赖仍要往下看**，
- *    否则「A 缓存了、A 的依赖没缓存」这种半拉状态会被漏过去；
- *  - 顺序是后序（先依赖后本体），于是中途停下来时，已经落地的部分是一个**自洽的前缀**。
- * @param entries - Host 给的清单。
- * @param name - 想取的包名（任一写法）。
- * @returns 要取的名字；清单里没有这个包时回空数组（调用方据此说「不认识的包」）。
- */
-export function prefetchPlan(entries: readonly PackageEntry[], name: string): string[] {
-  const byName = new Map(entries.map((entry) => [canonicalPackageName(entry.name), entry]))
-  const root = byName.get(canonicalPackageName(name))
-  if (root === undefined) return []
-  const ordered: string[] = []
-  const seen = new Set<string>()
-  const visit = (entry: PackageEntry): void => {
-    if (seen.has(entry.name)) return
-    seen.add(entry.name)
-    for (const dependency of entry.depends) {
-      const next = byName.get(canonicalPackageName(dependency))
-      if (next !== undefined) visit(next)
-    }
-    if (entry.state === 'absent') ordered.push(entry.name)
-  }
-  visit(root)
-  return ordered
-}
-
-/**
- * 按名字取一个包（一个包一次请求）。
- * 失败不抛、改成回一句结果——批量取的时候一次失败不该把整轮断在半路，
- * 调用方拿 `ok` 决定是继续还是收摊。
- */
-export async function cachePackage(name: string): Promise<PrefetchOutcome> {
-  let response: Response
-  try {
-    response = await fetch(`${PACKAGES_URL}/cache`, {
-      method: 'POST',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ names: [name] }),
-    })
-  } catch (error) {
-    console.error(`[manim-live] 取包失败（${name}）：`, error)
-    return { ok: false, bytes: 0, error: error instanceof Error ? error.message : String(error) }
-  }
-  if (!response.ok) {
-    console.error(`[manim-live] 取包失败（${name}）：HTTP ${response.status}`)
-    return { ok: false, bytes: 0, error: `HTTP ${response.status}` }
-  }
-  const body = (await response.json()) as { results?: unknown }
-  const first = Array.isArray(body.results) ? body.results[0] : undefined
-  if (first === null || typeof first !== 'object') return { ok: false, bytes: 0, error: 'Host 没有回报结果' }
-  const result = first as { state?: unknown; bytes?: unknown; error?: unknown }
-  if (typeof result.error === 'string' && result.error.length > 0) {
-    console.error(`[manim-live] 取包失败（${name}）：${result.error}`)
-    return { ok: false, bytes: 0, error: result.error }
-  }
-  return { ok: true, bytes: typeof result.bytes === 'number' ? result.bytes : 0, error: '' }
-}
-
-/**
- * 清缓存。给了 `names` 就只清这几个（设置页按行清理），不给就清掉缓存目录里全部包（实验场工具条）。
- * Host 只删自己缓存目录里的包文件，回被删掉的文件名；失败抛给调用方去显示。
- */
-async function clearCache(names?: string[]): Promise<string[]> {
-  const response = await fetch(CACHE_URL, {
-    method: 'POST',
-    ...(names === undefined
-      ? {}
-      : { headers: { 'content-type': 'application/json' }, body: JSON.stringify({ names }) }),
-  })
-  if (!response.ok) throw new Error(`HTTP ${response.status}`)
-  const body: unknown = await response.json()
-  if (body === null || typeof body !== 'object') return []
-  const removed = (body as { removed?: unknown }).removed
-  return Array.isArray(removed) ? removed.filter((name): name is string => typeof name === 'string') : []
-}
-
-/** 清掉本机缓存的全部按需包。 */
-export function clearPackageCache(): Promise<string[]> {
-  return clearCache()
-}
-
-/** 清掉**一个**包的本机缓存（名字任一写法）。它下次被用到会重新联网取一次。 */
-export function clearPackage(name: string): Promise<string[]> {
-  return clearCache([name])
-}
-
-/** 字节数成人话（清单里最大的包几十 MB，用两位有效数字足够）。 */
-export function formatBytes(bytes: number): string {
-  if (bytes < 1024) return `${bytes} B`
-  const units = ['KB', 'MB', 'GB']
-  let value = bytes / 1024
-  let unit = 0
-  while (value >= 1024 && unit < units.length - 1) {
-    value /= 1024
-    unit += 1
-  }
-  return `${value >= 100 ? Math.round(value) : value.toFixed(1)} ${units[unit]}`
-}
-
-/**
- * 设置页上摆出来的**常用包**（画图 / 数值 / 数据这条线上最常被 import 的十一个）。
- *
- * 这不是白名单——只是把常见的摆出来，免得用户在一个三百行的清单里找。任意其他包
- * 直接写名字就能取（走同一条预缓存通道）。
- *
- * 前三个是**随包**的（numpy / sympy / mpmath，装机即可用），列出来是为了让「哪些已经在了」
- * 一眼可见——它们不会出现在「未缓存」里，但用户会想知道它们在不在。
- *
- * 名字必须与 lock 的**键**一致（`scikit-learn` 而不是 `sklearn`、`pillow` 而不是 `PIL`），
- * 所以有测试对着 lock 逐个核（离线就能核）——否则界面上那一行永远是「未缓存」且点了报错。
- */
-export const COMMON_PACKAGES = [
-  'numpy',
-  'sympy',
-  'mpmath',
-  'matplotlib',
-  'pandas',
-  'scipy',
-  'scikit-learn',
-  'statsmodels',
-  'networkx',
-  'pillow',
-  'opencv-python',
-] as const
+export {
+  findPackage,
+  completionFor,
+  prefetchPlan,
+  formatBytes,
+  COMMON_PACKAGES,
+} from 'manim-live'
+export type {
+  PackageEntry,
+  PackageInventory,
+  PackageState,
+  PrefetchOutcome,
+  Completion,
+} from 'manim-live'

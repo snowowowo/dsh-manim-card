@@ -18,6 +18,7 @@
  * 只记录（否则这一份会变成几秒级的集成测试）。资源路由用的是真的 node:stream，文件也是真的。
  *
  * **预缓存「真的下成功」那一格**：离线造不出 sha256 对得上的字节（那等于求 sha256 的原像）。
+ * （目录本身「不许缺摘要」的离线不变量已随供给线下沉核心包 supply.test.ts，这里不再重复。）
  * 所以拆成两条——离线钉**目录本身不许缺摘要**（曾经 CATALOG 漏带 sha256，于是每次预缓存都必然
  * 失败、还只报「期望 undefined」；只有「对不上要报错」的用例根本拦不住），真下载那条放进
  * `MANIM_NET=1` 的联网组（挑最小的包，几 KB）。
@@ -701,21 +702,6 @@ describe('预缓存路由', () => {
     expect(results[0]!.state).toBe('absent')
     expect(results[0]!.error).toContain('offline')
     expect(vi.mocked(console.error).mock.calls.flat().join(' ')).toContain('预缓存')
-  })
-
-  it('可下载目录里每条都带着 lock 的 sha256——缺一个字段，预缓存就会「每次都失败」且看不出为什么', () => {
-    // 这一条是补的：曾经 CATALOG 映射时漏了 sha256，于是下载校验的期望值恒为 undefined、
-    // 每次预缓存都必然「校验不过」，报错只说「期望 undefined」。而当时唯一的校验用例
-    // 只验了「对不上要报错」——它当然也过，因为 undefined 与任何摘要都对不上。
-    const lock = JSON.parse(readFileSync(join(PYODIDE_DIR, 'pyodide-lock.json'), 'utf8')) as {
-      packages: Record<string, { file_name: string; sha256: string }>
-    }
-    const digestOf = new Map(Object.values(lock.packages).map((entry) => [entry.file_name, entry.sha256]))
-    // 数量对上：目录就是 lock 里有 whl / zip 产物的那些（285 条，别写死数字）
-    const downloadable = Object.values(lock.packages).filter((entry) => /\.(whl|zip)$/u.test(entry.file_name))
-    expect(CATALOG).toHaveLength(downloadable.length)
-    const broken = CATALOG.filter((entry) => entry.sha256 !== digestOf.get(entry.fileName))
-    expect(broken.map((entry) => entry.name)).toEqual([])
   })
 
   it('names 不是字符串数组（含空）给 400', async () => {
