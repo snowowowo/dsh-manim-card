@@ -761,3 +761,38 @@ button.mr-chip:focus-visible { outline: 2px solid var(--dsw-alias-state-business
   .mr-set-spin-rotor, .mr-set-spin-arc { animation: none; }
   .mr-set-spin-arc { stroke-dasharray: 18 150; stroke-dashoffset: -3; }
 }
+
+/* ===== 时间轴实验（实验场第三种模式）：舞台 + 控件条 ===== */
+.mr-tl { display: flex; flex-direction: column; gap: 10px; width: 100%; }
+/* 舞台与 .mr-stage 同口径（16:9 + 同一套边框/圆角/底），只是不带卡片里的上间距。 */
+.mr-tl-stage {
+  position: relative; width: 100%; aspect-ratio: 16 / 9;
+  overflow: hidden;
+  border: 0.5px solid var(--dsw-alias-border-l3);
+  border-radius: var(--dsw-radius-md);
+  background: var(--dsw-alias-bg-layer-1);
+}
+.mr-tl-stage canvas { display: block; width: 100% !important; height: 100% !important; }
+.mr-tl-veil {
+  position: absolute; inset: 0; z-index: 1;
+  display: flex; align-items: center; justify-content: center;
+  color: var(--dsw-alias-label-tertiary);
+  font-size: 12px;
+  pointer-events: none;
+}
+.mr-tl-error { margin: 0; color: var(--dsw-alias-state-error-primary); font-size: 13px; line-height: 20px; white-space: pre-wrap; }
+
+.mr-tl-bar { display: flex; align-items: center; gap: 8px; }
+.mr-tl-bar[data-disabled='true'] { opacity: 0.5; }
+.mr-tl-track-wrap { position: relative; flex: 1; min-width: 0; padding-bottom: 6px; }
+.mr-tl-track { width: 100%; height: 18px; margin: 0; accent-color: var(--dsw-alias-state-business-primary); cursor: pointer; }
+.mr-tl-track:disabled { cursor: default; }
+/* 段界刻度：一段（一 play 或一 wait）一条竖线，挂在滑杆下沿。 */
+.mr-tl-ticks { position: absolute; left: 0; right: 0; bottom: 0; height: 4px; pointer-events: none; }
+.mr-tl-ticks span { position: absolute; top: 0; width: 1px; height: 4px; background: var(--dsw-alias-border-l3); }
+.mr-tl-time {
+  flex: none;
+  color: var(--dsw-alias-label-secondary);
+  font-size: 12px; line-height: 18px;
+  font-variant-numeric: tabular-nums;
+}
