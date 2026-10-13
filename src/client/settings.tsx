@@ -64,7 +64,7 @@ function RuntimeCard({ t }: { t: Translate }) {
     },
     { id: 'webgl', tone: capabilityTone(status.capabilities.webgl), label: t('rtWebgl'), value: t(status.capabilities.webgl ? 'rtYes' : 'rtNo'), info: t('rtWebglWhy') },
     { id: 'wasm', tone: capabilityTone(status.capabilities.wasm), label: t('rtWasm'), value: t(status.capabilities.wasm ? 'rtYes' : 'rtNo'), info: t('rtWasmWhy') },
-    { id: 'recorder', tone: capabilityTone(status.capabilities.mediaRecorder), label: t('rtRecorder'), value: t(status.capabilities.mediaRecorder ? 'rtYes' : 'rtNo'), info: t('rtRecorderWhy') },
+    { id: 'recorder', tone: capabilityTone(status.capabilities.videoExport), label: t('rtRecorder'), value: t(status.capabilities.videoExport ? 'rtYes' : 'rtNo'), info: t('rtRecorderWhy') },
   ]
   const subline = status.hints.length > 0 ? t('rtHints', { count: status.hints.length }) : t('rtAllReady')
   return (

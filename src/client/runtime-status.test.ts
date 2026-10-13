@@ -18,7 +18,7 @@ const t: Translate = (key, params) => (params === undefined ? key : `${key}:${JS
 
 /** 一份「什么都好」的快照，各用例只改自己关心的那几项。 */
 const healthy: EnvironmentStatus = {
-  capabilities: { wasm: true, webgl: true, mediaRecorder: true },
+  capabilities: { wasm: true, webgl: true, videoExport: true },
   runtime: { phase: 'ready', indexURL: 'https://example.test/pyodide/' },
   katex: { baseURL: 'https://example.test/katex/', phase: 'loaded' },
   packages: { fetching: [] },
@@ -50,11 +50,11 @@ describe('状态 → 色调', () => {
 
 describe('缺哪几项能力', () => {
   it('顺序固定：WebAssembly → WebGL → 录屏', () => {
-    expect(missingCapabilities({ wasm: false, webgl: false, mediaRecorder: false })).toEqual(['wasm', 'webgl', 'recorder'])
+    expect(missingCapabilities({ wasm: false, webgl: false, videoExport: false })).toEqual(['wasm', 'webgl', 'recorder'])
   })
 
   it('都在时是空数组', () => {
-    expect(missingCapabilities({ wasm: true, webgl: true, mediaRecorder: true })).toEqual([])
+    expect(missingCapabilities({ wasm: true, webgl: true, videoExport: true })).toEqual([])
   })
 })
 
@@ -64,14 +64,14 @@ describe('有没有挡住渲染的硬伤', () => {
   })
 
   it('没 WebGL / 没 WebAssembly / 运行时失败 / 取包失败——任意一条都算', () => {
-    expect(blocksRender(status({ capabilities: { wasm: true, webgl: false, mediaRecorder: true } }))).toBe(true)
-    expect(blocksRender(status({ capabilities: { wasm: false, webgl: true, mediaRecorder: true } }))).toBe(true)
+    expect(blocksRender(status({ capabilities: { wasm: true, webgl: false, videoExport: true } }))).toBe(true)
+    expect(blocksRender(status({ capabilities: { wasm: false, webgl: true, videoExport: true } }))).toBe(true)
     expect(blocksRender(status({ runtime: { phase: 'error', indexURL: null } }))).toBe(true)
     expect(blocksRender(status({ packages: { fetching: [], lastError: '取包失败' } }))).toBe(true)
   })
 
   it('只缺录屏能力不算：它只影响浏览器录屏那一种导出', () => {
-    expect(blocksRender(status({ capabilities: { wasm: true, webgl: true, mediaRecorder: false } }))).toBe(false)
+    expect(blocksRender(status({ capabilities: { wasm: true, webgl: true, videoExport: false } }))).toBe(false)
   })
 })
 
@@ -114,7 +114,7 @@ describe('状态条的 chip', () => {
   })
 
   it('缺两项能力：计数进状态词，逐条为什么进说明', () => {
-    const caps = chipsOf({ t, status: status({ capabilities: { wasm: false, webgl: false, mediaRecorder: true } }), local: local({ phase: 'ready' }) })
+    const caps = chipsOf({ t, status: status({ capabilities: { wasm: false, webgl: false, videoExport: true } }), local: local({ phase: 'ready' }) })
       .find((chip) => chip.id === 'caps')
     expect(caps?.tone).toBe('error')
     expect(caps?.value).toBe('chipMissing:{"count":2}')

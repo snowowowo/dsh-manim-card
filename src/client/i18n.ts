@@ -116,7 +116,7 @@ export const DICT = {
     rtKatex: '公式样式',
     rtWebgl: 'WebGL',
     rtWasm: 'WebAssembly',
-    rtRecorder: '屏幕录制',
+    rtRecorder: '浏览器导出',
     rtYes: '可用',
     rtNo: '不可用',
     rtReady: '就绪',
@@ -133,7 +133,7 @@ export const DICT = {
     rtKatexAt: '取数地址：{url}',
     rtWebglWhy: 'WebGL 是画面本身的出口；没有它，卡片渲染不出任何东西。',
     rtWasmWhy: 'WebAssembly 是 Python 解释器的运行基础；没有它，所有渲染都起不来。',
-    rtRecorderWhy: '有它才能在浏览器里直接录屏导出；缺它只影响这一种导出方式，渲染与导出 mp4 都不受影响。',
+    rtRecorderWhy: '有它才能在浏览器里逐帧导出视频（WebCodecs 或 MediaRecorder）；缺它只影响这一种导出方式，渲染与本机 mp4 导出都不受影响。',
 
     // 状态条：四枚 chip 并排，所以「组名 + 状态词」都必须短
     envbarLabel: '环境状态',

@@ -96,7 +96,7 @@ export function missingCapabilities(caps: EnvironmentCapabilities): Array<'wasm'
   const out: Array<'wasm' | 'webgl' | 'recorder'> = []
   if (!caps.wasm) out.push('wasm')
   if (!caps.webgl) out.push('webgl')
-  if (!caps.mediaRecorder) out.push('recorder')
+  if (!caps.videoExport) out.push('recorder')
   return out
 }
 

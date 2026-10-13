@@ -64,7 +64,7 @@ interface EnvironmentStatus {
 interface EnvironmentCapabilities {
   wasm: boolean
   webgl: boolean
-  mediaRecorder: boolean
+  videoExport: boolean
 }
 ```
 
@@ -72,7 +72,7 @@ interface EnvironmentCapabilities {
 | --- | --- |
 | `wasm` | Python 解释器起不来，**所有**渲染不可用 |
 | `webgl` | manim-web 出不了画面，**所有**渲染不可用 |
-| `mediaRecorder` | 只影响「浏览器直接录屏」这一种导出方式，不影响渲染与本插件的 mp4 导出 |
+| `videoExport` | 只影响「浏览器逐帧导出」这一种导出方式，不影响渲染与本插件的 mp4 导出 |
 
 ### runtime
 

@@ -51,7 +51,7 @@ let renderer: ManimRenderer
 /** 一份最小可用快照（形状照 `EnvironmentStatus` 写，字段含义不在这里测）。 */
 function stubStatus(): EnvironmentStatus {
   return {
-    capabilities: { wasm: true, webgl: true, mediaRecorder: true },
+    capabilities: { wasm: true, webgl: true, videoExport: true },
     runtime: { phase: 'idle', indexURL: PYODIDE_ROUTE },
     katex: { baseURL: KATEX_ROUTE, phase: 'loaded' },
     packages: { fetching: [] },

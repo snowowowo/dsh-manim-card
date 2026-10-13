@@ -64,7 +64,7 @@ The result of a **one-off probe** of browser capabilities, cached for the lifeti
 interface EnvironmentCapabilities {
   wasm: boolean
   webgl: boolean
-  mediaRecorder: boolean
+  videoExport: boolean
 }
 ```
 
@@ -72,7 +72,7 @@ interface EnvironmentCapabilities {
 | --- | --- |
 | `wasm` | The Python interpreter cannot start; **no** rendering is available |
 | `webgl` | manim-web cannot produce a picture; **no** rendering is available |
-| `mediaRecorder` | Affects only "record directly in the browser", one export method. Rendering and this plugin's mp4 export are unaffected |
+| `videoExport` | Affects only the "browser frame-by-frame export" path. Rendering and this plugin's mp4 export are unaffected |
 
 ### runtime
 
