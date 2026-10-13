@@ -162495,6 +162495,148 @@ _sys.modules["manim"] = _dsh_manim
 			"pillow",
 			"opencv-python"
 		];
+		function text$1(value) {
+			return typeof value === "string" ? value : "";
+		}
+		/** 探测计划；形状不对回 null（调用方据此报错）。 */
+		function parsePlan(payload) {
+			if (payload === null || typeof payload !== "object") return null;
+			const value = payload;
+			if (!Array.isArray(value.checks)) return null;
+			const checks = value.checks.filter((raw) => raw !== null && typeof raw === "object").map((raw) => ({
+				id: text$1(raw.id),
+				tool: text$1(raw.tool),
+				command: text$1(raw.command)
+			})).filter((check) => check.id.length > 0);
+			if (checks.length === 0) return null;
+			return {
+				platform: text$1(value.platform),
+				arch: text$1(value.arch),
+				node: text$1(value.node),
+				path: text$1(value.path),
+				checks
+			};
+		}
+		/** 单项探测结果；形状不对回 null。 */
+		function parseResult(payload) {
+			if (payload === null || typeof payload !== "object") return null;
+			const value = payload;
+			const status = value.status;
+			if (status !== "ok" && status !== "missing" && status !== "error") return null;
+			const id = text$1(value.id);
+			if (id.length === 0) return null;
+			return {
+				id,
+				status,
+				path: typeof value.path === "string" ? value.path : null,
+				version: text$1(value.version),
+				detail: text$1(value.detail)
+			};
+		}
+		function createMachineClient(options) {
+			const url = options.environmentUrl;
+			return {
+				async loadPlan() {
+					const response = await fetch(url);
+					if (!response.ok) throw new Error(`HTTP ${response.status}`);
+					const plan = parsePlan(await response.json());
+					if (plan === null) throw new Error("探测计划形状不对");
+					return plan;
+				},
+				async probe(id) {
+					const response = await fetch(`${url}/${encodeURIComponent(id)}`);
+					if (!response.ok) throw new Error(`HTTP ${response.status}`);
+					const result = parseResult(await response.json());
+					if (result === null) throw new Error("探测结果形状不对");
+					return result;
+				}
+			};
+		}
+		function text$2(value) {
+			return typeof value === "string" ? value : "";
+		}
+		function parseMissing(value) {
+			if (!Array.isArray(value)) return [];
+			return value.filter((raw) => raw !== null && typeof raw === "object").map((raw) => ({
+				id: text$2(raw.id),
+				detail: text$2(raw.detail)
+			})).filter((item) => item.id.length > 0);
+		}
+		/** 就绪结论；形状不对回 null（调用方据此把按钮按「未知」处理——置灰 + 出错提示）。 */
+		function parseReadiness(payload) {
+			if (payload === null || typeof payload !== "object") return null;
+			const value = payload;
+			if (typeof value.ready !== "boolean") return null;
+			return {
+				ready: value.ready,
+				missing: parseMissing(value.missing)
+			};
+		}
+		/** 定位结果；形状不对按「命令跑失败」处理（宁可说失败，也不谎称文件还在）。 */
+		function parseReveal(payload) {
+			if (payload === null || typeof payload !== "object") return {
+				ok: false,
+				code: "failed",
+				error: ""
+			};
+			const value = payload;
+			const ok = value.ok === true;
+			const raw = value.code;
+			const code = raw === "missing" || raw === "outside" || raw === "failed" ? raw : "";
+			return {
+				ok,
+				code: !ok && code === "" ? "failed" : code,
+				error: text$2(value.error)
+			};
+		}
+		function createExportClient(options) {
+			const url = options.exportUrl;
+			return {
+				async loadExportReadiness() {
+					const response = await fetch(`${url}/ready`);
+					if (!response.ok) throw new Error(`HTTP ${response.status}`);
+					const readiness = parseReadiness(await response.json());
+					if (readiness === null) throw new Error("就绪结论形状不对");
+					return readiness;
+				},
+				async requestExport(python) {
+					const response = await fetch(url, {
+						method: "POST",
+						headers: { "content-type": "application/json" },
+						body: JSON.stringify({ python })
+					});
+					if (!response.ok) throw new Error(`HTTP ${response.status}`);
+					const value = await response.json();
+					if (value.ok === true && typeof value.file === "string") return {
+						ok: true,
+						file: value.file,
+						quality: text$2(value.quality) || "h"
+					};
+					if (value.ok === false) {
+						const reason = value.reason;
+						return {
+							ok: false,
+							reason: reason === "input" || reason === "environment" || reason === "render" ? reason : "render",
+							error: text$2(value.error),
+							missing: parseMissing(value.missing)
+						};
+					}
+					throw new Error("导出结果形状不对");
+				},
+				async revealExport(path, callOptions = {}) {
+					const response = await fetch(`${url}/reveal`, {
+						method: "POST",
+						headers: { "content-type": "application/json" },
+						body: JSON.stringify({
+							path,
+							checkOnly: callOptions.checkOnly === true
+						})
+					});
+					if (!response.ok) throw new Error(`HTTP ${response.status}`);
+					return parseReveal(await response.json());
+				}
+			};
+		}
 		/**
 		* 是否符合预期。**`reject` 的「失败」才是通过**——那条验的就是「当场拒掉、且说得清」，
 		* 跑通了反而说明拦截失效了。红绿点、续跑、「通过 N 条」全走这一个判据。
@@ -162701,94 +162843,13 @@ _sys.modules["manim"] = _dsh_manim
 		}
 		//#endregion
 		//#region src/client/export.ts
-		const EXPORT_URL = EXPORT_ROUTE;
-		function text$2(value) {
-			return typeof value === "string" ? value : "";
-		}
-		function parseMissing(value) {
-			if (!Array.isArray(value)) return [];
-			return value.filter((raw) => raw !== null && typeof raw === "object").map((raw) => ({
-				id: text$2(raw.id),
-				detail: text$2(raw.detail)
-			})).filter((item) => item.id.length > 0);
-		}
-		/** 就绪结论；形状不对回 null（调用方据此把按钮按「未知」处理——置灰 + 出错提示）。 */
-		function parseReadiness(payload) {
-			if (payload === null || typeof payload !== "object") return null;
-			const value = payload;
-			if (typeof value.ready !== "boolean") return null;
-			return {
-				ready: value.ready,
-				missing: parseMissing(value.missing)
-			};
-		}
+		const client$2 = createExportClient({ exportUrl: EXPORT_ROUTE });
 		/** 拿就绪结论（Host 侧有缓存，很快；首次会真跑一遍探测，可能几秒）。 */
-		async function loadExportReadiness() {
-			const response = await fetch(`${EXPORT_URL}/ready`);
-			if (!response.ok) throw new Error(`HTTP ${response.status}`);
-			const readiness = parseReadiness(await response.json());
-			if (readiness === null) throw new Error("就绪结论形状不对");
-			return readiness;
-		}
+		const loadExportReadiness = () => client$2.loadExportReadiness();
 		/** 真导出：把源码交给本机 manim 渲染成 mp4，回文件路径。HTTP 层失败抛错，业务失败走 `ok:false`。 */
-		async function requestExport(python) {
-			const response = await fetch(EXPORT_URL, {
-				method: "POST",
-				headers: { "content-type": "application/json" },
-				body: JSON.stringify({ python })
-			});
-			if (!response.ok) throw new Error(`HTTP ${response.status}`);
-			const value = await response.json();
-			if (value.ok === true && typeof value.file === "string") return {
-				ok: true,
-				file: value.file,
-				quality: text$2(value.quality) || "h"
-			};
-			if (value.ok === false) {
-				const reason = value.reason;
-				return {
-					ok: false,
-					reason: reason === "input" || reason === "environment" || reason === "render" ? reason : "render",
-					error: text$2(value.error),
-					missing: parseMissing(value.missing)
-				};
-			}
-			throw new Error("导出结果形状不对");
-		}
-		/**
-		* 在系统的文件浏览器里定位导出的文件（macOS 是 Finder 里选中它）。
-		* Host 只认导出目录（「下载」）里的文件，越界会回 `ok:false` 与原因——那不是错误，是拒绝。
-		* `checkOnly` 只问「还在不在」，不打开：恢复上次导出记录时用它核对，免得拿一条早已失效的路径当真。
-		*/
-		async function revealExport(path, { checkOnly = false } = {}) {
-			const response = await fetch(`${EXPORT_URL}/reveal`, {
-				method: "POST",
-				headers: { "content-type": "application/json" },
-				body: JSON.stringify({
-					path,
-					checkOnly
-				})
-			});
-			if (!response.ok) throw new Error(`HTTP ${response.status}`);
-			return parseReveal(await response.json());
-		}
-		/** 定位结果；形状不对按「命令跑失败」处理（宁可说失败，也不谎称文件还在）。 */
-		function parseReveal(payload) {
-			if (payload === null || typeof payload !== "object") return {
-				ok: false,
-				code: "failed",
-				error: ""
-			};
-			const value = payload;
-			const ok = value.ok === true;
-			const raw = value.code;
-			const code = raw === "missing" || raw === "outside" || raw === "failed" ? raw : "";
-			return {
-				ok,
-				code: !ok && code === "" ? "failed" : code,
-				error: text$2(value.error)
-			};
-		}
+		const requestExport = (python) => client$2.requestExport(python);
+		/** 在系统的文件浏览器里定位导出的文件；`checkOnly` 只问「还在不在」，不打开（恢复导出记录时核对用）。 */
+		const revealExport = (path, options) => client$2.revealExport(path, options);
 		//#endregion
 		//#region src/client/runtime-status.ts
 		/**
@@ -169168,7 +169229,7 @@ _sys.modules["manim"] = _dsh_manim
 		* @returns {string}
 		*   Serialized node.
 		*/
-		function text$1(node, _, parent, state) {
+		function text(node, _, parent, state) {
 			return parent && parent.type === "element" && (parent.tagName === "script" || parent.tagName === "style") ? node.value : stringifyEntities(node.value, Object.assign({}, state.settings.characterReferences, { subset: textEntitySubset }));
 		}
 		//#endregion
@@ -169193,7 +169254,7 @@ _sys.modules["manim"] = _dsh_manim
 		*   Serialized node.
 		*/
 		function raw(node, index, parent, state) {
-			return state.settings.allowDangerousHtml ? node.value : text$1(node, index, parent, state);
+			return state.settings.allowDangerousHtml ? node.value : text(node, index, parent, state);
 		}
 		//#endregion
 		//#region node_modules/.pnpm/hast-util-to-html@9.0.5/node_modules/hast-util-to-html/lib/handle/root.js
@@ -169236,7 +169297,7 @@ _sys.modules["manim"] = _dsh_manim
 				element,
 				raw,
 				root,
-				text: text$1
+				text
 			}
 		});
 		/**
@@ -174773,14 +174834,14 @@ XID_Start XIDS`.split(/\s/).map((p) => [w(p), p]));
 		}
 		//#endregion
 		//#region src/client/packages.ts
-		const client = createPackagesClient({
+		const client$1 = createPackagesClient({
 			packagesUrl: PACKAGES_ROUTE,
 			cacheUrl: CACHE_ROUTE
 		});
-		const loadPackages = () => client.loadPackages();
-		const cachePackage = (name) => client.cachePackage(name);
-		const clearPackageCache = () => client.clearPackageCache();
-		const clearPackage = (name) => client.clearPackage(name);
+		const loadPackages = () => client$1.loadPackages();
+		const cachePackage = (name) => client$1.cachePackage(name);
+		const clearPackageCache = () => client$1.clearPackageCache();
+		const clearPackage = (name) => client$1.clearPackage(name);
 		//#endregion
 		//#region src/client/samples.ts
 		const SAMPLES = [
@@ -175479,68 +175540,11 @@ self.play(Write(eq))
 		}
 		//#endregion
 		//#region src/client/environment.ts
-		/**
-		* 本机环境探测的取数：先拿计划，再**一项一项问**。
-		*
-		* 为什么不是一次问完：`manim --version` 要 import 整个 Manim，本机上可能十几秒。
-		* 一次问完等于让整页等最慢的那一项；逐项问则是逐行亮起来，快的先看到，
-		* 慢的/坏的只影响它自己那一行。
-		*/
-		const ENV_URL = ENVIRONMENT_ROUTE;
-		function text(value) {
-			return typeof value === "string" ? value : "";
-		}
-		/** 探测计划；形状不对回 null（调用方据此报错）。 */
-		function parsePlan(payload) {
-			if (payload === null || typeof payload !== "object") return null;
-			const value = payload;
-			if (!Array.isArray(value.checks)) return null;
-			const checks = value.checks.filter((raw) => raw !== null && typeof raw === "object").map((raw) => ({
-				id: text(raw.id),
-				tool: text(raw.tool),
-				command: text(raw.command)
-			})).filter((check) => check.id.length > 0);
-			if (checks.length === 0) return null;
-			return {
-				platform: text(value.platform),
-				arch: text(value.arch),
-				node: text(value.node),
-				path: text(value.path),
-				checks
-			};
-		}
-		/** 单项探测结果；形状不对回 null。 */
-		function parseResult(payload) {
-			if (payload === null || typeof payload !== "object") return null;
-			const value = payload;
-			const status = value.status;
-			if (status !== "ok" && status !== "missing" && status !== "error") return null;
-			const id = text(value.id);
-			if (id.length === 0) return null;
-			return {
-				id,
-				status,
-				path: typeof value.path === "string" ? value.path : null,
-				version: text(value.version),
-				detail: text(value.detail)
-			};
-		}
+		const client = createMachineClient({ environmentUrl: ENVIRONMENT_ROUTE });
 		/** 取探测计划（秒回：Host 只列要测什么，不跑命令）。 */
-		async function loadEnvPlan() {
-			const response = await fetch(ENV_URL);
-			if (!response.ok) throw new Error(`HTTP ${response.status}`);
-			const plan = parsePlan(await response.json());
-			if (plan === null) throw new Error("探测计划形状不对");
-			return plan;
-		}
+		const loadEnvPlan = () => client.loadPlan();
 		/** 跑一项探测。失败抛错，由调用方把这一行标成出错（别的行不受影响）。 */
-		async function probeEnv(id) {
-			const response = await fetch(`${ENV_URL}/${encodeURIComponent(id)}`);
-			if (!response.ok) throw new Error(`HTTP ${response.status}`);
-			const result = parseResult(await response.json());
-			if (result === null) throw new Error("探测结果形状不对");
-			return result;
-		}
+		const probeEnv = (id) => client.probe(id);
 		//#endregion
 		//#region src/client/settings.tsx
 		/** 库的三态：已缓存在本机=绿实心；随包自带=灰实心（在，但不归这里管）；还没缓存=空心环。 */

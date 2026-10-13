@@ -1,35 +1,18 @@
 /**
- * 导出视频（host/export.js）的行为边界。
+ * 导出路由（host/export.js 的 HTTP 面）的行为边界。
  *
- * 为什么值得测：导出是插件里唯一**真刀真枪调本机命令**的路径，搞错的表现都很伤——
- * 环境没备齐就放行（用户点了按钮等半天换来一声报错）、渲染失败被吞成「没有产出」、
- * mp4 拷进不知道哪儿去了。所以这里把每一层都钉住：
- *  - 场景识别：完整文件认类名、只写 construct 体的包上外壳（与工具侧口径一致）；
- *  - 就绪门：必要条件没备齐直接回「缺什么」，**不许**走到渲染那一步；
- *  - 真导出：假 manim（一个往 media 目录写 mp4 的脚本）走通全链路——源码落盘、mp4 拷进
- *    「下载」（homedir 已替身到临时目录）、工作目录删干净；
- *  - 渲染失败：非零退出要把 manim 的报错带回来，不能只说「失败」两个字；
- *  - HTTP 面：GET /ready 秒回就绪结论、POST 真导出、坏正文 400、不认识的动作 405。
+ * 导出本事的逐层测试（场景识别 / 就绪门 / 假 manim 全链路 / 定位）已随代码下沉核心包
+ * （`manim-live` 的 src/export/local.test.ts）；这里只钉本插件这一层的接线：
+ *  - GET /ready 回就绪结论（LaTeX 缺席不影响 ready、缺必要条件列出来）；
+ *  - POST 空源码回业务失败（200 的 ok:false，不是 5xx）、坏正文 400、不认识的方法 405；
+ *  - POST /export/reveal 越界回 ok:false（业务拒绝，不是 5xx）。
  *
  * `probeCheck` 被替身接走（就绪门不依赖这台机器装没装东西）；真 manim 的全链路验收
- * 不在单元测试里——那是 `MANIM_EXPORT=1` 的联网/本机档（见文件末尾）。
+ * 在核心包的 `MANIM_EXPORT=1` 档。
  */
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { chmodSync, existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs'
-import { tmpdir } from 'node:os'
-import { basename, join } from 'node:path'
-import {
-  buildRenderArgs,
-  exportRoute,
-  exportVideo,
-  invalidateReadiness,
-  revealExportedFile,
-  sceneClassName,
-  wrapConstructBody,
-} from './export.js'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { exportRoute, invalidateReadiness } from './export.js'
 
-// probeCheck 是就绪门的唯一入口，替身它 = 测试不依赖这台机器装了什么；
-// resolveExecutable 保留真身（exportVideo 在 ready 之后还要靠它找假 manim）。
 vi.mock('./environment.js', async (importOriginal) => {
   const actual = (await importOriginal()) as Record<string, unknown>
   return {
@@ -38,13 +21,15 @@ vi.mock('./environment.js', async (importOriginal) => {
   }
 })
 
-// homedir 替身到临时目录：导出会往「下载」里拷文件，绝不能碰用户真正的 Downloads。
-const FAKE_HOME = mkdtempSync(join(tmpdir(), 'manim-export-home-'))
+// 实例在模块加载时就算好了导出目录：把 homedir 指到一次性临时目录，绝不能指向真实「下载」。
+// 临时目录在 mock 工厂里现建（工厂先于 import 运行，外面的 const 拿到时会撞上 TDZ）。
 vi.mock('node:os', async (importOriginal) => {
   const actual = (await importOriginal()) as Record<string, unknown>
+  const { mkdtempSync } = await import('node:fs')
+  const home = mkdtempSync(`${(actual.tmpdir as () => string)()}/manim-export-home-`)
   return {
     ...actual,
-    homedir: () => FAKE_HOME,
+    homedir: () => home,
   }
 })
 
@@ -73,262 +58,44 @@ const READY = {
   dvisvgm: { status: 'missing', detail: 'PATH 里找不到 dvisvgm' },
 }
 
-// 场景里必须有 play：manim 对没有动画的场景只存 PNG、不出 mp4（这不是 bug，是它的规则——
-// 导出模块对这种情况回「没有产出视频文件」也是对的）。
-const FULL_FILE = ['from manim import *', '', 'class Demo(Scene):', '    def construct(self):', '        self.play(Write(Circle()))', ''].join('\n')
-
 beforeEach(() => {
   invalidateReadiness()
   vi.mocked(probeCheck).mockReset()
   vi.spyOn(console, 'error').mockImplementation(() => {})
 })
 
-afterEach(() => {
-  vi.restoreAllMocks()
-})
-
-describe('场景代码的处理', () => {
-  it('完整文件：认出 Scene 子类的类名', () => {
-    expect(sceneClassName(FULL_FILE)).toBe('Demo')
-  })
-
-  it('Scene 的子类（ThreeDScene 等）也算场景', () => {
-    expect(sceneClassName('class T(ThreeDScene):\n    def construct(self):\n        pass\n')).toBe('T')
-  })
-
-  it('点路径基类（x.Scene）也算场景；非 Scene 类不认', () => {
-    expect(sceneClassName('class T(manim.Scene):\n    def construct(self):\n        pass\n')).toBe('T')
-    expect(sceneClassName('class Helper(ValueTracker):\n    pass\n')).toBeNull()
-  })
-
-  it('只写 construct 体：认不出类名，交给外壳去包', () => {
-    expect(sceneClassName('self.add(Circle())\nself.wait(1)\n')).toBeNull()
-  })
-
-  it('外壳：import * 在顶、语句缩进四格、类名固定（导出走这条的产物与工具侧口径一致）', () => {
-    const wrapped = wrapConstructBody('self.add(Circle())\n\nself.wait(1)\n')
-    expect(wrapped.startsWith('from manim import *\n')).toBe(true)
-    expect(wrapped).toContain('class ManimExportScene(Scene):')
-    expect(wrapped).toContain('    def construct(self):')
-    expect(wrapped).toContain('        self.add(Circle())')
-    // 空行不缩进（缩了 Python 也不报错，但生成的文件不该是脏的）
-    expect(wrapped).toContain('\n\n')
-  })
-
-  it('命令行组装：质量档、media 目录、源文件、场景名各就各位', () => {
-    expect(buildRenderArgs('/w/scene.py', 'Demo', 'h', '/w/media')).toEqual([
-      '-qh', '--media_dir', '/w/media', '/w/scene.py', 'Demo',
-    ])
-  })
-})
-
-describe('就绪门', () => {
-  it('必要条件没备齐：回 environment 与缺什么，且**不碰渲染**', async () => {
-    probeAs({ ...READY, ffmpeg: { status: 'missing', detail: 'PATH 里找不到 ffmpeg' }, manimModule: { status: 'missing', detail: "ModuleNotFoundError: No module named 'manim'" } })
-    const result = await exportVideo({ python: FULL_FILE })
-    expect(result.ok).toBe(false)
-    if (result.ok) return
-    expect(result.reason).toBe('environment')
-    expect(result.missing?.map((item) => item.id).sort()).toEqual(['ffmpeg', 'manimModule'])
-  })
-
-  it('LaTeX / dvisvgm 缺席**不算**必要条件：缺的名单里不许出现它们', async () => {
-    probeAs({ ...READY, latex: { status: 'missing' }, dvisvgm: { status: 'missing' } })
-    // PATH 清空：ready 之后解析 manim 必然失败（替身 HOME 下没有 .local/bin），导出停在 environment——
-    // 关键是缺的名单里只有 manim，没有 latex / dvisvgm
-    const savedPath = process.env.PATH
-    process.env.PATH = ''
-    try {
-      const result = await exportVideo({ python: FULL_FILE })
-      expect(result.ok).toBe(false)
-      if (result.ok) return
-      expect(result.reason).toBe('environment')
-      expect(result.missing?.map((item) => item.id)).toEqual(['manim'])
-    } finally {
-      process.env.PATH = savedPath
-    }
-  })
-
-  it('结论带 TTL 缓存：TTL 内不重复探测（几十张卡各问一遍不能各跑一遍 manim --version）', async () => {
-    probeAs(READY)
-    const { exportReadiness } = await import('./export.js')
-    await exportReadiness()
-    await exportReadiness()
-    expect(probeCheck).toHaveBeenCalledTimes(6) // 4 必要 + 2 可选，各一次
-  })
-
-  it('空源码当场拒，连探测都不跑', async () => {
-    const result = await exportVideo({ python: '   ' })
-    expect(result).toMatchObject({ ok: false, reason: 'input' })
-    expect(probeCheck).not.toHaveBeenCalled()
-  })
-})
-
-describe('真导出（假 manim 脚本）', () => {
-  let work = ''
-  let scratch = ''
-  let fakeManim = ''
-
-  beforeEach(() => {
-    work = mkdtempSync(join(tmpdir(), 'manim-export-case-'))
-    // 注入的暂存根：导出把源码与 media 都落在它下面。
-    // 为什么不直接扫全局临时目录去断言「清理干净」——那样会跟任何同时在跑的导出撞车
-    // （开发时手工跑一次验收，就能让这一格红给你看，实测发生过）。
-    scratch = join(work, 'scratch')
-    mkdirSync(scratch, { recursive: true })
-    mkdirSync(join(work, 'bin'))
-    fakeManim = join(work, 'bin', 'manim')
-  })
-
-  afterEach(() => {
-    rmSync(work, { recursive: true, force: true })
-  })
-
-  /**
-   * 假 manim：按 `--media_dir` 往 media 目录里写产物。
-   *  - `ok`          → 碎片 + 成片都写（真 manim 开着缓存时就是这样）
-   *  - `partialOnly` → 只留碎片、没拼成片（导出必须报错）
-   *  - `fail`        → 非零退出并把报错写进 stderr
-   *  - `silent`      → 正常退出但什么都不写
-   */
-  function installFakeManim(behavior: 'ok' | 'fail' | 'silent' | 'partialOnly' = 'ok'): void {
-    const head = [
-      '#!/usr/bin/env node',
-      'const args = process.argv.slice(2)',
-      'const mdir = args[args.indexOf("--media_dir") + 1]',
-      'const fs = require("node:fs")',
-      'const dir = mdir + "/videos/scene/1080p60"',
-    ]
-    const script = behavior === 'fail'
-      ? [
-          '#!/usr/bin/env node',
-          'process.stderr.write("Traceback (most recent call last):\\n")',
-          'process.stderr.write("ValueError: too many circles\\n")',
-          'process.exit(1)',
-        ]
-      : behavior === 'silent'
-        ? [...head, 'fs.mkdirSync(dir, { recursive: true })']
-        : behavior === 'partialOnly'
-          ? [
-              ...head,
-              'fs.mkdirSync(dir + "/partial_movie_files/Demo", { recursive: true })',
-              'fs.writeFileSync(dir + "/partial_movie_files/Demo/aaa.mp4", "fragment")',
-            ]
-          : [
-              ...head,
-              // 真 manim 就是这样：碎片留在 partial_movie_files 里，成片在它外面那一层。
-              // 碎片路径按字典序排在成片**之后**——曾经的挑选逻辑正是被这一点骗了，
-              // 拷走的是一段一秒的碎片，用户看到的是「动画不完整」。
-              'fs.mkdirSync(dir + "/partial_movie_files/Demo", { recursive: true })',
-              'fs.writeFileSync(dir + "/partial_movie_files/Demo/zzz-fragment.mp4", "fragment")',
-              'fs.writeFileSync(dir + "/Demo.mp4", "full-cut")',
-            ]
-    writeFileSync(fakeManim, script.join('\n') + '\n')
-    chmodSync(fakeManim, 0o755)
+/** 假响应 / 假请求（异步可迭代，走 readBody 的真路径）。 */
+function responseStub() {
+  return {
+    statusCode: 200,
+    body: '',
+    setHeader() {},
+    end(this: { body: string }, body?: string) {
+      this.body = body ?? ''
+    },
   }
+}
+async function call(method: string, url: string, body?: unknown) {
+  const response = responseStub()
+  const chunks = body === undefined ? [] : [Buffer.from(JSON.stringify(body), 'utf8')]
+  const request = {
+    method,
+    url,
+    async *[Symbol.asyncIterator]() {
+      for (const chunk of chunks) yield chunk
+    },
+  }
+  const route = exportRoute()
+  await route.handler(request as never, response as never)
+  return response
+}
 
-  it('全链路：源码落盘 → 假 manim 渲染 → mp4 拷进「下载」→ 工作目录删干净', async () => {
-    installFakeManim('ok')
-    probeAs(READY)
-    // 假 manim 放上 PATH 的第一位：resolveExecutable（真身）按序找，第一个命中就是它，
-    // 不会摸到这台机器上真装的那份
-    const savedPath = process.env.PATH
-    process.env.PATH = `${join(work, 'bin')}:${savedPath}`
-    try {
-      const result = await exportVideo({ python: FULL_FILE, workRoot: scratch })
-      expect(result.ok).toBe(true)
-      if (!result.ok) return
-      expect(result.file.startsWith(join(FAKE_HOME, 'Downloads'))).toBe(true)
-      expect(basename(result.file)).toMatch(/^manim-Demo-\d{8}T\d{6}\.mp4$/u)
-      expect(result.quality).toBe('h')
-      expect(existsSync(result.file)).toBe(true)
-      // 拿到的必须是**成片**而不是碎片：同目录里那份碎片按字典序排在后面，
-      // 曾经的「排序取最后一个」正是这样把一秒的碎片当成了整片
-      expect(readFileSync(result.file, 'utf8')).toBe('full-cut')
-      // 暂存根清干净：导出的一次性目录不许留下
-      expect(readdirSync(scratch)).toEqual([])
-    } finally {
-      process.env.PATH = savedPath
-    }
-  })
-
-  it('渲染失败（非零退出）：把 manim 的报错带回来', async () => {
-    installFakeManim('fail')
-    probeAs(READY)
-    const savedPath = process.env.PATH
-    process.env.PATH = `${join(work, 'bin')}:${savedPath}`
-    try {
-      const result = await exportVideo({ python: FULL_FILE })
-      expect(result.ok).toBe(false)
-      if (result.ok) return
-      expect(result.reason).toBe('render')
-      expect(result.error).toContain('ValueError: too many circles')
-    } finally {
-      process.env.PATH = savedPath
-    }
-  })
-
-  it('跑完但没有 mp4：不算成功，也不许假装成功', async () => {
-    installFakeManim('silent')
-    probeAs(READY)
-    const savedPath = process.env.PATH
-    process.env.PATH = `${join(work, 'bin')}:${savedPath}`
-    try {
-      const result = await exportVideo({ python: FULL_FILE })
-      expect(result).toMatchObject({ ok: false, reason: 'render' })
-      if (result.ok) return
-      expect(result.error).toContain('没有产出视频')
-    } finally {
-      process.env.PATH = savedPath
-    }
-  })
-
-  it('只剩碎片、没拼成成片：如实报错，绝不拿碎片充数', async () => {
-    installFakeManim('partialOnly')
-    probeAs(READY)
-    const savedPath = process.env.PATH
-    process.env.PATH = `${join(work, 'bin')}:${savedPath}`
-    try {
-      const result = await exportVideo({ python: FULL_FILE })
-      expect(result).toMatchObject({ ok: false, reason: 'render' })
-      if (result.ok) return
-      expect(result.error).toContain('碎片')
-    } finally {
-      process.env.PATH = savedPath
-    }
-  })
-})
+const EXPORT_URL = '/dsh-plugins/manim-live/export'
 
 describe('HTTP 面', () => {
-  /** 与 routes.test.ts 同款的假响应 / 假请求（异步可迭代，走 readBody 的真路径）。 */
-  function responseStub() {
-    return {
-      statusCode: 200,
-      body: '',
-      setHeader() {},
-      end(this: { body: string }, body?: string) {
-        this.body = body ?? ''
-      },
-    }
-  }
-  async function call(method: string, url: string, body?: unknown) {
-    const response = responseStub()
-    const chunks = body === undefined ? [] : [Buffer.from(JSON.stringify(body), 'utf8')]
-    const request = {
-      method,
-      url,
-      async *[Symbol.asyncIterator]() {
-        for (const chunk of chunks) yield chunk
-      },
-    }
-    const route = exportRoute()
-    await route.handler(request as never, response as never)
-    return response
-  }
-
   it('GET /ready：回就绪结论（LaTeX 缺席不影响 ready）', async () => {
     probeAs(READY)
-    const response = await call('GET', '/dsh-plugins/manim-live/export/ready')
+    const response = await call('GET', `${EXPORT_URL}/ready`)
     expect(response.statusCode).toBe(200)
     const value = JSON.parse(response.body) as { ready: boolean; missing: unknown[] }
     expect(value.ready).toBe(true)
@@ -337,7 +104,7 @@ describe('HTTP 面', () => {
 
   it('GET /ready：缺必要条件时 ready=false 并列缺什么', async () => {
     probeAs({ ...READY, python3: { status: 'missing', detail: 'PATH 里找不到 python3' } })
-    const response = await call('GET', '/dsh-plugins/manim-live/export/ready')
+    const response = await call('GET', `${EXPORT_URL}/ready`)
     const value = JSON.parse(response.body) as { ready: boolean; missing: Array<{ id: string }> }
     expect(value.ready).toBe(false)
     expect(value.missing.map((item) => item.id)).toEqual(['python3'])
@@ -345,145 +112,24 @@ describe('HTTP 面', () => {
 
   it('POST：空源码回业务失败（200 的 ok:false，不是 5xx）', async () => {
     probeAs(READY)
-    const response = await call('POST', '/dsh-plugins/manim-live/export', { python: '' })
+    const response = await call('POST', EXPORT_URL, { python: '' })
     expect(response.statusCode).toBe(200)
     expect(JSON.parse(response.body)).toMatchObject({ ok: false, reason: 'input' })
   })
 
   it('POST 坏正文 400', async () => {
-    const response = await call('POST', '/dsh-plugins/manim-live/export', undefined)
+    const response = await call('POST', EXPORT_URL, undefined)
     // body undefined 时不发任何字节 → JSON.parse('') 抛 → 400
     expect(response.statusCode).toBe(400)
   })
 
   it('不认识的方法 405', async () => {
-    expect((await call('DELETE', '/dsh-plugins/manim-live/export')).statusCode).toBe(405)
-  })
-})
-
-describe('在文件浏览器里定位导出文件', () => {
-  let downloads = ''
-  /** 假 runner：只记下被调用的命令，绝不真弹 Finder。 */
-  function spyRunner() {
-    const calls: Array<{ file: string; args: string[] }> = []
-    const run = (file: string, args: string[]) => {
-      calls.push({ file, args })
-      return Promise.resolve({ error: null, stdout: '', stderr: '' })
-    }
-    return { calls, run }
-  }
-
-  beforeEach(() => {
-    downloads = join(FAKE_HOME, 'Downloads')
-    mkdirSync(downloads, { recursive: true })
+    expect((await call('DELETE', EXPORT_URL)).statusCode).toBe(405)
   })
 
-  it('导出目录里的文件：按平台调对命令（macOS 是 open -R 选中它）', async () => {
-    const file = join(downloads, 'manim-Demo-20261010T100000.mp4')
-    writeFileSync(file, 'mp4-bytes')
-    const { calls, run } = spyRunner()
-    const result = await revealExportedFile(file, { run })
-    expect(result.ok).toBe(true)
-    expect(calls).toHaveLength(1)
-    if (process.platform === 'darwin') {
-      expect(calls[0]?.file).toBe('open')
-      expect(calls[0]?.args[0]).toBe('-R')
-    }
-  })
-
-  it('导出目录之外一律拒绝：不能拿页面上的路径当「替你操作系统」的通路', async () => {
-    const outside = mkdtempSync(join(tmpdir(), 'manim-outside-'))
-    const file = join(outside, 'secret.mp4')
-    writeFileSync(file, 'x')
-    const { calls, run } = spyRunner()
-    try {
-      const result = await revealExportedFile(file, { run })
-      expect(result.ok).toBe(false)
-      expect(result.code).toBe('outside')
-      expect(result.error).toContain('只能打开导出目录里的文件')
-      expect(calls).toEqual([]) // 拒绝了就一条命令都不许跑
-    } finally {
-      rmSync(outside, { recursive: true, force: true })
-    }
-  })
-
-  it('文件已经不在了：如实回，不抛', async () => {
-    const { run } = spyRunner()
-    const result = await revealExportedFile(join(downloads, 'gone.mp4'), { run })
-    expect(result.ok).toBe(false)
-    expect(result.code).toBe('missing')
-    expect(result.error).toContain('文件不在了')
-  })
-
-  it('空路径当场拒', async () => {
-    const { run } = spyRunner()
-    expect(await revealExportedFile('', { run })).toMatchObject({ ok: false, code: 'missing' })
-  })
-
-  it('checkOnly 只回答在不在：一条系统命令都不跑（恢复导出记录时用它核对）', async () => {
-    const file = join(downloads, 'manim-Demo-20261010T100000.mp4')
-    writeFileSync(file, 'mp4-bytes')
-    const { calls, run } = spyRunner()
-    expect(await revealExportedFile(file, { run, checkOnly: true })).toMatchObject({ ok: true })
-    expect(calls).toEqual([])
-    // 不在的文件同样给 missing，且照样不跑命令
-    expect(await revealExportedFile(join(downloads, 'gone.mp4'), { run, checkOnly: true }))
-      .toMatchObject({ ok: false, code: 'missing' })
-    expect(calls).toEqual([])
-  })
-
-  it('命令跑失败：code 是 failed，带回它自己的报错', async () => {
-    const file = join(downloads, 'manim-Demo-20261010T100000.mp4')
-    writeFileSync(file, 'mp4-bytes')
-    const run = () => Promise.resolve({ error: new Error('spawn failed'), stdout: '', stderr: 'nope' })
-    const result = await revealExportedFile(file, { run })
-    expect(result).toMatchObject({ ok: false, code: 'failed' })
-    expect(result.error).toContain('nope')
-  })
-
-  it('HTTP 面：POST /export/reveal 越界回 ok:false（200 的业务拒绝，不是 5xx）', async () => {
-    const route = exportRoute()
-    const response = { statusCode: 200, body: '', setHeader() {}, end(body?: string) { this.body = body ?? '' } }
-    const chunk = Buffer.from(JSON.stringify({ path: '/etc/hosts' }), 'utf8')
-    const request = {
-      method: 'POST',
-      url: '/dsh-plugins/manim-live/export/reveal',
-      async *[Symbol.asyncIterator]() {
-        yield chunk
-      },
-    }
-    await route.handler(request as never, response as never)
+  it('POST /export/reveal 越界回 ok:false（200 的业务拒绝，不是 5xx）', async () => {
+    const response = await call('POST', `${EXPORT_URL}/reveal`, { path: '/etc/hosts' })
     expect(response.statusCode).toBe(200)
     expect(JSON.parse(response.body)).toMatchObject({ ok: false })
   })
-})
-
-/**
- * 真 manim 的全链路（要用**真装的** manim 渲染一段、真的往临时 HOME 的「下载」里落一个 mp4）：
- * `MANIM_EXPORT=1 pnpm test` 才跑。单元档已用假 manim 钉住了每一层的行为，这一档是端到端的存照。
- */
-const REAL = process.env.MANIM_EXPORT === '1' && process.platform !== 'win32'
-
-describe.skipIf(!REAL)('真 manim 导出（MANIM_EXPORT=1 才跑）', () => {
-  it('渲染一段简单动画并落到临时 HOME 的「下载」', async () => {
-    probeAs(READY) // 就绪门照常生效；probeCheck 是替身，但 manim 本身是真的
-    invalidateReadiness()
-    // 替身 HOME 把搜索路径里的 ~/.local/bin 也换掉了，真机档要自己把它接回来
-    // （manim 就软链在那儿；用 process.env.HOME，那个没被替身）
-    const realLocalBin = join(process.env.HOME ?? '', '.local', 'bin')
-    const savedPath = process.env.PATH
-    process.env.PATH = `${realLocalBin}:${savedPath}`
-    try {
-      const result = await exportVideo({ python: FULL_FILE, quality: 'l' })
-      console.info('[manim-export] result:', result)
-      expect(result.ok).toBe(true)
-      if (result.ok) {
-        expect(result.file.startsWith(join(FAKE_HOME, 'Downloads'))).toBe(true)
-        expect(existsSync(result.file)).toBe(true)
-        rmSync(result.file, { force: true })
-      }
-    } finally {
-      process.env.PATH = savedPath
-    }
-  }, 120_000)
 })
