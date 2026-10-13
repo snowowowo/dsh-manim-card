@@ -43,17 +43,6 @@ export const DICT = {
     freeLabel: '自定义代码',
     render: '渲染',
 
-    modeTimeline: '时间轴',
-    renderTimeline: '渲染时间轴',
-    tlHint:
-      '实验：整段代码收进一条时间轴，可以任意拖动、逐帧回看（回看是重算，不是录像）。注意：没有动画的语句（set_color 这类）在收集时立即生效，往回拖跨过它们不会还原。',
-    tlEmpty: '写好代码，点「渲染时间轴」。',
-    tlBuilding: '正在收集时间轴…',
-    tlPlay: '播放',
-    tlPause: '暂停',
-    tlPrevFrame: '上一帧',
-    tlNextFrame: '下一帧',
-    tlError: '时间轴构建失败：{message}',
     timeout: '渲染超时（60 秒没有返回）',
     stopped: '已停止',
     ok: '渲染完成',

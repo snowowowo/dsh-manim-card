@@ -9,7 +9,7 @@
 
 const KEY = 'manim-live.lab.v1'
 
-export type LabMode = 'samples' | 'free' | 'timeline'
+export type LabMode = 'samples' | 'free'
 
 /** 一条样例的验收结论只存 ok——报错原文卡片自己会显示，清单上只要红绿。 */
 export interface LabResult {
@@ -43,7 +43,7 @@ export function loadLab(): Partial<LabState> {
     }
     if (typeof bag.fast === 'boolean') out.fast = bag.fast
     if (typeof bag.source === 'string') out.source = bag.source
-    if (bag.mode === 'samples' || bag.mode === 'free' || bag.mode === 'timeline') out.mode = bag.mode
+    if (bag.mode === 'samples' || bag.mode === 'free') out.mode = bag.mode
     return out
   } catch (error) {
     console.error('[manim-live] 读取实验场记录失败:', error)

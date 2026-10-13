@@ -16,7 +16,6 @@ import { stateOf, tally } from 'manim-live'
 import { ManimCard, type CardResult } from './components/card'
 import { EnvBar } from './components/env-bar'
 import { Segmented } from './components/segmented'
-import { TimelineStage } from './components/timeline-stage'
 import { Tip } from './components/tip'
 import { clearPackageCache } from './packages'
 import { SAMPLES, type LabSample } from './samples'
@@ -52,8 +51,6 @@ export function ManimPage({ t }: { t: Translate }) {
   const [fast, setFast] = useState(restored.fast ?? false)
   const [shown, setShown] = useState<Shown | null>(null)
   const [running, setRunning] = useState(false)
-  /** 时间轴实验的当前任务（换 key 重建舞台）：null = 还没渲染过。 */
-  const [timelineJob, setTimelineJob] = useState<{ code: string; run: number } | null>(null)
   /** 清缓存的结果回执（null = 还没清过）。 */
   const [cacheNote, setCacheNote] = useState<string | null>(null)
   const [clearing, setClearing] = useState(false)
@@ -137,13 +134,6 @@ export function ManimPage({ t }: { t: Translate }) {
     // 空代码卡片会直接落到「数据不完整」占位、不发结果——先挡掉，别白挂一张卡。
     if (emptySource) return
     void render({ kind: 'free', code: source }, fast)
-  }
-
-  /** 时间轴实验：把整段收进一条可定位的时间轴（不走卡片，见 ./components/timeline-stage）。 */
-  const renderTimeline = (): void => {
-    if (emptySource) return
-    runSeed.current += 1
-    setTimelineJob({ code: source, run: runSeed.current })
   }
 
   /** 清掉本机缓存的按需包：想验「首次取包」就得先把缓存清干净。 */
@@ -274,7 +264,6 @@ export function ManimPage({ t }: { t: Translate }) {
           options={[
             { value: 'samples', label: t('modeSamples') },
             { value: 'free', label: t('modeFree') },
-            { value: 'timeline', label: t('modeTimeline') },
           ]}
         />
       </header>
@@ -339,7 +328,7 @@ export function ManimPage({ t }: { t: Translate }) {
 
           <main className="mr-main">{preview}</main>
         </div>
-      ) : mode === 'free' ? (
+      ) : (
         <div className="mr-workspace mr-workspace-free">
           <aside className="mr-side">
             <textarea
@@ -377,42 +366,6 @@ export function ManimPage({ t }: { t: Translate }) {
           </aside>
 
           <main className="mr-main">{preview}</main>
-        </div>
-      ) : (
-        /* 时间轴实验：同一段代码，收进一条可拖动/可逐帧的时间轴（不走卡片与实时播放）。 */
-        <div className="mr-workspace mr-workspace-free">
-          <aside className="mr-side">
-            <textarea
-              className="mr-code mr-code-fill"
-              spellCheck={false}
-              value={source}
-              onChange={(event) => setSource(event.target.value)}
-            />
-            <div className="mr-toolbar">
-              <button
-                className="mr-btn primary"
-                type="button"
-                disabled={emptySource}
-                onClick={renderTimeline}
-              >
-                <Play size={13} strokeWidth={1.8} aria-hidden="true" />
-                {t('renderTimeline')}
-              </button>
-              <Tip label={t('tlHint')} align="start">
-                <button className="mr-iconbtn" type="button" aria-label={t('tlHint')}>
-                  <Info size={15} strokeWidth={1.6} />
-                </button>
-              </Tip>
-              {cacheButton}
-              {cacheNote !== null && <span className="mr-toolbar-note" role="status">{cacheNote}</span>}
-            </div>
-          </aside>
-
-          <main className="mr-main">
-            {timelineJob === null
-              ? <p className="mr-empty">{t('tlEmpty')}</p>
-              : <TimelineStage key={timelineJob.run} code={timelineJob.code} t={t} />}
-          </main>
         </div>
       )}
     </div>
