@@ -12,39 +12,6 @@ export type Translate = (key: string, params?: Record<string, string | number>) 
 
 export const DICT = {
   zh: {
-    title: 'Manim 卡片',
-    lead: '本页验收本插件在宿主里的功能：卡片渲染、播放控制、查看代码、导出 mp4、预检报错。样例是内置的一小集（打进插件，正式安装也可用）；语料回归网在核心包 manim-live 仓（corpus/），与本页无关。',
-
-    modeLabel: '模式',
-    modeSamples: '样例',
-    modeFree: '自定义代码',
-
-    sampleCountIdle: '尚未跑过',
-    sampleCount: '{passed} / {total} 通过 · {failed} 未通过',
-    clearCache: '清除已下载的库',
-    clearCacheHint: '把本机已经下载的第三方库删掉。想再看一次「首次下载」的过程、或让某个库重新联网下载时用它；已经加载进当前页面的库要刷新页面才会卸掉。',
-    cacheCleared: '已删掉 {count} 个库',
-    cacheClearFailed: '清除失败：{message}',
-
-    stop: '停止',
-    stopHint: '停下正在进行的这一次渲染',
-    clearRecord: '清除记录',
-    clearRecordHint: '清掉已保存的渲染结果与自定义代码，下次从头开始',
-
-    fastOn: '极速渲染',
-    fastHint: '极速：不等 run_time 与 wait，直接落到终态。连跑多条样例用；看动画过程请关掉。updater 驱动的轨迹仍会被推进，不会变成空的。',
-
-    expectLabel: '预期',
-    expectHint: '这条样例应该看到什么。跑通了只说明「没炸」；画得对不对，要对着这句话看。「应当被拒绝」那条反过来——渲染失败才算通过。',
-
-    previewEmpty: '从左边点一条样例，或切到「自定义代码」写一段——结果出现在这里。',
-
-    sourceHint: '优先写完整的 Manim Python 文件（from manim import * + class X(Scene): def construct(self): …）；只写 construct 体也收。标准 Python 3 语法都可用。',
-    freeLabel: '自定义代码',
-    render: '渲染',
-
-    timeout: '渲染超时（60 秒没有返回）',
-    stopped: '已停止',
     ok: '渲染完成',
     fail: '渲染失败',
     loadingPackages: '正在加载 {names}…',
@@ -108,7 +75,7 @@ export const DICT = {
     envDvisvgm: 'dvisvgm',
     envDvisvgmWhy: 'LaTeX 转 SVG 的那一步 —— Manim 渲染公式的第二半。',
 
-    // ---- 设置页：浏览器运行时 / 实验场状态条 / 卡片的环境提示 ----
+    // ---- 设置页：浏览器运行时 / 卡片的环境提示 ----
     // 这一侧说的是**渲染**的条件（浏览器里的事，Host 问不到），与上面「本机环境」（导出那一侧）
     // 合起来才是完整的一台机器。词一律用日常说法：不出现 Pyodide、WASM 这类底层名词。
     rtTitle: '浏览器运行时',
@@ -134,25 +101,6 @@ export const DICT = {
     rtWebglWhy: 'WebGL 是画面本身的出口；没有它，卡片渲染不出任何东西。',
     rtWasmWhy: 'WebAssembly 是 Python 解释器的运行基础；没有它，所有渲染都起不来。',
     rtRecorderWhy: '有它才能在浏览器里逐帧导出视频（WebCodecs 或 MediaRecorder）；缺它只影响这一种导出方式，渲染与本机 mp4 导出都不受影响。',
-
-    // 状态条：四枚 chip 并排，所以「组名 + 状态词」都必须短
-    envbarLabel: '环境状态',
-    chipLocal: '本机 Manim',
-    chipRuntime: '运行时',
-    chipKatex: '公式样式',
-    chipCaps: '浏览器能力',
-    chipReady: '就绪',
-    chipChecking: '检测中…',
-    chipMissing: '缺 {count} 项',
-    chipUnknown: '查不到',
-    chipLocalMissing: '本机还缺：{items}（导出 mp4 要用这些）。',
-    chipRuntimeCold: '运行时还没加载：第一次渲染要先把它下载下来（约 13 MB），可以先按「立即预热」拉起来。',
-    envbarWarmup: '立即预热',
-    envbarWarming: '正在预热…',
-    envbarWarmed: '运行时已就绪',
-    envbarWarmFailed: '预热失败：{message}',
-    envbarReprobe: '重新检测',
-    envbarClose: '收起',
 
     // 卡片底部：渲染失败、且环境里确有挡住渲染的硬伤时，补一句解释
     renderEnvBlocked: '这台机器上还有条件没满足，可能正是它渲染不出来的原因：',

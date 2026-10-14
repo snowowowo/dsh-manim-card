@@ -25,11 +25,9 @@ cordis.patch.yml    本插件在宿主 profile 里的注册条目
 src/
 ├── client/         浏览器半边——全部打进 client.js
 │   ├── index.tsx       入口：ModuleLoader 注册 + 槽位接线 + ErrorBoundary
-│   ├── page.tsx        实验场整页
 │   ├── settings.tsx    设置面板
-│   ├── components/     卡片、代码视图、环境状态条等
+│   ├── components/     卡片、代码视图等
 │   ├── service.ts      对外的 manim-card 服务
-│   ├── samples.ts      实验场内置样例
 │   ├── runtime-status.ts  环境状态 → 展示口径（纯选择器）
 │   ├── i18n.ts         文案字典
 │   └── styles.css      皮肤
@@ -107,13 +105,13 @@ pnpm build                    # 重新内联进 client.js
 ## 排障入口
 
 - **产物加载失败 / `duplicate factory registration`**：先核对客户端 bundle 的注册 id 是否等于包名。它由 `tsdown.preset.ts` 从 `package.json` 派生，不手写。
-- **画不出来**：渲染与执行的真本事在核心包 [manim-live](https://github.com/snowowowo/manim-live)（[文档站](https://snowowowo.github.io/manim-live/)），它的排障页与开发页比这里细。先看实验场状态条给出的待处理项——环境类原因都在那里。
+- **画不出来**：渲染与执行的真本事在核心包 [manim-live](https://github.com/snowowowo/manim-live)（[文档站](https://snowowowo.github.io/manim-live/)），它的排障页与开发页比这里细。环境类原因看设置面板的「浏览器运行时」卡片。
 - **环境状态读数为空或永远未加载**：检查是否有第二份核心包被引入。状态必须走服务面或本插件这一份的 `manim-live`，见[API 参考](/api/#为什么状态必须走服务面)。
 - **公式变豆腐块**：核对 `src/routes.js` 的 KaTeX 路由与 `assets/katex/` 是否齐全。
 
 ## 边界与约定
 
-- 语料回归由核心包仓承担（`corpus/`）。本插件实验场只验收自身功能，样例内置在 `src/client/samples.ts`，逐字取自核心包仓的语料文件；换样例去那边挑。
+- 语料回归由核心包仓承担（`corpus/`）；要挑或加样例，去核心包仓那边。
 - 构建预设 `tsdown.preset.ts` 的唯一源是 `dsh-plugin-template` 仓，各插件包逐字节相同；改预设先改模板，再整份复制过来。
 - 约定与规范的唯一来源是容器仓 `dsh-plugins` 的 `AGENTS.md` 与 `.agents/skills/`，本页只做指针。
 - 文档站的中英两侧只差语言、不差内容：改了中文必须同步改英文，见 `docs/README.md`。

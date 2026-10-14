@@ -128,11 +128,11 @@ window.__ModuleLoader__.load({
 		* This source code is licensed under the ISC license.
 		* See the LICENSE file in the root directory of this source tree.
 		*/
-		const __iconNode$14 = [["path", {
+		const __iconNode$10 = [["path", {
 			d: "M20 6 9 17l-5-5",
 			key: "1gmf2c"
 		}]];
-		const Check = createLucideIcon("check", __iconNode$14);
+		const Check = createLucideIcon("check", __iconNode$10);
 		//#endregion
 		//#region node_modules/.pnpm/lucide-react@0.548.0_react@18.3.1/node_modules/lucide-react/dist/esm/icons/circle-check.js
 		/**
@@ -141,7 +141,7 @@ window.__ModuleLoader__.load({
 		* This source code is licensed under the ISC license.
 		* See the LICENSE file in the root directory of this source tree.
 		*/
-		const __iconNode$13 = [["circle", {
+		const __iconNode$9 = [["circle", {
 			cx: "12",
 			cy: "12",
 			r: "10",
@@ -150,7 +150,7 @@ window.__ModuleLoader__.load({
 			d: "m9 12 2 2 4-4",
 			key: "dzmm74"
 		}]];
-		const CircleCheck = createLucideIcon("circle-check", __iconNode$13);
+		const CircleCheck = createLucideIcon("circle-check", __iconNode$9);
 		//#endregion
 		//#region node_modules/.pnpm/lucide-react@0.548.0_react@18.3.1/node_modules/lucide-react/dist/esm/icons/circle-x.js
 		/**
@@ -159,7 +159,7 @@ window.__ModuleLoader__.load({
 		* This source code is licensed under the ISC license.
 		* See the LICENSE file in the root directory of this source tree.
 		*/
-		const __iconNode$12 = [
+		const __iconNode$8 = [
 			["circle", {
 				cx: "12",
 				cy: "12",
@@ -175,7 +175,7 @@ window.__ModuleLoader__.load({
 				key: "z0biqf"
 			}]
 		];
-		const CircleX = createLucideIcon("circle-x", __iconNode$12);
+		const CircleX = createLucideIcon("circle-x", __iconNode$8);
 		//#endregion
 		//#region node_modules/.pnpm/lucide-react@0.548.0_react@18.3.1/node_modules/lucide-react/dist/esm/icons/code-xml.js
 		/**
@@ -184,7 +184,7 @@ window.__ModuleLoader__.load({
 		* This source code is licensed under the ISC license.
 		* See the LICENSE file in the root directory of this source tree.
 		*/
-		const __iconNode$11 = [
+		const __iconNode$7 = [
 			["path", {
 				d: "m18 16 4-4-4-4",
 				key: "1inbqp"
@@ -198,7 +198,7 @@ window.__ModuleLoader__.load({
 				key: "e7oirm"
 			}]
 		];
-		const CodeXml = createLucideIcon("code-xml", __iconNode$11);
+		const CodeXml = createLucideIcon("code-xml", __iconNode$7);
 		//#endregion
 		//#region node_modules/.pnpm/lucide-react@0.548.0_react@18.3.1/node_modules/lucide-react/dist/esm/icons/copy.js
 		/**
@@ -207,7 +207,7 @@ window.__ModuleLoader__.load({
 		* This source code is licensed under the ISC license.
 		* See the LICENSE file in the root directory of this source tree.
 		*/
-		const __iconNode$10 = [["rect", {
+		const __iconNode$6 = [["rect", {
 			width: "14",
 			height: "14",
 			x: "8",
@@ -219,7 +219,7 @@ window.__ModuleLoader__.load({
 			d: "M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2",
 			key: "zix9uf"
 		}]];
-		const Copy = createLucideIcon("copy", __iconNode$10);
+		const Copy = createLucideIcon("copy", __iconNode$6);
 		//#endregion
 		//#region node_modules/.pnpm/lucide-react@0.548.0_react@18.3.1/node_modules/lucide-react/dist/esm/icons/download.js
 		/**
@@ -228,7 +228,7 @@ window.__ModuleLoader__.load({
 		* This source code is licensed under the ISC license.
 		* See the LICENSE file in the root directory of this source tree.
 		*/
-		const __iconNode$9 = [
+		const __iconNode$5 = [
 			["path", {
 				d: "M12 15V3",
 				key: "m9g1x1"
@@ -242,23 +242,7 @@ window.__ModuleLoader__.load({
 				key: "brsn70"
 			}]
 		];
-		const Download = createLucideIcon("download", __iconNode$9);
-		//#endregion
-		//#region node_modules/.pnpm/lucide-react@0.548.0_react@18.3.1/node_modules/lucide-react/dist/esm/icons/eraser.js
-		/**
-		* @license lucide-react v0.548.0 - ISC
-		*
-		* This source code is licensed under the ISC license.
-		* See the LICENSE file in the root directory of this source tree.
-		*/
-		const __iconNode$8 = [["path", {
-			d: "M21 21H8a2 2 0 0 1-1.42-.587l-3.994-3.999a2 2 0 0 1 0-2.828l10-10a2 2 0 0 1 2.829 0l5.999 6a2 2 0 0 1 0 2.828L12.834 21",
-			key: "g5wo59"
-		}], ["path", {
-			d: "m5.082 11.09 8.828 8.828",
-			key: "1wx5vj"
-		}]];
-		const Eraser = createLucideIcon("eraser", __iconNode$8);
+		const Download = createLucideIcon("download", __iconNode$5);
 		//#endregion
 		//#region node_modules/.pnpm/lucide-react@0.548.0_react@18.3.1/node_modules/lucide-react/dist/esm/icons/fast-forward.js
 		/**
@@ -267,14 +251,14 @@ window.__ModuleLoader__.load({
 		* This source code is licensed under the ISC license.
 		* See the LICENSE file in the root directory of this source tree.
 		*/
-		const __iconNode$7 = [["path", {
+		const __iconNode$4 = [["path", {
 			d: "M12 6a2 2 0 0 1 3.414-1.414l6 6a2 2 0 0 1 0 2.828l-6 6A2 2 0 0 1 12 18z",
 			key: "b19h5q"
 		}], ["path", {
 			d: "M2 6a2 2 0 0 1 3.414-1.414l6 6a2 2 0 0 1 0 2.828l-6 6A2 2 0 0 1 2 18z",
 			key: "h7h5ge"
 		}]];
-		const FastForward = createLucideIcon("fast-forward", __iconNode$7);
+		const FastForward = createLucideIcon("fast-forward", __iconNode$4);
 		//#endregion
 		//#region node_modules/.pnpm/lucide-react@0.548.0_react@18.3.1/node_modules/lucide-react/dist/esm/icons/info.js
 		/**
@@ -283,7 +267,7 @@ window.__ModuleLoader__.load({
 		* This source code is licensed under the ISC license.
 		* See the LICENSE file in the root directory of this source tree.
 		*/
-		const __iconNode$6 = [
+		const __iconNode$3 = [
 			["circle", {
 				cx: "12",
 				cy: "12",
@@ -299,7 +283,7 @@ window.__ModuleLoader__.load({
 				key: "e9boi3"
 			}]
 		];
-		const Info$2 = createLucideIcon("info", __iconNode$6);
+		const Info$2 = createLucideIcon("info", __iconNode$3);
 		//#endregion
 		//#region node_modules/.pnpm/lucide-react@0.548.0_react@18.3.1/node_modules/lucide-react/dist/esm/icons/play.js
 		/**
@@ -308,11 +292,11 @@ window.__ModuleLoader__.load({
 		* This source code is licensed under the ISC license.
 		* See the LICENSE file in the root directory of this source tree.
 		*/
-		const __iconNode$5 = [["path", {
+		const __iconNode$2 = [["path", {
 			d: "M5 5a2 2 0 0 1 3.008-1.728l11.997 6.998a2 2 0 0 1 .003 3.458l-12 7A2 2 0 0 1 5 19z",
 			key: "10ikf1"
 		}]];
-		const Play = createLucideIcon("play", __iconNode$5);
+		const Play = createLucideIcon("play", __iconNode$2);
 		//#endregion
 		//#region node_modules/.pnpm/lucide-react@0.548.0_react@18.3.1/node_modules/lucide-react/dist/esm/icons/refresh-cw.js
 		/**
@@ -321,7 +305,7 @@ window.__ModuleLoader__.load({
 		* This source code is licensed under the ISC license.
 		* See the LICENSE file in the root directory of this source tree.
 		*/
-		const __iconNode$4 = [
+		const __iconNode$1 = [
 			["path", {
 				d: "M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8",
 				key: "v9h5vc"
@@ -339,55 +323,7 @@ window.__ModuleLoader__.load({
 				key: "1cv678"
 			}]
 		];
-		const RefreshCw = createLucideIcon("refresh-cw", __iconNode$4);
-		//#endregion
-		//#region node_modules/.pnpm/lucide-react@0.548.0_react@18.3.1/node_modules/lucide-react/dist/esm/icons/square.js
-		/**
-		* @license lucide-react v0.548.0 - ISC
-		*
-		* This source code is licensed under the ISC license.
-		* See the LICENSE file in the root directory of this source tree.
-		*/
-		const __iconNode$3 = [["rect", {
-			width: "18",
-			height: "18",
-			x: "3",
-			y: "3",
-			rx: "2",
-			key: "afitv7"
-		}]];
-		const Square = createLucideIcon("square", __iconNode$3);
-		//#endregion
-		//#region node_modules/.pnpm/lucide-react@0.548.0_react@18.3.1/node_modules/lucide-react/dist/esm/icons/trash-2.js
-		/**
-		* @license lucide-react v0.548.0 - ISC
-		*
-		* This source code is licensed under the ISC license.
-		* See the LICENSE file in the root directory of this source tree.
-		*/
-		const __iconNode$2 = [
-			["path", {
-				d: "M10 11v6",
-				key: "nco0om"
-			}],
-			["path", {
-				d: "M14 11v6",
-				key: "outv1u"
-			}],
-			["path", {
-				d: "M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6",
-				key: "miytrc"
-			}],
-			["path", {
-				d: "M3 6h18",
-				key: "d0wm0j"
-			}],
-			["path", {
-				d: "M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2",
-				key: "e791ji"
-			}]
-		];
-		const Trash2 = createLucideIcon("trash-2", __iconNode$2);
+		const RefreshCw = createLucideIcon("refresh-cw", __iconNode$1);
 		//#endregion
 		//#region node_modules/.pnpm/lucide-react@0.548.0_react@18.3.1/node_modules/lucide-react/dist/esm/icons/triangle-alert.js
 		/**
@@ -396,7 +332,7 @@ window.__ModuleLoader__.load({
 		* This source code is licensed under the ISC license.
 		* See the LICENSE file in the root directory of this source tree.
 		*/
-		const __iconNode$1 = [
+		const __iconNode = [
 			["path", {
 				d: "m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3",
 				key: "wmoenq"
@@ -410,20 +346,65 @@ window.__ModuleLoader__.load({
 				key: "p32p05"
 			}]
 		];
-		const TriangleAlert = createLucideIcon("triangle-alert", __iconNode$1);
+		const TriangleAlert = createLucideIcon("triangle-alert", __iconNode);
 		//#endregion
-		//#region node_modules/.pnpm/lucide-react@0.548.0_react@18.3.1/node_modules/lucide-react/dist/esm/icons/zap.js
+		//#region src/client/components/dot.tsx
 		/**
-		* @license lucide-react v0.548.0 - ISC
-		*
-		* This source code is licensed under the ISC license.
-		* See the LICENSE file in the root directory of this source tree.
+		* @param tone  `ok` 绿 / `warn` 黄 / `error` 红 / `idle` 灰实心 / `empty` 空环 / `busy` 转圈。
+		* @param label 给了就是**有语义的状态点**（读屏念得出、鼠标悬浮有原生提示）；不给就当装饰，
+		*              因为旁边已经有文字把状态说清了（环境行的版本号、库行那个键、状态条上的状态词）。
 		*/
-		const __iconNode = [["path", {
-			d: "M4 14a1 1 0 0 1-.78-1.63l9.9-10.2a.5.5 0 0 1 .86.46l-1.92 6.02A1 1 0 0 0 13 10h7a1 1 0 0 1 .78 1.63l-9.9 10.2a.5.5 0 0 1-.86-.46l1.92-6.02A1 1 0 0 0 11 14z",
-			key: "1xq2db"
-		}]];
-		const Zap = createLucideIcon("zap", __iconNode);
+		function Dot({ tone, label }) {
+			if (tone === "busy") return /* @__PURE__ */ (0, react_jsx_runtime.jsx)("svg", {
+				className: "mr-set-spin",
+				width: "14",
+				height: "14",
+				viewBox: "0 0 24 24",
+				"aria-hidden": "true",
+				children: /* @__PURE__ */ (0, react_jsx_runtime.jsxs)("g", {
+					className: "mr-set-spin-rotor",
+					children: [/* @__PURE__ */ (0, react_jsx_runtime.jsx)("circle", {
+						className: "mr-set-spin-track",
+						cx: "12",
+						cy: "12",
+						r: "9.5"
+					}), /* @__PURE__ */ (0, react_jsx_runtime.jsx)("circle", {
+						className: "mr-set-spin-arc",
+						cx: "12",
+						cy: "12",
+						r: "9.5"
+					})]
+				})
+			});
+			return /* @__PURE__ */ (0, react_jsx_runtime.jsx)("span", {
+				className: "mr-set-dot",
+				"data-tone": tone,
+				role: label === void 0 ? void 0 : "img",
+				"aria-label": label,
+				"aria-hidden": label === void 0 ? true : void 0
+			});
+		}
+		//#endregion
+		//#region src/client/components/tip.tsx
+		/**
+		* 包住一个控件、给它一段悬浮说明。
+		* @param align 气泡的水平对齐：`center` 居中于控件；`start` 贴控件左缘、`end` 贴控件右缘
+		*   （贴边的按钮用，免得气泡出界）。
+		* @param wide 成段的长说明用：气泡放宽到 440px（默认 300px 是给一句话的）。
+		* @param className 加在气泡那一层上的额外类名。用在**外层要参与布局**的地方——
+		*   比如「占满剩余宽度」的那条（`.mr-chatcard-pathwrap`）；不传就只吃 `.mr-tip` 自己的样式。
+		*/
+		function Tip({ label, children, align = "center", wide = false, className }) {
+			return /* @__PURE__ */ (0, react_jsx_runtime.jsxs)("span", {
+				className: className === void 0 ? "mr-tip" : `mr-tip ${className}`,
+				"data-align": align,
+				children: [children, /* @__PURE__ */ (0, react_jsx_runtime.jsx)("span", {
+					className: wide ? "mr-tip-bubble is-wide" : "mr-tip-bubble",
+					role: "tooltip",
+					children: label
+				})]
+			});
+		}
 		//#endregion
 		//#region ../manim-live/node_modules/.pnpm/manim-web@0.36.0_@types+node@22.20.5_react@19.3.0_typescript@7.0.2/node_modules/manim-web/dist/rolldown-runtime-CWhphoD1.js
 		var e$12, t$12, n$14, r$15, i$15, a$14, o$16, s$12, c$11, l$13, u$12;
@@ -222394,17 +222375,17 @@ if _dsh_extras_src:
 		* 遍历一棵物体树（含子物）。
 		* @returns `visit` 是否曾返回 true（true 即提前收工）。
 		*/
-		function walk$1(mobject, visit, depth) {
+		function walk(mobject, visit, depth) {
 			if (depth > MAX_DEPTH || mobject === null || typeof mobject !== "object") return false;
 			if (visit(mobject)) return true;
 			const children = mobject.children;
 			if (!Array.isArray(children)) return false;
-			for (const child of children) if (walk$1(child, visit, depth + 1)) return true;
+			for (const child of children) if (walk(child, visit, depth + 1)) return true;
 			return false;
 		}
 		/** 这一棵物体树（含子物）的记账是否都自洽——morph 前的准入判据。 */
 		function subpathTreeConsistent(mobject) {
-			return !walk$1(mobject, (candidate) => !subpathsConsistent(candidate), 0);
+			return !walk(mobject, (candidate) => !subpathsConsistent(candidate), 0);
 		}
 		/**
 		* 治好一棵树上「记账与点数对不上」的节点：先退回物体自己的基准记账；基准也对不上就两套都清空
@@ -222414,7 +222395,7 @@ if _dsh_extras_src:
 		*/
 		function healSubpathBookkeeping(mobject) {
 			let healed = false;
-			walk$1(mobject, (candidate) => {
+			walk(mobject, (candidate) => {
 				if (subpathsConsistent(candidate)) return false;
 				const view = candidate;
 				try {
@@ -224277,28 +224258,6 @@ if _dsh_extras_src:
 				}
 			};
 		}
-		/**
-		* 是否符合预期。**`reject` 的「失败」才是通过**——那条验的就是「当场拒掉、且说得清」，
-		* 跑通了反而说明拦截失效了。红绿点、续跑、「通过 N 条」全走这一个判据。
-		*/
-		function isPassed(item, result) {
-			if (result === void 0) return false;
-			return item.expect === "reject" ? !result.ok : result.ok;
-		}
-		/** 清单上的三态（红绿点与徽章读它）。 */
-		function stateOf(item, result) {
-			if (result === void 0) return "idle";
-			return isPassed(item, result) ? "ok" : "fail";
-		}
-		function tally(items, results) {
-			const tried = items.filter((item) => results[item.id] !== void 0);
-			return {
-				tried: tried.length,
-				failed: tried.filter((item) => !isPassed(item, results[item.id])).length,
-				pending: items.filter((item) => !isPassed(item, results[item.id])),
-				untried: items.filter((item) => results[item.id] === void 0)
-			};
-		}
 		/** 已注入的 KaTeX 样式表（按 URL 去重，避免多实例重复插同一份）。 */
 		const katexLinks = /* @__PURE__ */ new Map();
 		/** 代码里是否用了走 KaTeX 的公式物体（`MathTex(` / `Tex(`；`Text(` 不算）。 */
@@ -224414,7 +224373,7 @@ if _dsh_extras_src:
 		const PYODIDE_ROUTE = `${PREFIX}/pyodide`;
 		/** KaTeX 静态资源（css + 字体）。Client 侧作为 `katexBaseURL` 交给核心包。 */
 		const KATEX_ROUTE = `${PREFIX}/katex`;
-		/** 包清单（GET）与预缓存（POST …/cache，设置页与实验场工具条共用）。 */
+		/** 包清单（GET）与预缓存（POST …/cache，设置页用）。 */
 		const PACKAGES_ROUTE = `${PREFIX}/packages`;
 		/** 清包缓存（POST；只删本插件缓存目录里的包文件，不递归、不碰别的名字）。 */
 		const CACHE_ROUTE = `${PREFIX}/cache`;
@@ -224422,6 +224381,773 @@ if _dsh_extras_src:
 		const ENVIRONMENT_ROUTE = `${PREFIX}/environment`;
 		/** 导出视频：`GET …/ready` 就绪结论、`POST` 真渲染、`POST …/reveal` 在文件浏览器里定位。 */
 		const EXPORT_ROUTE = `${PREFIX}/export`;
+		//#endregion
+		//#region src/client/environment.ts
+		const client$2 = createMachineClient({ environmentUrl: ENVIRONMENT_ROUTE });
+		/** 取探测计划（秒回：Host 只列要测什么，不跑命令）。 */
+		const loadEnvPlan = () => client$2.loadPlan();
+		/** 跑一项探测。失败抛错，由调用方把这一行标成出错（别的行不受影响）。 */
+		const probeEnv = (id) => client$2.probe(id);
+		//#endregion
+		//#region src/client/runtime-status.ts
+		/**
+		* 环境状态进界面的一层：核心包 `environmentStatus()` 的快照 / 订阅，加上「状态 → 状态点颜色」
+		* 与「状态 → 待处理项」的纯映射。
+		*
+		* 为什么单独一个文件：设置卡与聊天卡片都要看同一份状态（订阅只能写一处），
+		* 而映射与选择器是纯函数——能被测试按住，不碰 DOM 也不碰 React 渲染结果。
+		*
+		* 两套环境在这里合流，因为它们回答的是同一个问题「这台机器还缺什么」：
+		* - **浏览器侧**（核心包）：WebAssembly / WebGL / 录屏能力、Python 运行时、公式样式、按需取包 —— 管**渲染**；
+		* - **本机侧**（Host 路由）：本机的 Manim / Python / FFmpeg / LaTeX —— 管**导出 mp4**。
+		* 前者的事发生在浏览器里，Host 问不到；后者发生在操作系统里，浏览器探测不了。所以两条取数路径，一个界面出口。
+		*/
+		/** 运行时阶段 → 色调：没加载是「还没有」（空环），不是错。 */
+		function runtimeTone(phase) {
+			if (phase === "ready") return "ok";
+			if (phase === "loading") return "busy";
+			if (phase === "error") return "error";
+			return "empty";
+		}
+		/** KaTeX → 色调：未配置是「没有」（空环）；公式用不用得上由代码决定，这里不猜。 */
+		function katexTone(phase) {
+			if (phase === "loaded") return "ok";
+			if (phase === "loading") return "busy";
+			if (phase === "error") return "error";
+			return "empty";
+		}
+		/** 能力项 → 色调：缺能力是硬伤，红。 */
+		function capabilityTone(present) {
+			return present ? "ok" : "error";
+		}
+		/** 阶段 → 文案键（写死表，不拼键名）。设置卡用这一份。 */
+		const RUNTIME_PHRASE = {
+			idle: "rtIdle",
+			loading: "rtLoading",
+			ready: "rtReady",
+			error: "rtError"
+		};
+		const KATEX_PHRASE = {
+			unconfigured: "rtUnconfigured",
+			loading: "rtLoading",
+			loaded: "rtLoaded",
+			error: "rtError"
+		};
+		/** 订阅浏览器环境状态；卸载自动退订。首值取快照，所以第一帧就有内容、不闪空。 */
+		function useEnvironmentStatus() {
+			const [status, setStatus] = (0, react.useState)(environmentStatus);
+			(0, react.useEffect)(() => onEnvironmentStatus(setStatus), []);
+			return status;
+		}
+		/**
+		* 环境里有没有**会挡住渲染**的硬伤：解释器起不来 / WebAssembly 与 WebGL 缺席 / 取包失败。
+		*
+		* 缺 MediaRecorder **不算**——它只影响「浏览器直接录屏」那一种导出方式，
+		* 渲染与导出 mp4 都不走它（核心包的 hint 里也写明了这一点）。
+		*/
+		function blocksRender(status) {
+			return !status.capabilities.wasm || !status.capabilities.webgl || status.runtime.phase === "error" || status.packages.lastError !== void 0;
+		}
+		/**
+		* 渲染失败时该补的说明：环境里真有硬伤才给（把核心包给的可执行句原样摆出来）。
+		* 拿去即用——判据全在上面的 `blocksRender`，卡片那侧不再自己判一遍。
+		*/
+		function renderBlockHints() {
+			const status = environmentStatus();
+			return blocksRender(status) ? status.hints : [];
+		}
+		/** 探测项 id → 设置页同款可读名。卡片用这一张表（Host 加一项探测时补这里即可）。 */
+		const MISSING_NAMES = {
+			python3: "envPython3",
+			manim: "envManim",
+			manimModule: "envManimModule",
+			ffmpeg: "envFfmpeg",
+			latex: "envLatex",
+			dvisvgm: "envDvisvgm"
+		};
+		/** 缺的那几项拼成一句话里的一段（表里没有的 id 原样显示，比空着强）。 */
+		function missingLabels(missing, t) {
+			return missing.map((item) => {
+				const key = MISSING_NAMES[item.id];
+				return key === void 0 ? item.id : t(key);
+			}).join("、");
+		}
+		//#endregion
+		//#region src/client/packages.ts
+		const client$1 = createPackagesClient({
+			packagesUrl: PACKAGES_ROUTE,
+			cacheUrl: CACHE_ROUTE
+		});
+		const loadPackages = () => client$1.loadPackages();
+		const cachePackage = (name) => client$1.cachePackage(name);
+		const clearPackage = (name) => client$1.clearPackage(name);
+		//#endregion
+		//#region src/client/settings.tsx
+		/** 库的三态：已缓存在本机=绿实心；随包自带=灰实心（在，但不归这里管）；还没缓存=空心环。 */
+		const pkgTone = (state) => state === "cached" ? "ok" : state === "bundled" ? "idle" : "empty";
+		/** 状态点的读屏名（点的颜色与虚实是给眼睛看的，读屏得有一句话；内置那个词与键上的一致）。 */
+		const pkgStateKey = (state) => state === "cached" ? "pkgStateCached" : state === "bundled" ? "pkgBundled" : "pkgStateAbsent";
+		const envTone = (status) => status === "ok" ? "ok" : status === "missing" ? "warn" : "error";
+		/**
+		* 浏览器运行时卡片：数据全在核心包的环境状态里（订阅 `onEnvironmentStatus`），不走 Host 路由——
+		* 这些事发生在浏览器里，Host 问不到。与「本机环境」同属「环境」组：一个管渲染、一个管导出。
+		*/
+		function RuntimeCard({ t }) {
+			const status = useEnvironmentStatus();
+			const rows = [
+				{
+					id: "runtime",
+					tone: runtimeTone(status.runtime.phase),
+					label: t("rtRuntime"),
+					value: t(RUNTIME_PHRASE[status.runtime.phase]),
+					info: status.runtime.error ?? (status.runtime.indexURL === null ? t("rtNoLoader") : t("rtIndexWhy", { url: status.runtime.indexURL }))
+				},
+				{
+					id: "katex",
+					tone: katexTone(status.katex.phase),
+					label: t("rtKatex"),
+					value: t(KATEX_PHRASE[status.katex.phase]),
+					info: status.katex.error ?? (status.katex.baseURL === null ? t("rtKatexWhy") : t("rtKatexAt", { url: status.katex.baseURL }))
+				},
+				{
+					id: "webgl",
+					tone: capabilityTone(status.capabilities.webgl),
+					label: t("rtWebgl"),
+					value: t(status.capabilities.webgl ? "rtYes" : "rtNo"),
+					info: t("rtWebglWhy")
+				},
+				{
+					id: "wasm",
+					tone: capabilityTone(status.capabilities.wasm),
+					label: t("rtWasm"),
+					value: t(status.capabilities.wasm ? "rtYes" : "rtNo"),
+					info: t("rtWasmWhy")
+				},
+				{
+					id: "recorder",
+					tone: capabilityTone(status.capabilities.videoExport),
+					label: t("rtRecorder"),
+					value: t(status.capabilities.videoExport ? "rtYes" : "rtNo"),
+					info: t("rtRecorderWhy")
+				}
+			];
+			const subline = status.hints.length > 0 ? t("rtHints", { count: status.hints.length }) : t("rtAllReady");
+			return /* @__PURE__ */ (0, react_jsx_runtime.jsxs)("section", {
+				className: "mr-set-card",
+				children: [
+					/* @__PURE__ */ (0, react_jsx_runtime.jsx)("header", {
+						className: "mr-set-cardhead",
+						children: /* @__PURE__ */ (0, react_jsx_runtime.jsxs)("div", {
+							className: "mr-set-cardheadtext",
+							children: [/* @__PURE__ */ (0, react_jsx_runtime.jsx)("h3", {
+								className: "mr-set-cardtitle",
+								children: t("rtTitle")
+							}), /* @__PURE__ */ (0, react_jsx_runtime.jsx)("p", {
+								className: status.hints.length > 0 ? "mr-set-cardsub is-error" : "mr-set-cardsub",
+								role: "status",
+								children: subline
+							})]
+						})
+					}),
+					/* @__PURE__ */ (0, react_jsx_runtime.jsx)("div", {
+						className: "mr-set-rows",
+						children: rows.map((row) => /* @__PURE__ */ (0, react_jsx_runtime.jsxs)("div", {
+							className: "mr-set-row",
+							children: [/* @__PURE__ */ (0, react_jsx_runtime.jsxs)("span", {
+								className: "mr-set-cell is-check",
+								children: [/* @__PURE__ */ (0, react_jsx_runtime.jsx)("span", {
+									className: "mr-set-name",
+									children: row.label
+								}), /* @__PURE__ */ (0, react_jsx_runtime.jsx)(Info$1, {
+									name: row.label,
+									text: row.info
+								})]
+							}), /* @__PURE__ */ (0, react_jsx_runtime.jsxs)("span", {
+								className: "mr-set-cell is-status",
+								children: [/* @__PURE__ */ (0, react_jsx_runtime.jsx)(Dot, { tone: row.tone }), /* @__PURE__ */ (0, react_jsx_runtime.jsx)("span", { children: row.value })]
+							})]
+						}, row.id))
+					}),
+					status.hints.length > 0 && /* @__PURE__ */ (0, react_jsx_runtime.jsx)("p", {
+						className: "mr-set-cardfoot is-error",
+						role: "status",
+						children: status.hints.join("\n")
+					})
+				]
+			});
+		}
+		/**
+		* 探测项 id → 文案键。**写死这张表**是为了不去拼键名（拼出来的键查不到就成了空白文案）。
+		* Host 加了新探测项而这张表还没跟上时，退化成直接显示 id —— 比空着强，也一眼看得出要补文案。
+		*/
+		const ENV_COPY = {
+			python3: {
+				title: "envPython3",
+				why: "envPython3Why"
+			},
+			manim: {
+				title: "envManim",
+				why: "envManimWhy"
+			},
+			manimModule: {
+				title: "envManimModule",
+				why: "envManimModuleWhy"
+			},
+			ffmpeg: {
+				title: "envFfmpeg",
+				why: "envFfmpegWhy"
+			},
+			latex: {
+				title: "envLatex",
+				why: "envLatexWhy"
+			},
+			dvisvgm: {
+				title: "envDvisvgm",
+				why: "envDvisvgmWhy"
+			}
+		};
+		const envTitleKey = (id) => ENV_COPY[id]?.title ?? id;
+		const envWhyKey = (id) => ENV_COPY[id]?.why ?? id;
+		/** 环境行的右侧数值：就绪给版本，没装/出错给状态词（版本行可能很长，界面上要留得住）。 */
+		function envValue(t, result) {
+			if (result.status === "ok") return result.version;
+			return result.status === "missing" ? t("envMissing") : t("envError");
+		}
+		/**
+		* 本机环境卡片：逐项探测，逐行亮起来。
+		*
+		* 头部左侧报「几项就绪」（正在检测 / 拿不到计划时换成当时的状态），右上是「重新检测」。
+		* 探测顺序就是 Host 给的顺序（python3 → manim → manim 包 → ffmpeg → latex → dvisvgm），
+		* 一项失败标记那一行、继续下一项——一项超时不该让整块卡住。
+		*/
+		function EnvCard({ t }) {
+			const [plan, setPlan] = (0, react.useState)(null);
+			const [failure, setFailure] = (0, react.useState)(null);
+			const [results, setResults] = (0, react.useState)({});
+			const [running, setRunning] = (0, react.useState)(false);
+			const alive = (0, react.useRef)(true);
+			(0, react.useEffect)(() => () => {
+				alive.current = false;
+			}, []);
+			const run = (0, react.useCallback)(async (target) => {
+				setResults({});
+				setRunning(true);
+				for (const check of target.checks) {
+					let result;
+					try {
+						result = await probeEnv(check.id);
+					} catch (error) {
+						console.error(`[manim-card] 探测 ${check.id} 失败：`, error);
+						result = {
+							id: check.id,
+							status: "error",
+							path: null,
+							version: "",
+							detail: error instanceof Error ? error.message : String(error)
+						};
+					}
+					if (!alive.current) return;
+					setResults((previous) => ({
+						...previous,
+						[check.id]: result
+					}));
+				}
+				if (alive.current) setRunning(false);
+			}, []);
+			const load = (0, react.useCallback)(async () => {
+				setFailure(null);
+				setPlan(null);
+				try {
+					const next = await loadEnvPlan();
+					if (!alive.current) return;
+					setPlan(next);
+					run(next);
+				} catch (error) {
+					console.error("[manim-card] 取环境探测计划失败：", error);
+					if (alive.current) setFailure(error instanceof Error ? error.message : String(error));
+				}
+			}, [run]);
+			(0, react.useEffect)(() => {
+				load();
+			}, [load]);
+			const ready = Object.values(results).filter((result) => result.status === "ok").length;
+			const total = plan?.checks.length ?? 0;
+			const subline = failure !== null ? t("envPlanFailed", { message: failure }) : plan === null ? t("envProbing") : t("envReady", {
+				ready,
+				total
+			});
+			return /* @__PURE__ */ (0, react_jsx_runtime.jsxs)("section", {
+				className: "mr-set-group",
+				"aria-label": t("envTitle"),
+				children: [/* @__PURE__ */ (0, react_jsx_runtime.jsx)("h2", {
+					className: "mr-set-groupname",
+					children: t("envGroup")
+				}), /* @__PURE__ */ (0, react_jsx_runtime.jsx)("div", {
+					className: "mr-set-stack",
+					children: /* @__PURE__ */ (0, react_jsx_runtime.jsxs)("section", {
+						className: "mr-set-card",
+						children: [/* @__PURE__ */ (0, react_jsx_runtime.jsxs)("header", {
+							className: "mr-set-cardhead",
+							children: [/* @__PURE__ */ (0, react_jsx_runtime.jsxs)("div", {
+								className: "mr-set-cardheadtext",
+								children: [/* @__PURE__ */ (0, react_jsx_runtime.jsx)("h3", {
+									className: "mr-set-cardtitle",
+									children: t("envTitle")
+								}), /* @__PURE__ */ (0, react_jsx_runtime.jsx)("p", {
+									className: failure !== null ? "mr-set-cardsub is-error" : "mr-set-cardsub",
+									title: failure !== null ? subline : void 0,
+									role: "status",
+									children: subline
+								})]
+							}), /* @__PURE__ */ (0, react_jsx_runtime.jsx)("div", {
+								className: "mr-set-cardacts",
+								children: /* @__PURE__ */ (0, react_jsx_runtime.jsx)(Tip, {
+									label: t("envRerunHint"),
+									align: "end",
+									children: /* @__PURE__ */ (0, react_jsx_runtime.jsxs)("button", {
+										type: "button",
+										className: "mr-set-act",
+										disabled: running,
+										onClick: () => {
+											load();
+										},
+										children: [/* @__PURE__ */ (0, react_jsx_runtime.jsx)(RefreshCw, { size: 14 }), t("envRerun")]
+									})
+								})
+							})]
+						}), plan !== null && /* @__PURE__ */ (0, react_jsx_runtime.jsx)("div", {
+							className: "mr-set-rows",
+							children: plan.checks.map((check) => {
+								const result = results[check.id];
+								const tone = result === void 0 ? "busy" : envTone(result.status);
+								return /* @__PURE__ */ (0, react_jsx_runtime.jsxs)("div", {
+									className: "mr-set-row",
+									children: [/* @__PURE__ */ (0, react_jsx_runtime.jsxs)("span", {
+										className: "mr-set-cell is-check",
+										children: [/* @__PURE__ */ (0, react_jsx_runtime.jsx)("span", {
+											className: "mr-set-name",
+											children: t(envTitleKey(check.id))
+										}), /* @__PURE__ */ (0, react_jsx_runtime.jsx)(Info$1, {
+											name: t(envTitleKey(check.id)),
+											text: envInfo(t, check, result)
+										})]
+									}), /* @__PURE__ */ (0, react_jsx_runtime.jsxs)("span", {
+										className: "mr-set-cell is-status",
+										children: [/* @__PURE__ */ (0, react_jsx_runtime.jsx)(Dot, { tone }), result !== void 0 && /* @__PURE__ */ (0, react_jsx_runtime.jsx)("span", { children: envValue(t, result) })]
+									})]
+								}, check.id);
+							})
+						})]
+					})
+				})]
+			});
+		}
+		/**
+		* 环境项的 ⓘ：为什么看这项、找到了哪儿、实际跑的什么——页面上只留「名字 + 状态」，
+		* 这些解释性内容全部收在这里，悬浮/键盘聚焦才出现。
+		*/
+		function envInfo(t, check, result) {
+			const lines = [t(envWhyKey(check.id))];
+			if (result === void 0) lines.push(t("envProbing"));
+			else if (result.status === "ok") lines.push(t("envFoundAt", { path: result.path ?? "" }));
+			else lines.push(result.detail.length > 0 ? result.detail : t("envMissing"));
+			lines.push(t("envRan", { command: check.command }));
+			return lines.join("\n");
+		}
+		/** ⓘ 图标：说明的收口。可聚焦（聚焦即出说明），点了没有动作——它只是个「看解释」的入口。 */
+		function Info$1({ name, text }) {
+			return /* @__PURE__ */ (0, react_jsx_runtime.jsx)(Tip, {
+				label: text,
+				align: "start",
+				wide: true,
+				children: /* @__PURE__ */ (0, react_jsx_runtime.jsx)("button", {
+					type: "button",
+					className: "mr-set-info",
+					"aria-label": `${name}：${text}`,
+					children: /* @__PURE__ */ (0, react_jsx_runtime.jsx)(Info$2, { size: 13 })
+				})
+			});
+		}
+		/**
+		* Python 库：**两张卡片**——上面一张是「已缓存的库」清单（头部右上是刷新），
+		* 下面一张是「缓存其他库」（头部标题 + 一行短说明，输入框与按钮在卡片身体里）。
+		*
+		* 清单为什么不是全表：lock 里有近三百条，绝大多数人一辈子用不到——把常用的摆出来，
+		* 比让人在一个长列表里筛要快。**列表不是白名单**：清单里没有的包，直接写上名字就能取，
+		* 走的是同一条预缓存通道（也照样连依赖一起取）。手输过的包会留在表里，
+		* 于是「取回来了、想再清掉」这条路也在同一张表上闭环。
+		*
+		* 取/清都就地重问一次 Host（状态以后端为准），不本地猜。
+		*/
+		function PackagesCard({ t }) {
+			const [inventory, setInventory] = (0, react.useState)(null);
+			const [failure, setFailure] = (0, react.useState)(null);
+			const [manual, setManual] = (0, react.useState)("");
+			const [composing, setComposing] = (0, react.useState)(false);
+			const [extra, setExtra] = (0, react.useState)([]);
+			const [busy, setBusy] = (0, react.useState)(null);
+			const [note, setNote] = (0, react.useState)(null);
+			const [formNote, setFormNote] = (0, react.useState)(null);
+			const alive = (0, react.useRef)(true);
+			const manualId = (0, react.useId)();
+			(0, react.useEffect)(() => () => {
+				alive.current = false;
+			}, []);
+			const refresh = (0, react.useCallback)(async () => {
+				try {
+					const next = await loadPackages();
+					if (!alive.current) return;
+					setInventory(next);
+					setFailure(null);
+				} catch (error) {
+					console.error("[manim-card] 取包清单失败：", error);
+					if (alive.current) setFailure(error instanceof Error ? error.message : String(error));
+				}
+			}, []);
+			(0, react.useEffect)(() => {
+				refresh();
+			}, [refresh]);
+			const entries = inventory?.entries ?? [];
+			/** 表上要画的：常用那几个（固定顺序）+ 用户手输过的（去重、且不在常用里的）。 */
+			const shown = (0, react.useMemo)(() => {
+				const common = [];
+				const listed = /* @__PURE__ */ new Set();
+				for (const name of COMMON_PACKAGES) {
+					const entry = findPackage(entries, name);
+					if (entry !== void 0) {
+						common.push(entry);
+						listed.add(entry.name);
+					}
+				}
+				for (const name of extra) {
+					const entry = findPackage(entries, name);
+					if (entry !== void 0 && !listed.has(entry.name)) {
+						common.push(entry);
+						listed.add(entry.name);
+					}
+				}
+				return common;
+			}, [entries, extra]);
+			const counts = (0, react.useMemo)(() => {
+				let bundled = 0;
+				let cached = 0;
+				let bytes = 0;
+				for (const entry of entries) if (entry.state === "bundled") bundled += 1;
+				else if (entry.state === "cached") {
+					cached += 1;
+					bytes += entry.bytes ?? 0;
+				}
+				return {
+					bundled,
+					cached,
+					bytes
+				};
+			}, [entries]);
+			/**
+			* 输入框的补全虚影（按名字前缀）。
+			*
+			* 两个「不显示」的判断：
+			*  - 中文输入法组字期间不显示——组字中的字还没定型，虚影会跟着跳；
+			*  - 「已输入 + 要补的」整段太长时不显示：虚影是按输入框里的字往后接的，
+			*    一旦输入框内部滚动就对不上了。40 是照输入框实际宽度（内容列 564px 减去按钮，
+			*    13px 字号）能稳稳放下的字数取的——宁可长名字不给虚影，也不能给一截错位的。
+			*/
+			const ghost = (0, react.useMemo)(() => {
+				if (composing || manual.length === 0) return null;
+				const completion = completionFor(entries, manual);
+				if (completion === null || manual.length + completion.suffix.length > 40) return null;
+				return completion;
+			}, [
+				composing,
+				entries,
+				manual
+			]);
+			/** Tab / → 采纳虚影。只在真有虚影、且光标在末尾时接管，其余情况让默认行为照常走。 */
+			const acceptGhost = (event) => {
+				if (ghost === null) return;
+				if (event.key !== "Tab" && event.key !== "ArrowRight") return;
+				if (event.currentTarget.selectionStart !== manual.length) return;
+				event.preventDefault();
+				setManual(ghost.name);
+			};
+			/** 把它摆到表上（手输过的包留在表里，便于回头清理）。 */
+			const surface = (name) => {
+				setExtra((previous) => previous.includes(name) ? previous : [...previous, name]);
+			};
+			/**
+			* 取一个包（连依赖）：先算闭包，再一个一个取，进度落在按钮上。
+			* 名字不认识 / 已经在本机都当场说清楚，不去发无谓的请求。
+			*
+			* `fromForm` 只决定回执报在哪张卡片的脚注（补库卡片 vs 清单卡片），不改变取法。
+			*/
+			const fetchPackages = async (name, fromForm = false) => {
+				const say = fromForm ? setFormNote : setNote;
+				if (name.length === 0 || busy !== null) return;
+				say(null);
+				if (findPackage(entries, name) === void 0) {
+					say(t("pkgUnknown", { name }));
+					return;
+				}
+				surface(name);
+				const plan = prefetchPlan(entries, name);
+				if (plan.length === 0) {
+					say(t("pkgNothingToFetch", { name }));
+					return;
+				}
+				setBusy({
+					name,
+					done: 0,
+					total: plan.length
+				});
+				for (const [index, target] of plan.entries()) {
+					const outcome = await cachePackage(target);
+					if (!alive.current) return;
+					if (!outcome.ok) {
+						say(t("pkgFetchFailed", {
+							name: target,
+							error: outcome.error
+						}));
+						setBusy(null);
+						refresh();
+						return;
+					}
+					setBusy({
+						name,
+						done: index + 1,
+						total: plan.length
+					});
+					say(t("pkgFetchingNote", {
+						name,
+						done: index + 1,
+						total: plan.length
+					}));
+				}
+				setBusy(null);
+				say(t("pkgFetched", { count: plan.length }));
+				if (fromForm) setManual("");
+				await refresh();
+			};
+			/** 清掉某个包的本机缓存：它下次被用到会重新取一次。 */
+			const clearOne = async (name) => {
+				if (busy !== null) return;
+				setNote(null);
+				setBusy({
+					name,
+					done: 0,
+					total: 1
+				});
+				try {
+					await clearPackage(name);
+					if (!alive.current) return;
+					setNote(t("pkgCleared", { name }));
+				} catch (error) {
+					console.error(`[manim-card] 清理 ${name} 失败：`, error);
+					if (alive.current) setNote(t("pkgClearFailed", {
+						name,
+						error: error instanceof Error ? error.message : String(error)
+					}));
+				}
+				if (!alive.current) return;
+				setBusy(null);
+				await refresh();
+			};
+			return /* @__PURE__ */ (0, react_jsx_runtime.jsxs)("section", {
+				className: "mr-set-group",
+				"aria-label": t("pkgTitle"),
+				children: [/* @__PURE__ */ (0, react_jsx_runtime.jsx)("h2", {
+					className: "mr-set-groupname",
+					children: t("pkgTitle")
+				}), /* @__PURE__ */ (0, react_jsx_runtime.jsxs)("div", {
+					className: "mr-set-stack",
+					children: [/* @__PURE__ */ (0, react_jsx_runtime.jsxs)("section", {
+						className: "mr-set-card",
+						children: [
+							/* @__PURE__ */ (0, react_jsx_runtime.jsxs)("header", {
+								className: "mr-set-cardhead",
+								children: [/* @__PURE__ */ (0, react_jsx_runtime.jsx)("div", {
+									className: "mr-set-cardheadtext",
+									children: /* @__PURE__ */ (0, react_jsx_runtime.jsxs)("h3", {
+										className: "mr-set-cardtitle",
+										children: [t("pkgCardTitle"), inventory !== null && /* @__PURE__ */ (0, react_jsx_runtime.jsx)("span", {
+											className: "mr-set-cardcount",
+											children: t("pkgCountsShort", {
+												cached: counts.cached,
+												bytes: formatBytes(counts.bytes)
+											})
+										})]
+									})
+								}), /* @__PURE__ */ (0, react_jsx_runtime.jsx)("div", {
+									className: "mr-set-cardacts",
+									children: /* @__PURE__ */ (0, react_jsx_runtime.jsx)(Tip, {
+										label: t("pkgRefreshHint"),
+										align: "end",
+										children: /* @__PURE__ */ (0, react_jsx_runtime.jsxs)("button", {
+											type: "button",
+											className: "mr-set-act",
+											disabled: busy !== null,
+											onClick: () => {
+												refresh();
+											},
+											children: [/* @__PURE__ */ (0, react_jsx_runtime.jsx)(RefreshCw, { size: 14 }), t("pkgRefresh")]
+										})
+									})
+								})]
+							}),
+							inventory !== null && /* @__PURE__ */ (0, react_jsx_runtime.jsx)("div", {
+								className: "mr-set-rows is-light",
+								children: shown.map((entry) => /* @__PURE__ */ (0, react_jsx_runtime.jsxs)("div", {
+									className: "mr-set-row",
+									children: [
+										/* @__PURE__ */ (0, react_jsx_runtime.jsxs)("span", {
+											className: "mr-set-cell is-name",
+											children: [/* @__PURE__ */ (0, react_jsx_runtime.jsx)(Dot, {
+												tone: pkgTone(entry.state),
+												label: t(pkgStateKey(entry.state))
+											}), /* @__PURE__ */ (0, react_jsx_runtime.jsx)("span", {
+												className: "mr-set-name",
+												children: entry.name
+											})]
+										}),
+										/* @__PURE__ */ (0, react_jsx_runtime.jsx)("span", {
+											className: "mr-set-cell is-size",
+											children: entry.bytes === null ? "—" : formatBytes(entry.bytes)
+										}),
+										/* @__PURE__ */ (0, react_jsx_runtime.jsxs)("span", {
+											className: "mr-set-cell is-act",
+											children: [
+												entry.state === "bundled" && /* @__PURE__ */ (0, react_jsx_runtime.jsx)("button", {
+													type: "button",
+													className: "mr-set-act is-sm",
+													disabled: true,
+													children: t("pkgBundled")
+												}),
+												entry.state === "cached" && /* @__PURE__ */ (0, react_jsx_runtime.jsx)(Tip, {
+													label: t("pkgClearHint"),
+													align: "end",
+													children: /* @__PURE__ */ (0, react_jsx_runtime.jsx)("button", {
+														type: "button",
+														className: "mr-set-act is-sm",
+														disabled: busy !== null,
+														onClick: () => {
+															clearOne(entry.name);
+														},
+														children: t("pkgClear")
+													})
+												}),
+												entry.state === "absent" && /* @__PURE__ */ (0, react_jsx_runtime.jsx)(Tip, {
+													label: t("pkgCacheHint"),
+													align: "end",
+													children: /* @__PURE__ */ (0, react_jsx_runtime.jsx)("button", {
+														type: "button",
+														className: "mr-set-act is-sm",
+														disabled: busy !== null,
+														onClick: () => {
+															fetchPackages(entry.name);
+														},
+														children: t("pkgCache")
+													})
+												})
+											]
+										})
+									]
+								}, entry.name))
+							}),
+							failure !== null && /* @__PURE__ */ (0, react_jsx_runtime.jsx)("p", {
+								className: "mr-set-cardfoot is-error",
+								role: "status",
+								children: t("pkgFailed", { message: failure })
+							}),
+							note !== null && /* @__PURE__ */ (0, react_jsx_runtime.jsx)("p", {
+								className: "mr-set-cardfoot",
+								role: "status",
+								children: note
+							})
+						]
+					}), /* @__PURE__ */ (0, react_jsx_runtime.jsxs)("section", {
+						className: "mr-set-card",
+						children: [
+							/* @__PURE__ */ (0, react_jsx_runtime.jsx)("header", {
+								className: "mr-set-cardhead",
+								children: /* @__PURE__ */ (0, react_jsx_runtime.jsxs)("div", {
+									className: "mr-set-cardheadtext",
+									children: [/* @__PURE__ */ (0, react_jsx_runtime.jsx)("h3", {
+										className: "mr-set-cardtitle",
+										children: t("pkgAddTitle")
+									}), /* @__PURE__ */ (0, react_jsx_runtime.jsx)("p", {
+										className: "mr-set-cardsub",
+										children: t("pkgAddHint")
+									})]
+								})
+							}),
+							/* @__PURE__ */ (0, react_jsx_runtime.jsxs)("form", {
+								className: "mr-set-addrow",
+								onSubmit: (event) => {
+									event.preventDefault();
+									fetchPackages(manual.trim(), true);
+								},
+								children: [/* @__PURE__ */ (0, react_jsx_runtime.jsxs)("span", {
+									className: "mr-set-field",
+									children: [ghost !== null && /* @__PURE__ */ (0, react_jsx_runtime.jsxs)("span", {
+										className: "mr-set-mirror",
+										"aria-hidden": "true",
+										children: [/* @__PURE__ */ (0, react_jsx_runtime.jsx)("span", {
+											className: "mr-set-typed",
+											children: manual
+										}), /* @__PURE__ */ (0, react_jsx_runtime.jsx)("span", {
+											className: "mr-set-ghost",
+											children: ghost.suffix
+										})]
+									}), /* @__PURE__ */ (0, react_jsx_runtime.jsx)("input", {
+										id: manualId,
+										className: "mr-set-fieldinput",
+										type: "text",
+										value: manual,
+										spellCheck: false,
+										placeholder: t("pkgManual"),
+										"aria-label": t("pkgManualLabel"),
+										autoComplete: "off",
+										autoCapitalize: "off",
+										autoCorrect: "off",
+										onChange: (event) => setManual(event.target.value),
+										onCompositionStart: () => setComposing(true),
+										onCompositionEnd: () => setComposing(false),
+										onKeyDown: acceptGhost
+									})]
+								}), /* @__PURE__ */ (0, react_jsx_runtime.jsx)("button", {
+									type: "submit",
+									className: "mr-btn primary tall",
+									disabled: busy !== null || manual.trim().length === 0,
+									children: t("pkgCache")
+								})]
+							}),
+							formNote !== null && /* @__PURE__ */ (0, react_jsx_runtime.jsx)("p", {
+								className: "mr-set-cardfoot",
+								role: "status",
+								children: formNote
+							})
+						]
+					})]
+				})]
+			});
+		}
+		/** 设置页正文：环境组两张卡（浏览器运行时 + 本机环境），库组一张卡加一张补库卡。 */
+		function ManimSettingsPage({ t }) {
+			return /* @__PURE__ */ (0, react_jsx_runtime.jsxs)("section", {
+				className: "mr-set",
+				"aria-label": "manim-card",
+				children: [/* @__PURE__ */ (0, react_jsx_runtime.jsxs)("section", {
+					className: "mr-set-group",
+					"aria-label": t("envGroup"),
+					children: [/* @__PURE__ */ (0, react_jsx_runtime.jsx)("h2", {
+						className: "mr-set-groupname",
+						children: t("envGroup")
+					}), /* @__PURE__ */ (0, react_jsx_runtime.jsxs)("div", {
+						className: "mr-set-stack",
+						children: [/* @__PURE__ */ (0, react_jsx_runtime.jsx)(RuntimeCard, { t }), /* @__PURE__ */ (0, react_jsx_runtime.jsx)(EnvCard, { t })]
+					})]
+				}), /* @__PURE__ */ (0, react_jsx_runtime.jsx)(PackagesCard, { t })]
+			});
+		}
 		//#endregion
 		//#region src/client/service.ts
 		/**
@@ -224453,16 +225179,6 @@ if _dsh_extras_src:
 			renderer?.dispose();
 			renderer = null;
 		}
-		/**
-		* 预热：把 Pyodide 本体与随包件（numpy 等，合计约 16 MB）先拉起来。
-		*
-		* 谁用：实验场状态条上那枚「立即预热」——不预热的话，第一次渲染要等它整段下载完，
-		* 期间界面只有一个骨架屏。走的是与渲染同一条串行队列（见核心包 `py/runtime.ts` 的 queue），
-		* 所以预热期间点渲染也不会两段同时初始化。
-		*/
-		function warmupManim() {
-			return manimRenderer().warmup();
-		}
 		function createManimService() {
 			const instance = manimRenderer();
 			return {
@@ -224483,244 +225199,17 @@ if _dsh_extras_src:
 		}
 		//#endregion
 		//#region src/client/export.ts
-		const client$2 = createExportClient({ exportUrl: EXPORT_ROUTE });
+		const client = createExportClient({ exportUrl: EXPORT_ROUTE });
 		/** 拿就绪结论（Host 侧有缓存，很快；首次会真跑一遍探测，可能几秒）。 */
-		const loadExportReadiness = () => client$2.loadExportReadiness();
+		const loadExportReadiness = () => client.loadExportReadiness();
 		/** 真导出：把源码交给本机 manim 渲染成 mp4，回文件路径。HTTP 层失败抛错，业务失败走 `ok:false`。 */
-		const requestExport = (python) => client$2.requestExport(python);
+		const requestExport = (python) => client.requestExport(python);
 		/** 在系统的文件浏览器里定位导出的文件；`checkOnly` 只问「还在不在」，不打开（恢复导出记录时核对用）。 */
-		const revealExport = (path, options) => client$2.revealExport(path, options);
-		//#endregion
-		//#region src/client/runtime-status.ts
-		/**
-		* 环境状态进界面的一层：核心包 `environmentStatus()` 的快照 / 订阅，加上「状态 → 状态点颜色」
-		* 与「状态 → 待处理项」的纯映射。
-		*
-		* 为什么单独一个文件：设置卡、实验场状态条、聊天卡片都要看同一份状态（订阅只能写一处），
-		* 而映射与选择器是纯函数——能被测试按住，不碰 DOM 也不碰 React 渲染结果。
-		*
-		* 两套环境在这里合流，因为它们回答的是同一个问题「这台机器还缺什么」：
-		* - **浏览器侧**（核心包）：WebAssembly / WebGL / 录屏能力、Python 运行时、公式样式、按需取包 —— 管**渲染**；
-		* - **本机侧**（Host 路由）：本机的 Manim / Python / FFmpeg / LaTeX —— 管**导出 mp4**。
-		* 前者的事发生在浏览器里，Host 问不到；后者发生在操作系统里，浏览器探测不了。所以两条取数路径，一个界面出口。
-		*/
-		/** 运行时阶段 → 色调：没加载是「还没有」（空环），不是错。 */
-		function runtimeTone(phase) {
-			if (phase === "ready") return "ok";
-			if (phase === "loading") return "busy";
-			if (phase === "error") return "error";
-			return "empty";
-		}
-		/** KaTeX → 色调：未配置是「没有」（空环）；公式用不用得上由代码决定，这里不猜。 */
-		function katexTone(phase) {
-			if (phase === "loaded") return "ok";
-			if (phase === "loading") return "busy";
-			if (phase === "error") return "error";
-			return "empty";
-		}
-		/** 能力项 → 色调：缺能力是硬伤，红。 */
-		function capabilityTone(present) {
-			return present ? "ok" : "error";
-		}
-		/** 阶段 → 文案键（写死表，不拼键名）。设置卡与状态条共用这一份。 */
-		const RUNTIME_PHRASE = {
-			idle: "rtIdle",
-			loading: "rtLoading",
-			ready: "rtReady",
-			error: "rtError"
-		};
-		const KATEX_PHRASE = {
-			unconfigured: "rtUnconfigured",
-			loading: "rtLoading",
-			loaded: "rtLoaded",
-			error: "rtError"
-		};
-		/** 订阅浏览器环境状态；卸载自动退订。首值取快照，所以第一帧就有内容、不闪空。 */
-		function useEnvironmentStatus() {
-			const [status, setStatus] = (0, react.useState)(environmentStatus);
-			(0, react.useEffect)(() => onEnvironmentStatus(setStatus), []);
-			return status;
-		}
-		/**
-		* 取本机环境的就绪结论。走的是卡片导出按钮用的那条路（Host 侧带 TTL 缓存），
-		* 所以整页同时挂几十张卡也不会各跑一遍探测；`refresh()` 强制再问一次。
-		*/
-		function useLocalEnv() {
-			const [state, setState] = (0, react.useState)({ phase: "checking" });
-			const [attempt, setAttempt] = (0, react.useState)(0);
-			(0, react.useEffect)(() => {
-				let alive = true;
-				setState({ phase: "checking" });
-				loadExportReadiness().then((value) => {
-					if (!alive) return;
-					setState(value.ready ? { phase: "ready" } : {
-						phase: "missing",
-						missing: value.missing
-					});
-				}).catch((error) => {
-					console.error("[manim-card] 本机环境就绪结论取不到:", error);
-					if (alive) setState({ phase: "unknown" });
-				});
-				return () => {
-					alive = false;
-				};
-			}, [attempt]);
-			return {
-				state,
-				refresh: () => setAttempt((n) => n + 1)
-			};
-		}
-		/** 缺哪几项浏览器能力。顺序固定，便于对照测试与界面稳定。 */
-		function missingCapabilities(caps) {
-			const out = [];
-			if (!caps.wasm) out.push("wasm");
-			if (!caps.webgl) out.push("webgl");
-			if (!caps.videoExport) out.push("recorder");
-			return out;
-		}
-		/**
-		* 环境里有没有**会挡住渲染**的硬伤：解释器起不来 / WebAssembly 与 WebGL 缺席 / 取包失败。
-		*
-		* 缺 MediaRecorder **不算**——它只影响「浏览器直接录屏」那一种导出方式，
-		* 渲染与导出 mp4 都不走它（核心包的 hint 里也写明了这一点）。
-		*/
-		function blocksRender(status) {
-			return !status.capabilities.wasm || !status.capabilities.webgl || status.runtime.phase === "error" || status.packages.lastError !== void 0;
-		}
-		/**
-		* 渲染失败时该补的说明：环境里真有硬伤才给（把核心包给的可执行句原样摆出来）。
-		* 拿去即用——判据全在上面的 `blocksRender`，卡片那侧不再自己判一遍。
-		*/
-		function renderBlockHints() {
-			const status = environmentStatus();
-			return blocksRender(status) ? status.hints : [];
-		}
-		/**
-		* 探测项 id → 设置页同款可读名。卡片与状态条**共用这一张表**：
-		* 两处各写一张的话，Host 加一项探测就会出现「卡片认得出、状态条只显示 id」。
-		*/
-		const MISSING_NAMES = {
-			python3: "envPython3",
-			manim: "envManim",
-			manimModule: "envManimModule",
-			ffmpeg: "envFfmpeg",
-			latex: "envLatex",
-			dvisvgm: "envDvisvgm"
-		};
-		/** 缺的那几项拼成一句话里的一段（表里没有的 id 原样显示，比空着强）。 */
-		function missingLabels(missing, t) {
-			return missing.map((item) => {
-				const key = MISSING_NAMES[item.id];
-				return key === void 0 ? item.id : t(key);
-			}).join("、");
-		}
-		/**
-		* 四条条件 → 四枚 chip。纯函数（`t` 只是取词）：同一个快照进来，出去的东西每次都一样，
-		* 于是能拿假 `t` 把「哪种状态算可点、文案怎么取」钉在测试里。
-		*/
-		function chipsOf(input) {
-			const { t, status, local } = input;
-			const caps = missingCapabilities(status.capabilities);
-			const localMissing = local.phase === "missing" ? local.missing : [];
-			return [
-				{
-					id: "local",
-					tone: local.phase === "checking" ? "busy" : local.phase === "ready" ? "ok" : local.phase === "missing" ? "warn" : "idle",
-					label: t("chipLocal"),
-					value: local.phase === "checking" ? t("chipChecking") : local.phase === "ready" ? t("chipReady") : local.phase === "missing" ? t("chipMissing", { count: localMissing.length }) : t("chipUnknown"),
-					...localMissing.length === 0 ? {} : { detail: t("chipLocalMissing", { items: missingLabels(localMissing, t) }) },
-					actionable: localMissing.length > 0 || local.phase === "unknown"
-				},
-				{
-					id: "runtime",
-					tone: runtimeTone(status.runtime.phase),
-					label: t("chipRuntime"),
-					value: t(RUNTIME_PHRASE[status.runtime.phase]),
-					detail: status.runtime.error ?? t("rtIndexWhy", { url: status.runtime.indexURL ?? "" }),
-					actionable: status.runtime.phase === "idle" || status.runtime.phase === "error"
-				},
-				{
-					id: "katex",
-					tone: katexTone(status.katex.phase),
-					label: t("chipKatex"),
-					value: t(KATEX_PHRASE[status.katex.phase]),
-					detail: status.katex.error ?? (status.katex.baseURL === null ? t("rtKatexWhy") : t("rtKatexAt", { url: status.katex.baseURL })),
-					actionable: status.katex.phase === "error"
-				},
-				{
-					id: "caps",
-					tone: caps.length > 0 ? "error" : "ok",
-					label: t("chipCaps"),
-					value: caps.length > 0 ? t("chipMissing", { count: caps.length }) : t("chipReady"),
-					...caps.length === 0 ? {} : { detail: caps.map((name) => t(name === "wasm" ? "rtWasmWhy" : name === "webgl" ? "rtWebglWhy" : "rtRecorderWhy")).join(" ") },
-					actionable: caps.length > 0
-				}
-			];
-		}
-		/**
-		* 状态条展开后要说的全部话：浏览器侧的可执行句在前面（核心包给的，原样），
-		* 本机侧与「运行时还没起来」这两条在后面。
-		*
-		* 为什么把浏览器侧与运行时那句也收进来：这一栏是「这台机器还缺什么」的唯一出口，
-		* 点开哪一枚都该看到全景——分成四份各说各的，用户还得逐枚点过去才能拼出全貌。
-		*/
-		function pendingHints(input) {
-			const { t, status, local } = input;
-			const out = [...status.hints];
-			if (status.runtime.phase === "idle") out.push(t("chipRuntimeCold"));
-			if (local.phase === "missing" && local.missing.length > 0) out.push(t("chipLocalMissing", { items: missingLabels(local.missing, t) }));
-			return out;
-		}
+		const revealExport = (path, options) => client.revealExport(path, options);
 		//#endregion
 		//#region src/client/storage.ts
-		/**
-		* 实验场状态的落盘：逐条结果、极速开关、自定义代码、当前模式。
-		*
-		* 为什么要存：验收跑一半刷新了或崩了，不该从头再来。
-		*
-		* localStorage 是**不可信输入**（用户改得动、旧版本写的也可能对不上），所以读的时候逐字段
-		* 校验，坏数据一律当没存过——宁可丢一次进度，也不能拿脏数据把页面搞崩。
-		*/
-		const KEY = "manim-card.lab.v1";
-		/** 读回已保存的部分状态；没存过或存坏了都给空对象（调用方各自取默认值）。 */
-		function loadLab() {
-			try {
-				const raw = window.localStorage.getItem(KEY);
-				if (raw === null) return {};
-				const parsed = JSON.parse(raw);
-				if (parsed === null || typeof parsed !== "object") return {};
-				const bag = parsed;
-				const out = {};
-				if (bag.results !== null && typeof bag.results === "object") {
-					const results = {};
-					for (const [id, value] of Object.entries(bag.results)) if (value !== null && typeof value === "object" && typeof value.ok === "boolean") results[id] = { ok: value.ok };
-					out.results = results;
-				}
-				if (typeof bag.fast === "boolean") out.fast = bag.fast;
-				if (typeof bag.source === "string") out.source = bag.source;
-				if (bag.mode === "samples" || bag.mode === "free") out.mode = bag.mode;
-				return out;
-			} catch (error) {
-				console.error("[manim-card] 读取实验场记录失败:", error);
-				return {};
-			}
-		}
-		function saveLab(state) {
-			try {
-				window.localStorage.setItem(KEY, JSON.stringify(state));
-			} catch (error) {
-				console.error("[manim-card] 保存实验场记录失败:", error);
-			}
-		}
-		function clearLab() {
-			try {
-				window.localStorage.removeItem(KEY);
-			} catch (error) {
-				console.error("[manim-card] 清除实验场记录失败:", error);
-			}
-		}
 		const EXPORTS_KEY = "manim-card.exports.v1";
-		/** 记录条数上限：够回过头找最近导出的一批，又不会在实验场里越长越肥。 */
+		/** 记录条数上限：够回过头找最近导出的一批，又不会越长越肥。 */
 		const EXPORTS_LIMIT = 50;
 		function loadExports() {
 			try {
@@ -228221,7 +228710,7 @@ if _dsh_extras_src:
 		* @import {Info as InfoType} from 'property-information'
 		*/
 		/** @type {InfoType} */
-		var Info$1 = class {
+		var Info = class {
 			/**
 			* @param {string} property
 			*   Property.
@@ -228235,18 +228724,18 @@ if _dsh_extras_src:
 				this.property = property;
 			}
 		};
-		Info$1.prototype.attribute = "";
-		Info$1.prototype.booleanish = false;
-		Info$1.prototype.boolean = false;
-		Info$1.prototype.commaOrSpaceSeparated = false;
-		Info$1.prototype.commaSeparated = false;
-		Info$1.prototype.defined = false;
-		Info$1.prototype.mustUseProperty = false;
-		Info$1.prototype.number = false;
-		Info$1.prototype.overloadedBoolean = false;
-		Info$1.prototype.property = "";
-		Info$1.prototype.spaceSeparated = false;
-		Info$1.prototype.space = void 0;
+		Info.prototype.attribute = "";
+		Info.prototype.booleanish = false;
+		Info.prototype.boolean = false;
+		Info.prototype.commaOrSpaceSeparated = false;
+		Info.prototype.commaSeparated = false;
+		Info.prototype.defined = false;
+		Info.prototype.mustUseProperty = false;
+		Info.prototype.number = false;
+		Info.prototype.overloadedBoolean = false;
+		Info.prototype.property = "";
+		Info.prototype.spaceSeparated = false;
+		Info.prototype.space = void 0;
 		//#endregion
 		//#region node_modules/.pnpm/property-information@7.2.0/node_modules/property-information/lib/util/types.js
 		var types_exports = /* @__PURE__ */ __exportAll({
@@ -228275,7 +228764,7 @@ if _dsh_extras_src:
 		* @import {Space} from 'property-information'
 		*/
 		const checks = Object.keys(types_exports);
-		var DefinedInfo = class extends Info$1 {
+		var DefinedInfo = class extends Info {
 			/**
 			* @constructor
 			* @param {string} property
@@ -229412,7 +229901,7 @@ if _dsh_extras_src:
 		function find(schema, value) {
 			const normal = normalize(value);
 			let property = value;
-			let Type = Info$1;
+			let Type = Info;
 			if (normal in schema.normal) return schema.property[schema.normal[normal]];
 			if (normal.length > 4 && normal.slice(0, 4) === "data" && valid.test(value)) {
 				if (value.charAt(4) === "-") {
@@ -235681,27 +236170,6 @@ XID_Start XIDS`.split(/\s/).map((p) => [w(p), p]));
 			});
 		}
 		//#endregion
-		//#region src/client/components/tip.tsx
-		/**
-		* 包住一个控件、给它一段悬浮说明。
-		* @param align 气泡的水平对齐：`center` 居中于控件；`start` 贴控件左缘、`end` 贴控件右缘
-		*   （贴边的按钮用，免得气泡出界）。
-		* @param wide 成段的长说明用：气泡放宽到 440px（默认 300px 是给一句话的）。
-		* @param className 加在气泡那一层上的额外类名。用在**外层要参与布局**的地方——
-		*   比如「占满剩余宽度」的那条（`.mr-chatcard-pathwrap`）；不传就只吃 `.mr-tip` 自己的样式。
-		*/
-		function Tip({ label, children, align = "center", wide = false, className }) {
-			return /* @__PURE__ */ (0, react_jsx_runtime.jsxs)("span", {
-				className: className === void 0 ? "mr-tip" : `mr-tip ${className}`,
-				"data-align": align,
-				children: [children, /* @__PURE__ */ (0, react_jsx_runtime.jsx)("span", {
-					className: wide ? "mr-tip-bubble is-wide" : "mr-tip-bubble",
-					role: "tooltip",
-					children: label
-				})]
-			});
-		}
-		//#endregion
 		//#region src/client/components/card.tsx
 		/**
 		* 底部状态栏的一行：图标 + 内容。
@@ -235754,7 +236222,7 @@ XID_Start XIDS`.split(/\s/).map((p) => [w(p), p]));
 		* 老会话里几十张卡各播一遍，谁也等不起，而且那些画面用户早就看过了。
 		*
 		* 两个用户动作**压过全部自动规则**：
-		* - 手动播放 → 一定真播。包括那张「预算已经用掉」的、老会话的、以及实验场极速档下的——
+		* - 手动播放 → 一定真播。包括那张「预算已经用掉」的、老会话的、以及极速档下的——
 		*   点下去就是「我要看这一段」。它**同样压过「本批只由代表播」**：那条是跨卡的省算力规则，
 		*   拿它把用户按下的键按回去，等于按了个寂寞（非代表那张按下去只会跳到终态）。
 		* - ⏩ 跳过 → 不演，直接落终态。
@@ -235772,15 +236240,14 @@ XID_Start XIDS`.split(/\s/).map((p) => [w(p), p]));
 			return input.live && input.batchTail;
 		}
 		/**
-		* 渲染卡片。聊天流与实验场页面**共用这一个组件**——页面不再自己维护画布，
-		* 于是「重播 / 查看代码 / 复制」这些能力天然一致，不会再各改各的。
+		* 渲染卡片：聊天流里的一张 Manim 卡（画布 + 手动播放 + 查看代码 + 导出）——
+		* 「重播 / 查看代码 / 复制」这些能力都在同一处，不会再各改各的。
 		*
-		* - `label`  顶栏标签，缺省是聊天场景的「Manim 动画」（实验场传样例标题）。
-		* - `onResult` 一次渲染结束的回调（成功失败都调），实验场用它把结果显示到样例条目上。
+		* - `label`  顶栏标签，缺省「Manim 动画」。
+		* - `onResult` 一次渲染结束的回调（成功失败都调）。
 		* - `autoStart` 不理会视口、挂载即渲染。聊天流靠 IntersectionObserver 保证「只有可见的那几张
-		*   在跑」，但实验场一次只有一张卡、而它可能被滚出可视区（右侧栏往下翻看代码），
-		*   那时再等视口就会把页面吊在半路——所以那一侧显式关掉视口门控。
-		* - `fast` 极速：不等 run_time / wait，直接落终态（实验场那个开关）。
+		*   在跑」，不摆观察者的调用方则显式关掉视口门控。
+		* - `fast` 极速：不等 run_time / wait，直接落终态。
 		*/
 		function ManimCard({ data, t, label, onResult, autoStart, fast }) {
 			const stageRef = (0, react.useRef)(null);
@@ -235819,7 +236286,7 @@ XID_Start XIDS`.split(/\s/).map((p) => [w(p), p]));
 			const interrupted = data.interrupted === true;
 			const onResultRef = (0, react.useRef)(onResult);
 			onResultRef.current = onResult;
-			/** 状态既落在卡片上，也回给调用方（实验场用它点亮语料条目的红绿点）。 */
+			/** 状态既落在卡片上，也回给调用方。 */
 			const report = (next) => {
 				setEnvHints(next.ok ? [] : renderBlockHints());
 				setStatus(next);
@@ -236278,1584 +236745,6 @@ XID_Start XIDS`.split(/\s/).map((p) => [w(p), p]));
 			});
 		}
 		//#endregion
-		//#region src/client/components/dot.tsx
-		/**
-		* @param tone  `ok` 绿 / `warn` 黄 / `error` 红 / `idle` 灰实心 / `empty` 空环 / `busy` 转圈。
-		* @param label 给了就是**有语义的状态点**（读屏念得出、鼠标悬浮有原生提示）；不给就当装饰，
-		*              因为旁边已经有文字把状态说清了（环境行的版本号、库行那个键、状态条上的状态词）。
-		*/
-		function Dot({ tone, label }) {
-			if (tone === "busy") return /* @__PURE__ */ (0, react_jsx_runtime.jsx)("svg", {
-				className: "mr-set-spin",
-				width: "14",
-				height: "14",
-				viewBox: "0 0 24 24",
-				"aria-hidden": "true",
-				children: /* @__PURE__ */ (0, react_jsx_runtime.jsxs)("g", {
-					className: "mr-set-spin-rotor",
-					children: [/* @__PURE__ */ (0, react_jsx_runtime.jsx)("circle", {
-						className: "mr-set-spin-track",
-						cx: "12",
-						cy: "12",
-						r: "9.5"
-					}), /* @__PURE__ */ (0, react_jsx_runtime.jsx)("circle", {
-						className: "mr-set-spin-arc",
-						cx: "12",
-						cy: "12",
-						r: "9.5"
-					})]
-				})
-			});
-			return /* @__PURE__ */ (0, react_jsx_runtime.jsx)("span", {
-				className: "mr-set-dot",
-				"data-tone": tone,
-				role: label === void 0 ? void 0 : "img",
-				"aria-label": label,
-				"aria-hidden": label === void 0 ? true : void 0
-			});
-		}
-		//#endregion
-		//#region src/client/components/env-bar.tsx
-		function EnvBar({ t }) {
-			const status = useEnvironmentStatus();
-			const local = useLocalEnv();
-			/** 展开的是哪一枚（null = 收起）。四枚共用一个面板，因为面板说的是同一件事：这台机器还缺什么。 */
-			const [open, setOpen] = (0, react.useState)(null);
-			const [warming, setWarming] = (0, react.useState)(false);
-			/** 预热回执（null = 还没按过）。成功也要说一声：预热没有画面回执，不说就不知道按了有没有用。 */
-			const [warmNote, setWarmNote] = (0, react.useState)(null);
-			const chips = chipsOf({
-				t,
-				status,
-				local: local.state
-			});
-			const pending = pendingHints({
-				t,
-				status,
-				local: local.state
-			});
-			const canWarm = status.runtime.phase === "idle" || status.runtime.phase === "error";
-			const localBroken = local.state.phase === "missing" || local.state.phase === "unknown";
-			const warm = async () => {
-				if (warming) return;
-				setWarming(true);
-				setWarmNote(null);
-				try {
-					await warmupManim();
-					setWarmNote(t("envbarWarmed"));
-				} catch (error) {
-					console.error("[manim-card] 预热失败:", error);
-					setWarmNote(t("envbarWarmFailed", { message: error instanceof Error ? error.message : String(error) }));
-				} finally {
-					setWarming(false);
-				}
-			};
-			return /* @__PURE__ */ (0, react_jsx_runtime.jsxs)("div", {
-				className: "mr-envbar-wrap",
-				children: [/* @__PURE__ */ (0, react_jsx_runtime.jsxs)("div", {
-					className: "mr-envbar",
-					role: "group",
-					"aria-label": t("envbarLabel"),
-					children: [chips.map((chip) => {
-						const body = /* @__PURE__ */ (0, react_jsx_runtime.jsxs)(react_jsx_runtime.Fragment, { children: [
-							/* @__PURE__ */ (0, react_jsx_runtime.jsx)(Dot, { tone: chip.tone }),
-							/* @__PURE__ */ (0, react_jsx_runtime.jsx)("span", {
-								className: "mr-chip-name",
-								children: chip.label
-							}),
-							/* @__PURE__ */ (0, react_jsx_runtime.jsx)("span", {
-								className: "mr-chip-value",
-								children: chip.value
-							})
-						] });
-						return chip.actionable ? /* @__PURE__ */ (0, react_jsx_runtime.jsx)("button", {
-							className: "mr-chip",
-							type: "button",
-							"data-tone": chip.tone,
-							"aria-expanded": open === chip.id,
-							title: chip.detail,
-							onClick: () => setOpen((current) => current === chip.id ? null : chip.id),
-							children: body
-						}, chip.id) : /* @__PURE__ */ (0, react_jsx_runtime.jsx)("span", {
-							className: "mr-chip",
-							"data-tone": chip.tone,
-							title: chip.detail,
-							children: body
-						}, chip.id);
-					}), warmNote !== null && /* @__PURE__ */ (0, react_jsx_runtime.jsx)("span", {
-						className: "mr-envbar-note",
-						role: "status",
-						children: warmNote
-					})]
-				}), open !== null && /* @__PURE__ */ (0, react_jsx_runtime.jsxs)("div", {
-					className: "mr-envpanel",
-					children: [pending.length === 0 ? /* @__PURE__ */ (0, react_jsx_runtime.jsx)("p", {
-						className: "mr-envpanel-empty",
-						children: t("chipUnknown")
-					}) : /* @__PURE__ */ (0, react_jsx_runtime.jsx)("ul", {
-						className: "mr-envpanel-list",
-						children: pending.map((line) => /* @__PURE__ */ (0, react_jsx_runtime.jsx)("li", { children: line }, line))
-					}), /* @__PURE__ */ (0, react_jsx_runtime.jsxs)("div", {
-						className: "mr-envpanel-acts",
-						children: [
-							canWarm && /* @__PURE__ */ (0, react_jsx_runtime.jsx)("button", {
-								className: "mr-btn outline",
-								type: "button",
-								disabled: warming,
-								onClick: () => void warm(),
-								children: warming ? t("envbarWarming") : t("envbarWarmup")
-							}),
-							localBroken && /* @__PURE__ */ (0, react_jsx_runtime.jsx)("button", {
-								className: "mr-btn outline",
-								type: "button",
-								onClick: local.refresh,
-								children: t("envbarReprobe")
-							}),
-							/* @__PURE__ */ (0, react_jsx_runtime.jsx)("button", {
-								className: "mr-btn outline",
-								type: "button",
-								onClick: () => setOpen(null),
-								children: t("envbarClose")
-							})
-						]
-					})]
-				})]
-			});
-		}
-		//#endregion
-		//#region src/client/components/segmented.tsx
-		const isWalkKey = (key) => key === "ArrowLeft" || key === "ArrowRight" || key === "ArrowUp" || key === "ArrowDown" || key === "Home" || key === "End";
-		/** 漫游键落到的下一个可选项：方向键走最近的一个（可绕回），Home/End 跳首尾。 */
-		function walk(options, from, key) {
-			const enabled = options.filter((option) => option.disabled !== true);
-			if (key === "Home") return enabled[0];
-			if (key === "End") return enabled[enabled.length - 1];
-			const step = key === "ArrowRight" || key === "ArrowDown" ? 1 : -1;
-			const count = options.length;
-			for (let offset = 1; offset < count; offset += 1) {
-				const candidate = options[((from + step * offset) % count + count) % count];
-				if (candidate !== void 0 && candidate.disabled !== true) return candidate;
-			}
-		}
-		function Segmented({ value, options, onChange, label, disabled = false }) {
-			const selected = options.findIndex((option) => option.value === value);
-			const onKeyDown = (event) => {
-				if (!isWalkKey(event.key)) return;
-				event.preventDefault();
-				const target = walk(options, selected, event.key);
-				if (target !== void 0 && target.value !== value) onChange(target.value);
-			};
-			const geometry = {
-				"--mr-seg-count": String(options.length),
-				"--mr-seg-index": String(Math.max(selected, 0))
-			};
-			return /* @__PURE__ */ (0, react_jsx_runtime.jsxs)("div", {
-				role: "tablist",
-				"aria-label": label,
-				className: "mr-seg",
-				style: geometry,
-				children: [/* @__PURE__ */ (0, react_jsx_runtime.jsx)("span", {
-					"aria-hidden": "true",
-					className: "mr-seg-indicator"
-				}), options.map((option) => {
-					const active = option.value === value;
-					return /* @__PURE__ */ (0, react_jsx_runtime.jsx)("button", {
-						type: "button",
-						role: "tab",
-						"aria-selected": active,
-						tabIndex: active ? 0 : -1,
-						disabled: disabled || option.disabled === true,
-						className: "mr-seg-tab",
-						onClick: () => {
-							if (!active) onChange(option.value);
-						},
-						onKeyDown,
-						children: option.label
-					}, option.value);
-				})]
-			});
-		}
-		//#endregion
-		//#region src/client/packages.ts
-		const client$1 = createPackagesClient({
-			packagesUrl: PACKAGES_ROUTE,
-			cacheUrl: CACHE_ROUTE
-		});
-		const loadPackages = () => client$1.loadPackages();
-		const cachePackage = (name) => client$1.cachePackage(name);
-		const clearPackageCache = () => client$1.clearPackageCache();
-		const clearPackage = (name) => client$1.clearPackage(name);
-		//#endregion
-		//#region src/client/samples.ts
-		const SAMPLES = [
-			{
-				id: "basic-circle",
-				title: "画一个圆",
-				expect: "ok",
-				expectation: "画面中央出现一个默认描边色的圆，Create 动画沿轮廓把它描出来。",
-				python: String.raw`"""画一个圆
-
-@expect 画面中央出现一个默认描边色的圆，动画是 Create 沿轮廓描出来。"""
-
-from manim import *
-
-
-class CircleScene(Scene):
-    def construct(self):
-        circle = Circle(radius=1.2)
-        self.play(Create(circle))
-        self.wait(0.3)
-`
-			},
-			{
-				id: "animate-transform",
-				title: "Transform 变形",
-				expect: "ok",
-				expectation: "蓝圆连续变形为黄方（形状与位置同时插值），全程是同一个物体。",
-				python: String.raw`"""Transform 变形
-
-@expect A 物体连续变形为 B 物体（形状与位置同时插值），过程中两者都是同一个物体。"""
-
-from manim import *
-
-
-class TransformScene(Scene):
-    def construct(self):
-        circle = Circle(radius=1, color=BLUE)
-        square = Square(side_length=2, color=YELLOW)
-        self.add(circle)
-        self.play(Transform(circle, square))
-        self.wait(0.3)
-`
-			},
-			{
-				id: "basic-axes-plot",
-				title: "坐标系 + 函数曲线",
-				expect: "ok",
-				expectation: "一套坐标系上画出绿色抛物线，走势与函数一致、贴着坐标刻度。",
-				python: String.raw`"""坐标系 + 函数曲线
-
-@expect 一套坐标系上画出函数曲线，曲线走势与函数一致、贴着坐标刻度。
-@note plot() 的 func 是 Python 函数——要过桥，见「构造器参数」组的同项
-"""
-
-from manim import *
-
-
-class AxesPlotScene(Scene):
-    def construct(self):
-        ax = Axes(x_range=[-3, 3, 1], y_range=[-1, 3, 1])
-        graph = ax.plot(lambda x: x * x / 3, color=GREEN)
-        self.play(Create(ax), Create(graph))
-        self.wait(0.3)
-`
-			},
-			{
-				id: "text-mathtex-frac",
-				title: "MathTex 分式与根号",
-				expect: "ok",
-				expectation: "分式有横线、根号盖住被开方数，是公式排版（KaTeX 字体路由也要通）。",
-				python: String.raw`"""MathTex 分式与根号
-
-@expect 分式有横线、根号盖住被开方数，排版是公式排版。"""
-
-from manim import *
-
-
-class MathtexFracScene(Scene):
-    def construct(self):
-        tex = MathTex(r"\frac{a}{b} = \sqrt{c}")
-        self.play(Write(tex))
-        self.wait(0.3)
-`
-			},
-			{
-				id: "text-bulleted-list",
-				title: "BulletedList 项目列表",
-				expect: "ok",
-				expectation: "三行列表整体淡入，行首有项目符号、行距整齐、左对齐。",
-				python: String.raw`"""BulletedList 项目列表
-
-@expect 多行列表每行前有项目符号，行距整齐。
-@note CE 的 BulletedList(*items) 是变长位置参数，manim-web 收 items 数组
-@note 适配层 BulletedList 不渲染行首圆点，改用 VGroup + Text("•  …") 拼装
-"""
-
-from manim import *
-
-
-class BulletedListScene(Scene):
-    def construct(self):
-        lines = VGroup(
-            Text("•  第一条", font_size=32),
-            Text("•  第二条", font_size=32),
-            Text("•  第三条", font_size=32),
-        ).arrange(DOWN, aligned_edge=LEFT, buff=0.4)
-        lines.move_to([0, 0, 0])
-        self.play(FadeIn(lines))
-        self.wait(0.3)
-`
-			},
-			{
-				id: "graph-bar-chart",
-				title: "柱状图",
-				expect: "ok",
-				expectation: "三根柱子红 / 蓝 / 绿三色、高低与数据一致、间距均匀，标题在图上方不压图。",
-				python: String.raw`"""柱状图
-
-@expect 三根柱子红 / 蓝 / 绿三色、高低与数据一致、间距均匀，标题在图上方不压图。"""
-
-from manim import *
-
-
-class BarChartScene(Scene):
-    def construct(self):
-        chart = BarChart(values=[1, 3, 2], bar_colors=[RED, BLUE, GREEN])
-        chart.move_to([0, -0.6, 0])
-        # 适配层 bug：bar_colors 不生效，且 set_fill 会连描边一起染——
-        # 先逐根 set_fill，再单独 set_stroke 把描边改回同色。
-        # 适配层没有 chart.bars：三根柱是 chart 的第 3 个子物体的 3 个孩子
-        bars = chart[2]
-        for bar, color in zip(bars, [RED, BLUE, GREEN]):
-            bar.set_fill(color, opacity=1.0)
-            bar.set_stroke(color=color)
-        title = Text("三色柱状图", font_size=28, color=WHITE)
-        title.move_to([0, 2.6, 0])
-        self.play(Create(chart), Write(title))
-        self.wait(0.3)
-`
-			},
-			{
-				id: "updater-traced-path",
-				title: "TracedPath 跟随物体",
-				expect: "ok",
-				expectation: "红点向右移动时，身后拖出一条黄色轨迹线，与走过的路径重合（极速档下轨迹也要被推进出来）。",
-				python: String.raw`"""TracedPath 跟随物体
-
-@expect 点移动时身后拖出一条轨迹线，轨迹与走过的路径重合。
-@note ⚠️ 与 CE 写法不同：CE 收函数 dot.get_center，manim-web 收物体本身——技能文档已注明
-"""
-
-from manim import *
-
-
-class TracedPathScene(Scene):
-    def construct(self):
-        dot = Dot(point=[-3, 0, 0], color=RED)
-        path = TracedPath(dot, stroke_color=YELLOW)
-        self.add(path, dot)
-        self.play(dot.animate.shift(RIGHT * 6))
-        self.wait(0.3)
-`
-			},
-			{
-				id: "updater-decimal",
-				title: "数字跟着 tracker 变",
-				expect: "ok",
-				expectation: "右上角的数字实时从 0.0 变到 5.0（跟着 tracker 走，不是播完才跳终值）。",
-				python: String.raw`"""数字跟着 tracker 变
-
-@expect 数字实时跟着 tracker 变（不是播完才跳到终值）。"""
-
-from manim import *
-
-
-class DecimalScene(Scene):
-    def construct(self):
-        tracker = ValueTracker(0)
-        num = DecimalNumber(0, num_decimal_places=1)
-        num.to_corner(UR)
-        num.add_updater(lambda m: m.set_value(tracker.get_value()))
-        self.add(tracker, num)
-        self.play(tracker.animate.set_value(5), run_time=1)
-        self.wait(0.3)
-`
-			},
-			{
-				id: "lesson-space-cube-camera",
-				title: "空间直角坐标系与立方体",
-				expect: "ok",
-				expectation: "斜视中的蓝色立方体三面明暗不同；相机先自转再转到另一侧，终帧看到另一组侧面；标题钉在左上角不跟相机跑。",
-				python: String.raw`"""空间直角坐标系与立方体
-
-@expect 斜视看一个棱长 2 的立方体：三个面同时可见、明暗各不同（有光有深度，不是一块黑）；
-        它坐在第一象限，最远的顶点 (2, 2, 2) 上有个黄点、旁边跟着黄色标注；
-        三条坐标轴从原点穿出，Z 轴朝上。标题钉在画面左上角、不跟相机跑。
-        相机先绕方位角自转一段，再动画转到另一侧——终帧看到的是立方体的另一组侧面，
-        与初始斜视完全不同，证明相机真动了，不是被 2D 拍扁的一张脸。
-@template 要画 3D 空间图形（立方体 / 球 / 多面体 / 坐标轴）或想让相机转起来时照它抄。
-@note 3D 物体**必须**写 class X(ThreeDScene)：普通的 Scene 里一盏灯都没有，
-      吃光的材质落进去就是一团纯黑（不是「3D 没实现」，是放错场景了）。
-      屏幕上的字用 add_fixed_in_frame_mobjects 钉住；3D 里跟着物体走、又要一直正对镜头的字
-      用 add_fixed_orientation_mobjects——斜视下它俩都不会被压扁。
-      3D 实体的颜色 / 透明用构造参数 color / opacity（CE 的 fill_color / fill_opacity 在 3D 实体上不生效）。
-"""
-
-from manim import *
-
-SIDE = 2.0
-
-
-class SpaceCubeScene(ThreeDScene):
-    def construct(self):
-        # 轴比默认短一圈（默认 x∈[-6,6]、z∈[-4,4]，斜视下会顶到画面边）：
-        # 立方体已经占住画面中心，轴只用来交代「这是个坐标系」。
-        axes = ThreeDAxes(x_range=[-3, 3, 1], y_range=[-3, 3, 1], z_range=[-3, 3, 1])
-        cube = Cube(side_length=SIDE, color=BLUE)
-        cube.shift([SIDE / 2, SIDE / 2, SIDE / 2])  # 坐进第一象限，别跟坐标轴原点叠在一起
-        corner = Dot3D(point=[SIDE, SIDE, SIDE], radius=0.09, color=YELLOW)
-
-        title = Text("空间直角坐标系", font_size=32)
-        title.to_corner(UL)
-        self.add_fixed_in_frame_mobjects(title)  # 钉在屏幕上：不跟相机转，也不会被斜视压扁
-
-        corner_label = Text("(2, 2, 2)", font_size=22, color=YELLOW)
-        corner_label.move_to([SIDE, SIDE, SIDE + 0.5])
-        self.add_fixed_orientation_mobjects(corner_label)  # 留在 3D 里，但永远正对镜头
-
-        self.set_camera_orientation(phi=70 * DEGREES, theta=-135 * DEGREES)  # 初始斜视
-        self.play(Create(axes), FadeIn(cube), FadeIn(corner), Write(title), run_time=1)
-        self.begin_ambient_camera_rotation(rate=0.4)  # 相机自己绕方位角慢慢转
-        self.wait(1.5)
-        self.stop_ambient_camera_rotation()
-        self.move_camera(phi=60 * DEGREES, theta=-20 * DEGREES, run_time=2)  # 再动画转到另一侧
-        self.wait(0.2)
-`
-			},
-			{
-				id: "reject-unknown-class",
-				title: "引用未定义的名字（应当被拒绝）",
-				expect: "reject",
-				expectation: "不应当渲染：引用了 manim-web 没有的名字 FancyWidget，预检应当场报错并说明原因——这条渲染失败才算通过。",
-				python: String.raw`"""manim-web 没有的类
-
-@expect 不渲染：预检应当**当场**拒绝，报错要提到「FancyWidget」并给出可读的原因或替代写法。
-@reject FancyWidget
-"""
-
-from manim import *
-
-
-class UnknownClassScene(Scene):
-    def construct(self):
-        thing = FancyWidget(radius=1)
-        self.add(thing)
-`
-			}
-		];
-		//#endregion
-		//#region src/client/page.tsx
-		/** 自由编辑的起手样本：坐标系 + 圆 + 公式，顺带验证 KaTeX 字体路由。 */
-		const FREE_SAMPLE = `ax = Axes(x_range=[-2, 2, 1], y_range=[-2, 2, 1])
-circle = Circle(radius=1)
-circle.move_to(ax.c2p(0, 0, 0))
-circle.set_color("#247bbf")
-self.add(ax, circle)
-self.play(Create(ax), Create(circle))
-
-eq = MathTex(latex=["x^2", "+", "y^2", "=", "1"], font_size=34)
-eq.move_to(ax.c2p(0, 1.5, 0))
-self.play(Write(eq))
-`;
-		/** 单次渲染的最长等待：卡住不能把页面吊死。 */
-		const TIMEOUT_MS = 6e4;
-		function ManimPage({ t }) {
-			const [restored] = (0, react.useState)(() => loadLab());
-			const [mode, setMode] = (0, react.useState)(restored.mode ?? "samples");
-			const [results, setResults] = (0, react.useState)(() => restored.results ?? {});
-			const [source, setSource] = (0, react.useState)(restored.source ?? FREE_SAMPLE);
-			const [fast, setFast] = (0, react.useState)(restored.fast ?? false);
-			const [shown, setShown] = (0, react.useState)(null);
-			const [running, setRunning] = (0, react.useState)(false);
-			/** 清缓存的结果回执（null = 还没清过）。 */
-			const [cacheNote, setCacheNote] = (0, react.useState)(null);
-			const [clearing, setClearing] = (0, react.useState)(false);
-			const runSeed = (0, react.useRef)(0);
-			/** 当前这条渲染完成的落点。 */
-			const waiter = (0, react.useRef)(null);
-			const timer = (0, react.useRef)(null);
-			(0, react.useEffect)(() => {
-				const pending = window.setTimeout(() => saveLab({
-					results,
-					fast,
-					source,
-					mode
-				}), 400);
-				return () => window.clearTimeout(pending);
-			}, [
-				results,
-				fast,
-				source,
-				mode
-			]);
-			/** 放掉正在等的那条（完成 / 超时 / 被停止 / 被换掉都走这里），超时器一并清掉。 */
-			const settle = (result) => {
-				const resolve = waiter.current;
-				waiter.current = null;
-				if (timer.current !== null) {
-					window.clearTimeout(timer.current);
-					timer.current = null;
-				}
-				setRunning(false);
-				resolve?.(result);
-			};
-			/** 切到某个任务并等它渲染完；返回结果（超时/被停止也给一个结果，不会吊死）。 */
-			const render = (job, useFast) => new Promise((resolve) => {
-				settle({
-					ok: false,
-					text: t("stopped")
-				});
-				waiter.current = resolve;
-				timer.current = window.setTimeout(() => settle({
-					ok: false,
-					text: t("timeout")
-				}), TIMEOUT_MS);
-				runSeed.current += 1;
-				setRunning(true);
-				setShown({
-					...job,
-					run: runSeed.current,
-					fast: useFast
-				});
-			});
-			const handleResult = (job, result) => {
-				if (job.kind === "sample") setResults((prev) => ({
-					...prev,
-					[job.id]: { ok: result.ok }
-				}));
-				settle(result);
-			};
-			const stop = () => {
-				settle({
-					ok: false,
-					text: t("stopped")
-				});
-				setShown(null);
-			};
-			/** 换模式先放掉手上这条：不然卡片跟着旧模式消失、等待却要吊到超时。 */
-			const switchMode = (next) => {
-				if (next === mode) return;
-				settle({
-					ok: false,
-					text: t("stopped")
-				});
-				setShown(null);
-				setMode(next);
-			};
-			const openSample = (id) => {
-				render({
-					kind: "sample",
-					id
-				}, fast);
-			};
-			const toggleFast = () => {
-				const next = !fast;
-				setFast(next);
-				if (shown === null) return;
-				const job = shown.kind === "free" ? {
-					kind: "free",
-					code: shown.code
-				} : {
-					kind: "sample",
-					id: shown.id
-				};
-				render(job, next);
-			};
-			const clearRecord = () => {
-				clearLab();
-				setResults({});
-				setSource(FREE_SAMPLE);
-				settle({
-					ok: false,
-					text: t("stopped")
-				});
-				setShown(null);
-			};
-			const emptySource = source.trim().length === 0;
-			const renderFree = () => {
-				if (emptySource) return;
-				render({
-					kind: "free",
-					code: source
-				}, fast);
-			};
-			/** 清掉本机缓存的按需包：想验「首次取包」就得先把缓存清干净。 */
-			const clearCache = async () => {
-				if (clearing) return;
-				setClearing(true);
-				try {
-					const removed = await clearPackageCache();
-					setCacheNote(t("cacheCleared", { count: removed.length }));
-				} catch (error) {
-					console.error("[manim-card] 清包缓存失败:", error);
-					setCacheNote(t("cacheClearFailed", { message: error instanceof Error ? error.message : String(error) }));
-				} finally {
-					setClearing(false);
-				}
-			};
-			/** 正在展示什么（样例标题 / 自由编辑）——缺省 = 还没选，或这条不属于当前模式。 */
-			const current = (() => {
-				if (shown === null) return null;
-				if (shown.kind === "free") {
-					if (mode !== "free") return null;
-					return {
-						data: {
-							python: shown.code,
-							callId: `free-${shown.run}`,
-							stepKey: `free-${shown.run}`,
-							seq: shown.run,
-							live: true
-						},
-						label: t("freeLabel"),
-						job: {
-							kind: "free",
-							code: shown.code
-						}
-					};
-				}
-				if (mode !== "samples") return null;
-				const sample = SAMPLES.find((item) => item.id === shown.id);
-				return sample === void 0 ? null : {
-					data: {
-						python: sample.python,
-						callId: `${sample.id}-${shown.run}`,
-						stepKey: `${sample.id}-${shown.run}`,
-						seq: shown.run,
-						live: true
-					},
-					label: sample.title,
-					job: {
-						kind: "sample",
-						id: sample.id
-					}
-				};
-			})();
-			/** 正在展示的这条样例（自由编辑时为 undefined）——expect 对照条挂在它上面。 */
-			const currentSample = shown !== null && shown.kind === "sample" && mode === "samples" ? SAMPLES.find((item) => item.id === shown.id) : void 0;
-			const { tried, failed } = tally(SAMPLES, results);
-			const fastToggle = /* @__PURE__ */ (0, react_jsx_runtime.jsx)(Tip, {
-				label: t("fastHint"),
-				align: "start",
-				children: /* @__PURE__ */ (0, react_jsx_runtime.jsx)("button", {
-					className: "mr-iconbtn",
-					type: "button",
-					"aria-pressed": fast,
-					"aria-label": t("fastOn"),
-					onClick: toggleFast,
-					children: /* @__PURE__ */ (0, react_jsx_runtime.jsx)(Zap, {
-						size: 15,
-						strokeWidth: 1.6
-					})
-				})
-			});
-			/** 清包缓存：开发期验「首次取包」用的——不清的话那条路只走得到一次。 */
-			const cacheButton = /* @__PURE__ */ (0, react_jsx_runtime.jsx)(Tip, {
-				label: t("clearCacheHint"),
-				align: "start",
-				children: /* @__PURE__ */ (0, react_jsx_runtime.jsx)("button", {
-					className: "mr-iconbtn",
-					type: "button",
-					disabled: clearing,
-					"aria-label": t("clearCache"),
-					onClick: () => void clearCache(),
-					children: /* @__PURE__ */ (0, react_jsx_runtime.jsx)(Eraser, {
-						size: 15,
-						strokeWidth: 1.6
-					})
-				})
-			});
-			const preview = /* @__PURE__ */ (0, react_jsx_runtime.jsxs)("section", {
-				className: "mr-preview",
-				children: [currentSample !== void 0 && /* @__PURE__ */ (0, react_jsx_runtime.jsxs)("div", {
-					className: "mr-expect",
-					children: [/* @__PURE__ */ (0, react_jsx_runtime.jsx)(Tip, {
-						label: t("expectHint"),
-						align: "start",
-						children: /* @__PURE__ */ (0, react_jsx_runtime.jsx)("span", {
-							className: "mr-expect-label",
-							children: t("expectLabel")
-						})
-					}), /* @__PURE__ */ (0, react_jsx_runtime.jsx)("span", {
-						className: "mr-expect-text",
-						children: currentSample.expectation
-					})]
-				}), current === null ? /* @__PURE__ */ (0, react_jsx_runtime.jsx)("p", {
-					className: "mr-empty",
-					children: t("previewEmpty")
-				}) : /* @__PURE__ */ (0, react_jsx_runtime.jsx)(ManimCard, {
-					data: current.data,
-					t,
-					label: current.label,
-					autoStart: true,
-					fast: shown?.fast === true,
-					onResult: (result) => handleResult(current.job, result)
-				}, current.data.callId)]
-			});
-			return /* @__PURE__ */ (0, react_jsx_runtime.jsxs)("div", {
-				className: "mr-page",
-				children: [
-					/* @__PURE__ */ (0, react_jsx_runtime.jsxs)("header", {
-						className: "mr-page-head",
-						children: [/* @__PURE__ */ (0, react_jsx_runtime.jsxs)("div", {
-							className: "mr-head-title",
-							children: [/* @__PURE__ */ (0, react_jsx_runtime.jsx)("h1", {
-								className: "mr-page-title",
-								children: t("title")
-							}), /* @__PURE__ */ (0, react_jsx_runtime.jsx)(Tip, {
-								label: t("lead"),
-								align: "start",
-								children: /* @__PURE__ */ (0, react_jsx_runtime.jsx)("button", {
-									className: "mr-iconbtn",
-									type: "button",
-									"aria-label": t("lead"),
-									children: /* @__PURE__ */ (0, react_jsx_runtime.jsx)(Info$2, {
-										size: 15,
-										strokeWidth: 1.6
-									})
-								})
-							})]
-						}), /* @__PURE__ */ (0, react_jsx_runtime.jsx)(Segmented, {
-							value: mode,
-							onChange: switchMode,
-							label: t("modeLabel"),
-							options: [{
-								value: "samples",
-								label: t("modeSamples")
-							}, {
-								value: "free",
-								label: t("modeFree")
-							}]
-						})]
-					}),
-					/* @__PURE__ */ (0, react_jsx_runtime.jsx)(EnvBar, { t }),
-					mode === "samples" ? /* @__PURE__ */ (0, react_jsx_runtime.jsxs)("div", {
-						className: "mr-workspace",
-						children: [/* @__PURE__ */ (0, react_jsx_runtime.jsxs)("aside", {
-							className: "mr-side",
-							children: [/* @__PURE__ */ (0, react_jsx_runtime.jsxs)("div", {
-								className: "mr-toolbar",
-								children: [
-									running && /* @__PURE__ */ (0, react_jsx_runtime.jsx)(Tip, {
-										label: t("stopHint"),
-										align: "start",
-										children: /* @__PURE__ */ (0, react_jsx_runtime.jsx)("button", {
-											className: "mr-iconbtn",
-											type: "button",
-											"aria-label": t("stop"),
-											onClick: stop,
-											children: /* @__PURE__ */ (0, react_jsx_runtime.jsx)(Square, {
-												size: 14,
-												strokeWidth: 1.6
-											})
-										})
-									}),
-									/* @__PURE__ */ (0, react_jsx_runtime.jsx)(Tip, {
-										label: t("clearRecordHint"),
-										align: "start",
-										children: /* @__PURE__ */ (0, react_jsx_runtime.jsx)("button", {
-											className: "mr-iconbtn",
-											type: "button",
-											"aria-label": t("clearRecord"),
-											onClick: clearRecord,
-											children: /* @__PURE__ */ (0, react_jsx_runtime.jsx)(Trash2, {
-												size: 15,
-												strokeWidth: 1.6
-											})
-										})
-									}),
-									fastToggle,
-									cacheButton,
-									/* @__PURE__ */ (0, react_jsx_runtime.jsx)("span", {
-										className: "mr-toolbar-count",
-										children: tried === 0 ? t("sampleCountIdle") : t("sampleCount", {
-											passed: tried - failed,
-											failed,
-											total: SAMPLES.length
-										})
-									}),
-									cacheNote !== null && /* @__PURE__ */ (0, react_jsx_runtime.jsx)("span", {
-										className: "mr-toolbar-note",
-										role: "status",
-										children: cacheNote
-									})
-								]
-							}), /* @__PURE__ */ (0, react_jsx_runtime.jsx)("div", {
-								className: "mr-side-scroll",
-								children: /* @__PURE__ */ (0, react_jsx_runtime.jsx)("div", {
-									className: "mr-ground-items",
-									children: SAMPLES.map((sample) => {
-										const state = stateOf(sample, results[sample.id]);
-										return /* @__PURE__ */ (0, react_jsx_runtime.jsxs)("button", {
-											className: "mr-ground-item",
-											type: "button",
-											"data-state": state,
-											"aria-pressed": shown?.kind === "sample" && shown.id === sample.id,
-											title: [sample.id, sample.expectation].join("\n"),
-											onClick: () => openSample(sample.id),
-											children: [
-												/* @__PURE__ */ (0, react_jsx_runtime.jsx)("span", {
-													className: "mr-ground-dot",
-													"aria-hidden": "true"
-												}),
-												/* @__PURE__ */ (0, react_jsx_runtime.jsx)("span", {
-													className: "mr-ground-name",
-													children: sample.title
-												}),
-												/* @__PURE__ */ (0, react_jsx_runtime.jsx)("span", {
-													className: "mr-ground-id",
-													children: sample.id
-												})
-											]
-										}, sample.id);
-									})
-								})
-							})]
-						}), /* @__PURE__ */ (0, react_jsx_runtime.jsx)("main", {
-							className: "mr-main",
-							children: preview
-						})]
-					}) : /* @__PURE__ */ (0, react_jsx_runtime.jsxs)("div", {
-						className: "mr-workspace mr-workspace-free",
-						children: [/* @__PURE__ */ (0, react_jsx_runtime.jsxs)("aside", {
-							className: "mr-side",
-							children: [/* @__PURE__ */ (0, react_jsx_runtime.jsx)("textarea", {
-								className: "mr-code mr-code-fill",
-								spellCheck: false,
-								value: source,
-								onChange: (event) => setSource(event.target.value)
-							}), /* @__PURE__ */ (0, react_jsx_runtime.jsxs)("div", {
-								className: "mr-toolbar",
-								children: [
-									running && /* @__PURE__ */ (0, react_jsx_runtime.jsx)(Tip, {
-										label: t("stopHint"),
-										align: "start",
-										children: /* @__PURE__ */ (0, react_jsx_runtime.jsx)("button", {
-											className: "mr-iconbtn",
-											type: "button",
-											"aria-label": t("stop"),
-											onClick: stop,
-											children: /* @__PURE__ */ (0, react_jsx_runtime.jsx)(Square, {
-												size: 14,
-												strokeWidth: 1.6
-											})
-										})
-									}),
-									/* @__PURE__ */ (0, react_jsx_runtime.jsxs)("button", {
-										className: "mr-btn primary",
-										type: "button",
-										disabled: emptySource,
-										onClick: renderFree,
-										children: [/* @__PURE__ */ (0, react_jsx_runtime.jsx)(Play, {
-											size: 13,
-											strokeWidth: 1.8,
-											"aria-hidden": "true"
-										}), t("render")]
-									}),
-									/* @__PURE__ */ (0, react_jsx_runtime.jsx)(Tip, {
-										label: t("sourceHint"),
-										align: "start",
-										children: /* @__PURE__ */ (0, react_jsx_runtime.jsx)("button", {
-											className: "mr-iconbtn",
-											type: "button",
-											"aria-label": t("sourceHint"),
-											children: /* @__PURE__ */ (0, react_jsx_runtime.jsx)(Info$2, {
-												size: 15,
-												strokeWidth: 1.6
-											})
-										})
-									}),
-									fastToggle,
-									cacheButton,
-									cacheNote !== null && /* @__PURE__ */ (0, react_jsx_runtime.jsx)("span", {
-										className: "mr-toolbar-note",
-										role: "status",
-										children: cacheNote
-									})
-								]
-							})]
-						}), /* @__PURE__ */ (0, react_jsx_runtime.jsx)("main", {
-							className: "mr-main",
-							children: preview
-						})]
-					})
-				]
-			});
-		}
-		//#endregion
-		//#region src/client/environment.ts
-		const client = createMachineClient({ environmentUrl: ENVIRONMENT_ROUTE });
-		/** 取探测计划（秒回：Host 只列要测什么，不跑命令）。 */
-		const loadEnvPlan = () => client.loadPlan();
-		/** 跑一项探测。失败抛错，由调用方把这一行标成出错（别的行不受影响）。 */
-		const probeEnv = (id) => client.probe(id);
-		//#endregion
-		//#region src/client/settings.tsx
-		/** 库的三态：已缓存在本机=绿实心；随包自带=灰实心（在，但不归这里管）；还没缓存=空心环。 */
-		const pkgTone = (state) => state === "cached" ? "ok" : state === "bundled" ? "idle" : "empty";
-		/** 状态点的读屏名（点的颜色与虚实是给眼睛看的，读屏得有一句话；内置那个词与键上的一致）。 */
-		const pkgStateKey = (state) => state === "cached" ? "pkgStateCached" : state === "bundled" ? "pkgBundled" : "pkgStateAbsent";
-		const envTone = (status) => status === "ok" ? "ok" : status === "missing" ? "warn" : "error";
-		/**
-		* 浏览器运行时卡片：数据全在核心包的环境状态里（订阅 `onEnvironmentStatus`），不走 Host 路由——
-		* 这些事发生在浏览器里，Host 问不到。与「本机环境」同属「环境」组：一个管渲染、一个管导出。
-		*/
-		function RuntimeCard({ t }) {
-			const status = useEnvironmentStatus();
-			const rows = [
-				{
-					id: "runtime",
-					tone: runtimeTone(status.runtime.phase),
-					label: t("rtRuntime"),
-					value: t(RUNTIME_PHRASE[status.runtime.phase]),
-					info: status.runtime.error ?? (status.runtime.indexURL === null ? t("rtNoLoader") : t("rtIndexWhy", { url: status.runtime.indexURL }))
-				},
-				{
-					id: "katex",
-					tone: katexTone(status.katex.phase),
-					label: t("rtKatex"),
-					value: t(KATEX_PHRASE[status.katex.phase]),
-					info: status.katex.error ?? (status.katex.baseURL === null ? t("rtKatexWhy") : t("rtKatexAt", { url: status.katex.baseURL }))
-				},
-				{
-					id: "webgl",
-					tone: capabilityTone(status.capabilities.webgl),
-					label: t("rtWebgl"),
-					value: t(status.capabilities.webgl ? "rtYes" : "rtNo"),
-					info: t("rtWebglWhy")
-				},
-				{
-					id: "wasm",
-					tone: capabilityTone(status.capabilities.wasm),
-					label: t("rtWasm"),
-					value: t(status.capabilities.wasm ? "rtYes" : "rtNo"),
-					info: t("rtWasmWhy")
-				},
-				{
-					id: "recorder",
-					tone: capabilityTone(status.capabilities.videoExport),
-					label: t("rtRecorder"),
-					value: t(status.capabilities.videoExport ? "rtYes" : "rtNo"),
-					info: t("rtRecorderWhy")
-				}
-			];
-			const subline = status.hints.length > 0 ? t("rtHints", { count: status.hints.length }) : t("rtAllReady");
-			return /* @__PURE__ */ (0, react_jsx_runtime.jsxs)("section", {
-				className: "mr-set-card",
-				children: [
-					/* @__PURE__ */ (0, react_jsx_runtime.jsx)("header", {
-						className: "mr-set-cardhead",
-						children: /* @__PURE__ */ (0, react_jsx_runtime.jsxs)("div", {
-							className: "mr-set-cardheadtext",
-							children: [/* @__PURE__ */ (0, react_jsx_runtime.jsx)("h3", {
-								className: "mr-set-cardtitle",
-								children: t("rtTitle")
-							}), /* @__PURE__ */ (0, react_jsx_runtime.jsx)("p", {
-								className: status.hints.length > 0 ? "mr-set-cardsub is-error" : "mr-set-cardsub",
-								role: "status",
-								children: subline
-							})]
-						})
-					}),
-					/* @__PURE__ */ (0, react_jsx_runtime.jsx)("div", {
-						className: "mr-set-rows",
-						children: rows.map((row) => /* @__PURE__ */ (0, react_jsx_runtime.jsxs)("div", {
-							className: "mr-set-row",
-							children: [/* @__PURE__ */ (0, react_jsx_runtime.jsxs)("span", {
-								className: "mr-set-cell is-check",
-								children: [/* @__PURE__ */ (0, react_jsx_runtime.jsx)("span", {
-									className: "mr-set-name",
-									children: row.label
-								}), /* @__PURE__ */ (0, react_jsx_runtime.jsx)(Info, {
-									name: row.label,
-									text: row.info
-								})]
-							}), /* @__PURE__ */ (0, react_jsx_runtime.jsxs)("span", {
-								className: "mr-set-cell is-status",
-								children: [/* @__PURE__ */ (0, react_jsx_runtime.jsx)(Dot, { tone: row.tone }), /* @__PURE__ */ (0, react_jsx_runtime.jsx)("span", { children: row.value })]
-							})]
-						}, row.id))
-					}),
-					status.hints.length > 0 && /* @__PURE__ */ (0, react_jsx_runtime.jsx)("p", {
-						className: "mr-set-cardfoot is-error",
-						role: "status",
-						children: status.hints.join("\n")
-					})
-				]
-			});
-		}
-		/**
-		* 探测项 id → 文案键。**写死这张表**是为了不去拼键名（拼出来的键查不到就成了空白文案）。
-		* Host 加了新探测项而这张表还没跟上时，退化成直接显示 id —— 比空着强，也一眼看得出要补文案。
-		*/
-		const ENV_COPY = {
-			python3: {
-				title: "envPython3",
-				why: "envPython3Why"
-			},
-			manim: {
-				title: "envManim",
-				why: "envManimWhy"
-			},
-			manimModule: {
-				title: "envManimModule",
-				why: "envManimModuleWhy"
-			},
-			ffmpeg: {
-				title: "envFfmpeg",
-				why: "envFfmpegWhy"
-			},
-			latex: {
-				title: "envLatex",
-				why: "envLatexWhy"
-			},
-			dvisvgm: {
-				title: "envDvisvgm",
-				why: "envDvisvgmWhy"
-			}
-		};
-		const envTitleKey = (id) => ENV_COPY[id]?.title ?? id;
-		const envWhyKey = (id) => ENV_COPY[id]?.why ?? id;
-		/** 环境行的右侧数值：就绪给版本，没装/出错给状态词（版本行可能很长，界面上要留得住）。 */
-		function envValue(t, result) {
-			if (result.status === "ok") return result.version;
-			return result.status === "missing" ? t("envMissing") : t("envError");
-		}
-		/**
-		* 本机环境卡片：逐项探测，逐行亮起来。
-		*
-		* 头部左侧报「几项就绪」（正在检测 / 拿不到计划时换成当时的状态），右上是「重新检测」。
-		* 探测顺序就是 Host 给的顺序（python3 → manim → manim 包 → ffmpeg → latex → dvisvgm），
-		* 一项失败标记那一行、继续下一项——一项超时不该让整块卡住。
-		*/
-		function EnvCard({ t }) {
-			const [plan, setPlan] = (0, react.useState)(null);
-			const [failure, setFailure] = (0, react.useState)(null);
-			const [results, setResults] = (0, react.useState)({});
-			const [running, setRunning] = (0, react.useState)(false);
-			const alive = (0, react.useRef)(true);
-			(0, react.useEffect)(() => () => {
-				alive.current = false;
-			}, []);
-			const run = (0, react.useCallback)(async (target) => {
-				setResults({});
-				setRunning(true);
-				for (const check of target.checks) {
-					let result;
-					try {
-						result = await probeEnv(check.id);
-					} catch (error) {
-						console.error(`[manim-card] 探测 ${check.id} 失败：`, error);
-						result = {
-							id: check.id,
-							status: "error",
-							path: null,
-							version: "",
-							detail: error instanceof Error ? error.message : String(error)
-						};
-					}
-					if (!alive.current) return;
-					setResults((previous) => ({
-						...previous,
-						[check.id]: result
-					}));
-				}
-				if (alive.current) setRunning(false);
-			}, []);
-			const load = (0, react.useCallback)(async () => {
-				setFailure(null);
-				setPlan(null);
-				try {
-					const next = await loadEnvPlan();
-					if (!alive.current) return;
-					setPlan(next);
-					run(next);
-				} catch (error) {
-					console.error("[manim-card] 取环境探测计划失败：", error);
-					if (alive.current) setFailure(error instanceof Error ? error.message : String(error));
-				}
-			}, [run]);
-			(0, react.useEffect)(() => {
-				load();
-			}, [load]);
-			const ready = Object.values(results).filter((result) => result.status === "ok").length;
-			const total = plan?.checks.length ?? 0;
-			const subline = failure !== null ? t("envPlanFailed", { message: failure }) : plan === null ? t("envProbing") : t("envReady", {
-				ready,
-				total
-			});
-			return /* @__PURE__ */ (0, react_jsx_runtime.jsxs)("section", {
-				className: "mr-set-group",
-				"aria-label": t("envTitle"),
-				children: [/* @__PURE__ */ (0, react_jsx_runtime.jsx)("h2", {
-					className: "mr-set-groupname",
-					children: t("envGroup")
-				}), /* @__PURE__ */ (0, react_jsx_runtime.jsx)("div", {
-					className: "mr-set-stack",
-					children: /* @__PURE__ */ (0, react_jsx_runtime.jsxs)("section", {
-						className: "mr-set-card",
-						children: [/* @__PURE__ */ (0, react_jsx_runtime.jsxs)("header", {
-							className: "mr-set-cardhead",
-							children: [/* @__PURE__ */ (0, react_jsx_runtime.jsxs)("div", {
-								className: "mr-set-cardheadtext",
-								children: [/* @__PURE__ */ (0, react_jsx_runtime.jsx)("h3", {
-									className: "mr-set-cardtitle",
-									children: t("envTitle")
-								}), /* @__PURE__ */ (0, react_jsx_runtime.jsx)("p", {
-									className: failure !== null ? "mr-set-cardsub is-error" : "mr-set-cardsub",
-									title: failure !== null ? subline : void 0,
-									role: "status",
-									children: subline
-								})]
-							}), /* @__PURE__ */ (0, react_jsx_runtime.jsx)("div", {
-								className: "mr-set-cardacts",
-								children: /* @__PURE__ */ (0, react_jsx_runtime.jsx)(Tip, {
-									label: t("envRerunHint"),
-									align: "end",
-									children: /* @__PURE__ */ (0, react_jsx_runtime.jsxs)("button", {
-										type: "button",
-										className: "mr-set-act",
-										disabled: running,
-										onClick: () => {
-											load();
-										},
-										children: [/* @__PURE__ */ (0, react_jsx_runtime.jsx)(RefreshCw, { size: 14 }), t("envRerun")]
-									})
-								})
-							})]
-						}), plan !== null && /* @__PURE__ */ (0, react_jsx_runtime.jsx)("div", {
-							className: "mr-set-rows",
-							children: plan.checks.map((check) => {
-								const result = results[check.id];
-								const tone = result === void 0 ? "busy" : envTone(result.status);
-								return /* @__PURE__ */ (0, react_jsx_runtime.jsxs)("div", {
-									className: "mr-set-row",
-									children: [/* @__PURE__ */ (0, react_jsx_runtime.jsxs)("span", {
-										className: "mr-set-cell is-check",
-										children: [/* @__PURE__ */ (0, react_jsx_runtime.jsx)("span", {
-											className: "mr-set-name",
-											children: t(envTitleKey(check.id))
-										}), /* @__PURE__ */ (0, react_jsx_runtime.jsx)(Info, {
-											name: t(envTitleKey(check.id)),
-											text: envInfo(t, check, result)
-										})]
-									}), /* @__PURE__ */ (0, react_jsx_runtime.jsxs)("span", {
-										className: "mr-set-cell is-status",
-										children: [/* @__PURE__ */ (0, react_jsx_runtime.jsx)(Dot, { tone }), result !== void 0 && /* @__PURE__ */ (0, react_jsx_runtime.jsx)("span", { children: envValue(t, result) })]
-									})]
-								}, check.id);
-							})
-						})]
-					})
-				})]
-			});
-		}
-		/**
-		* 环境项的 ⓘ：为什么看这项、找到了哪儿、实际跑的什么——页面上只留「名字 + 状态」，
-		* 这些解释性内容全部收在这里，悬浮/键盘聚焦才出现。
-		*/
-		function envInfo(t, check, result) {
-			const lines = [t(envWhyKey(check.id))];
-			if (result === void 0) lines.push(t("envProbing"));
-			else if (result.status === "ok") lines.push(t("envFoundAt", { path: result.path ?? "" }));
-			else lines.push(result.detail.length > 0 ? result.detail : t("envMissing"));
-			lines.push(t("envRan", { command: check.command }));
-			return lines.join("\n");
-		}
-		/** ⓘ 图标：说明的收口。可聚焦（聚焦即出说明），点了没有动作——它只是个「看解释」的入口。 */
-		function Info({ name, text }) {
-			return /* @__PURE__ */ (0, react_jsx_runtime.jsx)(Tip, {
-				label: text,
-				align: "start",
-				wide: true,
-				children: /* @__PURE__ */ (0, react_jsx_runtime.jsx)("button", {
-					type: "button",
-					className: "mr-set-info",
-					"aria-label": `${name}：${text}`,
-					children: /* @__PURE__ */ (0, react_jsx_runtime.jsx)(Info$2, { size: 13 })
-				})
-			});
-		}
-		/**
-		* Python 库：**两张卡片**——上面一张是「已缓存的库」清单（头部右上是刷新），
-		* 下面一张是「缓存其他库」（头部标题 + 一行短说明，输入框与按钮在卡片身体里）。
-		*
-		* 清单为什么不是全表：lock 里有近三百条，绝大多数人一辈子用不到——把常用的摆出来，
-		* 比让人在一个长列表里筛要快。**列表不是白名单**：清单里没有的包，直接写上名字就能取，
-		* 走的是同一条预缓存通道（也照样连依赖一起取）。手输过的包会留在表里，
-		* 于是「取回来了、想再清掉」这条路也在同一张表上闭环。
-		*
-		* 取/清都就地重问一次 Host（状态以后端为准），不本地猜。
-		*/
-		function PackagesCard({ t }) {
-			const [inventory, setInventory] = (0, react.useState)(null);
-			const [failure, setFailure] = (0, react.useState)(null);
-			const [manual, setManual] = (0, react.useState)("");
-			const [composing, setComposing] = (0, react.useState)(false);
-			const [extra, setExtra] = (0, react.useState)([]);
-			const [busy, setBusy] = (0, react.useState)(null);
-			const [note, setNote] = (0, react.useState)(null);
-			const [formNote, setFormNote] = (0, react.useState)(null);
-			const alive = (0, react.useRef)(true);
-			const manualId = (0, react.useId)();
-			(0, react.useEffect)(() => () => {
-				alive.current = false;
-			}, []);
-			const refresh = (0, react.useCallback)(async () => {
-				try {
-					const next = await loadPackages();
-					if (!alive.current) return;
-					setInventory(next);
-					setFailure(null);
-				} catch (error) {
-					console.error("[manim-card] 取包清单失败：", error);
-					if (alive.current) setFailure(error instanceof Error ? error.message : String(error));
-				}
-			}, []);
-			(0, react.useEffect)(() => {
-				refresh();
-			}, [refresh]);
-			const entries = inventory?.entries ?? [];
-			/** 表上要画的：常用那几个（固定顺序）+ 用户手输过的（去重、且不在常用里的）。 */
-			const shown = (0, react.useMemo)(() => {
-				const common = [];
-				const listed = /* @__PURE__ */ new Set();
-				for (const name of COMMON_PACKAGES) {
-					const entry = findPackage(entries, name);
-					if (entry !== void 0) {
-						common.push(entry);
-						listed.add(entry.name);
-					}
-				}
-				for (const name of extra) {
-					const entry = findPackage(entries, name);
-					if (entry !== void 0 && !listed.has(entry.name)) {
-						common.push(entry);
-						listed.add(entry.name);
-					}
-				}
-				return common;
-			}, [entries, extra]);
-			const counts = (0, react.useMemo)(() => {
-				let bundled = 0;
-				let cached = 0;
-				let bytes = 0;
-				for (const entry of entries) if (entry.state === "bundled") bundled += 1;
-				else if (entry.state === "cached") {
-					cached += 1;
-					bytes += entry.bytes ?? 0;
-				}
-				return {
-					bundled,
-					cached,
-					bytes
-				};
-			}, [entries]);
-			/**
-			* 输入框的补全虚影（按名字前缀）。
-			*
-			* 两个「不显示」的判断：
-			*  - 中文输入法组字期间不显示——组字中的字还没定型，虚影会跟着跳；
-			*  - 「已输入 + 要补的」整段太长时不显示：虚影是按输入框里的字往后接的，
-			*    一旦输入框内部滚动就对不上了。40 是照输入框实际宽度（内容列 564px 减去按钮，
-			*    13px 字号）能稳稳放下的字数取的——宁可长名字不给虚影，也不能给一截错位的。
-			*/
-			const ghost = (0, react.useMemo)(() => {
-				if (composing || manual.length === 0) return null;
-				const completion = completionFor(entries, manual);
-				if (completion === null || manual.length + completion.suffix.length > 40) return null;
-				return completion;
-			}, [
-				composing,
-				entries,
-				manual
-			]);
-			/** Tab / → 采纳虚影。只在真有虚影、且光标在末尾时接管，其余情况让默认行为照常走。 */
-			const acceptGhost = (event) => {
-				if (ghost === null) return;
-				if (event.key !== "Tab" && event.key !== "ArrowRight") return;
-				if (event.currentTarget.selectionStart !== manual.length) return;
-				event.preventDefault();
-				setManual(ghost.name);
-			};
-			/** 把它摆到表上（手输过的包留在表里，便于回头清理）。 */
-			const surface = (name) => {
-				setExtra((previous) => previous.includes(name) ? previous : [...previous, name]);
-			};
-			/**
-			* 取一个包（连依赖）：先算闭包，再一个一个取，进度落在按钮上。
-			* 名字不认识 / 已经在本机都当场说清楚，不去发无谓的请求。
-			*
-			* `fromForm` 只决定回执报在哪张卡片的脚注（补库卡片 vs 清单卡片），不改变取法。
-			*/
-			const fetchPackages = async (name, fromForm = false) => {
-				const say = fromForm ? setFormNote : setNote;
-				if (name.length === 0 || busy !== null) return;
-				say(null);
-				if (findPackage(entries, name) === void 0) {
-					say(t("pkgUnknown", { name }));
-					return;
-				}
-				surface(name);
-				const plan = prefetchPlan(entries, name);
-				if (plan.length === 0) {
-					say(t("pkgNothingToFetch", { name }));
-					return;
-				}
-				setBusy({
-					name,
-					done: 0,
-					total: plan.length
-				});
-				for (const [index, target] of plan.entries()) {
-					const outcome = await cachePackage(target);
-					if (!alive.current) return;
-					if (!outcome.ok) {
-						say(t("pkgFetchFailed", {
-							name: target,
-							error: outcome.error
-						}));
-						setBusy(null);
-						refresh();
-						return;
-					}
-					setBusy({
-						name,
-						done: index + 1,
-						total: plan.length
-					});
-					say(t("pkgFetchingNote", {
-						name,
-						done: index + 1,
-						total: plan.length
-					}));
-				}
-				setBusy(null);
-				say(t("pkgFetched", { count: plan.length }));
-				if (fromForm) setManual("");
-				await refresh();
-			};
-			/** 清掉某个包的本机缓存：它下次被用到会重新取一次。 */
-			const clearOne = async (name) => {
-				if (busy !== null) return;
-				setNote(null);
-				setBusy({
-					name,
-					done: 0,
-					total: 1
-				});
-				try {
-					await clearPackage(name);
-					if (!alive.current) return;
-					setNote(t("pkgCleared", { name }));
-				} catch (error) {
-					console.error(`[manim-card] 清理 ${name} 失败：`, error);
-					if (alive.current) setNote(t("pkgClearFailed", {
-						name,
-						error: error instanceof Error ? error.message : String(error)
-					}));
-				}
-				if (!alive.current) return;
-				setBusy(null);
-				await refresh();
-			};
-			return /* @__PURE__ */ (0, react_jsx_runtime.jsxs)("section", {
-				className: "mr-set-group",
-				"aria-label": t("pkgTitle"),
-				children: [/* @__PURE__ */ (0, react_jsx_runtime.jsx)("h2", {
-					className: "mr-set-groupname",
-					children: t("pkgTitle")
-				}), /* @__PURE__ */ (0, react_jsx_runtime.jsxs)("div", {
-					className: "mr-set-stack",
-					children: [/* @__PURE__ */ (0, react_jsx_runtime.jsxs)("section", {
-						className: "mr-set-card",
-						children: [
-							/* @__PURE__ */ (0, react_jsx_runtime.jsxs)("header", {
-								className: "mr-set-cardhead",
-								children: [/* @__PURE__ */ (0, react_jsx_runtime.jsx)("div", {
-									className: "mr-set-cardheadtext",
-									children: /* @__PURE__ */ (0, react_jsx_runtime.jsxs)("h3", {
-										className: "mr-set-cardtitle",
-										children: [t("pkgCardTitle"), inventory !== null && /* @__PURE__ */ (0, react_jsx_runtime.jsx)("span", {
-											className: "mr-set-cardcount",
-											children: t("pkgCountsShort", {
-												cached: counts.cached,
-												bytes: formatBytes(counts.bytes)
-											})
-										})]
-									})
-								}), /* @__PURE__ */ (0, react_jsx_runtime.jsx)("div", {
-									className: "mr-set-cardacts",
-									children: /* @__PURE__ */ (0, react_jsx_runtime.jsx)(Tip, {
-										label: t("pkgRefreshHint"),
-										align: "end",
-										children: /* @__PURE__ */ (0, react_jsx_runtime.jsxs)("button", {
-											type: "button",
-											className: "mr-set-act",
-											disabled: busy !== null,
-											onClick: () => {
-												refresh();
-											},
-											children: [/* @__PURE__ */ (0, react_jsx_runtime.jsx)(RefreshCw, { size: 14 }), t("pkgRefresh")]
-										})
-									})
-								})]
-							}),
-							inventory !== null && /* @__PURE__ */ (0, react_jsx_runtime.jsx)("div", {
-								className: "mr-set-rows is-light",
-								children: shown.map((entry) => /* @__PURE__ */ (0, react_jsx_runtime.jsxs)("div", {
-									className: "mr-set-row",
-									children: [
-										/* @__PURE__ */ (0, react_jsx_runtime.jsxs)("span", {
-											className: "mr-set-cell is-name",
-											children: [/* @__PURE__ */ (0, react_jsx_runtime.jsx)(Dot, {
-												tone: pkgTone(entry.state),
-												label: t(pkgStateKey(entry.state))
-											}), /* @__PURE__ */ (0, react_jsx_runtime.jsx)("span", {
-												className: "mr-set-name",
-												children: entry.name
-											})]
-										}),
-										/* @__PURE__ */ (0, react_jsx_runtime.jsx)("span", {
-											className: "mr-set-cell is-size",
-											children: entry.bytes === null ? "—" : formatBytes(entry.bytes)
-										}),
-										/* @__PURE__ */ (0, react_jsx_runtime.jsxs)("span", {
-											className: "mr-set-cell is-act",
-											children: [
-												entry.state === "bundled" && /* @__PURE__ */ (0, react_jsx_runtime.jsx)("button", {
-													type: "button",
-													className: "mr-set-act is-sm",
-													disabled: true,
-													children: t("pkgBundled")
-												}),
-												entry.state === "cached" && /* @__PURE__ */ (0, react_jsx_runtime.jsx)(Tip, {
-													label: t("pkgClearHint"),
-													align: "end",
-													children: /* @__PURE__ */ (0, react_jsx_runtime.jsx)("button", {
-														type: "button",
-														className: "mr-set-act is-sm",
-														disabled: busy !== null,
-														onClick: () => {
-															clearOne(entry.name);
-														},
-														children: t("pkgClear")
-													})
-												}),
-												entry.state === "absent" && /* @__PURE__ */ (0, react_jsx_runtime.jsx)(Tip, {
-													label: t("pkgCacheHint"),
-													align: "end",
-													children: /* @__PURE__ */ (0, react_jsx_runtime.jsx)("button", {
-														type: "button",
-														className: "mr-set-act is-sm",
-														disabled: busy !== null,
-														onClick: () => {
-															fetchPackages(entry.name);
-														},
-														children: t("pkgCache")
-													})
-												})
-											]
-										})
-									]
-								}, entry.name))
-							}),
-							failure !== null && /* @__PURE__ */ (0, react_jsx_runtime.jsx)("p", {
-								className: "mr-set-cardfoot is-error",
-								role: "status",
-								children: t("pkgFailed", { message: failure })
-							}),
-							note !== null && /* @__PURE__ */ (0, react_jsx_runtime.jsx)("p", {
-								className: "mr-set-cardfoot",
-								role: "status",
-								children: note
-							})
-						]
-					}), /* @__PURE__ */ (0, react_jsx_runtime.jsxs)("section", {
-						className: "mr-set-card",
-						children: [
-							/* @__PURE__ */ (0, react_jsx_runtime.jsx)("header", {
-								className: "mr-set-cardhead",
-								children: /* @__PURE__ */ (0, react_jsx_runtime.jsxs)("div", {
-									className: "mr-set-cardheadtext",
-									children: [/* @__PURE__ */ (0, react_jsx_runtime.jsx)("h3", {
-										className: "mr-set-cardtitle",
-										children: t("pkgAddTitle")
-									}), /* @__PURE__ */ (0, react_jsx_runtime.jsx)("p", {
-										className: "mr-set-cardsub",
-										children: t("pkgAddHint")
-									})]
-								})
-							}),
-							/* @__PURE__ */ (0, react_jsx_runtime.jsxs)("form", {
-								className: "mr-set-addrow",
-								onSubmit: (event) => {
-									event.preventDefault();
-									fetchPackages(manual.trim(), true);
-								},
-								children: [/* @__PURE__ */ (0, react_jsx_runtime.jsxs)("span", {
-									className: "mr-set-field",
-									children: [ghost !== null && /* @__PURE__ */ (0, react_jsx_runtime.jsxs)("span", {
-										className: "mr-set-mirror",
-										"aria-hidden": "true",
-										children: [/* @__PURE__ */ (0, react_jsx_runtime.jsx)("span", {
-											className: "mr-set-typed",
-											children: manual
-										}), /* @__PURE__ */ (0, react_jsx_runtime.jsx)("span", {
-											className: "mr-set-ghost",
-											children: ghost.suffix
-										})]
-									}), /* @__PURE__ */ (0, react_jsx_runtime.jsx)("input", {
-										id: manualId,
-										className: "mr-set-fieldinput",
-										type: "text",
-										value: manual,
-										spellCheck: false,
-										placeholder: t("pkgManual"),
-										"aria-label": t("pkgManualLabel"),
-										autoComplete: "off",
-										autoCapitalize: "off",
-										autoCorrect: "off",
-										onChange: (event) => setManual(event.target.value),
-										onCompositionStart: () => setComposing(true),
-										onCompositionEnd: () => setComposing(false),
-										onKeyDown: acceptGhost
-									})]
-								}), /* @__PURE__ */ (0, react_jsx_runtime.jsx)("button", {
-									type: "submit",
-									className: "mr-btn primary tall",
-									disabled: busy !== null || manual.trim().length === 0,
-									children: t("pkgCache")
-								})]
-							}),
-							formNote !== null && /* @__PURE__ */ (0, react_jsx_runtime.jsx)("p", {
-								className: "mr-set-cardfoot",
-								role: "status",
-								children: formNote
-							})
-						]
-					})]
-				})]
-			});
-		}
-		/** 设置页正文：环境组两张卡（浏览器运行时 + 本机环境），库组一张卡加一张补库卡。 */
-		function ManimSettingsPage({ t }) {
-			return /* @__PURE__ */ (0, react_jsx_runtime.jsxs)("section", {
-				className: "mr-set",
-				"aria-label": "manim-card",
-				children: [/* @__PURE__ */ (0, react_jsx_runtime.jsxs)("section", {
-					className: "mr-set-group",
-					"aria-label": t("envGroup"),
-					children: [/* @__PURE__ */ (0, react_jsx_runtime.jsx)("h2", {
-						className: "mr-set-groupname",
-						children: t("envGroup")
-					}), /* @__PURE__ */ (0, react_jsx_runtime.jsxs)("div", {
-						className: "mr-set-stack",
-						children: [/* @__PURE__ */ (0, react_jsx_runtime.jsx)(RuntimeCard, { t }), /* @__PURE__ */ (0, react_jsx_runtime.jsx)(EnvCard, { t })]
-					})]
-				}), /* @__PURE__ */ (0, react_jsx_runtime.jsx)(PackagesCard, { t })]
-			});
-		}
-		//#endregion
 		//#region src/client/definition.ts
 		/** 工具参数是 JSON 字符串，坏数据一律当空对象（卡片会落到"数据不完整"占位）。 */
 		function safeArguments(raw) {
@@ -238008,31 +236897,6 @@ self.play(Write(eq))
 		*/
 		const NS = "manimCard";
 		const DICT = { zh: {
-			title: "Manim 卡片",
-			lead: "本页验收本插件在宿主里的功能：卡片渲染、播放控制、查看代码、导出 mp4、预检报错。样例是内置的一小集（打进插件，正式安装也可用）；语料回归网在核心包 manim-live 仓（corpus/），与本页无关。",
-			modeLabel: "模式",
-			modeSamples: "样例",
-			modeFree: "自定义代码",
-			sampleCountIdle: "尚未跑过",
-			sampleCount: "{passed} / {total} 通过 · {failed} 未通过",
-			clearCache: "清除已下载的库",
-			clearCacheHint: "把本机已经下载的第三方库删掉。想再看一次「首次下载」的过程、或让某个库重新联网下载时用它；已经加载进当前页面的库要刷新页面才会卸掉。",
-			cacheCleared: "已删掉 {count} 个库",
-			cacheClearFailed: "清除失败：{message}",
-			stop: "停止",
-			stopHint: "停下正在进行的这一次渲染",
-			clearRecord: "清除记录",
-			clearRecordHint: "清掉已保存的渲染结果与自定义代码，下次从头开始",
-			fastOn: "极速渲染",
-			fastHint: "极速：不等 run_time 与 wait，直接落到终态。连跑多条样例用；看动画过程请关掉。updater 驱动的轨迹仍会被推进，不会变成空的。",
-			expectLabel: "预期",
-			expectHint: "这条样例应该看到什么。跑通了只说明「没炸」；画得对不对，要对着这句话看。「应当被拒绝」那条反过来——渲染失败才算通过。",
-			previewEmpty: "从左边点一条样例，或切到「自定义代码」写一段——结果出现在这里。",
-			sourceHint: "优先写完整的 Manim Python 文件（from manim import * + class X(Scene): def construct(self): …）；只写 construct 体也收。标准 Python 3 语法都可用。",
-			freeLabel: "自定义代码",
-			render: "渲染",
-			timeout: "渲染超时（60 秒没有返回）",
-			stopped: "已停止",
 			ok: "渲染完成",
 			fail: "渲染失败",
 			loadingPackages: "正在加载 {names}…",
@@ -238105,23 +236969,6 @@ self.play(Write(eq))
 			rtWebglWhy: "WebGL 是画面本身的出口；没有它，卡片渲染不出任何东西。",
 			rtWasmWhy: "WebAssembly 是 Python 解释器的运行基础；没有它，所有渲染都起不来。",
 			rtRecorderWhy: "有它才能在浏览器里逐帧导出视频（WebCodecs 或 MediaRecorder）；缺它只影响这一种导出方式，渲染与本机 mp4 导出都不受影响。",
-			envbarLabel: "环境状态",
-			chipLocal: "本机 Manim",
-			chipRuntime: "运行时",
-			chipKatex: "公式样式",
-			chipCaps: "浏览器能力",
-			chipReady: "就绪",
-			chipChecking: "检测中…",
-			chipMissing: "缺 {count} 项",
-			chipUnknown: "查不到",
-			chipLocalMissing: "本机还缺：{items}（导出 mp4 要用这些）。",
-			chipRuntimeCold: "运行时还没加载：第一次渲染要先把它下载下来（约 13 MB），可以先按「立即预热」拉起来。",
-			envbarWarmup: "立即预热",
-			envbarWarming: "正在预热…",
-			envbarWarmed: "运行时已就绪",
-			envbarWarmFailed: "预热失败：{message}",
-			envbarReprobe: "重新检测",
-			envbarClose: "收起",
 			renderEnvBlocked: "这台机器上还有条件没满足，可能正是它渲染不出来的原因：",
 			pkgTitle: "Python 库",
 			pkgCardTitle: "已缓存的库",
@@ -238150,7 +236997,7 @@ self.play(Write(eq))
 		} };
 		//#endregion
 		//#region \0plugin-css:src/client/styles.css.mjs
-		const css = "/*! tailwindcss v4.3.3 | MIT License | https://tailwindcss.com */\n@layer properties{@supports (((-webkit-hyphens:none)) and (not (margin-trim:inline))) or ((-moz-orient:inline) and (not (color:rgb(from red r g b)))){*,:before,:after,::backdrop{--tw-rotate-x:initial;--tw-rotate-y:initial;--tw-rotate-z:initial;--tw-skew-x:initial;--tw-skew-y:initial;--tw-border-style:solid;--tw-ordinal:initial;--tw-slashed-zero:initial;--tw-numeric-figure:initial;--tw-numeric-spacing:initial;--tw-numeric-fraction:initial;--tw-shadow:0 0 #0000;--tw-shadow-color:initial;--tw-shadow-alpha:100%;--tw-inset-shadow:0 0 #0000;--tw-inset-shadow-color:initial;--tw-inset-shadow-alpha:100%;--tw-ring-color:initial;--tw-ring-shadow:0 0 #0000;--tw-inset-ring-color:initial;--tw-inset-ring-shadow:0 0 #0000;--tw-ring-inset:initial;--tw-ring-offset-width:0px;--tw-ring-offset-color:#fff;--tw-ring-offset-shadow:0 0 #0000;--tw-outline-style:solid;--tw-blur:initial;--tw-brightness:initial;--tw-contrast:initial;--tw-grayscale:initial;--tw-hue-rotate:initial;--tw-invert:initial;--tw-opacity:initial;--tw-saturate:initial;--tw-sepia:initial;--tw-drop-shadow:initial;--tw-drop-shadow-color:initial;--tw-drop-shadow-alpha:100%;--tw-drop-shadow-size:initial;--tw-ease:initial}}}@layer theme{:root,:host{--spacing:.25rem;--ease-in-out:cubic-bezier(.4, 0, .2, 1);--default-transition-duration:.15s;--default-transition-timing-function:cubic-bezier(.4, 0, .2, 1)}}@layer utilities{.collapse{visibility:collapse}.invisible{visibility:hidden}.visible{visibility:visible}.absolute{position:absolute}.fixed{position:fixed}.relative{position:relative}.static{position:static}.sticky{position:sticky}.container{width:100%;@media (width>=40rem){max-width:40rem}@media (width>=48rem){max-width:48rem}@media (width>=64rem){max-width:64rem}@media (width>=80rem){max-width:80rem}@media (width>=96rem){max-width:96rem}}.block{display:block}.contents{display:contents}.flex{display:flex}.flow-root{display:flow-root}.grid{display:grid}.hidden{display:none}.inline{display:inline}.inline-block{display:inline-block}.inline-flex{display:inline-flex}.inline-grid{display:inline-grid}.inline-table{display:inline-table}.list-item{display:list-item}.table{display:table}.table\\!{display:table!important}.table-caption{display:table-caption}.table-cell{display:table-cell}.table-column{display:table-column}.table-column-group{display:table-column-group}.table-footer-group{display:table-footer-group}.table-header-group{display:table-header-group}.table-row{display:table-row}.table-row-group{display:table-row-group}.size-1{width:var(--spacing);height:var(--spacing)}.h-40{height:calc(var(--spacing) * 40)}.h-84{height:calc(var(--spacing) * 84)}.h-120{height:calc(var(--spacing) * 120)}.flex-shrink,.shrink{flex-shrink:1}.grow{flex-grow:1}.transform{transform:var(--tw-rotate-x,) var(--tw-rotate-y,) var(--tw-rotate-z,) var(--tw-skew-x,) var(--tw-skew-y,)}.resize{resize:both}.truncate{text-overflow:ellipsis;white-space:nowrap;overflow:hidden}.rounded{border-radius:.25rem}.border{border-style:var(--tw-border-style);border-width:1px}.break-all{word-break:break-all}.capitalize{text-transform:capitalize}.lowercase{text-transform:lowercase}.uppercase{text-transform:uppercase}.italic{font-style:italic}.ordinal{--tw-ordinal:ordinal;font-variant-numeric:var(--tw-ordinal,) var(--tw-slashed-zero,) var(--tw-numeric-figure,) var(--tw-numeric-spacing,) var(--tw-numeric-fraction,)}.line-through{text-decoration-line:line-through}.overline{text-decoration-line:overline}.underline{text-decoration-line:underline}.shadow{--tw-shadow:0 1px 3px 0 var(--tw-shadow-color,#0000001a), 0 1px 2px -1px var(--tw-shadow-color,#0000001a);box-shadow:var(--tw-inset-shadow), var(--tw-inset-ring-shadow), var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow)}.ring{--tw-ring-shadow:var(--tw-ring-inset,) 0 0 0 calc(1px + var(--tw-ring-offset-width)) var(--tw-ring-color,currentcolor);box-shadow:var(--tw-inset-shadow), var(--tw-inset-ring-shadow), var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow)}.outline{outline-style:var(--tw-outline-style);outline-width:1px}.blur{--tw-blur:blur(8px);filter:var(--tw-blur,) var(--tw-brightness,) var(--tw-contrast,) var(--tw-grayscale,) var(--tw-hue-rotate,) var(--tw-invert,) var(--tw-saturate,) var(--tw-sepia,) var(--tw-drop-shadow,)}.grayscale{--tw-grayscale:grayscale(100%);filter:var(--tw-blur,) var(--tw-brightness,) var(--tw-contrast,) var(--tw-grayscale,) var(--tw-hue-rotate,) var(--tw-invert,) var(--tw-saturate,) var(--tw-sepia,) var(--tw-drop-shadow,)}.invert{--tw-invert:invert(100%);filter:var(--tw-blur,) var(--tw-brightness,) var(--tw-contrast,) var(--tw-grayscale,) var(--tw-hue-rotate,) var(--tw-invert,) var(--tw-saturate,) var(--tw-sepia,) var(--tw-drop-shadow,)}.filter{filter:var(--tw-blur,) var(--tw-brightness,) var(--tw-contrast,) var(--tw-grayscale,) var(--tw-hue-rotate,) var(--tw-invert,) var(--tw-saturate,) var(--tw-sepia,) var(--tw-drop-shadow,)}.transition{transition-property:color,background-color,border-color,outline-color,text-decoration-color,fill,stroke,--tw-gradient-from,--tw-gradient-via,--tw-gradient-to,opacity,box-shadow,transform,translate,scale,rotate,filter,-webkit-backdrop-filter,backdrop-filter,display,content-visibility,overlay,pointer-events;transition-timing-function:var(--tw-ease,var(--default-transition-timing-function));transition-duration:var(--tw-duration,var(--default-transition-duration))}.ease-in-out{--tw-ease:var(--ease-in-out);transition-timing-function:var(--ease-in-out)}}.mr-page{box-sizing:border-box;height:100%;color:var(--dsw-alias-label-primary);flex-direction:column;align-items:center;padding:0 clamp(24px,4vw,48px);display:flex;overflow:hidden}.mr-page-head,.mr-workspace{width:100%;max-width:1160px}.mr-page-head{box-sizing:border-box;flex:none;justify-content:space-between;align-items:center;gap:16px;padding-top:28px;display:flex}[data-platform=darwin] .mr-page-head{padding-top:calc(28px + var(--dsh-frame-top-clearance,0px))}.mr-head-title{align-items:center;gap:2px;min-width:0;display:flex}.mr-page-title{margin:0;font-size:20px;font-weight:500;line-height:28px}.mr-envbar-wrap{flex:none;width:100%;max-width:1160px;padding-top:10px}.mr-envbar{flex-wrap:wrap;align-items:center;gap:6px;display:flex}.mr-chip{box-sizing:border-box;border-radius:var(--dsw-radius-sm);height:28px;font:inherit;white-space:nowrap;color:var(--dsw-alias-label-secondary);background:0 0;border:.5px solid #0000;align-items:center;gap:6px;padding:0 8px;font-size:12px;font-weight:500;line-height:18px;display:inline-flex}.mr-chip-name{color:var(--dsw-alias-label-tertiary);font-weight:400}.mr-chip-value{font-variant-numeric:tabular-nums}button.mr-chip{cursor:pointer}button.mr-chip:hover{background:var(--dsw-alias-interactive-bg-hover)}button.mr-chip:focus-visible{outline:2px solid var(--dsw-alias-state-business-primary);outline-offset:2px}.mr-chip[data-tone=ok],.mr-chip[data-tone=empty]{border-color:var(--dsw-alias-border-l4);color:var(--dsw-alias-label-secondary)}.mr-chip[data-tone=busy]{border-color:var(--dsw-alias-border-l4)}.mr-chip[data-tone=idle]{background:var(--dsw-alias-bg-module-platform);color:var(--dsw-alias-label-secondary)}.mr-chip[data-tone=warn]{background:var(--dsw-alias-state-warn-tertiary);border-color:var(--dsw-alias-state-warn-label);@supports (color:color-mix(in lab, red, red)){border-color:color-mix(in srgb, var(--dsw-alias-state-warn-label) 20%, transparent)}color:var(--dsw-alias-state-warn-label)}.mr-chip[data-tone=error]{background:var(--dsw-alias-state-error-primary);@supports (color:color-mix(in lab, red, red)){background:color-mix(in srgb, var(--dsw-alias-state-error-primary) 10%, transparent)}border-color:var(--dsw-alias-state-error-primary);@supports (color:color-mix(in lab, red, red)){border-color:color-mix(in srgb, var(--dsw-alias-state-error-primary) 20%, transparent)}color:var(--dsw-alias-state-error-primary)}.mr-envbar-note{color:var(--dsw-alias-label-secondary);font-size:12px;line-height:18px}.mr-envpanel{border:.5px solid var(--dsw-alias-border-l2);border-radius:var(--dsw-radius-md);background:var(--dsw-alias-bg-layer-1);margin-top:8px;padding:10px 12px}.mr-envpanel-list{margin:0;padding-left:18px}.mr-envpanel-list>li{color:var(--dsw-alias-label-secondary);font-size:12px;line-height:18px}.mr-envpanel-list>li+li{margin-top:4px}.mr-envpanel-empty{color:var(--dsw-alias-label-tertiary);margin:0;font-size:12px;line-height:18px}.mr-envpanel-acts{align-items:center;gap:8px;margin-top:8px;display:flex}.mr-workspace{flex:1;grid-template-columns:minmax(240px,300px) minmax(0,1fr);gap:16px;min-height:0;padding:16px 0 24px;display:grid}.mr-workspace-free{grid-template-columns:minmax(300px,1fr) minmax(0,1.25fr)}.mr-side{flex-direction:column;gap:8px;min-width:0;min-height:0;display:flex}.mr-side-scroll{flex-direction:column;flex:1;gap:10px;min-height:0;padding-right:4px;display:flex;overflow:auto}.mr-main{flex-direction:column;gap:16px;min-width:0;min-height:0;padding-right:4px;display:flex;overflow:auto}.mr-preview{flex:none}.mr-empty{text-align:center;color:var(--dsw-alias-label-tertiary);margin:0;padding:48px 0;font-size:13px;line-height:20px}.mr-toolbar{z-index:5;flex-wrap:wrap;flex:none;align-items:center;gap:4px;display:flex;position:relative}.mr-toolbar-count{color:var(--dsw-alias-label-tertiary);font-variant-numeric:tabular-nums;margin-left:auto;font-size:12px;line-height:18px}.mr-tip{display:inline-flex;position:relative}.mr-tip-bubble{z-index:40;pointer-events:none;box-sizing:border-box;border-radius:var(--dsw-radius-sm);background:var(--dsw-alias-tooltip-bg);width:max-content;max-width:300px;color:var(--dsw-static-neutral-bluish-00);white-space:pre-line;overflow-wrap:break-word;opacity:0;visibility:hidden;padding:3px 7px;font-size:13px;font-weight:400;line-height:20px;position:absolute;top:calc(100% + 6px);left:50%;transform:translate(-50%)}.mr-tip[data-align=start] .mr-tip-bubble{left:0;transform:none}.mr-tip[data-align=end] .mr-tip-bubble{left:auto;right:0;transform:none}.mr-tip:hover .mr-tip-bubble,.mr-tip>:focus-visible~.mr-tip-bubble{opacity:1;visibility:visible}.mr-tip-bubble.is-wide{max-width:440px}.mr-seg{border-radius:var(--dsw-radius-md);background:var(--dsw-alias-interactive-bg-hover);flex:none;grid-auto-columns:1fr;grid-auto-flow:column;gap:2px;padding:4px;display:inline-grid;position:relative}.mr-seg-indicator{width:calc((100% - 8px - 2px * (var(--mr-seg-count,2) - 1)) / var(--mr-seg-count,2));border-radius:var(--dsw-radius-sm);background:var(--dsw-alias-bg-layer-1);height:calc(100% - 8px);box-shadow:var(--dsw-elevation-soft);transform:translateX(calc(var(--mr-seg-index,0) * (100% + 2px)));pointer-events:none;border:0;transition:transform .16s;position:absolute;top:4px;left:4px}.mr-seg-tab{box-sizing:border-box;z-index:1;border-radius:var(--dsw-radius-sm);height:28px;color:var(--dsw-alias-label-secondary);font:inherit;white-space:nowrap;cursor:pointer;background:0 0;border:0;padding:0 16px;font-size:13px;font-weight:500;line-height:20px;transition:color .12s;position:relative}.mr-seg-tab:hover:not(:disabled),.mr-seg-tab[aria-selected=true]{color:var(--dsw-alias-label-primary)}.mr-seg-tab:disabled{cursor:default;opacity:.4}.mr-seg-tab:focus-visible{outline:var(--dsw-focus-ring-width,2px) solid var(--dsw-alias-state-business-primary);outline-offset:-2px}@media (prefers-reduced-motion:reduce){.mr-seg-indicator,.mr-seg-tab{transition:none}}.mr-btn{box-sizing:border-box;cursor:pointer;border-radius:var(--dsw-radius-sm);height:28px;color:var(--dsw-alias-label-primary);background:0 0;border:none;justify-content:center;align-items:center;gap:4px;padding:0 10px;font-size:12px;line-height:18px;display:inline-flex}.mr-btn:disabled{cursor:not-allowed;opacity:.4}.mr-btn.primary{background:var(--dsw-alias-button-primary-fill);color:var(--dsw-alias-label-primary-foreground)}.mr-btn.primary:hover:not(:disabled){background:var(--dsw-alias-button-primary-hover)}.mr-btn.outline{border:.5px solid var(--dsw-alias-border-l2);color:var(--dsw-alias-label-primary)}.mr-btn.outline:hover:not(:disabled){background:var(--dsw-alias-interactive-bg-hover)}.mr-btn:focus-visible{outline:2px solid var(--dsw-alias-state-business-primary);outline-offset:2px}.mr-btn.tall{border-radius:var(--dsw-radius-md);height:36px;padding:0 16px;font-size:14px;line-height:22px}.mr-iconbtn{box-sizing:border-box;border-radius:var(--dsw-radius-sm);cursor:pointer;width:24px;height:24px;color:var(--dsw-alias-label-secondary);background:0 0;border:none;flex:none;justify-content:center;align-items:center;padding:0;display:inline-flex}.mr-iconbtn:hover:not(:disabled){background:var(--dsw-alias-interactive-bg-hover);color:var(--dsw-alias-label-primary)}.mr-iconbtn:disabled{cursor:not-allowed;opacity:.4}.mr-iconbtn:focus-visible{outline:2px solid var(--dsw-alias-state-business-primary);outline-offset:2px}.mr-iconbtn[aria-pressed=true]{background:var(--dsw-alias-interactive-bg-hover);color:var(--dsw-alias-state-business-primary)}.mr-code{box-sizing:border-box;resize:vertical;border:.5px solid var(--dsw-alias-border-l4);border-radius:var(--dsw-radius-md);background:var(--dsw-alias-bg-layer-1);width:100%;min-height:190px;color:var(--dsw-alias-label-primary);font-family:var(--ds-font-family-code);tab-size:2;padding:8px 10px;font-size:12px;line-height:18px;display:block}.mr-code-fill{resize:none;flex:1;min-height:0;margin:0}.mr-code:focus-visible{outline:2px solid var(--dsw-alias-state-business-primary);outline-offset:0}.mr-toolbar-note{color:var(--dsw-alias-label-secondary);font-size:12px;line-height:18px}.mr-ground-items{flex-direction:column;display:flex}.mr-ground-item{text-align:start;box-sizing:border-box;border-radius:var(--dsw-radius-sm);cursor:pointer;width:100%;height:28px;color:var(--dsw-alias-label-primary);background:0 0;border:none;align-items:center;gap:8px;padding:0 8px;display:flex}.mr-ground-item:hover,.mr-ground-item[aria-pressed=true]{background:var(--dsw-alias-interactive-bg-hover)}.mr-ground-item:focus-visible{outline:2px solid var(--dsw-alias-state-business-primary);outline-offset:-2px}.mr-ground-dot{border:.5px solid var(--dsw-alias-border-l3);background:0 0;border-radius:50%;flex:none;width:7px;height:7px}.mr-ground-item[data-state=ok] .mr-ground-dot{border-color:var(--dsw-alias-state-success-primary);background:var(--dsw-alias-state-success-primary)}.mr-ground-item[data-state=fail] .mr-ground-dot{border-color:var(--dsw-alias-state-error-primary);background:var(--dsw-alias-state-error-primary)}.mr-ground-name{flex:none;font-size:13px;line-height:20px}.mr-ground-id{text-overflow:ellipsis;white-space:nowrap;text-align:end;min-width:0;font-family:var(--ds-font-family-code);color:var(--dsw-alias-label-tertiary);flex:1;margin-left:auto;font-size:11px;line-height:16px;overflow:hidden}.mr-expect{box-sizing:border-box;border:1px solid var(--dsw-alias-border-l3);border-radius:var(--dsw-radius-sm);background:var(--dsw-alias-bg-layer-1);align-items:baseline;gap:8px;padding:8px 10px;display:flex}.mr-expect-label{color:var(--dsw-alias-label-secondary);cursor:help;flex:none;font-size:12px;font-weight:500;line-height:18px}.mr-expect-text{min-width:0;color:var(--dsw-alias-label-primary);overflow-wrap:break-word;flex:1;font-size:12px;line-height:18px}.mr-chatcard-body{margin-top:12px;position:relative}.mr-chatcard{box-sizing:border-box;border:.5px solid var(--dsw-alias-settings-card-stroke);border-radius:var(--dsw-radius-xl);background:var(--dsw-alias-settings-card-fill);color:var(--dsw-alias-label-primary);margin:6px 0;padding:10px 12px}.mr-chatcard-head{align-items:center;gap:6px;height:32px;display:flex}.mr-chatcard-label{flex:none;font-size:13px;font-weight:500;line-height:20px}.mr-chatcard-spacer{flex:1;min-width:0}.mr-chatcard-foot{flex-direction:column;gap:4px;margin-top:8px;display:flex}.mr-chatcard-footrow{align-items:center;gap:6px;font-size:13px;line-height:20px;display:flex}.mr-chatcard-footrow.is-ok{color:var(--dsw-alias-state-success-primary)}.mr-chatcard-footrow.is-busy{color:var(--dsw-alias-label-secondary)}.mr-chatcard-footrow.is-warn{color:var(--dsw-alias-state-warn-primary)}.mr-chatcard-footrow.is-error{white-space:pre-wrap;word-break:break-word;color:var(--dsw-alias-state-error-primary);align-items:flex-start}.mr-chatcard-footrow.is-error>svg{margin-top:3px}.mr-chatcard-footrow>svg,.mr-chatcard-footrow>.mr-spinner{flex:none}.mr-chatcard-footrow.is-envhint{align-items:flex-start}.mr-chatcard-footrow.is-envhint>svg{margin-top:3px}.mr-chatcard-envhint{min-width:0}.mr-chatcard-envlist{margin:4px 0 0;padding-left:16px}.mr-chatcard-envlist>li{overflow-wrap:anywhere}.mr-chatcard-envlist>li+li{margin-top:2px}.mr-chatcard-pathwrap{flex:1;min-width:0;display:flex}.mr-chatcard-path{min-width:0;font:inherit;color:inherit;text-align:left;text-overflow:ellipsis;white-space:nowrap;cursor:pointer;background:0 0;border:0;flex:1;padding:0;overflow:hidden}.mr-chatcard-path:hover{text-decoration:underline}.mr-chatcard-path:focus-visible{outline:2px solid var(--dsw-alias-state-business-primary);outline-offset:2px;border-radius:var(--dsw-radius-sm)}.mr-stage{aspect-ratio:16/9;border:.5px solid var(--dsw-alias-border-l3);border-radius:var(--dsw-radius-md);background:var(--dsw-alias-bg-layer-1);width:100%;margin-top:12px;position:relative;overflow:hidden}.mr-chatcard-body>.mr-stage{margin-top:0}.mr-stage canvas{display:block;width:100%!important;height:100%!important}.mr-canvas-skeleton{z-index:3;box-sizing:border-box;border:.5px solid var(--dsw-alias-border-l3);border-radius:var(--dsw-radius-md);background:var(--dsw-alias-bg-layer-1);flex-direction:row;justify-content:center;align-items:center;gap:28px;display:flex;position:absolute;inset:0}.mr-skel{background:var(--dsw-alias-bg-layer-2);flex:none;width:52px;height:52px;animation:1.4s ease-in-out infinite mr-skel-breathe;display:block}.mr-skel-circle{border-radius:50%}.mr-skel-square{border-radius:4px}.mr-skel-triangle{clip-path:polygon(50% 0%,100% 100%,0% 100%)}@keyframes mr-skel-breathe{0%,to{opacity:.45}50%{opacity:.9}}@media (prefers-reduced-motion:reduce){.mr-skel{opacity:.6;animation:none}}.mr-canvas-loading{z-index:4;box-sizing:border-box;pointer-events:none;justify-content:center;align-items:center;padding:12px;display:flex;position:absolute;inset:0}.mr-canvas-loading-pill{box-sizing:border-box;background:var(--dsw-alias-tooltip-bg);min-width:0;max-width:100%;color:var(--dsw-static-neutral-bluish-00);border-radius:999px;align-items:center;gap:8px;padding:6px 12px;font-size:13px;line-height:20px;display:flex}.mr-canvas-loading-text{text-overflow:ellipsis;white-space:nowrap;min-width:0;overflow:hidden}.mr-spinner{box-sizing:border-box;border:1.5px solid #ffffff40;border-top-color:currentColor;border-radius:50%;flex:none;width:14px;height:14px;animation:.8s linear infinite mr-spin}@keyframes mr-spin{to{transform:rotate(360deg)}}@media (prefers-reduced-motion:reduce){.mr-spinner{animation:none}}.mr-code-pane{border:.5px solid var(--dsw-alias-border-l3);border-radius:var(--dsw-radius-md);background:var(--dsw-alias-bg-layer-1);position:absolute;inset:0;overflow:auto}.mr-codeview{font-family:var(--ds-font-family-code);color:var(--dsw-alias-label-primary);white-space:pre-wrap;word-break:break-word;tab-size:2;margin:0;padding:10px 12px;font-size:12px;line-height:18px}.mr-codeview code{counter-reset:source-line;display:block}.mr-codeview code>.line{min-height:1lh;counter-increment:source-line;padding-inline-start:calc(var(--mr-codeview-gutter,2ch) + 12px);display:block;position:relative}.mr-codeview code>.line:before{width:var(--mr-codeview-gutter,2ch);color:var(--dsw-alias-label-tertiary);text-align:end;content:counter(source-line);user-select:none;position:absolute;inset-inline-start:0}.mr-codepane-actions{z-index:2;justify-content:flex-end;height:0;padding:6px 8px 0 0;display:flex;position:sticky;top:0}.mr-codepane-actions .mr-iconbtn{background:var(--dsw-alias-bg-layer-1);border:.5px solid var(--dsw-alias-border-l3);width:22px;height:22px}.mr-chatcard-code{border:.5px solid var(--dsw-alias-border-l4);border-radius:var(--dsw-radius-md);background:var(--dsw-alias-bg-layer-1);max-height:180px;margin-top:8px;overflow:auto}.mr-chatcard-code>.mr-codeview{padding:8px 10px}.mr-set{max-width:760px;color:var(--dsw-alias-label-primary);flex-direction:column;gap:32px;display:flex}.mr-set-group{flex-direction:column;gap:10px;display:flex}.mr-set-groupname{color:var(--dsw-alias-label-secondary);margin:0;font-size:13px;font-weight:500;line-height:20px}.mr-set-stack{flex-direction:column;gap:16px;display:flex}.mr-set-card{border:.5px solid var(--dsw-alias-settings-card-stroke);border-radius:var(--dsw-radius-xl);background:var(--dsw-alias-settings-card-fill);flex-direction:column;display:flex}.mr-set-cardhead{align-items:center;gap:16px;padding:14px 16px;display:flex}.mr-set-cardheadtext{flex:1;min-width:0}.mr-set-cardtitle{align-items:baseline;gap:8px;margin:0;font-size:14px;font-weight:500;line-height:22px;display:flex}.mr-set-cardcount{color:var(--dsw-alias-label-tertiary);font-variant-numeric:tabular-nums;font-size:12px;font-weight:400;line-height:18px}.mr-set-cardsub{text-overflow:ellipsis;white-space:nowrap;color:var(--dsw-alias-label-tertiary);margin:2px 0 0;font-size:12px;line-height:18px;overflow:hidden}.mr-set-cardsub.is-error{color:var(--dsw-alias-state-error-primary)}.mr-set-cardacts{flex:none;align-items:center;gap:8px;display:flex}.mr-set-act{box-sizing:border-box;cursor:pointer;border:.5px solid var(--dsw-alias-border-l2);border-radius:var(--dsw-radius-md);height:30px;font:inherit;color:var(--dsw-alias-label-primary);background:0 0;justify-content:center;align-items:center;gap:6px;padding:0 12px;font-size:13px;line-height:18px;display:inline-flex}.mr-set-act:hover:not(:disabled){background:var(--dsw-alias-interactive-bg-hover)}.mr-set-act:disabled{cursor:not-allowed;opacity:.4}.mr-set-act:focus-visible{outline:2px solid var(--dsw-alias-state-business-primary);outline-offset:2px}.mr-set-act.is-sm{height:26px;color:var(--dsw-alias-label-secondary);padding:0 10px;font-size:12px;line-height:18px}.mr-set-act.is-sm:hover:not(:disabled){color:var(--dsw-alias-label-primary)}.mr-set-rows{border-top:.5px solid var(--dsw-alias-border-l2);flex-direction:column;display:flex}.mr-set-row{box-sizing:border-box;align-items:center;gap:16px;min-height:44px;padding:8px 16px;display:flex}.mr-set-row+.mr-set-row{border-top:.5px solid var(--dsw-alias-border-l2)}.mr-set-rows.is-light .mr-set-row{min-height:34px;padding:4px 16px}.mr-set-cell{flex:none;min-width:0}.mr-set-cell.is-name{min-width:0;font-family:var(--ds-font-family-code);flex:1;align-items:center;gap:8px;font-size:13px;line-height:20px;display:flex}.mr-set-cell.is-check{flex:1;align-items:center;min-width:0;font-size:13px;line-height:20px;display:flex}.mr-set-name{text-overflow:ellipsis;white-space:nowrap;min-width:0;overflow:hidden}.mr-set-cell.is-act{flex:none;justify-content:flex-end;align-items:center;display:flex}.mr-set-cell.is-size{text-align:end;min-width:60px;color:var(--dsw-alias-label-tertiary);font-variant-numeric:tabular-nums;flex:none;font-size:12px;line-height:18px}.mr-set-cell.is-status{font-variant-numeric:tabular-nums;flex:none;justify-content:flex-end;align-items:center;gap:6px;font-size:13px;line-height:20px;display:flex}.mr-set-info{cursor:default;color:var(--dsw-alias-label-tertiary);background:0 0;border:none;flex:none;align-items:center;margin-left:5px;padding:0;display:inline-flex}.mr-set-info:hover,.mr-set-info:focus-visible{color:var(--dsw-alias-label-secondary)}.mr-set-info:focus-visible{outline:2px solid var(--dsw-alias-state-business-primary);outline-offset:1px;border-radius:var(--dsw-radius-sm)}.mr-set-cardfoot{color:var(--dsw-alias-label-tertiary);overflow-wrap:anywhere;margin:0;padding:0 16px 14px;font-size:12px;line-height:18px}.mr-set-cardfoot.is-error{color:var(--dsw-alias-state-error-primary)}.mr-set-rows+.mr-set-cardfoot{padding-top:10px}.mr-set-addrow{align-items:center;gap:8px;padding:0 16px 14px;display:flex}.mr-set-field{box-sizing:border-box;border:.5px solid var(--dsw-alias-border-l4);border-radius:var(--dsw-radius-md);background:var(--dsw-alias-bg-layer-1);min-width:0;height:36px;color:var(--dsw-alias-label-tertiary);flex:1;align-items:center;gap:6px;padding:0 12px;display:flex;position:relative}.mr-set-field:focus-within{border-color:var(--dsw-alias-state-business-primary)}.mr-set-fieldinput{z-index:1;min-width:0;font:inherit;color:var(--dsw-alias-label-primary);background:0 0;border:none;outline:none;flex:1;margin:0;padding:0;font-size:14px;line-height:22px;position:relative}.mr-set-fieldinput::placeholder{color:var(--dsw-alias-label-dimmed)}.mr-set-mirror{white-space:pre;pointer-events:none;align-items:center;padding:0 12px;font-size:14px;line-height:22px;display:flex;position:absolute;inset:0;overflow:hidden}.mr-set-typed{visibility:hidden}.mr-set-ghost{color:var(--dsw-alias-label-dimmed)}.mr-set-dot{box-sizing:border-box;border:.5px solid var(--dsw-alias-border-l3);background:0 0;border-radius:50%;flex:none;width:8px;height:8px}.mr-set-dot[data-tone=ok]{border-color:var(--dsw-alias-state-success-primary);background:var(--dsw-alias-state-success-primary)}.mr-set-dot[data-tone=warn]{border-color:var(--dsw-alias-state-warn-primary);background:var(--dsw-alias-state-warn-primary)}.mr-set-dot[data-tone=error]{border-color:var(--dsw-alias-state-error-primary);background:var(--dsw-alias-state-error-primary)}.mr-set-dot[data-tone=idle]{border-color:var(--dsw-alias-state-idle-primary);background:var(--dsw-alias-state-idle-primary)}.mr-set-spin{color:var(--dsw-alias-label-tertiary);flex:none}.mr-set-spin-rotor{transform-origin:50%;animation:1.5s linear infinite mr-set-spin}.mr-set-spin-track,.mr-set-spin-arc{fill:none;stroke:currentColor;stroke-width:2px;stroke-linecap:round}.mr-set-spin-track{opacity:.25}.mr-set-spin-arc{stroke-dasharray:12 150;animation:1.5s ease-in-out infinite mr-set-dash}@keyframes mr-set-spin{to{transform:rotate(360deg)}}@keyframes mr-set-dash{0%{stroke-dasharray:12 150;stroke-dashoffset:0}50%{stroke-dasharray:24 150;stroke-dashoffset:-6px}to{stroke-dasharray:12 150;stroke-dashoffset:0}}@media (prefers-reduced-motion:reduce){.mr-set-spin-rotor,.mr-set-spin-arc{animation:none}.mr-set-spin-arc{stroke-dasharray:18 150;stroke-dashoffset:-3px}}@property --tw-rotate-x{syntax:\"*\";inherits:false}@property --tw-rotate-y{syntax:\"*\";inherits:false}@property --tw-rotate-z{syntax:\"*\";inherits:false}@property --tw-skew-x{syntax:\"*\";inherits:false}@property --tw-skew-y{syntax:\"*\";inherits:false}@property --tw-border-style{syntax:\"*\";inherits:false;initial-value:solid}@property --tw-ordinal{syntax:\"*\";inherits:false}@property --tw-slashed-zero{syntax:\"*\";inherits:false}@property --tw-numeric-figure{syntax:\"*\";inherits:false}@property --tw-numeric-spacing{syntax:\"*\";inherits:false}@property --tw-numeric-fraction{syntax:\"*\";inherits:false}@property --tw-shadow{syntax:\"*\";inherits:false;initial-value:0 0 #0000}@property --tw-shadow-color{syntax:\"*\";inherits:false}@property --tw-shadow-alpha{syntax:\"<percentage>\";inherits:false;initial-value:100%}@property --tw-inset-shadow{syntax:\"*\";inherits:false;initial-value:0 0 #0000}@property --tw-inset-shadow-color{syntax:\"*\";inherits:false}@property --tw-inset-shadow-alpha{syntax:\"<percentage>\";inherits:false;initial-value:100%}@property --tw-ring-color{syntax:\"*\";inherits:false}@property --tw-ring-shadow{syntax:\"*\";inherits:false;initial-value:0 0 #0000}@property --tw-inset-ring-color{syntax:\"*\";inherits:false}@property --tw-inset-ring-shadow{syntax:\"*\";inherits:false;initial-value:0 0 #0000}@property --tw-ring-inset{syntax:\"*\";inherits:false}@property --tw-ring-offset-width{syntax:\"<length>\";inherits:false;initial-value:0}@property --tw-ring-offset-color{syntax:\"*\";inherits:false;initial-value:#fff}@property --tw-ring-offset-shadow{syntax:\"*\";inherits:false;initial-value:0 0 #0000}@property --tw-outline-style{syntax:\"*\";inherits:false;initial-value:solid}@property --tw-blur{syntax:\"*\";inherits:false}@property --tw-brightness{syntax:\"*\";inherits:false}@property --tw-contrast{syntax:\"*\";inherits:false}@property --tw-grayscale{syntax:\"*\";inherits:false}@property --tw-hue-rotate{syntax:\"*\";inherits:false}@property --tw-invert{syntax:\"*\";inherits:false}@property --tw-opacity{syntax:\"*\";inherits:false}@property --tw-saturate{syntax:\"*\";inherits:false}@property --tw-sepia{syntax:\"*\";inherits:false}@property --tw-drop-shadow{syntax:\"*\";inherits:false}@property --tw-drop-shadow-color{syntax:\"*\";inherits:false}@property --tw-drop-shadow-alpha{syntax:\"<percentage>\";inherits:false;initial-value:100%}@property --tw-drop-shadow-size{syntax:\"*\";inherits:false}@property --tw-ease{syntax:\"*\";inherits:false}";
+		const css = "/*! tailwindcss v4.3.3 | MIT License | https://tailwindcss.com */\n@layer properties{@supports (((-webkit-hyphens:none)) and (not (margin-trim:inline))) or ((-moz-orient:inline) and (not (color:rgb(from red r g b)))){*,:before,:after,::backdrop{--tw-rotate-x:initial;--tw-rotate-y:initial;--tw-rotate-z:initial;--tw-skew-x:initial;--tw-skew-y:initial;--tw-border-style:solid;--tw-ordinal:initial;--tw-slashed-zero:initial;--tw-numeric-figure:initial;--tw-numeric-spacing:initial;--tw-numeric-fraction:initial;--tw-shadow:0 0 #0000;--tw-shadow-color:initial;--tw-shadow-alpha:100%;--tw-inset-shadow:0 0 #0000;--tw-inset-shadow-color:initial;--tw-inset-shadow-alpha:100%;--tw-ring-color:initial;--tw-ring-shadow:0 0 #0000;--tw-inset-ring-color:initial;--tw-inset-ring-shadow:0 0 #0000;--tw-ring-inset:initial;--tw-ring-offset-width:0px;--tw-ring-offset-color:#fff;--tw-ring-offset-shadow:0 0 #0000;--tw-outline-style:solid;--tw-blur:initial;--tw-brightness:initial;--tw-contrast:initial;--tw-grayscale:initial;--tw-hue-rotate:initial;--tw-invert:initial;--tw-opacity:initial;--tw-saturate:initial;--tw-sepia:initial;--tw-drop-shadow:initial;--tw-drop-shadow-color:initial;--tw-drop-shadow-alpha:100%;--tw-drop-shadow-size:initial;--tw-ease:initial}}}@layer theme{:root,:host{--spacing:.25rem;--ease-in-out:cubic-bezier(.4, 0, .2, 1);--default-transition-duration:.15s;--default-transition-timing-function:cubic-bezier(.4, 0, .2, 1)}}@layer utilities{.collapse{visibility:collapse}.invisible{visibility:hidden}.visible{visibility:visible}.absolute{position:absolute}.fixed{position:fixed}.relative{position:relative}.static{position:static}.sticky{position:sticky}.container{width:100%;@media (width>=40rem){max-width:40rem}@media (width>=48rem){max-width:48rem}@media (width>=64rem){max-width:64rem}@media (width>=80rem){max-width:80rem}@media (width>=96rem){max-width:96rem}}.block{display:block}.contents{display:contents}.flex{display:flex}.flow-root{display:flow-root}.grid{display:grid}.hidden{display:none}.inline{display:inline}.inline-block{display:inline-block}.inline-flex{display:inline-flex}.inline-grid{display:inline-grid}.inline-table{display:inline-table}.list-item{display:list-item}.table{display:table}.table\\!{display:table!important}.table-caption{display:table-caption}.table-cell{display:table-cell}.table-column{display:table-column}.table-column-group{display:table-column-group}.table-footer-group{display:table-footer-group}.table-header-group{display:table-header-group}.table-row{display:table-row}.table-row-group{display:table-row-group}.size-1{width:var(--spacing);height:var(--spacing)}.h-40{height:calc(var(--spacing) * 40)}.h-84{height:calc(var(--spacing) * 84)}.h-120{height:calc(var(--spacing) * 120)}.flex-shrink,.shrink{flex-shrink:1}.grow{flex-grow:1}.transform{transform:var(--tw-rotate-x,) var(--tw-rotate-y,) var(--tw-rotate-z,) var(--tw-skew-x,) var(--tw-skew-y,)}.resize{resize:both}.truncate{text-overflow:ellipsis;white-space:nowrap;overflow:hidden}.rounded{border-radius:.25rem}.border{border-style:var(--tw-border-style);border-width:1px}.break-all{word-break:break-all}.capitalize{text-transform:capitalize}.lowercase{text-transform:lowercase}.uppercase{text-transform:uppercase}.italic{font-style:italic}.ordinal{--tw-ordinal:ordinal;font-variant-numeric:var(--tw-ordinal,) var(--tw-slashed-zero,) var(--tw-numeric-figure,) var(--tw-numeric-spacing,) var(--tw-numeric-fraction,)}.line-through{text-decoration-line:line-through}.overline{text-decoration-line:overline}.underline{text-decoration-line:underline}.shadow{--tw-shadow:0 1px 3px 0 var(--tw-shadow-color,#0000001a), 0 1px 2px -1px var(--tw-shadow-color,#0000001a);box-shadow:var(--tw-inset-shadow), var(--tw-inset-ring-shadow), var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow)}.ring{--tw-ring-shadow:var(--tw-ring-inset,) 0 0 0 calc(1px + var(--tw-ring-offset-width)) var(--tw-ring-color,currentcolor);box-shadow:var(--tw-inset-shadow), var(--tw-inset-ring-shadow), var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow)}.outline{outline-style:var(--tw-outline-style);outline-width:1px}.blur{--tw-blur:blur(8px);filter:var(--tw-blur,) var(--tw-brightness,) var(--tw-contrast,) var(--tw-grayscale,) var(--tw-hue-rotate,) var(--tw-invert,) var(--tw-saturate,) var(--tw-sepia,) var(--tw-drop-shadow,)}.grayscale{--tw-grayscale:grayscale(100%);filter:var(--tw-blur,) var(--tw-brightness,) var(--tw-contrast,) var(--tw-grayscale,) var(--tw-hue-rotate,) var(--tw-invert,) var(--tw-saturate,) var(--tw-sepia,) var(--tw-drop-shadow,)}.invert{--tw-invert:invert(100%);filter:var(--tw-blur,) var(--tw-brightness,) var(--tw-contrast,) var(--tw-grayscale,) var(--tw-hue-rotate,) var(--tw-invert,) var(--tw-saturate,) var(--tw-sepia,) var(--tw-drop-shadow,)}.filter{filter:var(--tw-blur,) var(--tw-brightness,) var(--tw-contrast,) var(--tw-grayscale,) var(--tw-hue-rotate,) var(--tw-invert,) var(--tw-saturate,) var(--tw-sepia,) var(--tw-drop-shadow,)}.transition{transition-property:color,background-color,border-color,outline-color,text-decoration-color,fill,stroke,--tw-gradient-from,--tw-gradient-via,--tw-gradient-to,opacity,box-shadow,transform,translate,scale,rotate,filter,-webkit-backdrop-filter,backdrop-filter,display,content-visibility,overlay,pointer-events;transition-timing-function:var(--tw-ease,var(--default-transition-timing-function));transition-duration:var(--tw-duration,var(--default-transition-duration))}.ease-in-out{--tw-ease:var(--ease-in-out);transition-timing-function:var(--ease-in-out)}}.mr-page{box-sizing:border-box;height:100%;color:var(--dsw-alias-label-primary);flex-direction:column;align-items:center;padding:0 clamp(24px,4vw,48px);display:flex;overflow:hidden}.mr-page-head,.mr-workspace{width:100%;max-width:1160px}.mr-page-head{box-sizing:border-box;flex:none;justify-content:space-between;align-items:center;gap:16px;padding-top:28px;display:flex}[data-platform=darwin] .mr-page-head{padding-top:calc(28px + var(--dsh-frame-top-clearance,0px))}.mr-head-title{align-items:center;gap:2px;min-width:0;display:flex}.mr-page-title{margin:0;font-size:20px;font-weight:500;line-height:28px}.mr-tip{display:inline-flex;position:relative}.mr-tip-bubble{z-index:40;pointer-events:none;box-sizing:border-box;border-radius:var(--dsw-radius-sm);background:var(--dsw-alias-tooltip-bg);width:max-content;max-width:300px;color:var(--dsw-static-neutral-bluish-00);white-space:pre-line;overflow-wrap:break-word;opacity:0;visibility:hidden;padding:3px 7px;font-size:13px;font-weight:400;line-height:20px;position:absolute;top:calc(100% + 6px);left:50%;transform:translate(-50%)}.mr-tip[data-align=start] .mr-tip-bubble{left:0;transform:none}.mr-tip[data-align=end] .mr-tip-bubble{left:auto;right:0;transform:none}.mr-tip:hover .mr-tip-bubble,.mr-tip>:focus-visible~.mr-tip-bubble{opacity:1;visibility:visible}.mr-tip-bubble.is-wide{max-width:440px}.mr-btn{box-sizing:border-box;cursor:pointer;border-radius:var(--dsw-radius-sm);height:28px;color:var(--dsw-alias-label-primary);background:0 0;border:none;justify-content:center;align-items:center;gap:4px;padding:0 10px;font-size:12px;line-height:18px;display:inline-flex}.mr-btn:disabled{cursor:not-allowed;opacity:.4}.mr-btn.primary{background:var(--dsw-alias-button-primary-fill);color:var(--dsw-alias-label-primary-foreground)}.mr-btn.primary:hover:not(:disabled){background:var(--dsw-alias-button-primary-hover)}.mr-btn.outline{border:.5px solid var(--dsw-alias-border-l2);color:var(--dsw-alias-label-primary)}.mr-btn.outline:hover:not(:disabled){background:var(--dsw-alias-interactive-bg-hover)}.mr-btn:focus-visible{outline:2px solid var(--dsw-alias-state-business-primary);outline-offset:2px}.mr-btn.tall{border-radius:var(--dsw-radius-md);height:36px;padding:0 16px;font-size:14px;line-height:22px}.mr-iconbtn{box-sizing:border-box;border-radius:var(--dsw-radius-sm);cursor:pointer;width:24px;height:24px;color:var(--dsw-alias-label-secondary);background:0 0;border:none;flex:none;justify-content:center;align-items:center;padding:0;display:inline-flex}.mr-iconbtn:hover:not(:disabled){background:var(--dsw-alias-interactive-bg-hover);color:var(--dsw-alias-label-primary)}.mr-iconbtn:disabled{cursor:not-allowed;opacity:.4}.mr-iconbtn:focus-visible{outline:2px solid var(--dsw-alias-state-business-primary);outline-offset:2px}.mr-iconbtn[aria-pressed=true]{background:var(--dsw-alias-interactive-bg-hover);color:var(--dsw-alias-state-business-primary)}.mr-code{box-sizing:border-box;resize:vertical;border:.5px solid var(--dsw-alias-border-l4);border-radius:var(--dsw-radius-md);background:var(--dsw-alias-bg-layer-1);width:100%;min-height:190px;color:var(--dsw-alias-label-primary);font-family:var(--ds-font-family-code);tab-size:2;padding:8px 10px;font-size:12px;line-height:18px;display:block}.mr-code-fill{resize:none;flex:1;min-height:0;margin:0}.mr-code:focus-visible{outline:2px solid var(--dsw-alias-state-business-primary);outline-offset:0}.mr-chatcard-body{margin-top:12px;position:relative}.mr-chatcard{box-sizing:border-box;border:.5px solid var(--dsw-alias-settings-card-stroke);border-radius:var(--dsw-radius-xl);background:var(--dsw-alias-settings-card-fill);color:var(--dsw-alias-label-primary);margin:6px 0;padding:10px 12px}.mr-chatcard-head{align-items:center;gap:6px;height:32px;display:flex}.mr-chatcard-label{flex:none;font-size:13px;font-weight:500;line-height:20px}.mr-chatcard-spacer{flex:1;min-width:0}.mr-chatcard-foot{flex-direction:column;gap:4px;margin-top:8px;display:flex}.mr-chatcard-footrow{align-items:center;gap:6px;font-size:13px;line-height:20px;display:flex}.mr-chatcard-footrow.is-ok{color:var(--dsw-alias-state-success-primary)}.mr-chatcard-footrow.is-busy{color:var(--dsw-alias-label-secondary)}.mr-chatcard-footrow.is-warn{color:var(--dsw-alias-state-warn-primary)}.mr-chatcard-footrow.is-error{white-space:pre-wrap;word-break:break-word;color:var(--dsw-alias-state-error-primary);align-items:flex-start}.mr-chatcard-footrow.is-error>svg{margin-top:3px}.mr-chatcard-footrow>svg,.mr-chatcard-footrow>.mr-spinner{flex:none}.mr-chatcard-footrow.is-envhint{align-items:flex-start}.mr-chatcard-footrow.is-envhint>svg{margin-top:3px}.mr-chatcard-envhint{min-width:0}.mr-chatcard-envlist{margin:4px 0 0;padding-left:16px}.mr-chatcard-envlist>li{overflow-wrap:anywhere}.mr-chatcard-envlist>li+li{margin-top:2px}.mr-chatcard-pathwrap{flex:1;min-width:0;display:flex}.mr-chatcard-path{min-width:0;font:inherit;color:inherit;text-align:left;text-overflow:ellipsis;white-space:nowrap;cursor:pointer;background:0 0;border:0;flex:1;padding:0;overflow:hidden}.mr-chatcard-path:hover{text-decoration:underline}.mr-chatcard-path:focus-visible{outline:2px solid var(--dsw-alias-state-business-primary);outline-offset:2px;border-radius:var(--dsw-radius-sm)}.mr-stage{aspect-ratio:16/9;border:.5px solid var(--dsw-alias-border-l3);border-radius:var(--dsw-radius-md);background:var(--dsw-alias-bg-layer-1);width:100%;margin-top:12px;position:relative;overflow:hidden}.mr-chatcard-body>.mr-stage{margin-top:0}.mr-stage canvas{display:block;width:100%!important;height:100%!important}.mr-canvas-skeleton{z-index:3;box-sizing:border-box;border:.5px solid var(--dsw-alias-border-l3);border-radius:var(--dsw-radius-md);background:var(--dsw-alias-bg-layer-1);flex-direction:row;justify-content:center;align-items:center;gap:28px;display:flex;position:absolute;inset:0}.mr-skel{background:var(--dsw-alias-bg-layer-2);flex:none;width:52px;height:52px;animation:1.4s ease-in-out infinite mr-skel-breathe;display:block}.mr-skel-circle{border-radius:50%}.mr-skel-square{border-radius:4px}.mr-skel-triangle{clip-path:polygon(50% 0%,100% 100%,0% 100%)}@keyframes mr-skel-breathe{0%,to{opacity:.45}50%{opacity:.9}}@media (prefers-reduced-motion:reduce){.mr-skel{opacity:.6;animation:none}}.mr-canvas-loading{z-index:4;box-sizing:border-box;pointer-events:none;justify-content:center;align-items:center;padding:12px;display:flex;position:absolute;inset:0}.mr-canvas-loading-pill{box-sizing:border-box;background:var(--dsw-alias-tooltip-bg);min-width:0;max-width:100%;color:var(--dsw-static-neutral-bluish-00);border-radius:999px;align-items:center;gap:8px;padding:6px 12px;font-size:13px;line-height:20px;display:flex}.mr-canvas-loading-text{text-overflow:ellipsis;white-space:nowrap;min-width:0;overflow:hidden}.mr-spinner{box-sizing:border-box;border:1.5px solid #ffffff40;border-top-color:currentColor;border-radius:50%;flex:none;width:14px;height:14px;animation:.8s linear infinite mr-spin}@keyframes mr-spin{to{transform:rotate(360deg)}}@media (prefers-reduced-motion:reduce){.mr-spinner{animation:none}}.mr-code-pane{border:.5px solid var(--dsw-alias-border-l3);border-radius:var(--dsw-radius-md);background:var(--dsw-alias-bg-layer-1);position:absolute;inset:0;overflow:auto}.mr-codeview{font-family:var(--ds-font-family-code);color:var(--dsw-alias-label-primary);white-space:pre-wrap;word-break:break-word;tab-size:2;margin:0;padding:10px 12px;font-size:12px;line-height:18px}.mr-codeview code{counter-reset:source-line;display:block}.mr-codeview code>.line{min-height:1lh;counter-increment:source-line;padding-inline-start:calc(var(--mr-codeview-gutter,2ch) + 12px);display:block;position:relative}.mr-codeview code>.line:before{width:var(--mr-codeview-gutter,2ch);color:var(--dsw-alias-label-tertiary);text-align:end;content:counter(source-line);user-select:none;position:absolute;inset-inline-start:0}.mr-codepane-actions{z-index:2;justify-content:flex-end;height:0;padding:6px 8px 0 0;display:flex;position:sticky;top:0}.mr-codepane-actions .mr-iconbtn{background:var(--dsw-alias-bg-layer-1);border:.5px solid var(--dsw-alias-border-l3);width:22px;height:22px}.mr-chatcard-code{border:.5px solid var(--dsw-alias-border-l4);border-radius:var(--dsw-radius-md);background:var(--dsw-alias-bg-layer-1);max-height:180px;margin-top:8px;overflow:auto}.mr-chatcard-code>.mr-codeview{padding:8px 10px}.mr-set{max-width:760px;color:var(--dsw-alias-label-primary);flex-direction:column;gap:32px;display:flex}.mr-set-group{flex-direction:column;gap:10px;display:flex}.mr-set-groupname{color:var(--dsw-alias-label-secondary);margin:0;font-size:13px;font-weight:500;line-height:20px}.mr-set-stack{flex-direction:column;gap:16px;display:flex}.mr-set-card{border:.5px solid var(--dsw-alias-settings-card-stroke);border-radius:var(--dsw-radius-xl);background:var(--dsw-alias-settings-card-fill);flex-direction:column;display:flex}.mr-set-cardhead{align-items:center;gap:16px;padding:14px 16px;display:flex}.mr-set-cardheadtext{flex:1;min-width:0}.mr-set-cardtitle{align-items:baseline;gap:8px;margin:0;font-size:14px;font-weight:500;line-height:22px;display:flex}.mr-set-cardcount{color:var(--dsw-alias-label-tertiary);font-variant-numeric:tabular-nums;font-size:12px;font-weight:400;line-height:18px}.mr-set-cardsub{text-overflow:ellipsis;white-space:nowrap;color:var(--dsw-alias-label-tertiary);margin:2px 0 0;font-size:12px;line-height:18px;overflow:hidden}.mr-set-cardsub.is-error{color:var(--dsw-alias-state-error-primary)}.mr-set-cardacts{flex:none;align-items:center;gap:8px;display:flex}.mr-set-act{box-sizing:border-box;cursor:pointer;border:.5px solid var(--dsw-alias-border-l2);border-radius:var(--dsw-radius-md);height:30px;font:inherit;color:var(--dsw-alias-label-primary);background:0 0;justify-content:center;align-items:center;gap:6px;padding:0 12px;font-size:13px;line-height:18px;display:inline-flex}.mr-set-act:hover:not(:disabled){background:var(--dsw-alias-interactive-bg-hover)}.mr-set-act:disabled{cursor:not-allowed;opacity:.4}.mr-set-act:focus-visible{outline:2px solid var(--dsw-alias-state-business-primary);outline-offset:2px}.mr-set-act.is-sm{height:26px;color:var(--dsw-alias-label-secondary);padding:0 10px;font-size:12px;line-height:18px}.mr-set-act.is-sm:hover:not(:disabled){color:var(--dsw-alias-label-primary)}.mr-set-rows{border-top:.5px solid var(--dsw-alias-border-l2);flex-direction:column;display:flex}.mr-set-row{box-sizing:border-box;align-items:center;gap:16px;min-height:44px;padding:8px 16px;display:flex}.mr-set-row+.mr-set-row{border-top:.5px solid var(--dsw-alias-border-l2)}.mr-set-rows.is-light .mr-set-row{min-height:34px;padding:4px 16px}.mr-set-cell{flex:none;min-width:0}.mr-set-cell.is-name{min-width:0;font-family:var(--ds-font-family-code);flex:1;align-items:center;gap:8px;font-size:13px;line-height:20px;display:flex}.mr-set-cell.is-check{flex:1;align-items:center;min-width:0;font-size:13px;line-height:20px;display:flex}.mr-set-name{text-overflow:ellipsis;white-space:nowrap;min-width:0;overflow:hidden}.mr-set-cell.is-act{flex:none;justify-content:flex-end;align-items:center;display:flex}.mr-set-cell.is-size{text-align:end;min-width:60px;color:var(--dsw-alias-label-tertiary);font-variant-numeric:tabular-nums;flex:none;font-size:12px;line-height:18px}.mr-set-cell.is-status{font-variant-numeric:tabular-nums;flex:none;justify-content:flex-end;align-items:center;gap:6px;font-size:13px;line-height:20px;display:flex}.mr-set-info{cursor:default;color:var(--dsw-alias-label-tertiary);background:0 0;border:none;flex:none;align-items:center;margin-left:5px;padding:0;display:inline-flex}.mr-set-info:hover,.mr-set-info:focus-visible{color:var(--dsw-alias-label-secondary)}.mr-set-info:focus-visible{outline:2px solid var(--dsw-alias-state-business-primary);outline-offset:1px;border-radius:var(--dsw-radius-sm)}.mr-set-cardfoot{color:var(--dsw-alias-label-tertiary);overflow-wrap:anywhere;margin:0;padding:0 16px 14px;font-size:12px;line-height:18px}.mr-set-cardfoot.is-error{color:var(--dsw-alias-state-error-primary)}.mr-set-rows+.mr-set-cardfoot{padding-top:10px}.mr-set-addrow{align-items:center;gap:8px;padding:0 16px 14px;display:flex}.mr-set-field{box-sizing:border-box;border:.5px solid var(--dsw-alias-border-l4);border-radius:var(--dsw-radius-md);background:var(--dsw-alias-bg-layer-1);min-width:0;height:36px;color:var(--dsw-alias-label-tertiary);flex:1;align-items:center;gap:6px;padding:0 12px;display:flex;position:relative}.mr-set-field:focus-within{border-color:var(--dsw-alias-state-business-primary)}.mr-set-fieldinput{z-index:1;min-width:0;font:inherit;color:var(--dsw-alias-label-primary);background:0 0;border:none;outline:none;flex:1;margin:0;padding:0;font-size:14px;line-height:22px;position:relative}.mr-set-fieldinput::placeholder{color:var(--dsw-alias-label-dimmed)}.mr-set-mirror{white-space:pre;pointer-events:none;align-items:center;padding:0 12px;font-size:14px;line-height:22px;display:flex;position:absolute;inset:0;overflow:hidden}.mr-set-typed{visibility:hidden}.mr-set-ghost{color:var(--dsw-alias-label-dimmed)}.mr-set-dot{box-sizing:border-box;border:.5px solid var(--dsw-alias-border-l3);background:0 0;border-radius:50%;flex:none;width:8px;height:8px}.mr-set-dot[data-tone=ok]{border-color:var(--dsw-alias-state-success-primary);background:var(--dsw-alias-state-success-primary)}.mr-set-dot[data-tone=warn]{border-color:var(--dsw-alias-state-warn-primary);background:var(--dsw-alias-state-warn-primary)}.mr-set-dot[data-tone=error]{border-color:var(--dsw-alias-state-error-primary);background:var(--dsw-alias-state-error-primary)}.mr-set-dot[data-tone=idle]{border-color:var(--dsw-alias-state-idle-primary);background:var(--dsw-alias-state-idle-primary)}.mr-set-spin{color:var(--dsw-alias-label-tertiary);flex:none}.mr-set-spin-rotor{transform-origin:50%;animation:1.5s linear infinite mr-set-spin}.mr-set-spin-track,.mr-set-spin-arc{fill:none;stroke:currentColor;stroke-width:2px;stroke-linecap:round}.mr-set-spin-track{opacity:.25}.mr-set-spin-arc{stroke-dasharray:12 150;animation:1.5s ease-in-out infinite mr-set-dash}@keyframes mr-set-spin{to{transform:rotate(360deg)}}@keyframes mr-set-dash{0%{stroke-dasharray:12 150;stroke-dashoffset:0}50%{stroke-dasharray:24 150;stroke-dashoffset:-6px}to{stroke-dasharray:12 150;stroke-dashoffset:0}}@media (prefers-reduced-motion:reduce){.mr-set-spin-rotor,.mr-set-spin-arc{animation:none}.mr-set-spin-arc{stroke-dasharray:18 150;stroke-dashoffset:-3px}}@property --tw-rotate-x{syntax:\"*\";inherits:false}@property --tw-rotate-y{syntax:\"*\";inherits:false}@property --tw-rotate-z{syntax:\"*\";inherits:false}@property --tw-skew-x{syntax:\"*\";inherits:false}@property --tw-skew-y{syntax:\"*\";inherits:false}@property --tw-border-style{syntax:\"*\";inherits:false;initial-value:solid}@property --tw-ordinal{syntax:\"*\";inherits:false}@property --tw-slashed-zero{syntax:\"*\";inherits:false}@property --tw-numeric-figure{syntax:\"*\";inherits:false}@property --tw-numeric-spacing{syntax:\"*\";inherits:false}@property --tw-numeric-fraction{syntax:\"*\";inherits:false}@property --tw-shadow{syntax:\"*\";inherits:false;initial-value:0 0 #0000}@property --tw-shadow-color{syntax:\"*\";inherits:false}@property --tw-shadow-alpha{syntax:\"<percentage>\";inherits:false;initial-value:100%}@property --tw-inset-shadow{syntax:\"*\";inherits:false;initial-value:0 0 #0000}@property --tw-inset-shadow-color{syntax:\"*\";inherits:false}@property --tw-inset-shadow-alpha{syntax:\"<percentage>\";inherits:false;initial-value:100%}@property --tw-ring-color{syntax:\"*\";inherits:false}@property --tw-ring-shadow{syntax:\"*\";inherits:false;initial-value:0 0 #0000}@property --tw-inset-ring-color{syntax:\"*\";inherits:false}@property --tw-inset-ring-shadow{syntax:\"*\";inherits:false;initial-value:0 0 #0000}@property --tw-ring-inset{syntax:\"*\";inherits:false}@property --tw-ring-offset-width{syntax:\"<length>\";inherits:false;initial-value:0}@property --tw-ring-offset-color{syntax:\"*\";inherits:false;initial-value:#fff}@property --tw-ring-offset-shadow{syntax:\"*\";inherits:false;initial-value:0 0 #0000}@property --tw-outline-style{syntax:\"*\";inherits:false;initial-value:solid}@property --tw-blur{syntax:\"*\";inherits:false}@property --tw-brightness{syntax:\"*\";inherits:false}@property --tw-contrast{syntax:\"*\";inherits:false}@property --tw-grayscale{syntax:\"*\";inherits:false}@property --tw-hue-rotate{syntax:\"*\";inherits:false}@property --tw-invert{syntax:\"*\";inherits:false}@property --tw-opacity{syntax:\"*\";inherits:false}@property --tw-saturate{syntax:\"*\";inherits:false}@property --tw-sepia{syntax:\"*\";inherits:false}@property --tw-drop-shadow{syntax:\"*\";inherits:false}@property --tw-drop-shadow-color{syntax:\"*\";inherits:false}@property --tw-drop-shadow-alpha{syntax:\"<percentage>\";inherits:false;initial-value:100%}@property --tw-drop-shadow-size{syntax:\"*\";inherits:false}@property --tw-ease{syntax:\"*\";inherits:false}";
 		const tagId = "dsh-manim-card/styles.css";
 		if (typeof document !== "undefined" && document.querySelector("style[data-plugin-css=" + JSON.stringify(tagId) + "]") === null) {
 			const tag = document.createElement("style");
@@ -238198,10 +237045,6 @@ self.play(Write(eq))
 						disposeManimRenderer();
 					};
 				}, "manim-card: provide service");
-				ctx.effect(() => ctx.provide("devpanel.manim-card", {
-					label: "manim-card",
-					component: () => /* @__PURE__ */ (0, react_jsx_runtime.jsx)(SlotErrorBoundary, { children: /* @__PURE__ */ (0, react_jsx_runtime.jsx)(ManimPage, { t }) })
-				}), "manim-card: devpanel");
 				ctx.slots.inject("settings.section", () => ctx.slots.register({
 					name: "settings.section",
 					id: "manim-card",

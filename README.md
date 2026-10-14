@@ -8,24 +8,13 @@
 
 **进行中**：Python 运行时（**核心包 `manim-live` 的 `src/py/`**，Pyodide 执行 + manim 适配层 + 桥，自带测试）、渲染引擎（**核心包 `manim-live` 的 `src/engine/`**）、KaTeX 与 Pyodide 资源路由、**聊天卡片**（AI 调 `manim_render` → 聊天流出一张卡；**自动播只发生在「刚生成的那张」**——它第一次进视口正常播一遍，之后重挂载的一律极速落末帧，老会话里的卡根本不跑；播放与画布数量交给一份全页**渲染调度器**：以阅读位置为中心预热 6 张、可见的优先、**滚出视口不拆**（只在画布超上限时收掉离得最远的）、**同一个 step 并行发的几张只真播最后那张**；全页共用一条 Python 队列，不会两张卡抢同一个解释器）、**技能**（`skills/manim-card/`，把可用 API、写法边界与**场景模板**讲给模型）与**Host 侧预检**（返回前用空桥干跑一遍，不通过当场回 `error`）都已就位；**随包外的 Python 库按需取**（`import pandas` 这类首次联网取一次、按 sha256 校验后落进 `~/.dsh/cache/manim-live/pyodide/`，之后离线命中，取的期间卡片上提示「正在加载 X…」）也已接线；**设置面板**里的「manim-card」一节（**本机环境探测** + **包缓存清单与预缓存**）也已就位，见下。
 
-写法上除属性动画 `self.play(m.animate.x(...))`（可链的方法由探针实测 manim-web 的 animate 代理生成，不在表里的当场报错并列出可用项）外，`rate_func=` / `run_time=`、`m[i]` 取段、`m.width` 这类属性读取、`self.clear()` 也都已接线——「这个写法支不支持」的判定与真执行取同一份支持面（核心包 `manim-live` 的 `src/py/surface.ts`），所以**预检放行的，真桥不会当场拒**。**方法改写**（`surface.ts` 的 `METHOD_REWRITES`）负责「CE 有、manim-web 换了形状」的那批：`set_stroke(color=, width=, opacity=)` → 颜色走**属性写**、`_color` 与 `strokeColor` 各写一份（渲染层读前者、回读走后者，见第六轮第 7 条）、宽 / 透明度走专属 setter——**不能**落 `setStyle`：manim-web 的 set color 存取器会把 fillColor 一起冲掉（见第四轮 (b) 的色板事故）；`set_opacity(x)` → stroke + fill 两个 setter、`put_start_and_end_on(a, b)` → Arrow 走同名方法、Line 走 `setStart` + `setEnd`。物体/动画的归类按 manim-web 的**实测原型链**定，不看 CE 把它挂在哪个模块下（CE 把 `TracedPath` / `AnimatedBoundary` 放在 `animation/` 里，两者其实是物体）；「包住一个物体」的写法（`TracedPath(dot)` / `SurroundingRectangle(text)` / `Union(a, b)` …）也走同一份构造规则。`self.add(...)` 收到动画会当场给出可读报错（校验在 Python 侧，预检也拦得住）。开发台（dsh-devbench）聚合的 manim-card 面板是**实验场**（见下节）——本插件功能的肉眼验收台。
+写法上除属性动画 `self.play(m.animate.x(...))`（可链的方法由探针实测 manim-web 的 animate 代理生成，不在表里的当场报错并列出可用项）外，`rate_func=` / `run_time=`、`m[i]` 取段、`m.width` 这类属性读取、`self.clear()` 也都已接线——「这个写法支不支持」的判定与真执行取同一份支持面（核心包 `manim-live` 的 `src/py/surface.ts`），所以**预检放行的，真桥不会当场拒**。**方法改写**（`surface.ts` 的 `METHOD_REWRITES`）负责「CE 有、manim-web 换了形状」的那批：`set_stroke(color=, width=, opacity=)` → 颜色走**属性写**、`_color` 与 `strokeColor` 各写一份（渲染层读前者、回读走后者，见第六轮第 7 条）、宽 / 透明度走专属 setter——**不能**落 `setStyle`：manim-web 的 set color 存取器会把 fillColor 一起冲掉（见第四轮 (b) 的色板事故）；`set_opacity(x)` → stroke + fill 两个 setter、`put_start_and_end_on(a, b)` → Arrow 走同名方法、Line 走 `setStart` + `setEnd`。物体/动画的归类按 manim-web 的**实测原型链**定，不看 CE 把它挂在哪个模块下（CE 把 `TracedPath` / `AnimatedBoundary` 放在 `animation/` 里，两者其实是物体）；「包住一个物体」的写法（`TracedPath(dot)` / `SurroundingRectangle(text)` / `Union(a, b)` …）也走同一份构造规则。`self.add(...)` 收到动画会当场给出可读报错（校验在 Python 侧，预检也拦得住）。
 
 顶层设计见容器仓 `_docs/dsh-manim-card/2026-10-09-01-manim渲染插件/顶层设计.md`。
 
-### 实验场（功能验收台）
+### 语料（回归网归核心包仓）
 
-开发台（dsh-devbench）里的 manim-card 调试面板是**实验场**：左边样例清单、右边渲染预览，点哪条跑哪条，通过 / 未通过当场标在条目上。它不是一个另做的调试页——**画布就是聊天卡片那个组件**（`components/card.tsx`），所以手动播放 / 查看代码 / 导出这些能力天然一致（页面对卡片只多传了 `autoStart`：一次只挂一张卡，不必再等视口）。
-
-页面顶部是**模式切换**（`components/segmented.tsx`，分段控件）：`样例` 与 `自定义代码`。两者互斥（同一时刻只挂一张卡），所以「自由编辑」不再是常驻在一旁的第二块编辑区。说明性长文案一律收进 `components/tip.tsx`（悬停 / 键盘聚焦才出现），页面上只留控件。
-
-工具条（图标 + 悬浮提示）：**停止** / **清除记录** / **极速** / **清除已下载的库**。
-
-- **进度落盘**：逐条结果（只存 ok）、极速开关、自定义代码、当前模式都存 `localStorage`（`storage.ts`），刷新或中途崩了不用从头再来；「清除记录」清空。
-- **极速**：不等 `run_time` 与 `wait`，直接落到终态——切换开关会把当前条按新口径重跑一遍。实现见 `manim-bridge.ts` 的 `fast`：动画时长压到 0（manim-web 对 `duration <= 0` 取 `alpha=1`），`wait` 则把场景里的 updater 按固定步长推到时长之后再渲染一帧——**不能一省了之**，`TracedPath` 这类轨迹本来就是在 `wait` 里长出来的，省掉就是空的。看动画过程时关掉这个开关。
-- **通过 / 未通过按「预期」判**：预览上方显示当前样例的 expect 一句话（人工验收对照用）；标了 `reject` 的那条**跑不通才是通过**（它验的就是「当场拒掉、且说得清」）。
-- **样例内置**（`client/samples.ts`，约十条）：python 逐字取自核心包仓 `corpus/examples/` 的语料文件——基础图形 / 变换 / 坐标系 / MathTex / 列表 / 柱状图 / TracedPath / updater 数字 / 3D 各一条，外加一条引用未定义名字的坏代码（验预检报错路径）。打进 `client.js`，**正式安装里同样可用**。
-
-**语料回归网与本页无关**：239 条那套语料（19 组）归核心包 `manim-live` 仓所有（`corpus/examples/`），回归、截图、覆盖率计量都在那边跑（`cd ../manim-live && pnpm test`）。本插件不再有语料路由——以前那套「运行时向 Host 取语料、正式安装退化成自定义代码」的机制已随本次收窄删除。
+**语料回归网不在本仓**：239 条那套语料（19 组）归核心包 `manim-live` 仓所有（`corpus/examples/`），回归、截图、覆盖率计量都在那边跑（`cd ../manim-live && pnpm test`）。本插件不再有语料路由——以前那套「运行时向 Host 取语料、正式安装退化成自定义代码」的机制已随本次收窄删除。
 
 语料本体是**核心包 `manim-live` 仓里 `corpus/examples/` 下的完整 Manim 文件**（19 组 / 239 条：离线 224 条 = 183 条应通过 + 41 条应拒绝，其中 2 条标了 `@browser`、Node 套件跳过改由 playground 真浏览器核；另 15 条需联网），独立可跑：
 
@@ -33,7 +22,7 @@
 manim ../manim-live/corpus/examples/basic/01-circle.py CircleScene
 ```
 
-**为什么归核心包仓**：这批文件是开发期的回归网（外加讲解模板的出处），不是产品功能——跟着插件发布，等于让每个用户都背上一个只有开发者才用的实验场，还要把上百条源码打进 `client.js`。验的又是核心包那条管线，所以抽核心包（Phase 1 Step 2）时它随运行时一起搬了过去。语料根可用环境变量 `MANIM_CORPUS`（绝对路径）覆盖，解析顺序与「谁在读它」都收在核心包 `manim-live` 的 `src/testbench/corpus.ts` 一处（消费者：Node 回归 / gen-skill / 截图脚本 / 核心包自己的 playground，**不许再各写各的路径**——必然漂移）。
+**为什么归核心包仓**：这批文件是开发期的回归网（外加讲解模板的出处），不是产品功能——跟着插件发布，等于让每个用户都背上一个只有开发者才用的测试台，还要把上百条源码打进 `client.js`。验的又是核心包那条管线，所以抽核心包（Phase 1 Step 2）时它随运行时一起搬了过去。语料根可用环境变量 `MANIM_CORPUS`（绝对路径）覆盖，解析顺序与「谁在读它」都收在核心包 `manim-live` 的 `src/testbench/corpus.ts` 一处（消费者：Node 回归 / gen-skill / 截图脚本 / 核心包自己的 playground，**不许再各写各的路径**——必然漂移）。
 
 文件即元数据：docstring 第一行是标题，`@expect <一句话>` 是**预期表现**（239 条全部已写），`@reject <关键词>` 标记「这条应当被当场拒绝」并钉住报错里必须出现的词，`@note` 写出处，`@template <什么时候照它抄>` 把一条标记成**技能模板**（见下）。目录即分组（目录没在核心包 `testbench/corpus.ts` 的 `GROUPS` 里登记就报错，免得新加的文件夹被静默漏掉），页面（浏览器）与自动测试（Node）读的是同一批 `.py` 文件，不存在「页面那份和测试那份不一样」。
 
@@ -73,7 +62,7 @@ manim ../manim-live/corpus/examples/basic/01-circle.py CircleScene
 
 「跑通」只说明没炸；**画得对不对**是另一回事——色板全黑就是全绿语料里被人眼抓出来的。配套两件事：
 
-- **每条语料带「预期表现」**：docstring 里 `@expect <一句话>`（核心包 `src/py/corpus-format.ts` 解析）。239 条全部已写。实验场的内置样例各带一句同源的 `expectation`，展示在预览上方。
+- **每条语料带「预期表现」**：docstring 里 `@expect <一句话>`（核心包 `src/py/corpus-format.ts` 解析）。239 条全部已写。
 
 ### 第五轮：把语料 API 覆盖率推到 100%
 
@@ -205,7 +194,7 @@ Host 侧对应五条新路由，全都挂在 `/dsh-plugins/manim-card/` 下，�
 |---|---|---|
 | `packages` | GET | 包清单：缓存目录、Pyodide 版本、每包的依赖 / 可 import 名 / 三态 / 字节数 |
 | `packages/cache` | POST | 按名字取包（`{ names: [...] }`，一个名字一次请求），sha256 校验后原子落盘 |
-| `cache` | POST | 清缓存：体里给 `{ names: [...] }` 就只清这几个（设置页按行清理），不给就清掉缓存目录里全部包（实验场工具条）；都回删掉的文件名，随包件不动 |
+| `cache` | POST | 清缓存：体里给 `{ names: [...] }` 就只清这几个（设置页按行清理），不给就清掉缓存目录里全部包；都回删掉的文件名，随包件不动 |
 | `environment` | GET | 探测计划：有哪些项、每项跑什么命令 |
 | `environment/<id>` | GET | 跑一项，回 ok / missing / error 与原因（超时也归 error 并说清） |
 | `export/ready` | GET | 导出就绪结论：必要条件（`python3` / `manim` / manim 库 / `ffmpeg`）备齐没有、缺什么；带 30s TTL 缓存——聊天流里几十张卡各问一遍，不能各跑一遍 `manim --version` |
@@ -230,7 +219,7 @@ Host 侧对应五条新路由，全都挂在 `/dsh-plugins/manim-card/` 下，�
 - **阅读位置决定谁跑**（第八轮）：`IntersectionObserver` 只**报**可见性（`rootMargin: '240px'`），不再决定生死；「谁该跑、谁先跑、画布攒到几张该收」全交给全页一份的**渲染调度器**（`render-queue.ts`）：以**第一张可见的卡**为阅读位置，向上下交替扩散凑够 **6 张**（贴底就全往上、贴顶就全往下、在中间就上下平均）——这 6 张加上所有可见的才有资格跑，其余**推迟到用户滚过去**，谁也不白烧算力，也不会让人看到离得远的动画在旁边演。优先级：可见的绝对优先 → 本批代表 → 离阅读位置近的 → 同距离新的先（聊天跟随尾部，新卡一出现就是最近的那张，所以「刚生成」不必再单独占一档）。一次只发一个许可（全页只有一份解释器，本来就串行），拿到许可的卡跑完必须 `release()`；`release` 还要明说「手里还剩没剩画布」——跑的过程中用户可能按了 ⏩，那一趟的画布已经收了，报「有」会让这张卡永远等不到重跑。
 - **滚出视口不拆**（第八轮纠正的一条误解）：插件里原来写着「聊天流是虚拟滚动的、滚出即卸载」，**是错的**——宿主的 `ChatNodeList` 是 `entries.map(...)` 全量渲染，宿主文档也明写 "The transcript itself remains fully mounted"（被虚拟化的是右侧那条 Turn 导航条，不是正文）。行一直挂着，于是「拆画布」从头到尾都是插件自伤：滚回来要重跑一遍 Python，屏幕上先空一块、再重画——用户看到的就是「一滚动它又演一遍」。现在滚出视口**不拆**，画布只在两种情况下没：卡片真卸载，或**活跃画布超过 8 张**时被调度器按「离阅读位置最远」收掉（一张卡一块 WebGL 上下文，浏览器活跃上限约 16，超了会强制丢最老的、那块画布直接变黑）。上限比预热窗口的 6 略大，给手动滚动留余量，免得刚滚回来那张立刻被收、又闪一下。顺带一处：正在跑的那次若因淘汰 / 卸载而作废，**不算渲染失败**、不往界面上报错，但机会也不补（见上一条）。`bornLive` 与 `spent` 都是模块级 `Set`（内存、跨挂载、不落 localStorage——刷新页面后再看一遍末帧本来就够）。
 - **同一个 step 并行发的几张只真播最后那张**（第八轮）：模型会在同一个 step 里并行发好几个 `manim_render`（真实轨迹里见过 3 个，形如 `call_00_` / `call_01_` / `call_02_`）。一个 step 只真播一张——用户等的其实是结果，不是 2~3 段动画接连演完（那要 6~9 秒，后几张全程骨架屏）。判据用宿主现成的粒度：`location` 上的 `turn` + `step` 合成 `stepKey`（形如 `1:2`，`definition.ts` 的 `readBatch`），调度器的 `isBatchTail` 取同批里 `seq` 最大的那张当**代表**、只让它真播。取最后一张而不是第一张，与上一条同一个道理：让离视线最近的那张负责。认不出 step 时**每张各算一批**（键带 `callId`）——落回同一个空串会让这批「认不出」的卡挤成一批、只播一张，等于凭一次采样失败把几张卡的动画吃掉；宁可多播一张，不能少播。同批最后一张还没登记完就先别发车（120ms 静默期），否则早到的那张会抢在兄弟卡挂载之前开跑、多播一段。
-- **按钮叫「手动播放」，两个图标**：没在播时是 ▶（`Play`），**一定真播**——压过「只播一次」「老会话不播」「同批只播一张」「实验场极速档」全部自动规则（拿批次规则把用户按下的键按回去，等于按了个寂寞：非代表那张按下去只会跳到终态）。正在播时变成 ⏩（`FastForward`），按下去**不演了、直接落终态**（两种模式共用一个键，所以 ⏩ 也压过手动）。中断卡上这个键同样管用：那类卡先前压根没渲染，按下前会先把渲染 effect 叫起来（`attempts` 计数）。
+- **按钮叫「手动播放」，两个图标**：没在播时是 ▶（`Play`），**一定真播**——压过「只播一次」「老会话不播」「同批只播一张」「极速档」全部自动规则（拿批次规则把用户按下的键按回去，等于按了个寂寞：非代表那张按下去只会跳到终态）。正在播时变成 ⏩（`FastForward`），按下去**不演了、直接落终态**（两种模式共用一个键，所以 ⏩ 也压过手动）。中断卡上这个键同样管用：那类卡先前压根没渲染，按下前会先把渲染 effect 叫起来（`attempts` 计数）。
 - **极速档要盖骨架屏**（第八轮）：`fast` 只是把动画时长压到 0，**每个 `play` 仍然逐个走一遍、各画一帧**——0 时长下就是一串中间态频闪，虽然很快但看着很难受。所以「想渲染、还没画好、而且不是在真播」的那段盖一层**块状骨架屏**（`styles.css` 的 `.mr-canvas-skeleton`）：排队等许可、以及极速重跑那一段都被它盖住，只剩「骨架 → 终态」。**不能带文字**——这会儿是「动画在跑」，不是「在下载什么」，写「正在加载」会跟取包那条提示撞车（那条才是真在取东西）。
 - **状态统一收在底部状态栏**（`FootRow`，四种音色：成功绿勾 / 报错红叉 / 进行中转圈 / **中断三角警告**）：顶栏是「这张卡是什么」——标签与动作键，高度要稳；「现在怎么样了」是随时在变的一层，压在顶栏会把标签挤掉。于是**渲染成功不出条**（画面本身就是回执），只有渲染失败（叉号 + manim 的原话）、预检失败、**这次调用被中断**、导出进行中/成功/失败才在底部出一条，同在时上下多行。卡片的明暗两套与几何（顶栏 32px、报错行 20px 起、路径截断不撑破卡片）用 `_tmp/selfcheck/shot.mjs` 的 `#card` 模式量化核对。
 
@@ -239,10 +228,10 @@ Host 侧对应五条新路由，全都挂在 `/dsh-plugins/manim-card/` 下，�
 分两层，别混：
 
 - **语料回归 / 运行时 / 适配层 / 支持面**（**在核心包仓里跑**）：`cd ../manim-live && pnpm test`。当前 **11 文件 / 603 通过 / 15 跳过**。其中语料回归把那批**离线**语料逐条过真管线（真 Pyodide + 真 manim-web；`Scene` 换假画布，只验「收不收、炸不炸」）。**需联网**的那 15 条（`net` 第三方包 / `combo` 多库协同）默认不跑：`MANIM_NET=1 pnpm test:net`（首次会下载几十 MB）。`syntax`（语法综合）与 `api`（API 点名）只用 manim + 随包的 numpy，是离线的，随默认套件跑。
-- **插件这一侧**（**在本仓跑**）：`pnpm test`。当前 **12 文件 / 247 通过 / 2 跳过**。覆盖 Host 工具 / 技能注册 / 各条路由 / 包清单 / 环境探测 / 导出 / 客户端逻辑（卡片播放判定、渲染调度器、落盘校验）。客户端 **UI 不写测试**。
+- **插件这一侧**（**在本仓跑**）：`pnpm test`。当前 **11 文件 / 165 通过 / 1 跳过**。覆盖 Host 工具 / 技能注册 / 各条路由 / 包清单 / 环境探测 / 导出 / 客户端逻辑（卡片播放判定、渲染调度器、落盘校验）。客户端 **UI 不写测试**。
 - **Vitest 逻辑覆盖率**（覆盖「代码」）：两侧各有 `pnpm coverage`。**不测 UI**（`.tsx` 与浏览器渲染胶水不计入分母），只要求**逻辑（非 `.tsx`）语句覆盖 ≥ 80%**。UI 改动以真机看几何为准，不写类名 / DOM 形态测试。
 
-小费：`coverage` 每次要清自己上一轮的 `coverage/` 输出，本机的安全删除拦截会挡下来，前缀 `CODEBUDDY_SAFE_DELETE_ENABLED=0` 即可（只影响 vitest 的产物目录）。清除「按需取」的三方包缓存不必手删——实验场工具条有「清除缓存」，走 Host 的 `clear-cache` 路由，删的是 `~/.dsh/cache/manim-live/pyodide/` 里按需下载的那部分（随包件不在其中）。
+小费：`coverage` 每次要清自己上一轮的 `coverage/` 输出，本机的安全删除拦截会挡下来，前缀 `CODEBUDDY_SAFE_DELETE_ENABLED=0` 即可（只影响 vitest 的产物目录）。清除「按需取」的三方包缓存不必手删——宿主设置里「manim-card」一节的库清单可以逐行删，走 Host 的 `cache` 路由，删的是 `~/.dsh/cache/manim-live/pyodide/` 里按需下载的那部分（随包件不在其中）。
 
 ## 结构
 
@@ -269,21 +258,19 @@ src/
 │   ├── http.js           路由共用的小工具：sendJson / readJsonBody
 │   └── routes.test.ts    路由测试（含 405 / 404 / 坏正文 / sha256 不符 / 取包失败即停）
 └── client/               浏览器半边（打包进 client.js）
-    ├── index.tsx         入口：locale / 样式接线 + 对外服务 + slot 注册（导航项 / 整页 / 聊天卡片 / 设置面板一节）
+    ├── index.tsx         入口：locale / 样式接线 + 对外服务 + slot 注册（聊天卡片 + 设置面板一节）
     ├── service.ts        对外服务 `manim-card`：核心包 `createManimRenderer` 的薄封装 + 模块级单例（卸载时 dispose）
     ├── definition.ts     聊天卡片的会话折叠定义（tool/call → 卡片节点；顺带读 `live`＝这张卡刚生成出来的、`interrupted`＝这次调用被中断、`stepKey`/`seq`＝这张卡属于哪一批（同一个 step））
     ├── render-queue.ts   渲染调度器（全页一份）：阅读位置 + 6 张预热窗口 / 优先级 / 画布上限 8 张 / 同一批只由代表播
-    ├── components/       卡片与页面零件：card.tsx（画布 + 手动播放 ⏯ + 查看代码，聊天与实验场共用）、code-view.tsx、segmented.tsx、tip.tsx
-    ├── page.tsx          实验场：样例 / 自定义代码两种模式（分段切换），左栏清单 + 工具条，右栏预览
-    ├── samples.ts        实验场的内置样例集（python 逐字取自核心包仓的语料文件）
+    ├── components/       卡片零件：card.tsx（画布 + 手动播放 ⏯ + 查看代码）、code-view.tsx、tip.tsx
+    ├── runtime-status.ts 环境状态 → 界面口径（色调映射 / 阶段文案表 / 缺项可读名，纯函数）
     ├── settings.tsx      设置面板「manim-card」一节：本机环境 + 包缓存（可拆的纯组件，只收 `t`）
-    ├── packages.ts       包清单 / 依赖闭包 / 取包 / 清缓存（设置页与实验场共用这一层）
+    ├── packages.ts       包清单 / 依赖闭包 / 取包 / 清缓存（设置页用）
     ├── environment.ts    本机环境探测的取数与响应解析
     ├── export.ts         导出视频的取数与响应解析
-    ├── storage.ts        实验场状态落盘（结果 / 极速开关 / 代码 / 模式 + 导出记录），读时逐字段校验
+    ├── storage.ts        导出记录落盘，读时逐字段校验
     ├── clipboard.ts      剪贴板（clipboard API + execCommand 兜底）与「已复制」反馈
     ├── code-highlight.ts shiki 高亮（自装，颜色走宿主 --shiki-* 变量）
-    ├── navicon.tsx       导航图标
     ├── i18n.ts           文案与命名空间
     └── styles.css        皮肤（只引 --dsw-* token）
 ```

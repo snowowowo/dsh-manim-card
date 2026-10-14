@@ -32,7 +32,7 @@ Pick one in the host's CLI / plugin management:
 The npm publishing and GitHub direct-install paths have not been verified end to end (the repository is currently private); this page will be updated once they land. The development-time setup is a symlink inside the profile plus a patch entry, see [Development & Debugging](/en/dev/).
 :::
 
-After installing, refresh the host page: a "manim-card" section appears in the **host settings**; with the dev bench (dsh-devbench, dev-only) installed, a manim-card laboratory panel appears there as well.
+After installing, refresh the host page: a "manim-card" section appears in the **host settings**.
 
 ## Bundled assets
 
@@ -47,10 +47,9 @@ Both are served **same-origin** by the plugin's Host routes: the browser side ne
 
 ## What the first run waits for
 
-Before the first render, the Pyodide core (about 13 MB) and the bundled numpy (about 3 MB) have to be fetched into the browser; during that time the interface shows only a skeleton. That wait can be moved forward:
+Before the first render, the Pyodide core (about 13 MB) and the bundled numpy (about 3 MB) have to be fetched into the browser; during that time the interface shows only a skeleton. You can watch that wait progress:
 
-- press "Warm up now" on the Laboratory status bar, see [Laboratory](/en/guide/lab#environment-status-bar);
-- or read the "Python runtime" row in the Settings panel's "Browser runtime" card, which reports the current phase.
+- read the "Python runtime" row in the Settings panel's "Browser runtime" card, which reports the current phase.
 
 ## What needs the network, on demand
 
@@ -68,5 +67,4 @@ The cache directory `~/.dsh/cache/manim-live/pyodide/` lives outside the plugin 
 ## Next steps
 
 - Get a first card in a session → [Usage in Chat](/en/guide/usage)
-- Verify the plugin's features one by one → [Laboratory](/en/guide/lab)
 - Check this machine's conditions → [Settings Panel](/en/guide/settings)

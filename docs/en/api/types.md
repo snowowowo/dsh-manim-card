@@ -86,7 +86,7 @@ The lifecycle of the Pyodide runtime.
 
 | `phase` | Meaning | What you can do |
 | --- | --- | --- |
-| `idle` | Not loaded. The normal initial state before the first render | Wait, or bring it up early with "Warm up now" in the Laboratory |
+| `idle` | Not loaded. The normal initial state before the first render | Wait |
 | `loading` | Loading | Show a progress hint |
 | `ready` | Ready, rendering is possible | Proceed normally |
 | `error` | Load failed | Read `error`; `hints` already carries a matching suggestion |
@@ -130,7 +130,7 @@ Progress of on-demand fetches of third-party Python packages (packages not bundl
 - Formula stylesheet load failure;
 - Package fetch failure.
 
-"Formula stylesheet not configured" is not among them — that is a configuration choice rather than a fault, and it speaks only through the `warnings` of `check()`. The sentences in `hints` can be shown to users as-is; this plugin's Laboratory status bar and Settings panel use exactly these.
+"Formula stylesheet not configured" is not among them — that is a configuration choice rather than a fault, and it speaks only through the `warnings` of `check()`. The sentences in `hints` can be shown to users as-is; this plugin's Settings panel uses exactly these.
 
 ```ts
 const status = manim.environmentStatus()

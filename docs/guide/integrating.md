@@ -110,7 +110,7 @@ import type { CheckResult, EnvironmentStatus, ManimService, Surface } from 'mani
 | `manim_render` 工具 | 面向模型，不是面向插件 | 调用方自己决定何时生成代码 |
 | 导出 mp4 | 依赖宿主与本机环境，不是通用能力 | 见核心包的[导出](https://snowowowo.github.io/manim-live/api/export)，或用宿主自己的文件能力 |
 | `fast` 极速档、逐次取包回调 | 当前服务面只收容器一个参数，未开放 | 按[开发与调试](/dev/)扩 `src/client/service.ts`，不要绕过服务直接依赖核心包 |
-| 预热 | 涉及约 16 MB 流量，何时花应由用户决定 | 引导用户到[实验场](/guide/lab#环境状态条)点「立即预热」 |
+| 预热 | 涉及约 16 MB 流量，何时花应由用户决定 | 由调用方在自己的 UI 里决定入口（本插件当前没有预热入口） |
 
 若目标是**脱离宿主**在自己的页面里用同一块画布，不必接入本服务——直接依赖核心包 [manim-live](https://snowowowo.github.io/manim-live/)。
 

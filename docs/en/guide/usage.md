@@ -51,10 +51,9 @@ The download button in the card header hands the source to the **locally install
 
 ## When the environment falls short
 
-When nothing can be drawn, the cause is usually the machine's conditions rather than the code. Cards add an actionable line in exactly those failures, worded from the same source as the plugin's two other places:
+When nothing can be drawn, the cause is usually the machine's conditions rather than the code. Cards add an actionable line in exactly those failures, worded from the same source as the plugin's Settings panel:
 
 - one extra line below the card's error row (only when there really is a hard unmet condition; invisible in a healthy environment);
-- the matching chip on the Laboratory status bar can be opened, see [Laboratory](/en/guide/lab#environment-status-bar);
 - the "Browser runtime" card in the Settings panel lists each item's state and remedy, see [Settings Panel](/en/guide/settings#browser-runtime).
 
-All three read the same verdict, produced by the core package, so the wording never contradicts itself. To read that status from your own plugin, use [the manim-card service's environmentStatus()](/en/api/service#manim-environmentstatus).
+Both read the same verdict, produced by the core package, so the wording never contradicts itself. To read that status from your own plugin, use [the manim-card service's environmentStatus()](/en/api/service#manim-environmentstatus).

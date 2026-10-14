@@ -3,13 +3,10 @@ import type { EnvironmentStatus } from 'manim-live'
 import {
   blocksRender,
   capabilityTone,
-  chipsOf,
   katexTone,
   missingCapabilities,
   missingLabels,
-  pendingHints,
   runtimeTone,
-  type LocalEnvState,
 } from './runtime-status'
 import type { Translate } from './i18n'
 
@@ -72,92 +69,6 @@ describe('有没有挡住渲染的硬伤', () => {
 
   it('只缺录屏能力不算：它只影响浏览器录屏那一种导出', () => {
     expect(blocksRender(status({ capabilities: { wasm: true, webgl: true, videoExport: false } }))).toBe(false)
-  })
-})
-
-describe('状态条的 chip', () => {
-  const local = (state: LocalEnvState) => state
-
-  it('四枚齐：本机 / 运行时 / 公式样式 / 浏览器能力', () => {
-    const chips = chipsOf({ t, status: healthy, local: local({ phase: 'ready' }) })
-    expect(chips.map((chip) => chip.id)).toEqual(['local', 'runtime', 'katex', 'caps'])
-    expect(chips.map((chip) => chip.tone)).toEqual(['ok', 'ok', 'ok', 'ok'])
-    expect(chips.some((chip) => chip.actionable)).toBe(false)
-  })
-
-  it('运行时没加载：空环、可点（点开能预热）', () => {
-    const runtime = chipsOf({ t, status: status({ runtime: { phase: 'idle', indexURL: null } }), local: local({ phase: 'ready' }) })
-      .find((chip) => chip.id === 'runtime')
-    expect(runtime?.tone).toBe('empty')
-    expect(runtime?.value).toBe('rtIdle')
-    expect(runtime?.actionable).toBe(true)
-  })
-
-  it('运行时加载中：转圈、不可点（没什么可做的）', () => {
-    const runtime = chipsOf({ t, status: status({ runtime: { phase: 'loading', indexURL: null } }), local: local({ phase: 'ready' }) })
-      .find((chip) => chip.id === 'runtime')
-    expect(runtime?.tone).toBe('busy')
-    expect(runtime?.actionable).toBe(false)
-  })
-
-  it('公式样式加载失败：红、可点；未配置则不可点（不是错）', () => {
-    const failed = chipsOf({ t, status: status({ katex: { baseURL: 'x', phase: 'error', error: '404' } }), local: local({ phase: 'ready' }) })
-      .find((chip) => chip.id === 'katex')
-    expect(failed?.tone).toBe('error')
-    expect(failed?.detail).toBe('404')
-    expect(failed?.actionable).toBe(true)
-
-    const unconfigured = chipsOf({ t, status: status({ katex: { baseURL: null, phase: 'unconfigured' } }), local: local({ phase: 'ready' }) })
-      .find((chip) => chip.id === 'katex')
-    expect(unconfigured?.tone).toBe('empty')
-    expect(unconfigured?.actionable).toBe(false)
-  })
-
-  it('缺两项能力：计数进状态词，逐条为什么进说明', () => {
-    const caps = chipsOf({ t, status: status({ capabilities: { wasm: false, webgl: false, videoExport: true } }), local: local({ phase: 'ready' }) })
-      .find((chip) => chip.id === 'caps')
-    expect(caps?.tone).toBe('error')
-    expect(caps?.value).toBe('chipMissing:{"count":2}')
-    expect(caps?.detail).toBe('rtWasmWhy rtWebglWhy')
-    expect(caps?.actionable).toBe(true)
-  })
-
-  it('本机环境：检测中转圈不可点、缺项黄可点、查不到灰可点', () => {
-    const checking = chipsOf({ t, status: healthy, local: local({ phase: 'checking' }) }).find((chip) => chip.id === 'local')
-    expect(checking?.tone).toBe('busy')
-    expect(checking?.actionable).toBe(false)
-
-    const missing = chipsOf({ t, status: healthy, local: local({ phase: 'missing', missing: [{ id: 'ffmpeg', detail: '' }] }) })
-      .find((chip) => chip.id === 'local')
-    expect(missing?.tone).toBe('warn')
-    expect(missing?.value).toBe('chipMissing:{"count":1}')
-    expect(missing?.actionable).toBe(true)
-
-    const unknown = chipsOf({ t, status: healthy, local: local({ phase: 'unknown' }) }).find((chip) => chip.id === 'local')
-    expect(unknown?.tone).toBe('idle')
-    expect(unknown?.actionable).toBe(true)
-  })
-})
-
-describe('展开面板里的待处理项', () => {
-  it('运行时没加载：借核心包的 hints 之外再补一句「要先下载」', () => {
-    const lines = pendingHints({ t, status: status({ runtime: { phase: 'idle', indexURL: null } }), local: { phase: 'ready' } })
-    expect(lines).toContain('chipRuntimeCold')
-  })
-
-  it('加载中不补那句话（已经在做了，没什么可说的）', () => {
-    const lines = pendingHints({ t, status: status({ runtime: { phase: 'loading', indexURL: null } }), local: { phase: 'ready' } })
-    expect(lines).toEqual([])
-  })
-
-  it('本机缺项：拼上缺什么；与浏览器侧的 hints 并存', () => {
-    const lines = pendingHints({
-      t,
-      status: status({ hints: ['浏览器侧那句'] }),
-      local: { phase: 'missing', missing: [{ id: 'ffmpeg', detail: '' }, { id: '打不上名字的', detail: '' }] },
-    })
-    expect(lines[0]).toBe('浏览器侧那句')
-    expect(lines[1]).toBe('chipLocalMissing:{"items":"envFfmpeg、打不上名字的"}')
   })
 })
 

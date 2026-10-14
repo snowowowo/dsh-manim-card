@@ -51,7 +51,7 @@ if (result.warnings?.length) showHint(result.warnings)
 **Notes**
 
 - **Failure returns `ok: false` and never throws.** Throwing would take the caller down with it — which is worse than the service being absent, so this rule must not be broken.
-- The precheck runs in a real interpreter, so the first call also brings up the Pyodide runtime (if not yet loaded) and may wait for one runtime download. To move that wait ahead of rendering, read `runtime.phase` from `environmentStatus()`, or let the user press "Warm up now" on the Laboratory status bar.
+- The precheck runs in a real interpreter, so the first call also brings up the Pyodide runtime (if not yet loaded) and may wait for one runtime download. To move that wait ahead of rendering, read `runtime.phase` from `environmentStatus()`.
 - Empty source (length 0 after trimming) returns `{ ok: true }` directly without starting the runtime.
 - **A passing precheck does not guarantee a successful render**: it runs the "draw nothing" bridge, so errors involving real drawing and layout only surface at `Surface.run()`. Render-time errors are the caller's to handle.
 - `warnings` reports only non-blocking issues (typically "the code contains formulas while the renderer was created without a formula stylesheet configured"); it does not affect the `ok` verdict.

@@ -12,7 +12,6 @@ dsh-manim-card 是 DeepSeek Harness（下称「宿主」）的插件：AI 在会
 | --- | --- | --- |
 | 聊天流 | 动画卡片：AI 调用 `manim_render` 后出现，支持播放、查看源码、导出 mp4 | [在聊天里用](/guide/usage) |
 | 工具 | `manim_render`：工具返回前在 Node 侧的真解释器里干跑一遍，语法错、未定义名、不支持的写法当场以 `error` 回给模型 | [宿主工具](/api/tool) |
-| 开发台面板 | 开发台（dsh-devbench，dev-only）聚合的 manim-card 面板：内置样例集与自由代码的功能验收台 | [实验场](/guide/lab) |
 | 设置面板 | 「manim-card」一节：浏览器运行时、本机环境探测、包缓存管理 | [设置面板](/guide/settings) |
 | 跨插件服务 | Cordis 服务 `manim-card`：预检、画布、环境状态快照与订阅 | [第三方插件接入](/guide/integrating) |
 
@@ -41,9 +40,9 @@ dsh-manim-card 是 DeepSeek Harness（下称「宿主」）的插件：AI 在会
 | --- | --- | --- |
 | 宿主 | 会话与聊天流、槽位与服务体系、`manim_render` 的调用与日志 | 渲染、Manim 语法、本机环境 |
 | 核心包 [manim-live](https://snowowowo.github.io/manim-live/) | 浏览器内的 Python 执行、manim 适配层、WebGL 画布、环境状态判定 | 宿主接入、卡片界面、导出、资源路由 |
-| 本插件 | 宿主接入（路由、工具、槽位）、卡片与播放调度、实验场、设置面板、mp4 导出、跨插件服务 | 渲染与执行本身 |
+| 本插件 | 宿主接入（路由、工具、槽位）、卡片与播放调度、设置面板、mp4 导出、跨插件服务 | 渲染与执行本身 |
 
-接口按使用者分成三条对外面：给模型的是 [`manim_render` 工具](/api/tool)，给其他插件的是 [manim-card 服务](/api/service)，给人用的是聊天卡片与实验场。本插件**不导出可供 `import` 的 JavaScript 模块**——插件之间禁止 import 是宿主的约定，跨插件协作只有服务一条路。
+接口按使用者分成三条对外面：给模型的是 [`manim_render` 工具](/api/tool)，给其他插件的是 [manim-card 服务](/api/service)，给人用的是聊天卡片。本插件**不导出可供 `import` 的 JavaScript 模块**——插件之间禁止 import 是宿主的约定，跨插件协作只有服务一条路。
 
 ## 与核心包 manim-live 的关系
 
@@ -65,6 +64,5 @@ dsh-manim-card 是 DeepSeek Harness（下称「宿主」）的插件：AI 在会
 ## 从哪开始
 
 - 装上并跑出第一张卡片 → [安装](/guide/installation)、[在聊天里用](/guide/usage)
-- 验收插件功能是否正常 → [实验场](/guide/lab)
 - 检查这台机器的条件（能不能出画面、能不能导出） → [设置面板](/guide/settings)
 - 在自己的插件里用画布 → [第三方插件接入](/guide/integrating)，接口细节见 [API 参考](/api/)

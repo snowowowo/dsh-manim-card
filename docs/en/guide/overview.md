@@ -12,7 +12,6 @@ dsh-manim-card is a plugin for DeepSeek Harness ("the host"): AI writes **standa
 | --- | --- | --- |
 | Chat stream | Animation cards: they appear after the AI calls `manim_render` and support playback, code viewing and mp4 export | [Usage in Chat](/en/guide/usage) |
 | A tool | `manim_render`: the code is dry-run in a real interpreter on the Node side before the tool returns, so syntax errors, undefined names and unsupported constructs come back as `error` immediately | [Host Tool](/en/api/tool) |
-| Dev bench panel | The manim-card panel aggregated by the dev bench (dsh-devbench, dev-only): an acceptance bench with a built-in sample set plus free-form code | [Laboratory](/en/guide/lab) |
 | Settings panel | A "Manim 渲染" section: the browser runtime, local environment probing and package cache management | [Settings Panel](/en/guide/settings) |
 | Cross-plugin service | The Cordis service `manim-card`: precheck, canvases, environment status snapshot and subscription | [Third-party Plugin Integration](/en/guide/integrating) |
 
@@ -41,9 +40,9 @@ From "AI writes code" to "an animation in the chat", three parties each own one 
 | --- | --- | --- |
 | The host | The conversation and chat stream, the slot and service systems, invocation and logging of `manim_render` | Rendering, Manim syntax, the local environment |
 | Core package [manim-live](https://snowowowo.github.io/manim-live/) | Python execution in the browser, the manim adaptation layer, the WebGL canvas, environment status verdicts | Host integration, card UI, export, asset routes |
-| This plugin | Host integration (routes, tool, slots), cards and playback scheduling, the Laboratory, the Settings panel, mp4 export, the cross-plugin service | Rendering and execution themselves |
+| This plugin | Host integration (routes, tool, slots), cards and playback scheduling, the Settings panel, mp4 export, the cross-plugin service | Rendering and execution themselves |
 
-The interfaces are split into three outward surfaces by consumer: the [`manim_render` tool](/en/api/tool) for the model, the [manim-card service](/en/api/service) for other plugins, and the chat cards plus Laboratory for people. This plugin **exports no JavaScript module that can be `import`ed** — imports between plugins are forbidden by the host's convention, so the service is the only path for cross-plugin work.
+The interfaces are split into three outward surfaces by consumer: the [`manim_render` tool](/en/api/tool) for the model, the [manim-card service](/en/api/service) for other plugins, and the chat cards for people. This plugin **exports no JavaScript module that can be `import`ed** — imports between plugins are forbidden by the host's convention, so the service is the only path for cross-plugin work.
 
 ## Relationship with the core package manim-live
 
@@ -65,6 +64,6 @@ The interfaces are split into three outward surfaces by consumer: the [`manim_re
 ## Where to start
 
 - Install it and get a first card → [Installation](/en/guide/installation), [Usage in Chat](/en/guide/usage)
-- Verify the plugin's features work → [Laboratory](/en/guide/lab)
+- Verify the plugin's features work → [Settings Panel](/en/guide/settings)
 - Check this machine's conditions (can it render, can it export) → [Settings Panel](/en/guide/settings)
 - Use a canvas in your own plugin → [Third-party Plugin Integration](/en/guide/integrating), interface detail in the [API Reference](/en/api/)

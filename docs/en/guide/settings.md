@@ -10,7 +10,7 @@ The "Manim 渲染" section of the host settings answers two questions — **what
 
 ## Browser runtime
 
-The runtime itself and four browser conditions live in one card. It reads from **the current page** rather than through the Host: these things happen in the browser, and the Host cannot see them. It reads the same status as the Laboratory's status bar.
+The runtime itself and four browser conditions live in one card. It reads from **the current page** rather than through the Host: these things happen in the browser, and the Host cannot see them.
 
 | Row | Values | Notes |
 | --- | --- | --- |
@@ -20,7 +20,7 @@ The runtime itself and four browser conditions live in one card. It reads from *
 | WebAssembly | yes / no | The foundation the Python interpreter runs on; without it nothing renders at all |
 | Screen recording | yes / no | Affects only the "record in the browser" export route; missing it affects neither rendering nor mp4 export |
 
-The card header states a count of pending items (or "all ready" when nothing is outstanding); when anything is unsatisfied, the card footer lists **actionable remedies** one by one, for instance "the current browser has no usable WebGL: manim-web cannot produce a picture" or "the Pyodide runtime failed to start: … first confirm the fetch address really opens and its files are complete". Those sentences come from the core package under one shared wording, and are the same batch as the Laboratory status bar's expanded panel.
+The card header states a count of pending items (or "all ready" when nothing is outstanding); when anything is unsatisfied, the card footer lists **actionable remedies** one by one, for instance "the current browser has no usable WebGL: manim-web cannot produce a picture" or "the Pyodide runtime failed to start: … first confirm the fetch address really opens and its files are complete". Those sentences come from the core package under one shared wording.
 
 Value semantics and type definitions of each field are in [Data Types](/en/api/types#environmentstatus).
 
@@ -34,7 +34,7 @@ Three behaviours worth knowing:
 - Probing fills in PATH itself: the PATH the desktop host receives is trimmed and paths like `/usr/local/bin` are often absent; without filling in, "installed but not detected" false positives occur.
 - The "manim library" item follows the manim command to locate the interpreter: if the command is a symlink into some venv, judging by the first `python3` on PATH would inevitably give a false report, so it is not judged that way.
 
-Among these six, `latex` and `dvisvgm` are needed only for formula constructs and are not required for mp4 export; the necessity verdict uses exactly the same rule as the card's export button and the Laboratory's "Local Manim" chip.
+Among these six, `latex` and `dvisvgm` are needed only for formula constructs and are not required for mp4 export; the necessity verdict uses exactly the same rule as the card's export button.
 
 ## Package cache
 

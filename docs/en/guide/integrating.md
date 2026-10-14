@@ -110,7 +110,7 @@ The runtime is a **page-level singleton**: canvases you create share one Python 
 | The `manim_render` tool | It faces the model, not plugins | Decide yourself when to generate code |
 | mp4 export | It depends on the host and the local environment; it is not a general capability | See the core package's [Export](https://snowowowo.github.io/manim-live/en/api/export), or use the host's own file capabilities |
 | The `fast` mode and per-run fetch callbacks | The service surface currently takes only a container | Extend `src/client/service.ts` as described in [Development & Debugging](/en/dev/); do not bypass the service by depending on the core package |
-| Warmup | It involves about 16 MB of traffic, and when to spend that should be the user's call | Point users at "Warm up now" in the [Laboratory](/en/guide/lab#environment-status-bar) |
+| Warmup | It involves about 16 MB of traffic, and when to spend that should be the user's call | Let the caller decide where to expose it (this plugin currently has no warmup entry point) |
 
 If your goal is to use the same canvas **outside the host**, in your own page, you do not need this service — depend on the core package [manim-live](https://snowowowo.github.io/manim-live/) directly.
 

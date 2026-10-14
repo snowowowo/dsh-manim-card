@@ -12,7 +12,7 @@
 | --- | --- | --- | --- |
 | 宿主里的模型 | `manim_render` 工具 | Host 工具，入参一段 Python 源码 | [宿主工具](/api/tool) |
 | 其他插件 | `ctx.get('manim-card')` | Cordis 服务，返回 `ManimService` | 本页与[manim-card 服务](/api/service) |
-| 聊天界面的使用者 | 卡片、实验场、设置面板 | 界面，无需编程 | [在聊天里用](/guide/usage)、[实验场](/guide/lab)、[设置面板](/guide/settings) |
+| 聊天界面的使用者 | 卡片、设置面板 | 界面，无需编程 | [在聊天里用](/guide/usage)、[设置面板](/guide/settings) |
 | 本插件与核心包的开发者 | `pnpm` 脚本、`src/` 分层 | 源码 | [开发与调试](/dev/) |
 
 **本插件不导出可供 `import` 的 JavaScript 模块。** 插件之间禁止 import 是宿主的约定，跨插件协作只有服务一条路；想在宿主之外使用同一块画布，直接依赖核心包 [manim-live](https://snowowowo.github.io/manim-live/)。
@@ -37,7 +37,7 @@ ctx.get('manim-card')                     → ManimService | undefined   服务�
 三点读图说明：
 
 - `ManimService` 的四个成员全是方法，没有属性。`Surface` 只能由 `createSurface()` 造出来，不能单独构造；它的成员定义与行为契约都在核心包，见[画布](https://snowowowo.github.io/manim-live/api/surface)。
-- 服务面只覆盖「预检、画布、环境状态」三件事。卡片 UI、`manim_render` 工具、播放调度、实验场与导出都是本插件自己的入口，不在服务内——调用方要展示就得自建 UI。
+- 服务面只覆盖「预检、画布、环境状态」三件事。卡片 UI、`manim_render` 工具、播放调度与导出都是本插件自己的入口，不在服务内——调用方要展示就得自建 UI。
 - 状态有两个出口：单次运行的结论在 `check()` / `run()` 的返回值里，页面级的环境条件在 `environmentStatus()` 与它的订阅里，见[manim-card 服务](/api/service)。
 
 ## 拿到服务
@@ -100,7 +100,7 @@ import type { EnvironmentStatus, CheckResult } from 'manim-live'
 
 - 聊天卡片与调用方创建的画布不会争抢解释器，渲染按提交顺序串行执行；
 - 某一方的代码长时间运行会阻塞另一方，这与「同一页面只有一条队列」是同一件事；
-- 预热（实验场状态条上的动作）同样排在这条队列里，预热期间提交的渲染排在它后面。
+- 预热同样排在这条队列里，预热期间提交的渲染排在它后面。
 
 画布的显示尺寸固定 1280×720，不随容器变化；要改显示大小用 CSS 缩放容器。背景全透明，底色由宿主页面透出。
 

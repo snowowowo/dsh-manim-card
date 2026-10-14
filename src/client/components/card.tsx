@@ -73,7 +73,7 @@ const spent = new Set<string>()
  * 老会话里几十张卡各播一遍，谁也等不起，而且那些画面用户早就看过了。
  *
  * 两个用户动作**压过全部自动规则**：
- * - 手动播放 → 一定真播。包括那张「预算已经用掉」的、老会话的、以及实验场极速档下的——
+ * - 手动播放 → 一定真播。包括那张「预算已经用掉」的、老会话的、以及极速档下的——
  *   点下去就是「我要看这一段」。它**同样压过「本批只由代表播」**：那条是跨卡的省算力规则，
  *   拿它把用户按下的键按回去，等于按了个寂寞（非代表那张按下去只会跳到终态）。
  * - ⏩ 跳过 → 不演，直接落终态。
@@ -101,15 +101,14 @@ export function decidePlay(input: {
 }
 
 /**
- * 渲染卡片。聊天流与实验场页面**共用这一个组件**——页面不再自己维护画布，
- * 于是「重播 / 查看代码 / 复制」这些能力天然一致，不会再各改各的。
+ * 渲染卡片：聊天流里的一张 Manim 卡（画布 + 手动播放 + 查看代码 + 导出）——
+ * 「重播 / 查看代码 / 复制」这些能力都在同一处，不会再各改各的。
  *
- * - `label`  顶栏标签，缺省是聊天场景的「Manim 动画」（实验场传样例标题）。
- * - `onResult` 一次渲染结束的回调（成功失败都调），实验场用它把结果显示到样例条目上。
+ * - `label`  顶栏标签，缺省「Manim 动画」。
+ * - `onResult` 一次渲染结束的回调（成功失败都调）。
  * - `autoStart` 不理会视口、挂载即渲染。聊天流靠 IntersectionObserver 保证「只有可见的那几张
- *   在跑」，但实验场一次只有一张卡、而它可能被滚出可视区（右侧栏往下翻看代码），
- *   那时再等视口就会把页面吊在半路——所以那一侧显式关掉视口门控。
- * - `fast` 极速：不等 run_time / wait，直接落终态（实验场那个开关）。
+ *   在跑」，不摆观察者的调用方则显式关掉视口门控。
+ * - `fast` 极速：不等 run_time / wait，直接落终态。
  */
 export function ManimCard({ data, t, label, onResult, autoStart, fast }: {
   data: ManimCardData
@@ -166,7 +165,7 @@ export function ManimCard({ data, t, label, onResult, autoStart, fast }: {
   const onResultRef = useRef(onResult)
   onResultRef.current = onResult
 
-  /** 状态既落在卡片上，也回给调用方（实验场用它点亮语料条目的红绿点）。 */
+  /** 状态既落在卡片上，也回给调用方。 */
   const report = (next: CardResult): void => {
     // 失败时顺手看一眼环境：有硬伤（起不了解释器 / 没有 WebGL / 取包失败）就把话摆出来。
     // 一次失败只取一次——不订阅环境状态，几十张卡各挂一个订阅不划算，而失败那一刻的读数就够用了。
@@ -334,7 +333,7 @@ export function ManimCard({ data, t, label, onResult, autoStart, fast }: {
       void (async () => {
         try {
           // 极速与否只看**这一趟要不要演**：不演的那趟（自动落末帧、⏩ 跳过）直接落终态；
-          // 要演的那趟一律真演——哪怕实验场的极速开关还开着，手动播放点下去就是要看过程。
+          // 要演的那趟一律真演——手动播放点下去就是要看过程。
           // 画布工厂在核心包里（`manim-live`），本插件只持有那个页面级单例渲染器（见 ../service.ts）。
           const created = await manimRenderer().createSurface(stage, { fast: !play })
           // 建的过程中这一趟被作废了（按了 ⏩、被淘汰、卡片卸载）：当场释放，别泄漏上下文。
@@ -372,8 +371,7 @@ export function ManimCard({ data, t, label, onResult, autoStart, fast }: {
 
     renderQueue.register(
       { callId: data.callId, seq: data.seq, stepKey: data.stepKey },
-      // 实验场一次只挂一张卡、而它可能被滚出可视区（右侧栏往下翻看代码），那时再等视口
-      // 就会把页面吊在半路——所以那一侧直接报「可见」，不摆观察者。
+      // `autoStart` 的卡直接报「可见」，不摆观察者——那时再等视口会把渲染吊在半路。
       { visible: autoStart === true, willing: true, hasCanvas: false },
       { run, evict: dropSurface },
     )

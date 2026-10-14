@@ -25,11 +25,9 @@ cordis.patch.yml    This plugin's registration entry in a host profile
 src/
 ├── client/         Browser half — all of it is bundled into client.js
 │   ├── index.tsx       Entry: ModuleLoader registration + slot wiring + ErrorBoundary
-│   ├── page.tsx        The Laboratory page
 │   ├── settings.tsx    Settings panel
-│   ├── components/     Cards, code view, environment status bar and friends
+│   ├── components/     Cards, code view and friends
 │   ├── service.ts      The outward-facing manim-card service
-│   ├── samples.ts      Built-in Laboratory samples
 │   ├── runtime-status.ts  Environment status → display wording (pure selectors)
 │   ├── i18n.ts         Copy dictionary
 │   └── styles.css      Skin
@@ -107,13 +105,13 @@ If `pnpm link` was ever used to point at a local core-package checkout, `node_mo
 ## Troubleshooting entry points
 
 - **Artifact load failure / `duplicate factory registration`**: first check that the client bundle's registration id equals the package name. It is derived from `package.json` by `tsdown.preset.ts`, never handwritten.
-- **Nothing renders**: the real rendering and execution machinery lives in the core package [manim-live](https://github.com/snowowowo/manim-live) ([docs site](https://snowowowo.github.io/manim-live/)), whose troubleshooting and development pages are more detailed than this one. Start with the pending items the Laboratory status bar reports — environment causes are all there.
+- **Nothing renders**: the real rendering and execution machinery lives in the core package [manim-live](https://github.com/snowowowo/manim-live) ([docs site](https://snowowowo.github.io/manim-live/)), whose troubleshooting and development pages are more detailed than this one. Environment causes are all listed in the Settings panel's "Browser runtime" card.
 - **Environment status empty or permanently "not loaded"**: check whether a second copy of the core package has been pulled in. Status must come through the service surface, or from this plugin's own copy of `manim-live`, see [API Reference](/en/api/#why-status-must-go-through-the-service).
 - **Formulas turned into tofu**: check the KaTeX route in `src/routes.js` and whether `assets/katex/` is complete.
 
 ## Boundaries and conventions
 
-- Corpus regression belongs to the core package repository (`corpus/`). This plugin's Laboratory only verifies its own features, with samples built into `src/client/samples.ts`, copied verbatim from the core package's corpus files; pick new ones over there.
+- Corpus regression belongs to the core package repository (`corpus/`); to pick or add samples, go over there.
 - The build preset `tsdown.preset.ts` has its single source in the `dsh-plugin-template` repository and is byte-identical across plugin packages; change the preset in the template first, then copy the whole file over.
 - The single source of conventions and rules is the container repository `dsh-plugins`'s `AGENTS.md` and `.agents/skills/`; this page only points to them.
 - The docs site's two languages differ only in language, never in content: a change to Chinese must be mirrored in English, see `docs/README.md`.

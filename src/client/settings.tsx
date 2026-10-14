@@ -22,7 +22,7 @@ import { Info as InfoIcon, RefreshCw } from 'lucide-react'
 import { Dot } from './components/dot'
 import { Tip } from './components/tip'
 import { loadEnvPlan, probeEnv, type EnvCheck, type EnvPlan, type EnvResult, type EnvStatus } from './environment'
-// 状态点的语义、色调映射与取词表都在 ./runtime-status（实验场状态条要共用同一份）。
+// 状态点的语义、色调映射与取词表都在 ./runtime-status。
 import { capabilityTone, KATEX_PHRASE, katexTone, RUNTIME_PHRASE, runtimeTone, useEnvironmentStatus, type StatusTone as Tone } from './runtime-status'
 import {
   cachePackage, clearPackage, COMMON_PACKAGES, completionFor, findPackage, formatBytes, loadPackages, prefetchPlan,

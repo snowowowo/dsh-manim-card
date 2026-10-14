@@ -47,7 +47,6 @@ export default defineConfig({
           {
             text: '功能',
             items: [
-              { text: '实验场', link: '/guide/lab' },
               { text: '设置面板', link: '/guide/settings' },
             ],
           },
@@ -120,7 +119,6 @@ export default defineConfig({
           {
             text: 'Features',
             items: [
-              { text: 'Laboratory', link: '/en/guide/lab' },
               { text: 'Settings Panel', link: '/en/guide/settings' },
             ],
           },

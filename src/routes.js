@@ -32,7 +32,7 @@ export const PYODIDE_ROUTE = `${PREFIX}/pyodide`
 /** KaTeX 静态资源（css + 字体）。Client 侧作为 `katexBaseURL` 交给核心包。 */
 export const KATEX_ROUTE = `${PREFIX}/katex`
 
-/** 包清单（GET）与预缓存（POST …/cache，设置页与实验场工具条共用）。 */
+/** 包清单（GET）与预缓存（POST …/cache，设置页用）。 */
 export const PACKAGES_ROUTE = `${PREFIX}/packages`
 
 /** 清包缓存（POST；只删本插件缓存目录里的包文件，不递归、不碰别的名字）。 */

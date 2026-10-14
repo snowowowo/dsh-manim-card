@@ -1,6 +1,5 @@
 // Client 入口：默认导出插件对象（产物包装由构建预设的 banner/footer 完成）。
 import React, { type ReactNode } from 'react'
-import { ManimPage } from './page'
 import { ManimSettingsPage } from './settings'
 import { ManimCard } from './components/card'
 import { definition, type ManimCardData } from './definition'
@@ -72,14 +71,6 @@ export default {
         disposeManimRenderer()
       }
     }, 'manim-card: provide service')
-
-    // 调试面板：实验场（内置样例集 + 自定义代码的功能验收台）不占自己的导航，以 devpanel
-    // 服务交给开发台（dsh-devbench）聚合；开发台缺席时无人读它，零可见（真功能页才注册槽位）。
-    // label 一律插件自己的英文名（入口短名），不自起中文名。
-    ctx.effect(() => ctx.provide('devpanel.manim-card', {
-      label: 'manim-card',
-      component: () => <SlotErrorBoundary><ManimPage t={t} /></SlotErrorBoundary>,
-    }), 'manim-card: devpanel')
 
     // 设置分区：设置面板里的一个整页（本机环境 + 包缓存）。这是**真功能**（用户要用的），
     // 照常注册槽位、常显；label 用插件英文名。

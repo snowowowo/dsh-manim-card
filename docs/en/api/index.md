@@ -12,7 +12,7 @@ The plugin has four kinds of consumers; interfaces are split by consumer and do 
 | --- | --- | --- | --- |
 | Model inside the host | `manim_render` tool | Host tool taking a piece of Python source | [Host Tool](/en/api/tool) |
 | Other plugins | `ctx.get('manim-card')` | Cordis service returning `ManimService` | This page and [The manim-card Service](/en/api/service) |
-| Users of the chat UI | Cards, Laboratory, Settings | UI, no programming | [Usage in Chat](/en/guide/usage), [Laboratory](/en/guide/lab), [Settings Panel](/en/guide/settings) |
+| Users of the chat UI | Cards, Settings | UI, no programming | [Usage in Chat](/en/guide/usage), [Settings Panel](/en/guide/settings) |
 | Developers of this plugin and the core package | `pnpm` scripts, the `src/` layering | Source | [Development & Debugging](/en/dev/) |
 
 **The plugin exports no JavaScript module that can be `import`ed.** Imports between plugins are forbidden by the host's convention, so cross-plugin cooperation has exactly one path: the service. To use the same canvas outside the host, depend on the core package [manim-live](https://snowowowo.github.io/manim-live/) directly.
@@ -37,7 +37,7 @@ ctx.get('manim-card')                     → ManimService | undefined   undefin
 Three notes on reading this graph:
 
 - All four members of `ManimService` are methods; there are no properties. A `Surface` can only be produced by `createSurface()` and cannot be constructed separately; its members and behavioural contracts belong to the core package, see [Canvas](https://snowowowo.github.io/manim-live/en/api/surface).
-- The service surface covers exactly three things: precheck, canvas, environment status. Card UI, the `manim_render` tool, playback scheduling, the Laboratory and export are this plugin's own entry points and are not part of the service — a caller that wants to display something must build its own UI.
+- The service surface covers exactly three things: precheck, canvas, environment status. Card UI, the `manim_render` tool, playback scheduling and export are this plugin's own entry points and are not part of the service — a caller that wants to display something must build its own UI.
 - Status has two exits: the outcome of a single run is in the return value of `check()` / `run()`, and page-level environment conditions are in `environmentStatus()` and its subscription, see [The manim-card Service](/en/api/service).
 
 ## Obtaining the service
@@ -100,7 +100,7 @@ This plugin and its callers share a single page-level runtime: the Python interp
 
 - Chat cards and canvases created by callers never contend for the interpreter; renders execute serially in submission order;
 - A long-running piece of code on one side blocks the other — which is the same statement as "one queue per page";
-- Warming up (the action on the Laboratory status bar) also joins that queue, so renders submitted during warmup are queued behind it.
+- Warming up also joins that queue, so renders submitted during warmup are queued behind it.
 
 A canvas has a fixed 1280×720 resolution that does not follow its container; to change the displayed size, scale the container with CSS. The background is fully transparent, so the host page's colour shows through.
 
