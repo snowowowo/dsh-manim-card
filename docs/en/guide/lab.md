@@ -1,6 +1,6 @@
 # Laboratory
 
-The Laboratory lives in the "Manim 渲染" page of the left navigation. It is the acceptance bench for this plugin's features: card rendering, playback control, code viewing, mp4 export and precheck errors are all verified here against expectations. This page covers its interface, environment status bar, sample mode, toolbar and progress persistence.
+The Laboratory is the manim-card panel aggregated by the dev bench (dsh-devbench, dev-only). It is the acceptance bench for this plugin's features: card rendering, playback control, code viewing, mp4 export and precheck errors are all verified here against expectations. This page covers its interface, environment status bar, sample mode, toolbar and progress persistence.
 
 The Laboratory is not a separately implemented debug page — **the canvas uses the same component as the chat cards**, so manual playback, code viewing and export behave exactly as in chat, and what passes here holds there too.
 

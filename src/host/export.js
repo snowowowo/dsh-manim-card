@@ -79,7 +79,7 @@ export function exportRoute() {
         response.statusCode = 405;
         response.end();
       } catch (error) {
-        console.error(`[manim-live] export route failed (${request.url}):`, error);
+        console.error(`[manim-card] export route failed (${request.url}):`, error);
         sendJson(response, 500, { error: error instanceof Error ? error.message : String(error) });
       }
     },

@@ -90,7 +90,7 @@ async function call(method: string, url: string, body?: unknown) {
   return response
 }
 
-const EXPORT_URL = '/dsh-plugins/manim-live/export'
+const EXPORT_URL = '/dsh-plugins/manim-card/export'
 
 describe('HTTP 面', () => {
   it('GET /ready：回就绪结论（LaTeX 缺席不影响 ready）', async () => {

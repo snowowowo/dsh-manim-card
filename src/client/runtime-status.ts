@@ -79,7 +79,7 @@ export function useLocalEnv(): { state: LocalEnvState; refresh: () => void } {
         setState(value.ready ? { phase: 'ready' } : { phase: 'missing', missing: value.missing })
       })
       .catch((error) => {
-        console.error('[manim-live] 本机环境就绪结论取不到:', error)
+        console.error('[manim-card] 本机环境就绪结论取不到:', error)
         if (alive) setState({ phase: 'unknown' })
       })
     return () => {

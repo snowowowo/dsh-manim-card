@@ -1,3 +1,3 @@
 - insert:
-    - id: manim-live
-      name: './plugins/dsh-manim-live/index.js'
+    - id: manim-card
+      name: './plugins/dsh-manim-card/index.js'

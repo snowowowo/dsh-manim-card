@@ -57,4 +57,4 @@ When nothing can be drawn, the cause is usually the machine's conditions rather 
 - the matching chip on the Laboratory status bar can be opened, see [Laboratory](/en/guide/lab#environment-status-bar);
 - the "Browser runtime" card in the Settings panel lists each item's state and remedy, see [Settings Panel](/en/guide/settings#browser-runtime).
 
-All three read the same verdict, produced by the core package, so the wording never contradicts itself. To read that status from your own plugin, use [the manim-live service's environmentStatus()](/en/api/service#manim-environmentstatus).
+All three read the same verdict, produced by the core package, so the wording never contradicts itself. To read that status from your own plugin, use [the manim-card service's environmentStatus()](/en/api/service#manim-environmentstatus).

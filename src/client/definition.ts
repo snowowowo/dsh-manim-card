@@ -158,7 +158,7 @@ function readBatch(match: FoldMatch, callId: string): { stepKey: string; seq: nu
 }
 
 export const definition = {
-  kind: 'manim-render',
+  kind: 'manim-card',
   target: 'chat',
   match: (event: FoldEvent): { id: string; role: 'start' | 'update' } | null => {
     if (event.type === 'tool/call') {
@@ -191,14 +191,14 @@ export const definition = {
     // 中断收尾（宿主说这次没跑成）：认出来就走 interrupted，不打日志——那不是「怪数据」。
     if (readInterrupted(match.event)) return { ...context.state, interrupted: true }
     // 其余认不出的回执才留一条：宿主哪天换了收尾格式，能从这儿查出来。
-    if (text !== undefined) console.error('[manim-live] 工具回执认不出:', text.slice(0, 200))
+    if (text !== undefined) console.error('[manim-card] 工具回执认不出:', text.slice(0, 200))
     return context.state
   },
   buildViewNode: (context: FoldContext) => {
     if (context.start === undefined) return null
     return {
       key: context.key,
-      kind: 'manim-render',
+      kind: 'manim-card',
       id: context.id,
       target: 'chat',
       anchorSeq: context.start.event.seq,

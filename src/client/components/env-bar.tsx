@@ -34,7 +34,7 @@ export function EnvBar({ t }: { t: Translate }) {
       await warmupManim()
       setWarmNote(t('envbarWarmed'))
     } catch (error) {
-      console.error('[manim-live] 预热失败:', error)
+      console.error('[manim-card] 预热失败:', error)
       setWarmNote(t('envbarWarmFailed', { message: error instanceof Error ? error.message : String(error) }))
     } finally {
       setWarming(false)

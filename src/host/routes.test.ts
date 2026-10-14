@@ -50,12 +50,12 @@ const PLUGIN_DIR = join(dirname(fileURLToPath(import.meta.url)), '..', '..')
 const KATEX_DIR = join(PLUGIN_DIR, 'assets', 'katex')
 const PYODIDE_DIR = join(PLUGIN_DIR, 'assets', 'pyodide')
 
-const CACHE_PATH = '/dsh-plugins/manim-live/cache'
-const KATEX_PATH = '/dsh-plugins/manim-live/katex'
-const PYODIDE_PATH = '/dsh-plugins/manim-live/pyodide'
-const PACKAGES_PATH = '/dsh-plugins/manim-live/packages'
-const ENV_PATH = '/dsh-plugins/manim-live/environment'
-const EXPORT_PATH = '/dsh-plugins/manim-live/export'
+const CACHE_PATH = '/dsh-plugins/manim-card/cache'
+const KATEX_PATH = '/dsh-plugins/manim-card/katex'
+const PYODIDE_PATH = '/dsh-plugins/manim-card/pyodide'
+const PACKAGES_PATH = '/dsh-plugins/manim-card/packages'
+const ENV_PATH = '/dsh-plugins/manim-card/environment'
+const EXPORT_PATH = '/dsh-plugins/manim-card/export'
 
 interface Handler {
   (request: { method: string; url: string }, response: unknown): Promise<void>
@@ -294,7 +294,7 @@ describe('技能注册', () => {
   it('SKILL.md 的 frontmatter 被剥掉，正文原样交出去', () => {
     apply(fakeCtx())
     const skill = captured.skills[0]!
-    expect(skill.name).toBe('manim-live')
+    expect(skill.name).toBe('manim-card')
     expect(skill.source).toBe('runtime')
     expect(typeof skill.content).toBe('string')
     expect((skill.content as string).length).toBeGreaterThan(0)
@@ -315,7 +315,7 @@ describe('常驻指引', () => {
   it('以固定名与顺序注册到 systemPrompt，正文非空', () => {
     apply(fakeCtx())
     const section = captured.sections[0]!
-    expect(section.name).toBe('manim-live:guide')
+    expect(section.name).toBe('manim-card:guide')
     expect(section.order).toBe(520)
     expect(typeof section.text).toBe('string')
     expect(section.text!.length).toBeGreaterThan(0)

@@ -90,7 +90,7 @@ export function pyodideRoute(cacheDir) {
         response.setHeader('content-type', MIME[extname(name)] ?? 'application/octet-stream');
         response.end(bytes);
       } catch (error) {
-        console.error(`[manim-live] pyodide asset failed (${request.url}):`, error);
+        console.error(`[manim-card] pyodide asset failed (${request.url}):`, error);
         response.statusCode = 502;
         response.end();
       }
@@ -135,15 +135,15 @@ export function clearCacheRoute(cacheDir) {
             await unlink(join(cacheDir, name));
             removed.push(name);
           } catch (error) {
-            console.error(`[manim-live] 清缓存失败（${name}）：`, error);
+            console.error(`[manim-card] 清缓存失败（${name}）：`, error);
           }
         }
-        console.info(`[manim-live] 已清掉包缓存 ${removed.length} 个（${cacheDir}）`);
+        console.info(`[manim-card] 已清掉包缓存 ${removed.length} 个（${cacheDir}）`);
         sendJson(response, 200, { removed });
       } catch (error) {
         // 坏正文是请求的错（400），别报成插件故障
         const bad = error instanceof BadRequest;
-        if (!bad) console.error('[manim-live] 清缓存失败：', error);
+        if (!bad) console.error('[manim-card] 清缓存失败：', error);
         sendJson(response, bad ? 400 : 500, { error: error instanceof Error ? error.message : String(error) });
       }
     },
@@ -197,7 +197,7 @@ export function packagesRoute(cacheDir) {
       } catch (error) {
         // 坏正文（截断的 JSON / 超限）是请求的错，答 400 且不吵日志；其余才是路由的真故障。
         const bad = error instanceof BadRequest;
-        if (!bad) console.error(`[manim-live] packages route failed (${request.url}):`, error);
+        if (!bad) console.error(`[manim-card] packages route failed (${request.url}):`, error);
         sendJson(response, bad ? 400 : 500, { error: error instanceof Error ? error.message : String(error) });
       }
     },

@@ -28,7 +28,7 @@ src/
 │   ├── page.tsx        实验场整页
 │   ├── settings.tsx    设置面板
 │   ├── components/     卡片、代码视图、环境状态条等
-│   ├── service.ts      对外的 manim-live 服务
+│   ├── service.ts      对外的 manim-card 服务
 │   ├── samples.ts      实验场内置样例
 │   ├── runtime-status.ts  环境状态 → 展示口径（纯选择器）
 │   ├── i18n.ts         文案字典
@@ -40,7 +40,7 @@ src/
 │   └── pyodide.js / assets.js / http.js   资源与按需取包路由
 └── routes.js       两条资源路由的唯一真源，两侧共用
 assets/             随包资源：pyodide / katex
-skills/manim-live/  给模型的领域技能正文（Markdown）
+skills/manim-card/  给模型的领域技能正文（Markdown）
 docs/               文档站（VitePress，独立依赖，与插件的依赖图无关）
 ```
 
@@ -53,8 +53,8 @@ docs/               文档站（VitePress，独立依赖，与插件的依赖图
 ## 搭建开发环境
 
 ```bash
-git clone https://github.com/snowowowo/dsh-manim-live.git
-cd dsh-manim-live
+git clone https://github.com/snowowowo/dsh-manim-card.git
+cd dsh-manim-card
 pnpm install
 pnpm build       # 产出 client.js
 ```

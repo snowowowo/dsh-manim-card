@@ -43,7 +43,7 @@ export function environmentRoute() {
         }
         sendJson(response, 200, result);
       } catch (error) {
-        console.error(`[manim-live] environment route failed (${request.url}):`, error);
+        console.error(`[manim-card] environment route failed (${request.url}):`, error);
         sendJson(response, 500, { error: error instanceof Error ? error.message : String(error) });
       }
     },

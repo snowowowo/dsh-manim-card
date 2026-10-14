@@ -5,14 +5,14 @@
  * 页面上的**说明性长文案一律做成悬浮提示**（键名带 `Hint`）——页面本身只留控件，
  * 开发自己知道在干什么，不需要每次都被念一遍。
  */
-export const NS = 'manimRenderer'
+export const NS = 'manimCard'
 
 /** 宿主 locale.bind 返回的取词函数（宿主返回值未带类型，按用法声明）。 */
 export type Translate = (key: string, params?: Record<string, string | number>) => string
 
 export const DICT = {
   zh: {
-    title: 'Manim 渲染',
+    title: 'Manim 卡片',
     lead: '本页验收本插件在宿主里的功能：卡片渲染、播放控制、查看代码、导出 mp4、预检报错。样例是内置的一小集（打进插件，正式安装也可用）；语料回归网在核心包 manim-live 仓（corpus/），与本页无关。',
 
     modeLabel: '模式',
@@ -71,7 +71,7 @@ export const DICT = {
     exportVideo: '导出视频',
     exportReadyHint: '用本机安装的 Manim 渲染成 mp4（1080p），存到「下载」文件夹。',
     exportChecking: '正在检查本机环境，稍等…',
-    exportMissingHint: '暂时不能导出，本机还缺：{missing}。到 设置 → Manim 渲染 里查看详情。',
+    exportMissingHint: '暂时不能导出，本机还缺：{missing}。到 设置 → manim-card 里查看详情。',
     exportUnknownHint: '本机环境暂时检查不了，不能导出。',
     exportBusy: '正在用本机 Manim 渲染并导出…要真跑一遍，可能得等一会儿',
     exportDone: '已导出到 {path}',

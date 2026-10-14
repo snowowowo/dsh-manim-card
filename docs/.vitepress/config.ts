@@ -1,15 +1,15 @@
 import { defineConfig } from 'vitepress'
 
-// base 与部署地址对齐：仓库是 github.com/snowowowo/dsh-manim-live，项目页即
-// https://snowowowo.github.io/dsh-manim-live/ 。换自定义域名（或改成 <user>.github.io
+// base 与部署地址对齐：仓库是 github.com/snowowowo/dsh-manim-card，项目页即
+// https://snowowowo.github.io/dsh-manim-card/ 。换自定义域名（或改成 <user>.github.io
 // 用户页）时改这一处即可——正文里的图片全是相对路径，vite 构建时自动带上 base。
-const BASE = '/dsh-manim-live/'
+const BASE = '/dsh-manim-card/'
 
 // i18n 约定（标准源是 dsh-plugin-template）：中文是源语言，放在根目录；英文是本地化，
 // 放在 en/ 下且目录结构与中文一一对应。两侧只差语言，不差内容——改了中文必须同步改英文。
 export default defineConfig({
   base: BASE,
-  title: 'dsh-manim-live',
+  title: 'dsh-manim-card',
   description: 'DeepSeek Harness 插件：在会话中让 AI 用 Manim 画动画——聊天流中出现可播放、可查看代码、可导出 mp4 的动画卡片；代码在浏览器内执行，基础功能离线可用。',
   // 图标放在 public/ 下。head 里的 href **不会**被自动加 base（它不走 markdown 链接改写），
   // 所以这里手动拼上——顺手把它绑到上面那个 BASE，免得两处各改一次。
@@ -59,7 +59,7 @@ export default defineConfig({
             text: 'API 参考',
             items: [
               { text: '总览与入口', link: '/api/' },
-              { text: 'manim-live 服务', link: '/api/service' },
+              { text: 'manim-card 服务', link: '/api/service' },
               { text: '数据类型', link: '/api/types' },
               { text: '宿主工具', link: '/api/tool' },
             ],
@@ -99,7 +99,7 @@ export default defineConfig({
       label: 'English',
       lang: 'en-US',
       link: '/en/',
-      title: 'dsh-manim-live',
+      title: 'dsh-manim-card',
       description: 'A DeepSeek Harness plugin: let AI draw Manim animations right in the session — playable, code-inspectable, mp4-exportable animation cards appear in the chat stream; code runs in the browser, and basic features work offline.',
 
       themeConfig: {
@@ -132,7 +132,7 @@ export default defineConfig({
             text: 'API Reference',
             items: [
               { text: 'Overview and Entry Points', link: '/en/api/' },
-              { text: 'The manim-live Service', link: '/en/api/service' },
+              { text: 'The manim-card Service', link: '/en/api/service' },
               { text: 'Data Types', link: '/en/api/types' },
               { text: 'Host Tool', link: '/en/api/tool' },
             ],
@@ -155,7 +155,7 @@ export default defineConfig({
 
   // socialLinks / footer 两侧共享，留在顶层 themeConfig。
   themeConfig: {
-    socialLinks: [{ icon: 'github', link: 'https://github.com/snowowowo/dsh-manim-live' }],
+    socialLinks: [{ icon: 'github', link: 'https://github.com/snowowowo/dsh-manim-card' }],
     footer: {
       message: 'DeepSeek Harness 插件系列 · 运行时与渲染引擎见核心包 manim-live',
       copyright: 'Copyright © 2026 snowowowo',

@@ -1,6 +1,6 @@
 # API 参考：总览与入口
 
-本页讲 dsh-manim-live 对外提供什么、怎么拿到、活多久。其余各页讲一个面：服务成员见[manim-live 服务](/api/service)，数据结构见[数据类型](/api/types)，模型侧的调用契约见[宿主工具](/api/tool)。
+本页讲 dsh-manim-card 对外提供什么、怎么拿到、活多久。其余各页讲一个面：服务成员见[manim-card 服务](/api/service)，数据结构见[数据类型](/api/types)，模型侧的调用契约见[宿主工具](/api/tool)。
 
 第一次上手看[它是什么](/guide/overview)与[安装](/guide/installation)；要在自己的插件里用画布，从[第三方插件接入](/guide/integrating)读起。
 
@@ -11,7 +11,7 @@
 | 使用者 | 接口 | 形态 | 文档 |
 | --- | --- | --- | --- |
 | 宿主里的模型 | `manim_render` 工具 | Host 工具，入参一段 Python 源码 | [宿主工具](/api/tool) |
-| 其他插件 | `ctx.get('manim-live')` | Cordis 服务，返回 `ManimService` | 本页与[manim-live 服务](/api/service) |
+| 其他插件 | `ctx.get('manim-card')` | Cordis 服务，返回 `ManimService` | 本页与[manim-card 服务](/api/service) |
 | 聊天界面的使用者 | 卡片、实验场、设置面板 | 界面，无需编程 | [在聊天里用](/guide/usage)、[实验场](/guide/lab)、[设置面板](/guide/settings) |
 | 本插件与核心包的开发者 | `pnpm` 脚本、`src/` 分层 | 源码 | [开发与调试](/dev/) |
 
@@ -19,10 +19,10 @@
 
 ## 对象关系
 
-一切从 `ctx.get('manim-live')` 开始。返回的 `ManimService` 就是调用方能拿到的全部：
+一切从 `ctx.get('manim-card')` 开始。返回的 `ManimService` 就是调用方能拿到的全部：
 
 ```
-ctx.get('manim-live')                     → ManimService | undefined   服务缺席时为 undefined
+ctx.get('manim-card')                     → ManimService | undefined   服务缺席时为 undefined
 ├─ check(python)                     → Promise<CheckResult>
 ├─ createSurface(container)          → Promise<Surface>           一块画布一个
 │  ├─ run(code, handlers?)           → Promise<RunResult>         ← 以下五个成员属核心包
@@ -38,7 +38,7 @@ ctx.get('manim-live')                     → ManimService | undefined   服务�
 
 - `ManimService` 的四个成员全是方法，没有属性。`Surface` 只能由 `createSurface()` 造出来，不能单独构造；它的成员定义与行为契约都在核心包，见[画布](https://snowowowo.github.io/manim-live/api/surface)。
 - 服务面只覆盖「预检、画布、环境状态」三件事。卡片 UI、`manim_render` 工具、播放调度、实验场与导出都是本插件自己的入口，不在服务内——调用方要展示就得自建 UI。
-- 状态有两个出口：单次运行的结论在 `check()` / `run()` 的返回值里，页面级的环境条件在 `environmentStatus()` 与它的订阅里，见[manim-live 服务](/api/service)。
+- 状态有两个出口：单次运行的结论在 `check()` / `run()` 的返回值里，页面级的环境条件在 `environmentStatus()` 与它的订阅里，见[manim-card 服务](/api/service)。
 
 ## 拿到服务
 
@@ -49,14 +49,14 @@ ctx.get('manim-live')                     → ManimService | undefined   服务�
 export default {
   inject: ['slots'],
   apply(ctx) {
-    const manim = ctx.get('manim-live')
+    const manim = ctx.get('manim-card')
     if (!manim) return   // 软可选：本插件缺席时照常降级
     // …使用 manim
   },
 }
 ```
 
-**软可选消费**是本服务的硬约定：本插件未安装、被禁用或尚未加载时，`ctx.get('manim-live')` 返回 `undefined`。用 `ctx.get()` 而**不是** `inject`——`inject` 在宿主这版 Cordis 里是硬依赖，服务缺席会让整个插件不加载；本服务的语义是「有就用、没有就算了」，所以必须走 `get()`。
+**软可选消费**是本服务的硬约定：本插件未安装、被禁用或尚未加载时，`ctx.get('manim-card')` 返回 `undefined`。用 `ctx.get()` 而**不是** `inject`——`inject` 在宿主这版 Cordis 里是硬依赖，服务缺席会让整个插件不加载；本服务的语义是「有就用、没有就算了」，所以必须走 `get()`。
 
 因此调用方需要保证：服务缺席时退化为自己的展示方式，不报错、不阻塞。反过来，本插件也不保证服务在任意时刻都存在——它在插件加载后出现，卸载时消失，见下文。
 
@@ -64,7 +64,7 @@ export default {
 
 | 时刻 | 发生什么 |
 | --- | --- |
-| 本插件加载 | 建立渲染器与宿主路由的接线，随后 `provide('manim-live')`；此后 `ctx.get('manim-live')` 可用 |
+| 本插件加载 | 建立渲染器与宿主路由的接线，随后 `provide('manim-card')`；此后 `ctx.get('manim-card')` 可用 |
 | 调用方建画布 | `createSurface()` 挂一块 WebGL 画布进你给的容器；容器不归本插件管 |
 | 调用方用完 | 必须自己调 `surface.dispose()`：画布持有 WebGL 上下文，不释放就是泄漏 |
 | 本插件卸载 | 先释放服务，再 `dispose()` 渲染器——**它造过的所有画布一并失效**，注入的 KaTeX 样式同时摘掉 |
@@ -107,6 +107,6 @@ import type { EnvironmentStatus, CheckResult } from 'manim-live'
 ## 从哪开始
 
 - 想在自己的插件里用画布 → [第三方插件接入](/guide/integrating)
-- 服务的四个成员逐个讲清 → [manim-live 服务](/api/service)
+- 服务的四个成员逐个讲清 → [manim-card 服务](/api/service)
 - `CheckResult` / `EnvironmentStatus` 等类型的字段 → [数据类型](/api/types)
 - 模型调用 `manim_render` 的入参与返回 → [宿主工具](/api/tool)

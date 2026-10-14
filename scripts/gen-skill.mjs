@@ -18,7 +18,7 @@ import { PACKAGE_ROOT as CORE_ROOT, collectCorpus } from 'manim-live/node'
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..')
 const mapPath = join(CORE_ROOT, 'src/py/api-map.generated.ts')
-const skillPath = join(root, 'skills/manim-live/SKILL.md')
+const skillPath = join(root, 'skills/manim-card/SKILL.md')
 
 const source = readFileSync(mapPath, 'utf8')
 const match = source.match(/PY_API_MAP: Record<string, PyApiEntry> = (\{[\s\S]*?\n\})\n/)

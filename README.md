@@ -1,20 +1,20 @@
-# dsh-manim-live — Manim 渲染
+# dsh-manim-card — Manim 卡片
 
-给宿主加一个能力：**AI 在聊天里直接写 Python 的 Manim 代码，当场渲染出画面**。只装这一个插件就能用，不依赖黑板或其他插件。
+给宿主加一个能力：**AI 在聊天里直接写 Python 的 Manim 代码，当场渲染出画面**。它是一个专注**聊天流卡片显示**的小插件：只装这一个插件就能用，不依赖黑板或其他插件；其他插件要用 Manim 能力直接依赖核心包，也不必依赖它。
 
-它把旧黑板里三件事合成一个包：**运行时**（真 Python 解释器执行 AI 写的 Manim Python）、**渲染器**（跑在真 manim-web 上画进画布）、**入口与出口**（Host 工具 + 聊天流卡片）。对外服务 `manim`（供第三方插件消费）已提供：`check(python)` 干跑预检 + `createSurface(container)` 造一块画布。
+它把旧黑板里三件事合成一个包：**运行时**（真 Python 解释器执行 AI 写的 Manim Python）、**渲染器**（跑在真 manim-web 上画进画布）、**入口与出口**（Host 工具 + 聊天流卡片）。对外另留一条薄服务 `manim-card`：`check(python)` 干跑预检 + `createSurface(container)` 造一块画布（要复用运行时与画布的第三方插件可用；一般接 Manim 直接依赖核心包即可）。
 
 ## 状态
 
-**进行中**：Python 运行时（**核心包 `manim-live` 的 `src/py/`**，Pyodide 执行 + manim 适配层 + 桥，自带测试）、渲染引擎（**核心包 `manim-live` 的 `src/engine/`**）、KaTeX 与 Pyodide 资源路由、**聊天卡片**（AI 调 `manim_render` → 聊天流出一张卡；**自动播只发生在「刚生成的那张」**——它第一次进视口正常播一遍，之后重挂载的一律极速落末帧，老会话里的卡根本不跑；播放与画布数量交给一份全页**渲染调度器**：以阅读位置为中心预热 6 张、可见的优先、**滚出视口不拆**（只在画布超上限时收掉离得最远的）、**同一个 step 并行发的几张只真播最后那张**；全页共用一条 Python 队列，不会两张卡抢同一个解释器）、**技能**（`skills/manim-live/`，把可用 API、写法边界与**场景模板**讲给模型）与**Host 侧预检**（返回前用空桥干跑一遍，不通过当场回 `error`）都已就位；**随包外的 Python 库按需取**（`import pandas` 这类首次联网取一次、按 sha256 校验后落进 `~/.dsh/cache/manim-live/pyodide/`，之后离线命中，取的期间卡片上提示「正在加载 X…」）也已接线；**设置面板**里的「Manim 渲染」一节（**本机环境探测** + **包缓存清单与预缓存**）也已就位，见下。
+**进行中**：Python 运行时（**核心包 `manim-live` 的 `src/py/`**，Pyodide 执行 + manim 适配层 + 桥，自带测试）、渲染引擎（**核心包 `manim-live` 的 `src/engine/`**）、KaTeX 与 Pyodide 资源路由、**聊天卡片**（AI 调 `manim_render` → 聊天流出一张卡；**自动播只发生在「刚生成的那张」**——它第一次进视口正常播一遍，之后重挂载的一律极速落末帧，老会话里的卡根本不跑；播放与画布数量交给一份全页**渲染调度器**：以阅读位置为中心预热 6 张、可见的优先、**滚出视口不拆**（只在画布超上限时收掉离得最远的）、**同一个 step 并行发的几张只真播最后那张**；全页共用一条 Python 队列，不会两张卡抢同一个解释器）、**技能**（`skills/manim-card/`，把可用 API、写法边界与**场景模板**讲给模型）与**Host 侧预检**（返回前用空桥干跑一遍，不通过当场回 `error`）都已就位；**随包外的 Python 库按需取**（`import pandas` 这类首次联网取一次、按 sha256 校验后落进 `~/.dsh/cache/manim-live/pyodide/`，之后离线命中，取的期间卡片上提示「正在加载 X…」）也已接线；**设置面板**里的「manim-card」一节（**本机环境探测** + **包缓存清单与预缓存**）也已就位，见下。
 
-写法上除属性动画 `self.play(m.animate.x(...))`（可链的方法由探针实测 manim-web 的 animate 代理生成，不在表里的当场报错并列出可用项）外，`rate_func=` / `run_time=`、`m[i]` 取段、`m.width` 这类属性读取、`self.clear()` 也都已接线——「这个写法支不支持」的判定与真执行取同一份支持面（核心包 `manim-live` 的 `src/py/surface.ts`），所以**预检放行的，真桥不会当场拒**。**方法改写**（`surface.ts` 的 `METHOD_REWRITES`）负责「CE 有、manim-web 换了形状」的那批：`set_stroke(color=, width=, opacity=)` → 颜色走**属性写**、`_color` 与 `strokeColor` 各写一份（渲染层读前者、回读走后者，见第六轮第 7 条）、宽 / 透明度走专属 setter——**不能**落 `setStyle`：manim-web 的 set color 存取器会把 fillColor 一起冲掉（见第四轮 (b) 的色板事故）；`set_opacity(x)` → stroke + fill 两个 setter、`put_start_and_end_on(a, b)` → Arrow 走同名方法、Line 走 `setStart` + `setEnd`。物体/动画的归类按 manim-web 的**实测原型链**定，不看 CE 把它挂在哪个模块下（CE 把 `TracedPath` / `AnimatedBoundary` 放在 `animation/` 里，两者其实是物体）；「包住一个物体」的写法（`TracedPath(dot)` / `SurroundingRectangle(text)` / `Union(a, b)` …）也走同一份构造规则。`self.add(...)` 收到动画会当场给出可读报错（校验在 Python 侧，预检也拦得住）。左侧导航「Manim 渲染」是**实验场**（见下节）——本插件功能的肉眼验收台。
+写法上除属性动画 `self.play(m.animate.x(...))`（可链的方法由探针实测 manim-web 的 animate 代理生成，不在表里的当场报错并列出可用项）外，`rate_func=` / `run_time=`、`m[i]` 取段、`m.width` 这类属性读取、`self.clear()` 也都已接线——「这个写法支不支持」的判定与真执行取同一份支持面（核心包 `manim-live` 的 `src/py/surface.ts`），所以**预检放行的，真桥不会当场拒**。**方法改写**（`surface.ts` 的 `METHOD_REWRITES`）负责「CE 有、manim-web 换了形状」的那批：`set_stroke(color=, width=, opacity=)` → 颜色走**属性写**、`_color` 与 `strokeColor` 各写一份（渲染层读前者、回读走后者，见第六轮第 7 条）、宽 / 透明度走专属 setter——**不能**落 `setStyle`：manim-web 的 set color 存取器会把 fillColor 一起冲掉（见第四轮 (b) 的色板事故）；`set_opacity(x)` → stroke + fill 两个 setter、`put_start_and_end_on(a, b)` → Arrow 走同名方法、Line 走 `setStart` + `setEnd`。物体/动画的归类按 manim-web 的**实测原型链**定，不看 CE 把它挂在哪个模块下（CE 把 `TracedPath` / `AnimatedBoundary` 放在 `animation/` 里，两者其实是物体）；「包住一个物体」的写法（`TracedPath(dot)` / `SurroundingRectangle(text)` / `Union(a, b)` …）也走同一份构造规则。`self.add(...)` 收到动画会当场给出可读报错（校验在 Python 侧，预检也拦得住）。开发台（dsh-devbench）聚合的 manim-card 面板是**实验场**（见下节）——本插件功能的肉眼验收台。
 
-顶层设计见容器仓 `_docs/dsh-manim-live/2026-10-09-01-manim渲染插件/顶层设计.md`。
+顶层设计见容器仓 `_docs/dsh-manim-card/2026-10-09-01-manim渲染插件/顶层设计.md`。
 
 ### 实验场（功能验收台）
 
-左侧导航「Manim 渲染」那一页是**实验场**：左边样例清单、右边渲染预览，点哪条跑哪条，通过 / 未通过当场标在条目上。它不是一个另做的调试页——**画布就是聊天卡片那个组件**（`components/card.tsx`），所以手动播放 / 查看代码 / 导出这些能力天然一致（页面对卡片只多传了 `autoStart`：一次只挂一张卡，不必再等视口）。
+开发台（dsh-devbench）里的 manim-card 调试面板是**实验场**：左边样例清单、右边渲染预览，点哪条跑哪条，通过 / 未通过当场标在条目上。它不是一个另做的调试页——**画布就是聊天卡片那个组件**（`components/card.tsx`），所以手动播放 / 查看代码 / 导出这些能力天然一致（页面对卡片只多传了 `autoStart`：一次只挂一张卡，不必再等视口）。
 
 页面顶部是**模式切换**（`components/segmented.tsx`，分段控件）：`样例` 与 `自定义代码`。两者互斥（同一时刻只挂一张卡），所以「自由编辑」不再是常驻在一旁的第二块编辑区。说明性长文案一律收进 `components/tip.tsx`（悬停 / 键盘聚焦才出现），页面上只留控件。
 
@@ -182,7 +182,7 @@ manim ../manim-live/corpus/examples/basic/01-circle.py CircleScene
 
 ### 设置页：本机环境与包缓存
 
-设置面板里的「Manim 渲染」（宿主 slot `settings.section`）有两张卡片，回答两件以后会越来越要紧的事：**「导出」要靠本机真的 Manim**，而**离线可用性取决于哪些包已经在本地**。
+设置面板里的「manim-card」一节（宿主 slot `settings.section`）有两张卡片，回答两件以后会越来越要紧的事：**「导出」要靠本机真的 Manim**，而**离线可用性取决于哪些包已经在本地**。
 
 **本机环境**逐项探测 `python3` / `manim` / manim 模块 / `ffmpeg` / `latex` / `dvisvgm`，每项给出 ok / 缺失 / 出错三态。**页面只留数据**：卡片头部是「标题 + 状态行（几项就绪）+ 重新检测」，一行 = 名字 + ⓘ + 状态点与版本，「为什么在意它、找到哪儿了、实际跑的命令」全部收进 ⓘ（悬浮/键盘聚焦才出现）——导出走的是本机，不走 Pyodide，所以「能不能导出」与本机装了什么直接相关，但这层解释不必铺在页面上。两个实现细节：
 
@@ -199,7 +199,7 @@ manim ../manim-live/corpus/examples/basic/01-circle.py CircleScene
 - **面板是个可拆的组件**：`ManimSettingsPage` 只收一个 `t`（文案函数）——不读设置面板的 store、不假设自己在哪、不留「关闭」回调。注册只有一行（`client/index.tsx` 里的 `slots.register('settings.section', …)`），以后要把它搬进「学习工作台」那类聚合页，改的就是那一行，面板本身不动。
 - **视觉照抄宿主**：卡片 / 细分隔线 / 状态点 / ⓘ / 输入框都按 `dsh-design-system` 的配方、只用 `--dsw-alias-*` 变量手写（不许 import 宿主的 UI 包），浅色深色两套都成立。版式按宿主「存储」「审计中心」那类页的范式：**外面只留一个分组标签，标题、一行说明与动作键都进卡片头部**（动作是描边的文字键，不用挤在一起的小图标）；清单行内的动作是矮一档的文字键。改动版式后用 `_tmp/selfcheck/`（真组件 + 宿主真主题，按内容列实际 564px 宽）截亮暗两色核对、量行高与头部几何，不靠目测猜。
 
-Host 侧对应五条新路由，全都挂在 `/dsh-plugins/manim-live/` 下，成对写在 `src/host/routes.test.ts` 里：
+Host 侧对应五条新路由，全都挂在 `/dsh-plugins/manim-card/` 下，成对写在 `src/host/routes.test.ts` 里：
 
 | 路由 | 方法 | 干什么 |
 |---|---|---|
@@ -249,14 +249,14 @@ Host 侧对应五条新路由，全都挂在 `/dsh-plugins/manim-live/` 下，�
 ```
 index.js                  Host 侧入口；只 re-export src/host/index.js
 client.js                 Client 构建产物（随包提交）
-cordis.patch.yml          把插件插进 profile 的 patch（条目的 id 与入口路径都是 manim-live）
+cordis.patch.yml          把插件插进 profile 的 patch（条目的 id 与入口路径都是 manim-card）
 tsdown.config.ts          构建声明：只有 client.js 一个产物（Host 半边是免构建 JS）
 tsdown.preset.ts          tsdown 客户端预设（每包自带一份，与 dsh-plugin-template 逐字节相同）
 tsconfig.json             类型检查（覆盖 src/）
 assets/katex/             KaTeX 样式与字体（MathTex 渲染用，由 Host 路由提供）
 assets/pyodide/           Pyodide 发行版随包：核心（asm.js/wasm + stdlib.zip）+ 随包 wheel（numpy / sympy / mpmath）+ 包目录 pyodide-lock.json
 scripts/gen-skill.mjs     技能文档清单段生成器（跨仓读核心包的语料与三态表）
-skills/manim-live/        AI 面向的技能：可用 API 清单 + manim-web 缺失项与替代 + 场景模板 + 纪律
+skills/manim-card/        AI 面向的技能：可用 API 清单 + manim-web 缺失项与替代 + 场景模板 + 纪律
 
 src/
 ├── routes.js             全部六条路由的唯一真源（Host 注册与 Client 请求用同一个值）
@@ -270,13 +270,13 @@ src/
 │   └── routes.test.ts    路由测试（含 405 / 404 / 坏正文 / sha256 不符 / 取包失败即停）
 └── client/               浏览器半边（打包进 client.js）
     ├── index.tsx         入口：locale / 样式接线 + 对外服务 + slot 注册（导航项 / 整页 / 聊天卡片 / 设置面板一节）
-    ├── service.ts        对外服务 `manim`：核心包 `createManimRenderer` 的薄封装 + 模块级单例（卸载时 dispose）
+    ├── service.ts        对外服务 `manim-card`：核心包 `createManimRenderer` 的薄封装 + 模块级单例（卸载时 dispose）
     ├── definition.ts     聊天卡片的会话折叠定义（tool/call → 卡片节点；顺带读 `live`＝这张卡刚生成出来的、`interrupted`＝这次调用被中断、`stepKey`/`seq`＝这张卡属于哪一批（同一个 step））
     ├── render-queue.ts   渲染调度器（全页一份）：阅读位置 + 6 张预热窗口 / 优先级 / 画布上限 8 张 / 同一批只由代表播
     ├── components/       卡片与页面零件：card.tsx（画布 + 手动播放 ⏯ + 查看代码，聊天与实验场共用）、code-view.tsx、segmented.tsx、tip.tsx
     ├── page.tsx          实验场：样例 / 自定义代码两种模式（分段切换），左栏清单 + 工具条，右栏预览
     ├── samples.ts        实验场的内置样例集（python 逐字取自核心包仓的语料文件）
-    ├── settings.tsx      设置面板「Manim 渲染」一节：本机环境 + 包缓存（可拆的纯组件，只收 `t`）
+    ├── settings.tsx      设置面板「manim-card」一节：本机环境 + 包缓存（可拆的纯组件，只收 `t`）
     ├── packages.ts       包清单 / 依赖闭包 / 取包 / 清缓存（设置页与实验场共用这一层）
     ├── environment.ts    本机环境探测的取数与响应解析
     ├── export.ts         导出视频的取数与响应解析

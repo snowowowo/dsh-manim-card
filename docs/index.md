@@ -2,7 +2,7 @@
 layout: home
 
 hero:
-  name: dsh-manim-live
+  name: dsh-manim-card
   text: 聊天里的 Manim 动画
   tagline: "DeepSeek Harness 插件：AI 在会话里写标准 Manim（Python）代码，聊天流中当场出现可播放的动画卡片——可重播、可查看代码、可导出 mp4。代码在浏览器内执行，不要求本机装 Python；约 13 MB 的运行时与公式字体随包分发，断网也能画基本图形。"
   actions:
@@ -14,7 +14,7 @@ hero:
       link: /guide/usage
     - theme: alt
       text: GitHub
-      link: https://github.com/snowowowo/dsh-manim-live
+      link: https://github.com/snowowowo/dsh-manim-card
 
 features:
   - icon: 💬
@@ -25,7 +25,7 @@ features:
     details: 代码先在 Node 侧的真解释器里跑一遍，语法错与不支持的写法当场回给模型；聊天里不会留下空白或残缺的卡片。
   - icon: 🧪
     title: 实验场
-    details: 左侧导航「Manim 渲染」下的一页：内置约十条样例加自由代码输入，每条样例旁边有通过 / 未通过的标记。
+    details: 开发台（dsh-devbench）聚合的 manim-card 面板：内置约十条样例加自由代码输入，每条样例旁边有通过 / 未通过的标记。
   - icon: 🚦
     title: 环境状态
     details: 「能不能出画面、能不能导出」收成一份读数，实验场状态条、设置面板与聊天卡片三处同源；每一项未满足都附可执行的处置。

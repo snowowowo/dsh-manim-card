@@ -7,7 +7,7 @@
  * 校验，坏数据一律当没存过——宁可丢一次进度，也不能拿脏数据把页面搞崩。
  */
 
-const KEY = 'manim-live.lab.v1'
+const KEY = 'manim-card.lab.v1'
 
 export type LabMode = 'samples' | 'free'
 
@@ -46,7 +46,7 @@ export function loadLab(): Partial<LabState> {
     if (bag.mode === 'samples' || bag.mode === 'free') out.mode = bag.mode
     return out
   } catch (error) {
-    console.error('[manim-live] 读取实验场记录失败:', error)
+    console.error('[manim-card] 读取实验场记录失败:', error)
     return {}
   }
 }
@@ -55,7 +55,7 @@ export function saveLab(state: LabState): void {
   try {
     window.localStorage.setItem(KEY, JSON.stringify(state))
   } catch (error) {
-    console.error('[manim-live] 保存实验场记录失败:', error)
+    console.error('[manim-card] 保存实验场记录失败:', error)
   }
 }
 
@@ -63,7 +63,7 @@ export function clearLab(): void {
   try {
     window.localStorage.removeItem(KEY)
   } catch (error) {
-    console.error('[manim-live] 清除实验场记录失败:', error)
+    console.error('[manim-card] 清除实验场记录失败:', error)
   }
 }
 
@@ -82,7 +82,7 @@ export interface ExportRecord {
   at: number
 }
 
-const EXPORTS_KEY = 'manim-live.exports.v1'
+const EXPORTS_KEY = 'manim-card.exports.v1'
 /** 记录条数上限：够回过头找最近导出的一批，又不会在实验场里越长越肥。 */
 const EXPORTS_LIMIT = 50
 
@@ -103,7 +103,7 @@ export function loadExports(): Record<string, ExportRecord> {
     }
     return out
   } catch (error) {
-    console.error('[manim-live] 读取导出记录失败:', error)
+    console.error('[manim-card] 读取导出记录失败:', error)
     return {}
   }
 }
@@ -128,6 +128,6 @@ export function rememberExport(callId: string, file: string): void {
       .slice(0, EXPORTS_LIMIT)
     window.localStorage.setItem(EXPORTS_KEY, JSON.stringify(Object.fromEntries(kept)))
   } catch (error) {
-    console.error('[manim-live] 保存导出记录失败:', error)
+    console.error('[manim-card] 保存导出记录失败:', error)
   }
 }

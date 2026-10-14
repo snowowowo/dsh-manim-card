@@ -216,13 +216,13 @@ describe('buildViewNode：锚点与数据', () => {
     const location = { block: 2 }
     const node = definition.buildViewNode({
       state: state({ python: 'x = 1' }),
-      key: 'manim-render',
+      key: 'manim-card',
       id: 'manim-c1',
       start: { event: callEvent(), location },
     } as never)
     expect(node).toMatchObject({
-      key: 'manim-render',
-      kind: 'manim-render',
+      key: 'manim-card',
+      kind: 'manim-card',
       id: 'manim-c1',
       target: 'chat',
       anchorSeq: 7,

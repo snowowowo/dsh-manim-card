@@ -6,8 +6,8 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { clearLab, loadExports, loadLab, rememberExport, saveLab } from './storage'
 
-const KEY = 'manim-live.lab.v1'
-const EXPORTS_KEY = 'manim-live.exports.v1'
+const KEY = 'manim-card.lab.v1'
+const EXPORTS_KEY = 'manim-card.exports.v1'
 
 function fakeStorage(initial: Record<string, string> = {}) {
   const map = new Map(Object.entries(initial))

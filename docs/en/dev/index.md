@@ -28,7 +28,7 @@ src/
 │   ├── page.tsx        The Laboratory page
 │   ├── settings.tsx    Settings panel
 │   ├── components/     Cards, code view, environment status bar and friends
-│   ├── service.ts      The outward-facing manim-live service
+│   ├── service.ts      The outward-facing manim-card service
 │   ├── samples.ts      Built-in Laboratory samples
 │   ├── runtime-status.ts  Environment status → display wording (pure selectors)
 │   ├── i18n.ts         Copy dictionary
@@ -40,7 +40,7 @@ src/
 │   └── pyodide.js / assets.js / http.js   Asset and on-demand package-fetch routes
 └── routes.js       Single source of truth for the two asset routes, shared by both halves
 assets/             Bundled assets: pyodide / katex
-skills/manim-live/  The domain skill body for the model (Markdown)
+skills/manim-card/  The domain skill body for the model (Markdown)
 docs/               The docs site (VitePress, its own dependency, unrelated to the plugin's dependency graph)
 ```
 
@@ -53,8 +53,8 @@ What ships is decided by `files` in `package.json`: `index.js` / `client.js` / `
 ## Setting up the development environment
 
 ```bash
-git clone https://github.com/snowowowo/dsh-manim-live.git
-cd dsh-manim-live
+git clone https://github.com/snowowowo/dsh-manim-card.git
+cd dsh-manim-card
 pnpm install
 pnpm build       # produces client.js
 ```

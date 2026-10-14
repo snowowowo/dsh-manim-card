@@ -2,7 +2,7 @@
 layout: home
 
 hero:
-  name: dsh-manim-live
+  name: dsh-manim-card
   text: Manim animations in chat
   tagline: "A DeepSeek Harness plugin: the AI writes standard Manim (Python) code in the session and a playable animation card appears right in the chat stream — replayable, code-inspectable, exportable as mp4. The code runs in the browser, so no local Python is required; the ~13 MB runtime and the formula fonts ship with the plugin, so basic figures work offline."
   actions:
@@ -14,7 +14,7 @@ hero:
       link: /en/guide/usage
     - theme: alt
       text: GitHub
-      link: https://github.com/snowowowo/dsh-manim-live
+      link: https://github.com/snowowowo/dsh-manim-card
 
 features:
   - icon: 💬
@@ -25,7 +25,7 @@ features:
     details: The code is dry-run in a real interpreter on the Node side first, so syntax errors and unsupported constructs are reported immediately; no blank or broken card is left in the chat.
   - icon: 🧪
     title: Laboratory
-    details: A page under "Manim 渲染" in the left navigation — about ten built-in samples plus a free-form code box, with a pass / fail marker beside each sample.
+    details: The manim-card panel aggregated by the dev bench (dsh-devbench, dev-only) — about ten built-in samples plus a free-form code box, with a pass / fail marker beside each sample.
   - icon: 🚦
     title: Environment status
     details: '"Can it render, can it export" collapsed into one reading, shared by the Laboratory status bar, the Settings panel and chat cards, with an actionable remedy for every unmet item.'

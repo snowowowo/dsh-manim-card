@@ -24,7 +24,7 @@
  * 与宿主的 `webServer.register` 分发约定一致——**不是本包能单独决定的**，改它要连宿主一起改。
  * 客户端 bundle 注册的 id 是另一回事（由构建预设从 `package.json` 的 name 派生，见 tsdown.preset.ts）。
  */
-export const PREFIX = '/dsh-plugins/manim-live'
+export const PREFIX = '/dsh-plugins/manim-card'
 
 /** Pyodide 本体与按需包。Client 侧作为 `pyodideIndexURL` 交给核心包（本体的取数根，末尾斜杠由核心包补）。 */
 export const PYODIDE_ROUTE = `${PREFIX}/pyodide`

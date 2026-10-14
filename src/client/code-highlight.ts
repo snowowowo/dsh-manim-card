@@ -67,7 +67,7 @@ export function highlightPython(code: string): CodeLines | undefined {
       style: spanStyle(token.color, token.fontStyle ?? 0),
     })))
   } catch (error) {
-    console.error('[manim-live] python highlight failed:', error)
+    console.error('[manim-card] python highlight failed:', error)
     return undefined
   }
 }

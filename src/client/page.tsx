@@ -144,7 +144,7 @@ export function ManimPage({ t }: { t: Translate }) {
       const removed = await clearPackageCache()
       setCacheNote(t('cacheCleared', { count: removed.length }))
     } catch (error) {
-      console.error('[manim-live] 清包缓存失败:', error)
+      console.error('[manim-card] 清包缓存失败:', error)
       setCacheNote(t('cacheClearFailed', { message: error instanceof Error ? error.message : String(error) }))
     } finally {
       setClearing(false)

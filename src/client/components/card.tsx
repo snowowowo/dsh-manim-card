@@ -193,7 +193,7 @@ export function ManimCard({ data, t, label, onResult, autoStart, fast }: {
         if (alive) setReadiness(value)
       })
       .catch((error) => {
-        console.error('[manim-live] export readiness failed:', error)
+        console.error('[manim-card] export readiness failed:', error)
         if (alive) setReadiness({ ready: false, missing: [] })
       })
     return () => {
@@ -217,7 +217,7 @@ export function ManimCard({ data, t, label, onResult, autoStart, fast }: {
       })
       .catch((error) => {
         // 问不到（Host 没起来之类）就不动它：宁可留一条可能过期的线索，也别误报成「文件没了」
-        console.error('[manim-live] export record check failed:', error)
+        console.error('[manim-card] export record check failed:', error)
       })
     return () => {
       alive = false
@@ -241,7 +241,7 @@ export function ManimCard({ data, t, label, onResult, autoStart, fast }: {
         }
       })
       .catch((error) => {
-        console.error('[manim-live] export failed:', error)
+        console.error('[manim-card] export failed:', error)
         setExportNote({ ok: false, text: t('exportFailed', { error: error instanceof Error ? error.message : String(error) }) })
       })
       .finally(() => setExporting(false))
@@ -262,7 +262,7 @@ export function ManimCard({ data, t, label, onResult, autoStart, fast }: {
         })
       })
       .catch((error) => {
-        console.error('[manim-live] reveal failed:', error)
+        console.error('[manim-card] reveal failed:', error)
         setExportNote({ ok: false, text: t('revealFailed', { error: error instanceof Error ? error.message : String(error) }) })
       })
   }
@@ -355,7 +355,7 @@ export function ManimCard({ data, t, label, onResult, autoStart, fast }: {
           setRendered(true)
           report(result.ok ? { ok: true, text: t('ok') } : { ok: false, text: result.error ?? t('fail') })
         } catch (error) {
-          console.error('[manim-live] card render failed:', error)
+          console.error('[manim-card] card render failed:', error)
           if (alive && mine === generation) {
             report({ ok: false, text: error instanceof Error ? error.message : String(error) })
           }

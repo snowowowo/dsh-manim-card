@@ -52,7 +52,7 @@ export function assetRoute(baseDir, path) {
         response.setHeader('content-type', file.mime);
         file.stream.pipe(response);
       } catch (error) {
-        console.error(`[manim-live] asset failed (${path}):`, error);
+        console.error(`[manim-card] asset failed (${path}):`, error);
         response.statusCode = 500;
         response.end();
       }

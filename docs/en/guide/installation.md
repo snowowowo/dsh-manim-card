@@ -24,15 +24,15 @@ Pick one in the host's CLI / plugin management:
 
 | Method | Command | Status |
 | --- | --- | --- |
-| From npm | `dsh plugin add dsh-manim-live` | Available once published |
-| From a tarball | `dsh plugin add ./dsh-manim-live-<version>.tgz` | Same |
-| Direct install from the GitHub repository | `dsh plugin add github:snowowowo/dsh-manim-live` | Repo root is the package |
+| From npm | `dsh plugin add dsh-manim-card` | Available once published |
+| From a tarball | `dsh plugin add ./dsh-manim-card-<version>.tgz` | Same |
+| Direct install from the GitHub repository | `dsh plugin add github:snowowowo/dsh-manim-card` | Repo root is the package |
 
 ::: tip Two paths not yet verified
 The npm publishing and GitHub direct-install paths have not been verified end to end (the repository is currently private); this page will be updated once they land. The development-time setup is a symlink inside the profile plus a patch entry, see [Development & Debugging](/en/dev/).
 :::
 
-After installing, refresh the host page: a "Manim 渲染" entry appears both in the **left navigation** and in the **host settings**.
+After installing, refresh the host page: a "manim-card" section appears in the **host settings**; with the dev bench (dsh-devbench, dev-only) installed, a manim-card laboratory panel appears there as well.
 
 ## Bundled assets
 

@@ -1,9 +1,9 @@
 {
-  "name": "dsh-manim-live",
+  "name": "dsh-manim-card",
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "description": "Manim 渲染：AI 在聊天里写 Python Manim 代码，当场在聊天流卡片里渲染（可独立运行）",
+  "description": "Manim 卡片：AI 在聊天里写 Python Manim 代码，当场在聊天流卡片里渲染（专注聊天流卡片的小插件，可独立运行）",
   "exports": {
     ".": "./index.js",
     "./client": "./client.js"
@@ -61,7 +61,7 @@
       "immediately": true
     },
     "meta": {
-      "title": "Manim 渲染",
+      "title": "Manim 卡片",
       "description": "AI 写的 Python Manim 代码在聊天流卡片里当场渲染"
     }
   }

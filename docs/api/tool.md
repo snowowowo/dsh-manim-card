@@ -1,6 +1,6 @@
 # API 参考：宿主工具
 
-本插件向宿主注册一个工具 `manim_render`，由模型调用，把一段 Manim Python 变成聊天流里的动画卡片。它不属于 JavaScript API（本插件不导出可 `import` 的模块），但它是本插件对外的第一条面，入参与返回都是稳定契约，故收在 API 参考里。服务面见[manim-live 服务](/api/service)。
+本插件向宿主注册一个工具 `manim_render`，由模型调用，把一段 Manim Python 变成聊天流里的动画卡片。它不属于 JavaScript API（本插件不导出可 `import` 的模块），但它是本插件对外的第一条面，入参与返回都是稳定契约，故收在 API 参考里。服务面见[manim-card 服务](/api/service)。
 
 ## manim_render
 
@@ -45,9 +45,9 @@ returns:
 
 工具要能用，除了工具本身还需要两处上下文，都由本插件在加载时一并注册：
 
-**领域技能 `manim-live`**。一份 Markdown（`skills/manim-live/SKILL.md`），讲清 manim_render 的写法边界、可用的 Manim API、manim-web 实测缺失项与替代写法。它整份以内存字符串注册进宿主的 `skills` 服务，模型一次调用即拿到全部，不需要再去读文件；`skills` 服务缺席时打一条 `console.error` 并跳过，工具仍可用，只是模型只能依赖工具描述。
+**领域技能 `manim-card`**。一份 Markdown（`skills/manim-card/SKILL.md`），讲清 manim_render 的写法边界、可用的 Manim API、manim-web 实测缺失项与替代写法。它整份以内存字符串注册进宿主的 `skills` 服务，模型一次调用即拿到全部，不需要再去读文件；`skills` 服务缺席时打一条 `console.error` 并跳过，工具仍可用，只是模型只能依赖工具描述。
 
-**常驻小指引**。一段安装进系统提示的短文本（`manim-live:guide`），讲「何时调用」与「代码口径」五条：先加载技能再写代码、优先写完整文件、`ok: false` 时按行号改好再调一次、不要用文字复述画面、渲染成功后提醒用户卡片会被折叠。
+**常驻小指引**。一段安装进系统提示的短文本（`manim-card:guide`），讲「何时调用」与「代码口径」五条：先加载技能再写代码、优先写完整文件、`ok: false` 时按行号改好再调一次、不要用文字复述画面、渲染成功后提醒用户卡片会被折叠。
 
 ## 使用者的可见结果
 

@@ -24,15 +24,15 @@
 
 | 方式 | 命令 | 状态 |
 | --- | --- | --- |
-| 从 npm | `dsh plugin add dsh-manim-live` | 发布后可用 |
-| 从 tarball | `dsh plugin add ./dsh-manim-live-<版本>.tgz` | 同上 |
-| 从 GitHub 仓库直装 | `dsh plugin add github:snowowowo/dsh-manim-live` | 仓根即包 |
+| 从 npm | `dsh plugin add dsh-manim-card` | 发布后可用 |
+| 从 tarball | `dsh plugin add ./dsh-manim-card-<版本>.tgz` | 同上 |
+| 从 GitHub 仓库直装 | `dsh plugin add github:snowowowo/dsh-manim-card` | 仓根即包 |
 
 ::: tip 两条链路尚未实测
 npm 发布与 GitHub 直装尚未走通验证过（仓库当前私有），落地后会更新本页。开发期的装法是 profile 内软链加 patch 条目，见[开发与调试](/dev/)。
 :::
 
-装完后刷新宿主页面，**左侧导航**与**宿主设置**里各出现一处「Manim 渲染」。
+装完后刷新宿主页面，**宿主设置**里出现「manim-card」一节；若装有开发台（dsh-devbench，dev-only），还会有 manim-card 实验场面板。
 
 ## 随包资源
 

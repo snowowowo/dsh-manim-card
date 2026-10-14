@@ -57,4 +57,4 @@
 - 实验场状态条上对应的那枚 chip 可以点开，见[实验场](/guide/lab#环境状态条)；
 - 设置面板的「浏览器运行时」卡逐项列出状态与处置，见[设置面板](/guide/settings#浏览器运行时)。
 
-三处读的是同一份判定结果，由核心包给出，措辞不会互相打架。要在自己的插件里读这份状态，用 [manim-live 服务的 environmentStatus()](/api/service#manim-environmentstatus)。
+三处读的是同一份判定结果，由核心包给出，措辞不会互相打架。要在自己的插件里读这份状态，用 [manim-card 服务的 environmentStatus()](/api/service#manim-environmentstatus)。

@@ -1,6 +1,6 @@
 # API Reference: Host Tool
 
-This plugin registers one host tool, `manim_render`, called by the model to turn a piece of Manim Python into an animation card in the chat stream. It is not a JavaScript API (this plugin exports no importable module), but it is the first outward surface of the plugin, and both its arguments and its return are stable contracts, so it belongs in the API reference. For the service surface see [The manim-live Service](/en/api/service).
+This plugin registers one host tool, `manim_render`, called by the model to turn a piece of Manim Python into an animation card in the chat stream. It is not a JavaScript API (this plugin exports no importable module), but it is the first outward surface of the plugin, and both its arguments and its return are stable contracts, so it belongs in the API reference. For the service surface see [The manim-card Service](/en/api/service).
 
 ## manim_render
 
@@ -45,9 +45,9 @@ Also, `ok` and `error` are the entire tool return: the `warnings` from `check()`
 
 For the tool to be usable, two pieces of context are needed besides the tool itself; this plugin registers both at load time.
 
-**The domain skill `manim-live`.** A Markdown file (`skills/manim-live/SKILL.md`) covering the writing boundaries of manim_render, the available Manim APIs, and the manim-web capabilities measured to be missing along with alternatives. It is registered into the host's `skills` service as an in-memory string, so the model receives all of it in a single call without reading a file; when the `skills` service is absent this plugin logs one `console.error` and skips it, leaving the tool usable but the model dependent on the tool description alone.
+**The domain skill `manim-card`.** A Markdown file (`skills/manim-card/SKILL.md`) covering the writing boundaries of manim_render, the available Manim APIs, and the manim-web capabilities measured to be missing along with alternatives. It is registered into the host's `skills` service as an in-memory string, so the model receives all of it in a single call without reading a file; when the `skills` service is absent this plugin logs one `console.error` and skips it, leaving the tool usable but the model dependent on the tool description alone.
 
-**A resident short guide.** A short text installed into the system prompt (`manim-live:guide`) with five points on "when to call" and "how to write code": load the skill before writing code, prefer a complete file, on `ok: false` fix by line number and call once more, do not restate the picture in words, and remind the user after a successful render that the card will be folded away.
+**A resident short guide.** A short text installed into the system prompt (`manim-card:guide`) with five points on "when to call" and "how to write code": load the skill before writing code, prefer a complete file, on `ok: false` fix by line number and call once more, do not restate the picture in words, and remind the user after a successful render that the card will be folded away.
 
 ## What the user sees
 

@@ -1,6 +1,6 @@
-# API Reference: The manim-live Service
+# API Reference: The manim-card Service
 
-The `manim-live` service is provided by this plugin's client half and consumed by other plugins through `ctx.get('manim-live')`. It has one object, `ManimService`, with four methods: precheck, create canvas, read environment status, subscribe to status changes. This page covers each of them. How to obtain the service, its lifecycle and the cooperation boundary are in [Overview](/en/api/); type fields are in [Data Types](/en/api/types).
+The `manim-card` service is provided by this plugin's client half and consumed by other plugins through `ctx.get('manim-card')`. It has one object, `ManimService`, with four methods: precheck, create canvas, read environment status, subscribe to status changes. This page covers each of them. How to obtain the service, its lifecycle and the cooperation boundary are in [Overview](/en/api/); type fields are in [Data Types](/en/api/types).
 
 The service key carries `-live` instead of a bare `manim`: a service key is a **namespace shared across plugins**, and taking the generic word would reserve `manim` itself, forcing later plugins that expose Manim-related capabilities to work around it or collide. It follows the same scheme as the entry id, route prefix, skill name and slot ids; consumers must use the full name — `ctx.get('manim')` does not reach this service.
 
@@ -36,7 +36,7 @@ interface CheckResult {
 **Example**
 
 ```ts
-const manim = ctx.get('manim-live')
+const manim = ctx.get('manim-card')
 if (!manim) return
 
 const result = await manim.check(python)

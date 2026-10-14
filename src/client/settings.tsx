@@ -143,7 +143,7 @@ function EnvCard({ t }: { t: Translate }) {
       try {
         result = await probeEnv(check.id)
       } catch (error) {
-        console.error(`[manim-live] 探测 ${check.id} 失败：`, error)
+        console.error(`[manim-card] 探测 ${check.id} 失败：`, error)
         result = { id: check.id, status: 'error', path: null, version: '', detail: error instanceof Error ? error.message : String(error) }
       }
       if (!alive.current) return
@@ -161,7 +161,7 @@ function EnvCard({ t }: { t: Translate }) {
       setPlan(next)
       void run(next)
     } catch (error) {
-      console.error('[manim-live] 取环境探测计划失败：', error)
+      console.error('[manim-card] 取环境探测计划失败：', error)
       if (alive.current) setFailure(error instanceof Error ? error.message : String(error))
     }
   }, [run])
@@ -287,7 +287,7 @@ function PackagesCard({ t }: { t: Translate }) {
       setInventory(next)
       setFailure(null)
     } catch (error) {
-      console.error('[manim-live] 取包清单失败：', error)
+      console.error('[manim-card] 取包清单失败：', error)
       if (alive.current) setFailure(error instanceof Error ? error.message : String(error))
     }
   }, [])
@@ -403,7 +403,7 @@ function PackagesCard({ t }: { t: Translate }) {
       if (!alive.current) return
       setNote(t('pkgCleared', { name }))
     } catch (error) {
-      console.error(`[manim-live] 清理 ${name} 失败：`, error)
+      console.error(`[manim-card] 清理 ${name} 失败：`, error)
       if (alive.current) setNote(t('pkgClearFailed', { name, error: error instanceof Error ? error.message : String(error) }))
     }
     if (!alive.current) return
@@ -532,7 +532,7 @@ function PackagesCard({ t }: { t: Translate }) {
 /** 设置页正文：环境组两张卡（浏览器运行时 + 本机环境），库组一张卡加一张补库卡。 */
 export function ManimSettingsPage({ t }: { t: Translate }) {
   return (
-    <section className="mr-set" aria-label="manim-live">
+    <section className="mr-set" aria-label="manim-card">
       <section className="mr-set-group" aria-label={t('envGroup')}>
         <h2 className="mr-set-groupname">{t('envGroup')}</h2>
         <div className="mr-set-stack">

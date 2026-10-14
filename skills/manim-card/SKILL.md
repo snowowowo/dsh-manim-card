@@ -1,5 +1,5 @@
 ---
-name: manim-live
+name: manim-card
 description: 用 manim_render 生成 Manim 动画卡片前必读。首选写法（完整 Python 文件）、可用的 Manim API、manim-web 实测缺失项都在这里；标准 Manim 语法照写即可。
 ---
 
