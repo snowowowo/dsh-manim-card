@@ -42,7 +42,7 @@ class Demo(Scene):
 > 下面这段**由 `scripts/gen-skill.mjs` 从实测三态表生成，勿手改**——改了表或重跑探针后，紧接着跑那个脚本。
 
 <!-- gen:api-list -->
-**图形与组合**：`Angle` `AnnotationDot` `AnnularSector` `Annulus` `Arc` `ArcBetweenPoints` `ArcBrace` `ArcPolygon` `Arrow` `Arrow3D` `ArrowCircleFilledTip` `ArrowCircleTip` `ArrowSquareFilledTip` `ArrowSquareTip` `ArrowTip` `ArrowTriangleFilledTip` `ArrowTriangleTip` `ArrowVectorField` `Axes` `BackgroundRectangle` `BarChart` `Brace` `BraceBetweenPoints` `BraceLabel` `BraceText` `BulletedList` `Circle` `Code` `ComplexPlane` `ComplexValueTracker` `Cone` `ConvexHull` `ConvexHull3D` `Cross` `Cube` `CubicBezier` `CurvedArrow` `CurvedDoubleArrow` `Cutout` `Cylinder` `DashedLine` `DashedVMobject` `DecimalMatrix` `DecimalNumber` `DecimalTable` `DiGraph` `Difference` `Dodecahedron` `Dot` `Dot3D` `DoubleArrow` `Elbow` `Ellipse` `Exclusion` `FullScreenRectangle` `FunctionGraph` `Graph` `Group` `Icosahedron` `ImageMobject` `ImplicitFunction` `Integer` `IntegerMatrix` `IntegerTable` `Intersection` `LabeledArrow` `LabeledDot` `LabeledLine` `LabeledPolygram` `Line` `Line3D` `LinearTransformationScene` `ManimBanner` `MarkupText` `MathTable` `MathTex` `Matrix` `Mobject` `Mobject1D` `Mobject2D` `MobjectMatrix` `MobjectTable` `MovingCameraScene` `NumberLine` `NumberPlane` `Octahedron` `PGroup` `PMobject` `Paragraph` `ParametricFunction` `PointCloudDot` `PolarPlane` `Polygon` `Polygram` `Prism` `Rectangle` `RegularPolygon` `RegularPolygram` `RightAngle` `RoundedRectangle` `SVGMobject` `SampleSpace` `Scene` `ScreenRectangle` `Sector` `SingleStringMathTex` `Sphere` `Square` `Star` `StealthTip` `StreamLines` `SurroundingRectangle` `Table` `TangentLine` `TangentialArc` `Tetrahedron` `Tex` `Text` `ThreeDAxes` `ThreeDScene` `ThreeDVMobject` `TipableVMobject` `Title` `Torus` `Triangle` `Underline` `Union` `UnitInterval` `VDict` `VGroup` `VMobject` `VMobjectFromSVGPath` `ValueTracker` `Variable` `Vector` `VectorField` `VectorScene` `VectorizedPoint` `ZoomedScene` `AnimatedBoundary` `TracedPath`
+**图形与组合**：`Angle` `AnnotationDot` `AnnularSector` `Annulus` `Arc` `ArcBetweenPoints` `ArcBrace` `ArcPolygon` `ArcPolygonFromArcs` `Arrow` `Arrow3D` `ArrowCircleFilledTip` `ArrowCircleTip` `ArrowSquareFilledTip` `ArrowSquareTip` `ArrowTip` `ArrowTriangleFilledTip` `ArrowTriangleTip` `ArrowVectorField` `Axes` `BackgroundRectangle` `BarChart` `Brace` `BraceBetweenPoints` `BraceLabel` `BraceText` `BulletedList` `Circle` `Code` `ComplexPlane` `ComplexValueTracker` `Cone` `ConvexHull` `ConvexHull3D` `Cross` `Cube` `CubicBezier` `CurvedArrow` `CurvedDoubleArrow` `CurvesAsSubmobjects` `Cutout` `Cylinder` `DashedLine` `DashedVMobject` `DecimalMatrix` `DecimalNumber` `DecimalTable` `DiGraph` `Difference` `Dodecahedron` `Dot` `Dot3D` `DoubleArrow` `Elbow` `Ellipse` `Exclusion` `FullScreenRectangle` `FunctionGraph` `Graph` `Group` `Icosahedron` `ImageMobject` `ImplicitFunction` `Integer` `IntegerMatrix` `IntegerTable` `Intersection` `Label` `LabeledArrow` `LabeledDot` `LabeledLine` `LabeledPolygram` `Line` `Line3D` `LinearBase` `LinearTransformationScene` `LogBase` `ManimBanner` `MarkupText` `MathTable` `MathTex` `MathTypst` `Matrix` `Mobject` `Mobject1D` `Mobject2D` `MobjectMatrix` `MobjectTable` `MovingCameraScene` `NumberLine` `NumberPlane` `Octahedron` `PGroup` `PMobject` `Paragraph` `ParametricFunction` `PointCloudDot` `PolarPlane` `Polygon` `Polygram` `Prism` `Rectangle` `RegularPolygon` `RegularPolygram` `RightAngle` `RoundedRectangle` `SVGMobject` `SampleSpace` `Scene` `ScreenRectangle` `Sector` `SingleStringMathTex` `SpecialThreeDScene` `Sphere` `Square` `Star` `StealthTip` `StreamLines` `Surface` `SurroundingRectangle` `Table` `TangentLine` `TangentialArc` `Tetrahedron` `Tex` `Text` `ThreeDAxes` `ThreeDScene` `ThreeDVMobject` `TipableVMobject` `Title` `Torus` `Triangle` `Typst` `Underline` `Union` `UnitInterval` `VDict` `VGroup` `VMobject` `VMobjectFromSVGPath` `ValueTracker` `Variable` `Vector` `VectorField` `VectorScene` `VectorizedPoint` `ZoomedScene` `AnimatedBoundary` `TracedPath`
 **动画**：`Add` `AddTextLetterByLetter` `AddTextWordByWord` `Animation` `AnimationGroup` `ApplyComplexFunction` `ApplyFunction` `ApplyMatrix` `ApplyMethod` `ApplyPointwiseFunction` `ApplyPointwiseFunctionToCenter` `ApplyWave` `Blink` `Broadcast` `ChangeDecimalToValue` `ChangeSpeed` `ChangingDecimal` `Circumscribe` `ClockwiseTransform` `ComplexHomotopy` `CounterclockwiseTransform` `Create` `CyclicReplace` `DrawBorderThenFill` `FadeIn` `FadeOut` `FadeToColor` `FadeTransform` `FadeTransformPieces` `Flash` `FocusOn` `GrowArrow` `GrowFromCenter` `GrowFromEdge` `GrowFromPoint` `Homotopy` `Indicate` `LaggedStart` `LaggedStartMap` `MoveAlongPath` `MoveToTarget` `PhaseFlow` `RemoveTextLetterByLetter` `ReplacementTransform` `Restore` `Rotate` `Rotating` `ScaleInPlace` `ShowIncreasingSubsets` `ShowPartial` `ShowPassingFlash` `ShowPassingFlashWithThinningStrokeWidth` `ShowSubmobjectsOneByOne` `ShrinkToCenter` `SmoothedVectorizedHomotopy` `SpinInFromNothing` `SpiralIn` `Succession` `Swap` `Transform` `TransformAnimations` `TransformFromCopy` `TransformMatchingShapes` `TransformMatchingTex` `TypeWithCursor` `Uncreate` `UntypeWithCursor` `Unwrite` `UpdateFromAlphaFunc` `UpdateFromFunc` `Wait` `Wiggle` `Write`
 **方法**：`shift` `move_to` `scale` `rotate` `stretch` `flip` `set_fill` `set_color` `set_style` `next_to` `align_to` `to_edge` `to_corner` `arrange` `arrange_in_grid` `copy` `save_state` `restore` `become` `get_center` `get_bounding_box` `set_x` `set_y` `set_z` `add_updater` `remove_updater` `clear_updaters` `get_updaters` `get_start` `get_end` `plot` `plot_line_graph` `get_axis_labels` `c2p` `coords_to_point` `get_graph_label` `get_area` `get_riemann_rectangles` `input_to_graph_point` `get_parts` `set_value` `get_value` `interpolate`
 **场景方法**：`play` `add` `remove` `wait` `clear`
@@ -56,6 +56,36 @@ class Demo(Scene):
 
 - 坐标系取点一律 `ax.c2p(x, y, 0)`；轴标签 `ax.get_axis_labels(x_label="x", y_label="y")`。
 - `TracedPath` 接的是**要追踪的物体**（如 `traced = TracedPath(dot)`），不是取点函数——这点与 CE 不同。
+
+## 引擎扩展图表（`manim_live_extra`）——标准 Manim 没有，按需用
+
+**这是一条独立车道，不是 Manim 的一部分**：下面这些图形在标准 Manim（以及你自己的记忆）里都不存在——**默认不要用**；只有当讲解需要统计图表 / 通用图表 / 数学可视化、手拼 VGroup 明显不划算时，才按需引入你要的那几个：
+
+```python
+from manim import *
+from manim_live_extra import Histogram   # ← 只 import 用到的，别 import *
+
+class StatsScene(Scene):
+    def construct(self):
+        hist = Histogram(data=[1, 2, 2, 3, 3, 3, 4, 4, 5], bins=4, fill_opacity=0.8)
+        self.play(Create(hist))
+```
+
+**代价（用之前必须掂量）**：带了这行 import 的代码**只能在浏览器里渲染**——本机 manim CLI 导出会被前置门拒绝（标准 Manim 没有这些图形），也不能拿去别的 Manim 环境跑。文件里没有这行 import，就与扩展毫无关系、随处可用。用户明确要本机 mp4 导出时，别用扩展。
+
+写错地方也没关系：`from manim import *` 之后直接拿扩展名用，会当场报错并告诉你正确 import 是什么。
+
+**签名速查**（全部关键字传参；颜色直接用 `from manim import *` 的常量，如 `BLUE`）：
+
+- 统计：`Histogram(data=[…], bins=5, density=False)`、`BoxPlot(data=[…] 或 [[…],[…]])`、`ViolinPlot(data=[[…],[…]])`、`ScatterPlot(x=[…], y=[…])`、`StackedBarChart(values=[[…],[…]], series_names=[…])`、`AreaChart(values=[[…],[…]])`、`StepChart(values=[…], show_dots=True)`、`CalendarHeatmap(data=[{"date": "2026-06-01", "value": 3}, …])`
+- 通用：`PieChart(values=[…], labels=[…])`、`DonutChart(values=[…], labels=[…])`、`RadarChart(data=[…], categories=[…])`、`GanttChart(tasks=[{"name": "调研", "start": 0, "end": 2, "color": BLUE}, …])`
+- 数学可视化：`HeatMap(func=lambda x, y: …)`、`ContourPlot(func=lambda x, y: …)`（func 收 (x, y)、返回一个数）
+
+当前可用的扩展名（由探针表生成，勿手改）：
+
+<!-- gen:extras-list -->
+`Histogram` `BoxPlot` `ViolinPlot` `ScatterPlot` `StackedBarChart` `AreaChart` `StepChart` `CalendarHeatmap` `PieChart` `DonutChart` `RadarChart` `GanttChart` `HeatMap` `ContourPlot`
+<!-- /gen:extras-list -->
 
 ## 3D：用 `class X(ThreeDScene)`
 
@@ -156,7 +186,7 @@ self.play(FadeIn(label, shift=UP), rate_func=running_start)   # 位移淡入
 **全量缺失清单**（由表生成）——这些名字 manim-web 没有对应，直接写会被预检拒。个别名字只在 `m.animate` 链里可用，以上文那条链的清单为准：
 
 <!-- gen:missing -->
-- **类 / 形状**：`ArcPolygonFromArcs` `CoordinateSystem` `CurvesAsSubmobjects` `DefaultSectionType` `DotCloud` `ImageMobjectFromCamera` `Label` `LinearBase` `LogBase` `MathTypst` `OpenGLPGroup` `OpenGLPMPoint` `OpenGLPMobject` `Point` `SceneFileWriter` `Section` `SpecialThreeDScene` `Surface` `TrueDot` `Typst`
+- **类 / 形状**：`CoordinateSystem` `DefaultSectionType` `DotCloud` `ImageMobjectFromCamera` `OpenGLPGroup` `OpenGLPMPoint` `OpenGLPMobject` `Point` `SceneFileWriter` `Section` `TrueDot`
 - **动画**：`MaintainPositionRelativeTo`
 - **方法**：`surround` `set_z_index` `put_start_and_end` `plot_parametric_curve` `plot_derivative_graph` `get_part_by_tex` `bring_to_front` `bring_to_back`
 - **函数**：`always` `always_redraw` `always_rotate` `always_shift` `assert_is_mobject_method` `cycle_animation` `f_always` `override_animation` `turn_animation_into_updater`
@@ -613,6 +643,57 @@ class DiceFrequencyScene(Scene):
         self.play(Create(chart))
         self.play(Create(guide), Write(guide_label))
         self.wait(0.3)
+```
+
+### 空间直角坐标系与立方体（`13-space-cube-camera.py`，出自「讲解场景（模板）」组）
+
+**什么时候照它抄**：要画 3D 空间图形（立方体 / 球 / 多面体 / 坐标轴）或想让相机转起来时照它抄。
+
+```python
+"""空间直角坐标系与立方体
+
+@expect 斜视看一个棱长 2 的立方体：三个面同时可见、明暗各不同（有光有深度，不是一块黑）；
+        它坐在第一象限，最远的顶点 (2, 2, 2) 上有个黄点、旁边跟着黄色标注；
+        三条坐标轴从原点穿出，Z 轴朝上。标题钉在画面左上角、不跟相机跑。
+        相机先绕方位角自转一段，再动画转到另一侧——终帧看到的是立方体的另一组侧面，
+        与初始斜视完全不同，证明相机真动了，不是被 2D 拍扁的一张脸。
+@template 要画 3D 空间图形（立方体 / 球 / 多面体 / 坐标轴）或想让相机转起来时照它抄。
+@note 3D 物体**必须**写 class X(ThreeDScene)：普通的 Scene 里一盏灯都没有，
+      吃光的材质落进去就是一团纯黑（不是「3D 没实现」，是放错场景了）。
+      屏幕上的字用 add_fixed_in_frame_mobjects 钉住；3D 里跟着物体走、又要一直正对镜头的字
+      用 add_fixed_orientation_mobjects——斜视下它俩都不会被压扁。
+      3D 实体的颜色 / 透明用构造参数 color / opacity（CE 的 fill_color / fill_opacity 在 3D 实体上不生效）。
+"""
+
+from manim import *
+
+SIDE = 2.0
+
+
+class SpaceCubeScene(ThreeDScene):
+    def construct(self):
+        # 轴比默认短一圈（默认 x∈[-6,6]、z∈[-4,4]，斜视下会顶到画面边）：
+        # 立方体已经占住画面中心，轴只用来交代「这是个坐标系」。
+        axes = ThreeDAxes(x_range=[-3, 3, 1], y_range=[-3, 3, 1], z_range=[-3, 3, 1])
+        cube = Cube(side_length=SIDE, color=BLUE)
+        cube.shift([SIDE / 2, SIDE / 2, SIDE / 2])  # 坐进第一象限，别跟坐标轴原点叠在一起
+        corner = Dot3D(point=[SIDE, SIDE, SIDE], radius=0.09, color=YELLOW)
+
+        title = Text("空间直角坐标系", font_size=32)
+        title.to_corner(UL)
+        self.add_fixed_in_frame_mobjects(title)  # 钉在屏幕上：不跟相机转，也不会被斜视压扁
+
+        corner_label = Text("(2, 2, 2)", font_size=22, color=YELLOW)
+        corner_label.move_to([SIDE, SIDE, SIDE + 0.5])
+        self.add_fixed_orientation_mobjects(corner_label)  # 留在 3D 里，但永远正对镜头
+
+        self.set_camera_orientation(phi=70 * DEGREES, theta=-135 * DEGREES)  # 初始斜视
+        self.play(Create(axes), FadeIn(cube), FadeIn(corner), Write(title), run_time=1)
+        self.begin_ambient_camera_rotation(rate=0.4)  # 相机自己绕方位角慢慢转
+        self.wait(1.5)
+        self.stop_ambient_camera_rotation()
+        self.move_camera(phi=60 * DEGREES, theta=-20 * DEGREES, run_time=2)  # 再动画转到另一侧
+        self.wait(0.2)
 ```
 <!-- /gen:templates -->
 

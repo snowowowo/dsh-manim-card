@@ -52,6 +52,12 @@ const abstracts = Object.fromEntries(
   [...abstractMatch[1].matchAll(/([A-Za-z_$][\w$]*)\s*:\s*'([^']*)'/g)].map(([, name, alt]) => [name, alt]),
 )
 
+// 扩展车道（manim_live_extra）的名字表：与三态表同源生成，进技能文档的扩展段。
+const extrasPath = join(CORE_ROOT, 'src/py/extras-map.generated.ts')
+const extrasMatch = readFileSync(extrasPath, 'utf8').match(/EXTRA_API_MAP: Record<string, ExtraApiEntry> = (\{[\s\S]*?\n\})\n/)
+if (extrasMatch === null) throw new Error(`没能从 ${extrasPath} 里读到 EXTRA_API_MAP`)
+const extras = Object.keys(JSON.parse(extrasMatch[1]))
+
 const entries = Object.entries(map)
 const of = (...states) => entries.filter(([, entry]) => states.includes(entry.state))
 const names = (list) => list.map(([name]) => name)
@@ -110,6 +116,11 @@ function animateMethodList() {
   return ticks([...animateMethods, ...Object.keys(animateRewrites)])
 }
 
+/** 扩展车道清单：名字一行（签名与用法是手写的，见 SKILL.md 扩展节）。表空时返回空串——段落留白即「无扩展」。 */
+function extrasList() {
+  return ticks(extras)
+}
+
 /**
  * 场景模板：只内联 docstring 里带 `@template <理由>` 标记的语料，**原样**贴进技能。
  *
@@ -160,12 +171,20 @@ function replaceBlock(text, marker, body) {
 const before = readFileSync(skillPath, 'utf8')
 const after = replaceBlock(
   replaceBlock(
-    replaceBlock(replaceBlock(before, 'api-list', apiList()), 'missing', missingList()),
-    'animate-methods',
-    animateMethodList(),
+    replaceBlock(
+      replaceBlock(
+        replaceBlock(before, 'api-list', apiList()),
+        'missing',
+        missingList(),
+      ),
+      'animate-methods',
+      animateMethodList(),
+    ),
+    'templates',
+    templatesSection(),
   ),
-  'templates',
-  templatesSection(),
+  'extras-list',
+  extrasList(),
 )
 writeFileSync(skillPath, after)
 
@@ -174,5 +193,6 @@ console.log(
     `  可用：class ${pick(ok, 'class').length} / anim ${pick(ok, 'anim').length} / method ${pick(ok, 'method').length} / ` +
     `scene-method ${pick(ok, 'scene-method').length} / function ${pick(ok, 'function').length} / const ${pick(ok, 'const').length} / ` +
     `rate ${pick(ok, 'rate').length} / color ${pick(ok, 'color').length}；alias ${alias.length}\n` +
-    `  缺失：${missing.length} 项（另 ${Object.keys(abstracts).length} 项抽象基类）`,
+    `  缺失：${missing.length} 项（另 ${Object.keys(abstracts).length} 项抽象基类）\n` +
+    `  扩展车道：${extras.length} 个（manim_live_extra）`,
 )
