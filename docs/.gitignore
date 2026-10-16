@@ -1,3 +1,7 @@
 node_modules/
 .vitepress/dist/
 .vitepress/cache/
+
+# 构建期临时产物：VitePress 的 SSR 临时目录、vite 读 TS 配置落下的 timestamp 副本
+.vitepress/.temp/
+.vitepress/config.ts.timestamp-*.mjs
