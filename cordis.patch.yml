@@ -1,3 +1,16 @@
+# dsh-manim-card bundle patch
+#
+# 这是插件的挂载声明。`name` 必须写**包名**：用 `dsh plugin add` 装进来时，
+# 宿主从 profile 的 node_modules 里解析这个包名，落到它自己的 index.js。
+#
+# 早先这里写的是 `./plugins/dsh-manim-card/index.js`——那是**开发期软链**的
+# 相对路径（profile 目录下的 plugins/<名> 软链到本仓）。软链安装能用，一旦改走
+# 正规安装（npm / GitHub 直装），节点_modules 里没有 plugins/ 这一层，
+# 启动时就会 failed to import。
+#
+# 两种装法都用这个文件，不需要各写一份：软链安装时 profile 的 plugins/<名>
+# 本身就是一个包（有自己的 package.json），包名解析同样成立。
 - insert:
     - id: manim-card
-      name: './plugins/dsh-manim-card/index.js'
+      name: 'dsh-manim-card'
+
