@@ -59,7 +59,7 @@ class Demo(Scene):
 
 ## 引擎扩展图表（`manim_live_extra`）——标准 Manim 没有，按需用
 
-**这是一条独立车道，不是 Manim 的一部分**：下面这些图形在标准 Manim（以及你自己的记忆）里都不存在——**默认不要用**；只有当讲解需要统计图表 / 通用图表 / 数学可视化、手拼 VGroup 明显不划算时，才按需引入你要的那几个：
+**这是一条独立车道，不是 Manim 的一部分**：下面这些图形在标准 Manim（以及你自己的记忆）里都不存在——**默认不要用**；只有当讲解需要**统计与通用图表、某个学科的示意图（生物 / 化学 / 机器学习 / 概率 / 网络流程）、3D 曲面或分形**，而手拼 VGroup 明显不划算时，才按需引入你要的那几个：
 
 ```python
 from manim import *
@@ -77,14 +77,23 @@ class StatsScene(Scene):
 
 **签名速查**（全部关键字传参；颜色直接用 `from manim import *` 的常量，如 `BLUE`）：
 
-- 统计：`Histogram(data=[…], bins=5, density=False)`、`BoxPlot(data=[…] 或 [[…],[…]])`、`ViolinPlot(data=[[…],[…]])`、`ScatterPlot(x=[…], y=[…])`、`StackedBarChart(values=[[…],[…]], series_names=[…])`、`AreaChart(values=[[…],[…]])`、`StepChart(values=[…], show_dots=True)`、`CalendarHeatmap(data=[{"date": "2026-06-01", "value": 3}, …])`
-- 通用：`PieChart(values=[…], labels=[…])`、`DonutChart(values=[…], labels=[…])`、`RadarChart(data=[…], categories=[…])`、`GanttChart(tasks=[{"name": "调研", "start": 0, "end": 2, "color": BLUE}, …])`
-- 数学可视化：`HeatMap(func=lambda x, y: …)`、`ContourPlot(func=lambda x, y: …)`（func 收 (x, y)、返回一个数）
+- **统计与通用图表**：`Histogram(data=[…], bins=5, density=False)`、`BoxPlot(data=[…] 或 [[…],[…]])`、`ViolinPlot(data=[[…],[…]])`、`ScatterPlot(x=[…], y=[…])`、`StackedBarChart(values=[[…],[…]], series_names=[…])`、`AreaChart(values=[[…],[…]])`、`StepChart(values=[…], show_dots=True)`、`CalendarHeatmap(data=[{"date": "2026-06-01", "value": 3}, …])`、`CandlestickChart(data=[{"open": 1, "high": 2, "low": 0.5, "close": 1.6}, …])`、`WaterfallChart(values=[3, -1, 2], labels=[…], show_total=True)`
+- **通用**：`PieChart(values=[…], labels=[…])`、`DonutChart(values=[…], labels=[…])`、`RadarChart(data=[…], categories=[…])`、`GanttChart(tasks=[{"name": "调研", "start": 0, "end": 2, "color": BLUE}, …])`
+- **数学可视化**：`HeatMap(func=lambda x, y: …)`、`ContourPlot(func=lambda x, y: …)`（func 收 (x, y)、返回一个数）
+- **生物**：`DNAHelix(sequence=['A', 'T', 'G', 'C'], turns=1.5, radius=1.2)`、`Cell(labels=True)`、`AminoAcidChain(residues=['G', 'A', 'V', 'L'], bead_radius=0.22)`
+- **化学**：`MoleculeMobject(atoms=[{"element": "O", "x": 0, "y": 0}, …], bonds=[{"from": 0, "to": 1}, …], bond_length=1.2)`
+- **机器学习**：`NeuralNetwork([FeedForwardLayer(num_nodes=3), FeedForwardLayer(num_nodes=4)], layer_spacing=2.0)`；层也能单独用——`FeedForwardLayer(num_nodes=4)`、`ConvolutionalLayer(num_feature_maps=3, map_size=3)`、`PoolingLayer(num_feature_maps=3, map_size=2)`、`ImageLayer(rows=5, cols=5, cell_size=0.5)`
+- **概率**：`DiceFace(value=5, size=1.6, dot_radius=0.09)`
+- **网络与流程**：`SankeyDiagram(nodes=[{"id": "A"}, …], links=[{"source": "A", "target": "C", "value": 3}, …])`
+- **3D**（**必须在 `ThreeDScene` 里用**，普通 Scene 里 3D 物体会全黑）：`Box3D(width=2.5, height=1.6, depth=1.2)`、`Vector3D(end=[2, 1.5, 1.2], color=YELLOW)`、`ParametricSurface(func=lambda u, v: axes.c2p(u, v, u * v), u_range=[-2, 2], v_range=[-2, 2])`、`Surface3D(func=…)`、`ImplicitSurface(func=lambda x, y, z: x * x + y * y + z * z - 1, x_range=[-1.5, 1.5])`
+- **分形**：`MandelbrotSet(width=6.0, height=3.6, max_iterations=120)`、`NewtonFractal(width=6.0, height=3.6)`
+
+**K 线注意**：`CandlestickChart` / `WaterfallChart` 的默认色是**欧美的涨绿跌红**（`bullish_color` 默认 GREEN、`bearish_color` 默认 RED）——按中国习惯要显式传 `bullish_color=RED, bearish_color=GREEN`。
 
 当前可用的扩展名（由探针表生成，勿手改）：
 
 <!-- gen:extras-list -->
-`Histogram` `BoxPlot` `ViolinPlot` `ScatterPlot` `StackedBarChart` `AreaChart` `StepChart` `CalendarHeatmap` `PieChart` `DonutChart` `RadarChart` `GanttChart` `HeatMap` `ContourPlot`
+`Histogram` `BoxPlot` `ViolinPlot` `ScatterPlot` `StackedBarChart` `AreaChart` `StepChart` `CalendarHeatmap` `CandlestickChart` `WaterfallChart` `PieChart` `DonutChart` `RadarChart` `GanttChart` `HeatMap` `ContourPlot` `DNAHelix` `Cell` `AminoAcidChain` `MoleculeMobject` `NeuralNetwork` `FeedForwardLayer` `ConvolutionalLayer` `PoolingLayer` `ImageLayer` `DiceFace` `SankeyDiagram` `Box3D` `Vector3D` `ParametricSurface` `Surface3D` `ImplicitSurface` `MandelbrotSet` `NewtonFractal`
 <!-- /gen:extras-list -->
 
 ## 3D：用 `class X(ThreeDScene)`
