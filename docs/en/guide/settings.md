@@ -18,7 +18,7 @@ The runtime itself and four browser conditions live in one card. It reads from *
 | Formula styles | unconfigured / loading / loaded / failed | "Unconfigured" means no `katexBaseURL` was passed when creating the renderer; `MathTex` / `Tex` still render, but as bare un-styled typesetting. This plugin always passes one, so only "loaded" or "failed" appears here |
 | WebGL | yes / no | The exit for the picture itself; without it the card renders nothing at all |
 | WebAssembly | yes / no | The foundation the Python interpreter runs on; without it nothing renders at all |
-| Screen recording | yes / no | Affects only the "record in the browser" export route; missing it affects neither rendering nor mp4 export |
+| Browser export | yes / no | Needed to export video frame by frame in the browser (WebCodecs or MediaRecorder); missing it affects only this one export route, neither rendering nor local mp4 export |
 
 The card header states a count of pending items (or "all ready" when nothing is outstanding); when anything is unsatisfied, the card footer lists **actionable remedies** one by one, for instance "the current browser has no usable WebGL: manim-web cannot produce a picture" or "the Pyodide runtime failed to start: … first confirm the fetch address really opens and its files are complete". Those sentences come from the core package under one shared wording.
 
@@ -48,6 +48,6 @@ Lists the eleven commonly used libraries (numpy / sympy / mpmath / matplotlib / 
 
 Pressing "Cache" on an uncached row fetches that library together with its dependencies.
 
-The wording is "cache" rather than "download": these packages are fetched over the network on demand at runtime anyway (automatically on first `import pandas`, verified by sha256, stored in `~/.dsh/cache/manim-live/pyodide/`); what happens here is **caching to the local machine ahead of time** to guarantee offline availability later. Fetch progress and failure reasons are also reflected in the browser runtime's package-fetch entry — when a fetch fails during rendering, it is the same sentence being read.
+The wording is "cache" rather than "download": these packages are fetched over the network on demand at runtime anyway (automatically on first `import pandas`, verified by sha256, stored in `~/.dsh/cache/manim-live/pyodide/`); what happens here is **caching to the local machine ahead of time** to guarantee offline availability later. Progress and failure reasons also flow into the environment status: while fetching, the card shows "正在加载 X…", and a failure becomes one of the actionable sentences at the foot of the "Browser runtime" card — the same sentence a failed fetch during rendering reads.
 
 Below the list is a **"Cache other libraries"** card: enter any package name to fetch it (spellings like `Pillow` and `scikit_learn` are both recognized, with completion suggestions while typing); manually fetched packages are kept in the list, and fetching and deleting happen at the same path.

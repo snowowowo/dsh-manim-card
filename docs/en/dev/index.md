@@ -12,7 +12,7 @@ This page is for developers of this plugin: tech stack, directory layout, develo
 | Styles | Tailwind CSS 4 | CSS is generated at build time through postcss + lightningcss and injected as `<style data-plugin>`, scoped, without preflight |
 | Icons | lucide-react | Named imports, never the whole package |
 | Code highlighting | shiki + `@shikijs/langs` | Used when viewing the Python source on a card |
-| Runtime and rendering | Core package `manim-live` `^0.2.0` | Python execution and the WebGL canvas come from it, **inlined** into `client.js` at build time |
+| Runtime and rendering | Core package `manim-live` `^0.3.0` | Python execution and the WebGL canvas come from it, **inlined** into `client.js` at build time |
 | Tests | Vitest 5 + v8 coverage | Tests sit beside the file under test, named `*.test.ts` |
 | Package manager | pnpm | The only lockfile is `pnpm-lock.yaml` |
 
@@ -25,10 +25,17 @@ cordis.patch.yml    This plugin's registration entry in a host profile
 src/
 ├── client/         Browser half — all of it is bundled into client.js
 │   ├── index.tsx       Entry: ModuleLoader registration + slot wiring + ErrorBoundary
+│   ├── renderer.ts     The one Manim renderer per page: the core package's factory is wired to this plugin's routes here
 │   ├── settings.tsx    Settings panel
-│   ├── components/     Cards, code view and friends
-│   ├── service.ts      The outward-facing manim-card service
+│   ├── components/     UI pieces: card, code view, status dot, hover tip
+│   ├── definition.ts   Session folding definition: one manim_render call = one render card
+│   ├── render-queue.ts Render scheduling: which card runs now, how many canvases stay alive
 │   ├── runtime-status.ts  Environment status → display wording (pure selectors)
+│   ├── storage.ts      Export records on disk (localStorage read as untrusted input)
+│   ├── clipboard.ts    Copying source: clipboard API first, execCommand as fallback
+│   ├── code-highlight.ts  Python highlighting via shiki
+│   ├── environment.ts / export.ts / packages.ts
+│   │                   Three fetch layers: the core package's environment-probe / export / package-manager clients bound to this plugin's routes
 │   ├── i18n.ts         Copy dictionary
 │   └── styles.css      Skin
 ├── host/           Host half — plain JS, no build step, published as-is
@@ -36,15 +43,18 @@ src/
 │   ├── environment.js  Local environment probing
 │   ├── export.js       mp4 export
 │   └── pyodide.js / assets.js / http.js   Asset and on-demand package-fetch routes
-└── routes.js       Single source of truth for the two asset routes, shared by both halves
+└── routes.js       Single source of truth for every HTTP route, shared by both halves
 assets/             Bundled assets: pyodide / katex
-skills/manim-card/  The domain skill body for the model (Markdown)
+scripts/gen-skill.mjs  Generates the domain skill body for the model
+skills/manim-card/  The skill body (Markdown, produced by the script above)
 docs/               The docs site (VitePress, its own dependency, unrelated to the plugin's dependency graph)
 ```
 
+(`*.test.ts` files sit beside the file under test and are not listed here.)
+
 This repository has only **two halves, client and host** — there is no third shared area. Constants both halves need live in `src/routes.js`; heavy shared machinery (the Python runtime, rendering) belongs to the core package.
 
-`src/routes.js` is the single source of truth for the two asset routes: both the Host route registration and the fetch roots the client half passes to the core package read from it. Changing one and forgetting the other shows up as "Pyodide stuck loading" or "formulas turned into tofu", and only on a real machine — which is why `src/client/service.test.ts` asserts against the constants instead of copying the literals a second time.
+`src/routes.js` is the single source of truth for **every** HTTP route of this plugin: six constants (KaTeX and Pyodide as two prefix-style file routes, plus four interface routes — packages / cache / environment / export, which together expose eight countable endpoints). The paths the Host registers, the fetch roots the client half passes to the core package, and the fetch addresses of the three fetch layers all read from it. Changing one and forgetting the other shows up as "Pyodide stuck loading" or "formulas turned into tofu", and only on a real machine — which is why `src/client/renderer.test.ts` asserts against the constants instead of copying the literals a second time.
 
 What ships is decided by `files` in `package.json`: `index.js` / `client.js` / `src` / `assets` / `skills` / `cordis.patch.yml`. `docs/` is not part of the package.
 
@@ -83,9 +93,10 @@ A typical change goes through these steps:
 
 ## Tests
 
-Unit tests sit next to their source files (`*.test.ts`); `pnpm test` runs the offline tier. Three divisions of labour worth knowing:
+Unit tests sit next to their source files (`*.test.ts`); `pnpm test` runs the offline tier. Four divisions of labour worth knowing:
 
-- `src/client/service.test.ts` pins the **cross-plugin contract** (service surface shape, the two route constants, status being forwarded rather than recomputed);
+- `src/host/routes.test.ts` runs `apply()` for real against a fake ctx: the tool, the skill, the standing guide, and the registration and behavioural boundary of every asset and interface route all live in this one file;
+- `src/client/renderer.test.ts` pins the **renderer wiring** (the two asset addresses come from `src/routes.js`, and exactly one renderer exists per page);
 - `src/client/runtime-status.test.ts` pins the **pure selectors** (status → tone, pending hints, actionability), driven by a fake translate function and touching neither the DOM nor render output;
 - `src/client/i18n.test.ts` is a **missing-copy regression net**: a misspelled key or a mismatched placeholder is reported on the spot, naming the source file that uses it.
 
@@ -93,7 +104,7 @@ Real runtime behaviour (Pyodide, the manim adaptation layer, the supported surfa
 
 ## The core package dependency
 
-The core package is depended on by **version** (`manim-live: ^0.2.0`), not by a local `link`, so it can be kept aligned with the published release at any time:
+The core package is depended on by **version** (`manim-live: ^0.3.0`), not by a local `link`, so it can be kept aligned with the published release at any time:
 
 ```bash
 pnpm add manim-live@latest   # or edit the version in package.json, then pnpm install

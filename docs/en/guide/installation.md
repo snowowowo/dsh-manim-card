@@ -24,26 +24,28 @@ Pick one in the host's CLI / plugin management:
 
 | Method | Command | Status |
 | --- | --- | --- |
-| From npm | `dsh plugin add dsh-manim-card` | Available once published |
-| From a tarball | `dsh plugin add ./dsh-manim-card-<version>.tgz` | Same |
-| Direct install from the GitHub repository | `dsh plugin add github:snowowowo/dsh-manim-card` | Repo root is the package |
+| From npm | `dsh plugin add dsh-manim-card` | Not published yet |
+| From a tarball | `dsh plugin add ./dsh-manim-card-<version>.tgz` | Use it after a local `npm pack` |
+| Direct install from the GitHub repository | `dsh plugin add github:snowowowo/dsh-manim-card` | Repository is public, path not yet verified |
 
 ::: tip Two paths not yet verified
-The npm publishing and GitHub direct-install paths have not been verified end to end (the repository is currently private); this page will be updated once they land. The development-time setup is a symlink inside the profile plus a patch entry, see [Development & Debugging](/en/dev/).
+The repository is public and the online docs site is live; but the **npm publishing** and **GitHub direct-install** paths have not been verified end to end, and this page will be updated once they land. The development-time setup is a symlink inside the profile plus a patch entry, see [Development & Debugging](/en/dev/).
 :::
 
 After installing, refresh the host page: a "manim-card" section appears in the **host settings**.
 
 ## Bundled assets
 
-Two runtime assets ship with the plugin, so nothing else has to be prepared and no external CDN is involved:
+Two kinds of runtime assets ship with the plugin, so nothing else has to be prepared and no external CDN is involved:
 
 | Asset | Location | Purpose |
 | --- | --- | --- |
-| Pyodide distribution | `assets/pyodide/` | Core wasm + standard library + numpy / sympy / mpmath. Basic figures can be drawn offline |
+| Pyodide distribution | `assets/pyodide/` | Core wasm + standard library + the numpy / sympy / mpmath wheels. Basic figures can be drawn offline |
 | KaTeX styles and fonts | `assets/katex/` | Needed by formulas typeset with `MathTex` / `Tex` |
 
 Both are served **same-origin** by the plugin's Host routes: the browser side never talks to a public CDN, and the fetch root is the plugin's own route.
+
+The plugin's runtime dependency (the core package `manim-live`) is no extra errand either — it is **inlined** into `client.js` at build time, so it needs no separate installation and is not an asset you have to prepare.
 
 ## What the first run waits for
 
@@ -53,7 +55,7 @@ Before the first render, the Pyodide core (about 13 MB) and the bundled numpy (a
 
 ## What needs the network, on demand
 
-**Third-party libraries not bundled with the package**, such as `import pandas`: fetched over the network on first use, verified by sha256, and stored in `~/.dsh/cache/manim-live/pyodide/`; afterwards served offline from cache. While fetching, the card shows a "loading X…" hint, and the outcome is also reflected in the package-fetch entry of the environment status.
+**Third-party libraries not bundled with the package**, such as `import pandas`: fetched over the network on first use, verified by sha256, and stored in `~/.dsh/cache/manim-live/pyodide/`; afterwards served offline from cache. While fetching, the card shows a "正在加载 X…" hint; on failure the reason becomes one of the actionable sentences at the foot of the "Browser runtime" card.
 
 To prefetch or clear these, go to the "Package cache" block of the Settings panel, see [Settings Panel](/en/guide/settings#package-cache). In an offline environment an uncached library cannot be fetched; rendering then fails with a fetch error whose reason is the same sentence as `packages.lastError` in the environment status.
 

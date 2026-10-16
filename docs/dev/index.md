@@ -12,7 +12,7 @@
 | 样式 | Tailwind CSS 4 | 构建期经 postcss + lightningcss 生成 CSS，以 `<style data-plugin>` 注入，作用域隔离、不引 preflight |
 | 图标 | lucide-react | 具名 import，不整包引入 |
 | 代码高亮 | shiki + `@shikijs/langs` | 卡片里查看 Python 源码时使用 |
-| 运行时与渲染 | 核心包 `manim-live` `^0.2.0` | 浏览器内的 Python 执行与 WebGL 画布由它提供，构建时**内联**进 `client.js` |
+| 运行时与渲染 | 核心包 `manim-live` `^0.3.0` | 浏览器内的 Python 执行与 WebGL 画布由它提供，构建时**内联**进 `client.js` |
 | 测试 | Vitest 5 + v8 覆盖率 | 用例与被测文件同目录，命名 `*.test.ts` |
 | 包管理 | pnpm | 唯一 lockfile 是 `pnpm-lock.yaml` |
 
@@ -25,10 +25,17 @@ cordis.patch.yml    本插件在宿主 profile 里的注册条目
 src/
 ├── client/         浏览器半边——全部打进 client.js
 │   ├── index.tsx       入口：ModuleLoader 注册 + 槽位接线 + ErrorBoundary
+│   ├── renderer.ts     全页唯一的 Manim 渲染器：核心包的工厂在这里接到本插件的路由上
 │   ├── settings.tsx    设置面板
-│   ├── components/     卡片、代码视图等
-│   ├── service.ts      对外的 manim-card 服务
+│   ├── components/     界面件：卡片、代码视图、状态点、悬浮提示
+│   ├── definition.ts   会话折叠定义：一次 manim_render 调用 = 一张渲染卡片
+│   ├── render-queue.ts 渲染调度：轮到哪张卡跑、同时活几张画布
 │   ├── runtime-status.ts  环境状态 → 展示口径（纯选择器）
+│   ├── storage.ts      导出记录落盘（localStorage 当不可信输入读）
+│   ├── clipboard.ts    复制源码：clipboard API 优先，execCommand 兜底
+│   ├── code-highlight.ts  shiki 的 Python 高亮
+│   ├── environment.ts / export.ts / packages.ts
+│   │                   三个取数层：把核心包的环境探测 / 导出 / 包管理客户端绑到本插件的路由上
 │   ├── i18n.ts         文案字典
 │   └── styles.css      皮肤
 ├── host/           宿主半边——免构建的普通 JS，原样发布
@@ -36,15 +43,18 @@ src/
 │   ├── environment.js  本机环境探测
 │   ├── export.js       mp4 导出
 │   └── pyodide.js / assets.js / http.js   资源与按需取包路由
-└── routes.js       两条资源路由的唯一真源，两侧共用
+└── routes.js       全部 HTTP 路由的唯一真源，两侧共用
 assets/             随包资源：pyodide / katex
-skills/manim-card/  给模型的领域技能正文（Markdown）
+scripts/gen-skill.mjs  生成给模型的领域技能正文
+skills/manim-card/  技能正文（Markdown，由上面的脚本生成）
 docs/               文档站（VitePress，独立依赖，与插件的依赖图无关）
 ```
 
+（`*.test.ts` 与被测文件同目录，此处不列。）
+
 本仓只有 **client / host 两个半边**，没有第三块共用区——两侧都要用的常量收在 `src/routes.js`，重量级的共用逻辑（Python 运行时、渲染）归核心包。
 
-`src/routes.js` 是两条资源路由的唯一真源：Host 注册路由与 Client 侧传给核心包的取数根都读它。改一处忘另一处的表现是「Pyodide 卡在加载」或「公式变豆腐块」，且只在真机出现——所以 `src/client/service.test.ts` 里对着常量断言，不抄第二遍字面量。
+`src/routes.js` 是本插件**全部** HTTP 路由的唯一真源：六条常量（KaTeX、Pyodide 两条前缀式文件路由，加上 packages / cache / environment / export 四条接口路由，后四条共八个可数端点）。Host 注册的路径、Client 侧传给核心包的取数根、以及三个取数层的 fetch 地址全部读它。改一处忘另一处的表现是「Pyodide 卡在加载」或「公式变豆腐块」，且只在真机出现——所以 `src/client/renderer.test.ts` 里对着常量断言，不抄第二遍字面量。
 
 进包的内容由 `package.json` 的 `files` 决定：`index.js` / `client.js` / `src` / `assets` / `skills` / `cordis.patch.yml`。`docs/` 不进包。
 
@@ -83,9 +93,10 @@ pnpm docs       # 本地起文档站
 
 ## 测试
 
-单测与源文件同目录（`*.test.ts`），`pnpm test` 跑不联网的那一档。三处值得知道的分工：
+单测与源文件同目录（`*.test.ts`），`pnpm test` 跑不联网的那一档。四处值得知道的分工：
 
-- `src/client/service.test.ts` 钉的是**跨插件契约**（服务面形状、两条路由常量、状态必须转发而非重算）；
+- `src/host/routes.test.ts` 用假 ctx 真跑一遍 `apply()`：工具、技能、常驻指引，以及每一条资源与接口路由的注册与行为边界都在这一份里；
+- `src/client/renderer.test.ts` 钉的是**渲染器接线**（两条资源地址来自 `src/routes.js`、全页只建一个渲染器）；
 - `src/client/runtime-status.test.ts` 钉的是**纯选择器**（状态 → 色调、待处理项、可点性），拿假取词函数驱动，不碰 DOM 与渲染结果；
 - `src/client/i18n.test.ts` 是**文案缺口回归网**：键名打错或占位符对不上，当场报出是哪个源文件在用。
 
@@ -93,7 +104,7 @@ pnpm docs       # 本地起文档站
 
 ## 依赖核心包
 
-核心包以**版本号**依赖（`manim-live: ^0.2.0`），不用本地 `link`，便于随时对齐发布版：
+核心包以**版本号**依赖（`manim-live: ^0.3.0`），不用本地 `link`，便于随时对齐发布版：
 
 ```bash
 pnpm add manim-live@latest   # 或在 package.json 改版本号后 pnpm install

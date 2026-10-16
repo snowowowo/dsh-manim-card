@@ -10,7 +10,7 @@ dsh-manim-card 是 DeepSeek Harness（下称「宿主」）的插件：AI 在会
 
 | 落点 | 内容 | 详情 |
 | --- | --- | --- |
-| 聊天流 | 动画卡片：AI 调用 `manim_render` 后出现，支持播放、查看源码、导出 mp4 | [在聊天里用](/guide/usage) |
+| 聊天流 | 动画卡片：AI 调用 `manim_render` 后出现，支持手动播放、查看代码、导出视频 | [在聊天里用](/guide/usage) |
 | 工具 | `manim_render`：工具返回前在 Node 侧的真解释器里干跑一遍，语法错、未定义名、不支持的写法当场以 `error` 回给模型 | [宿主工具](/api/tool) |
 | 设置面板 | 「manim-card」一节：浏览器运行时、本机环境探测、包缓存管理 | [设置面板](/guide/settings) |
 
@@ -45,14 +45,14 @@ dsh-manim-card 是 DeepSeek Harness（下称「宿主」）的插件：AI 在会
 
 ## 与核心包 manim-live 的关系
 
-[manim-live](https://github.com/snowowowo/manim-live)（[文档站](https://snowowowo.github.io/manim-live/)）是独立的 npm 包，执行与渲染的核心能力都在它那里；本插件是它在宿主里的接入层。按场景选择：
+[manim-live](https://github.com/snowowowo/manim-live)（[文档站](https://snowowowo.github.io/manim-live/)）是独立的 npm 包，执行与渲染的核心能力都在它那里；本插件是它在宿主里的接入层——装本插件即带上它（构建时内联进 `client.js`），**不必另行安装**。按场景选择：
 
 | 想要 | 用什么 |
 | --- | --- |
 | 在宿主会话里让 AI 画动画、看卡片、导出 mp4 | 本插件 |
 | 在自己的页面或产品里嵌一块同样的画布，脱离宿主 | 核心包 manim-live |
 | 在自己的插件里用一块同样的画布与运行时 | 核心包 manim-live（它不认宿主，也不认哪个插件在用） |
-| 对一份语料做批量回归（239 条） | 核心包仓的 `corpus/`；本插件不维护语料 |
+| 对一份语料做批量回归 | 核心包仓的 `corpus/`；本插件不维护语料——条数与覆盖以那边为准 |
 
 ## 不适用
 

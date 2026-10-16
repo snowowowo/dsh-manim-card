@@ -10,7 +10,7 @@ dsh-manim-card is a plugin for DeepSeek Harness ("the host"): AI writes **standa
 
 | Where it lands | What | Detail |
 | --- | --- | --- |
-| Chat stream | Animation cards: they appear after the AI calls `manim_render` and support playback, code viewing and mp4 export | [Usage in Chat](/en/guide/usage) |
+| Chat stream | Animation cards: they appear after the AI calls `manim_render` and support manual play, code viewing and video export | [Usage in Chat](/en/guide/usage) |
 | A tool | `manim_render`: the code is dry-run in a real interpreter on the Node side before the tool returns, so syntax errors, undefined names and unsupported constructs come back as `error` immediately | [Host Tool](/en/api/tool) |
 | Settings panel | A "Manim 渲染" section: the browser runtime, local environment probing and package cache management | [Settings Panel](/en/guide/settings) |
 
@@ -45,14 +45,14 @@ The interfaces are split into two outward surfaces by consumer: the [`manim_rend
 
 ## Relationship with the core package manim-live
 
-[manim-live](https://github.com/snowowowo/manim-live) ([docs](https://snowowowo.github.io/manim-live/)) is an independent npm package holding the core execution and rendering capabilities; this plugin is its integration layer inside the host. Choose by scenario:
+[manim-live](https://github.com/snowowowo/manim-live) ([docs](https://snowowowo.github.io/manim-live/)) is an independent npm package holding the core execution and rendering capabilities; this plugin is its integration layer inside the host — installing this plugin brings it along (inlined into `client.js` at build time), so it **never needs a separate install**. Choose by scenario:
 
 | You want | Use |
 | --- | --- |
 | AI drawing animations in host conversations, cards, mp4 export | This plugin |
 | The same canvas inside your own page or product, outside the host | The core package manim-live |
 | The same canvas and runtime, from your own plugin | The core package manim-live (it knows neither the host nor which plugin is using it) |
-| Batch regression over a corpus (239 cases) | `corpus/` in the core package repository; this plugin maintains no corpus |
+| Batch regression over a corpus | `corpus/` in the core package repository; this plugin maintains no corpus — the case count and coverage are settled there |
 
 ## Not a fit for
 

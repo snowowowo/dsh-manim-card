@@ -24,26 +24,28 @@
 
 | 方式 | 命令 | 状态 |
 | --- | --- | --- |
-| 从 npm | `dsh plugin add dsh-manim-card` | 发布后可用 |
-| 从 tarball | `dsh plugin add ./dsh-manim-card-<版本>.tgz` | 同上 |
-| 从 GitHub 仓库直装 | `dsh plugin add github:snowowowo/dsh-manim-card` | 仓根即包 |
+| 从 npm | `dsh plugin add dsh-manim-card` | 尚未发布 |
+| 从 tarball | `dsh plugin add ./dsh-manim-card-<版本>.tgz` | 本地 `npm pack` 出包后可用 |
+| 从 GitHub 仓库直装 | `dsh plugin add github:snowowowo/dsh-manim-card` | 仓库已公开，链路未实测 |
 
 ::: tip 两条链路尚未实测
-npm 发布与 GitHub 直装尚未走通验证过（仓库当前私有），落地后会更新本页。开发期的装法是 profile 内软链加 patch 条目，见[开发与调试](/dev/)。
+仓库已公开，线上文档站也已上线；但 **npm 发布**与 **GitHub 直装**两条链路尚未端到端走通，落地后会更新本页。开发期的装法是 profile 内软链加 patch 条目，见[开发与调试](/dev/)。
 :::
 
 装完后刷新宿主页面，**宿主设置**里出现「manim-card」一节。
 
 ## 随包资源
 
-两份运行资源随插件分发，装完不需要另外准备，也不依赖外网 CDN：
+两类运行资源随插件分发，装完不需要另外准备，也不依赖外网 CDN：
 
 | 资源 | 位置 | 用途 |
 | --- | --- | --- |
-| Pyodide 发行版 | `assets/pyodide/` | 核心 wasm + 标准库 + numpy / sympy / mpmath。断网也能画基本图形 |
+| Pyodide 发行版 | `assets/pyodide/` | 核心 wasm + 标准库 + numpy / sympy / mpmath 三个 wheel。断网也能画基本图形 |
 | KaTeX 样式与字体 | `assets/katex/` | `MathTex` / `Tex` 排出的公式所需 |
 
 两者都由插件的 Host 路由**同源分发**：浏览器侧不直连公网，取数根就是插件自己的路由。
+
+本插件的运行时依赖（核心包 `manim-live`）同样不打搅你——它在构建时**内联**进 `client.js`，不需要单独安装，也不是一份要自己准备的资源。
 
 ## 首次运行要等什么
 
@@ -53,7 +55,7 @@ npm 发布与 GitHub 直装尚未走通验证过（仓库当前私有），落�
 
 ## 哪些东西按需联网
 
-`import pandas` 这类**随包没有的第三方库**：首次用到时联网取一次，按 sha256 校验后落进 `~/.dsh/cache/manim-live/pyodide/`，之后离线命中。取值期间卡片上提示「正在加载 X…」，结果同时反映在环境状态的取包一项里。
+`import pandas` 这类**随包没有的第三方库**：首次用到时联网取一次，按 sha256 校验后落进 `~/.dsh/cache/manim-live/pyodide/`，之后离线命中。取值期间卡片上提示「正在加载 X…」；失败则进「浏览器运行时」卡片底部的处置句。
 
 想提前存好或清掉，去设置面板的「包缓存」一块，见[设置面板](/guide/settings#包缓存)。断网环境下未缓存过的库取不到，此时渲染以取包失败报错，错误原因与环境状态里 `packages.lastError` 是同一句。
 
