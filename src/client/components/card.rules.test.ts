@@ -84,9 +84,9 @@ describe('exportFailureText：导出失败说哪句话', () => {
   const t = (key: string, params?: Record<string, string | number>): string =>
     params === undefined ? key : `${key}(${Object.entries(params).map(([k, v]) => `${k}=${v}`).join(',')})`
 
-  it('浏览器没能力 —— 说清缺哪一项，名字用核心包给的', () => {
-    expect(exportFailureText({ ok: false, code: 'unsupported', missing: ['WebCodecs 或 MediaRecorder'] }, t))
-      .toBe('exportMissingHint(missing=WebCodecs 或 MediaRecorder)')
+  it('浏览器不能录 —— 说清缺哪一项，名字由本插件给', () => {
+    expect(exportFailureText({ ok: false, code: 'unsupported', missing: ['MediaRecorder'] }, t))
+      .toBe('exportMissingHint(missing=MediaRecorder)')
   })
 
   it('缺项名是空串时退回本插件自己那一项的名字，不摆一句「缺 」', () => {
@@ -96,16 +96,12 @@ describe('exportFailureText：导出失败说哪句话', () => {
       .toBe('exportMissingHint(missing=rtRecorder)')
   })
 
-  it('编码失败 —— 原样摆核心包给的原因', () => {
-    expect(exportFailureText({ ok: false, code: 'failed', detail: '逐帧编码炸了' }, t))
-      .toBe('exportFailed(error=逐帧编码炸了)')
+  it('录制失败 —— 原样摆原因', () => {
+    expect(exportFailureText({ ok: false, code: 'failed', detail: '录制炸了' }, t))
+      .toBe('exportFailed(error=录制炸了)')
   })
 
-  it('编码失败但没给原因 —— 退回通用那句，不留空', () => {
+  it('录制失败但没给原因 —— 退回通用那句，不留空', () => {
     expect(exportFailureText({ ok: false, code: 'failed' }, t)).toBe('exportFailed(error=fail)')
-  })
-
-  it('接入者没接上 —— 说清是插件这一侧的事，别让人去查自己的机器', () => {
-    expect(exportFailureText({ ok: false, code: 'broken' }, t)).toBe('exportFailed(error=exportBroken)')
   })
 })

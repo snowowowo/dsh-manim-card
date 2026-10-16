@@ -230147,7 +230147,7 @@ if _dsh_extras_src:
 		setRuntimePhaseListener((phase, error) => noteRuntimePhase(phase, error));
 		setPackageStatusListener((names, lastError) => notePackages(names, lastError));
 		/** 逐帧导出的帧率。30 对教学动画足够（上游默认 60，产物翻倍）。 */
-		const FPS = 30;
+		const FPS$1 = 30;
 		/** 上游的 `mime`：WebCodecs 那条给 mp4，MediaRecorder 那条给 webm——由实际编码结果定，不猜。 */
 		function extensionOf(blob) {
 			const mime = blob.type !== "" ? blob.type : "video/webm";
@@ -230218,7 +230218,7 @@ if _dsh_extras_src:
 					error: "manim-web 的导出器载入失败"
 				};
 				const options = {
-					fps: FPS,
+					fps: FPS$1,
 					onProgress: (progress) => onProgress?.(`导出中 ${Math.round(progress * 100)}%`)
 				};
 				try {
@@ -231204,51 +231204,135 @@ if _dsh_extras_src:
 		}
 		//#endregion
 		//#region src/client/export.ts
+		/** 录制帧率。30 对教学动画足够，也是本插件一直用的值。 */
+		const FPS = 30;
 		/**
-		* 浏览器逐帧导出的接入者。按 **id** 找而不是取下标：核心包始终把自带那个排在列表最前，
-		* 但那是实现细节，按 id 认才不会被上游调序弄坏。
+		* 候选 MIME，按优先级排。
+		*
+		* 先 mp4 后 webm：mp4 兼容性更好（剪辑软件、部分播放器），但**不是每个浏览器都支持录 mp4**
+		* （Chrome/Electron 多数只给 webm），所以逐个探测，用第一个能用的。
 		*/
-		function browserExporter() {
-			return manimRenderer().exporters.find((exporter) => exporter.id === browserVideo.id) ?? null;
+		const MIME_CANDIDATES = [
+			"video/mp4;codecs=avc1.42E01E",
+			"video/mp4",
+			"video/webm;codecs=vp9",
+			"video/webm"
+		];
+		/** 挑一个当前环境真的支持的录制格式；都不支持时给 null（调用方报「不支持」）。 */
+		function pickMime() {
+			if (typeof MediaRecorder === "undefined") return null;
+			for (const mime of MIME_CANDIDATES) if (MediaRecorder.isTypeSupported(mime)) return mime;
+			return null;
+		}
+		/** 由 MIME 定扩展名——不写死 `.mp4`，编码结果说了算。 */
+		function extensionFor(mime) {
+			return mime.includes("mp4") ? "mp4" : "webm";
 		}
 		/**
-		* 一块画布 → 导出接入者要的那个 `RenderController`。
+		* 画布能不能被录。
 		*
-		* 三个成员画布上都已经有了，这里只做改名（`Surface` 是给人用的名字，`RenderController` 是给导出用的），
-		* 不新增任何能力。**必须传当前活着的那块画布**：`collect()` 是真在它上面跑一遍代码。
+		* 只有一条硬性条件：`MediaRecorder` 且至少一个 MIME 可用。
+		* （不再问 WebCodecs——那条路虽然能编码，但喂给它的帧是坏的，见文件头。）
 		*/
-		function controllerOf(surface) {
+		function canRecordVideo() {
+			const mime = pickMime();
+			if (mime === null) return {
+				ok: false,
+				missing: ["MediaRecorder"]
+			};
 			return {
-				canvas: () => surface.canvas(),
-				isRendered: () => surface.isRendered(),
-				collect: (python) => surface.collect(python)
+				ok: true,
+				mime
 			};
 		}
+		/** 等一段真实时间。 */
+		const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 		/**
-		* 跑一次浏览器逐帧导出。
+		* 让动画真实播一遍，同时录下画布。
 		*
-		* 就绪判定与逐帧编码全在核心包那一侧（上游 `manim-web` 的导出器），这里只做三件事：
-		* 问一句能不能用、把进展接给界面、把结论收敛成一种形状。
+		* 步骤：回到起点 → 起录 → 播 → 等播完 → 停录。
+		*
+		* **必须等播放真的结束再停录**：停早了尾部会被截断。判据用 `playback.state() === 'ended'`
+		* （上游在播到末尾时会把它置成 `ended`），同时挂一个 `duration + 余量` 的兜底超时——
+		* 万一中途出意外卡住，也不能把整个导出吊死。
 		*/
 		async function exportVideoInBrowser(python, surface, onProgress) {
-			const exporter = browserExporter();
-			if (exporter === null) return {
-				ok: false,
-				code: "broken"
-			};
-			const ready = await exporter.probe();
-			if (!ready.ready) return {
+			const ready = canRecordVideo();
+			if (!ready.ok) return {
 				ok: false,
 				code: "unsupported",
-				missing: (ready.missing ?? []).map((item) => item.label)
+				missing: ready.missing
 			};
-			let result;
+			const canvas = surface.canvas();
+			if (canvas === null) return {
+				ok: false,
+				code: "failed",
+				detail: "画布还没准备好"
+			};
+			onProgress("正在把动画排进时间轴…");
+			let playback;
 			try {
-				result = await exporter.run({
-					python,
-					controller: controllerOf(surface),
-					onProgress
+				playback = await surface.createPlayback(python);
+			} catch (error) {
+				console.error("[manim-card] export: playback failed:", error);
+				return {
+					ok: false,
+					code: "failed",
+					detail: error instanceof Error ? error.message : String(error)
+				};
+			}
+			let recorder = null;
+			try {
+				const duration = playback.duration();
+				if (!Number.isFinite(duration) || duration <= 0) {
+					playback.dispose();
+					return {
+						ok: false,
+						code: "failed",
+						detail: "这段动画没有可导出的时长"
+					};
+				}
+				playback.seek(0);
+				playback.pause();
+				const stream = canvas.captureStream(FPS);
+				recorder = new MediaRecorder(stream, { mimeType: ready.mime });
+				const chunks = [];
+				recorder.ondataavailable = (event) => {
+					if (event.data.size > 0) chunks.push(event.data);
+				};
+				const stopped = new Promise((resolve) => {
+					recorder.onstop = () => resolve();
 				});
+				recorder.start();
+				await wait(Math.ceil(1e3 / FPS));
+				onProgress(`正在录制 ${duration.toFixed(1)} 秒…`);
+				playback.play();
+				const startedAt = Date.now();
+				const budget = duration * 1e3 + 1e3;
+				while (Date.now() - startedAt < budget) {
+					if (playback.state() === "ended") break;
+					const elapsed = (Date.now() - startedAt) / 1e3;
+					const percent = Math.min(99, Math.round(elapsed / duration * 100));
+					onProgress(`正在录制 ${duration.toFixed(1)} 秒… ${percent}%`);
+					await wait(200);
+				}
+				await wait(Math.ceil(1e3 / FPS));
+				onProgress("正在收尾…");
+				recorder.stop();
+				await stopped;
+				stream.getTracks().forEach((track) => track.stop());
+				const blob = new Blob(chunks, { type: ready.mime.split(";")[0] });
+				if (blob.size === 0) return {
+					ok: false,
+					code: "failed",
+					detail: "录出来的内容是空的"
+				};
+				onProgress(`导出完成 ${(blob.size / 1024).toFixed(0)} KB`);
+				return {
+					ok: true,
+					blob,
+					name: `manim-${Date.now()}.${extensionFor(ready.mime)}`
+				};
 			} catch (error) {
 				console.error("[manim-card] browser export failed:", error);
 				return {
@@ -231256,21 +231340,10 @@ if _dsh_extras_src:
 					code: "failed",
 					detail: error instanceof Error ? error.message : String(error)
 				};
+			} finally {
+				playback.dispose();
+				if (recorder !== null && recorder.state !== "inactive") recorder.stop();
 			}
-			if (!result.ok) return {
-				ok: false,
-				code: "failed",
-				detail: result.error
-			};
-			if (result.kind !== "blob") return {
-				ok: false,
-				code: "broken"
-			};
-			return {
-				ok: true,
-				blob: result.blob,
-				name: result.name
-			};
 		}
 		/**
 		* 把产物存进用户的「下载」文件夹。
@@ -242271,17 +242344,15 @@ XID_Start XIDS`.split(/\s/).map((p) => [w(p), p]));
 			return input.live && input.batchTail;
 		}
 		/**
-		* 导出失败说哪句话——三类分开，因为**用户能做的事不一样**：
-		* - 浏览器没能力 → 说清缺哪一项（换浏览器是能自己解决的）；缺项名由核心包给，不自造。
-		* - 逐帧编码中途失败 → 原样摆核心包给的原因（多半与这段动画本身有关）。
-		* - 接入者没接上 → 说清是插件这一侧的事，别让人去查自己的机器。
+		* 导出失败说哪句话——两类分开，因为**用户能做的事不一样**：
+		* - 浏览器不能录 → 说清缺哪一项（换浏览器是能自己解决的）；缺项名由本插件给，不自造。
+		* - 录制中途失败 → 原样摆原因（多半与这段动画本身有关）。
 		*/
 		function exportFailureText(outcome, t) {
 			if (outcome.code === "unsupported") {
 				const missing = (outcome.missing ?? []).filter((label) => label.length > 0).join("、");
 				return t("exportMissingHint", { missing: missing.length > 0 ? missing : t("rtRecorder") });
 			}
-			if (outcome.code === "broken") return t("exportFailed", { error: t("exportBroken") });
 			return t("exportFailed", { error: outcome.detail ?? t("fail") });
 		}
 		/**
@@ -242323,13 +242394,7 @@ XID_Start XIDS`.split(/\s/).map((p) => [w(p), p]));
 			const modeRef = (0, react.useRef)("auto");
 			/** 渲染 effect 把「原地重跑」与「当前那块画布」递出来给按钮用（闭包变量 JSX 够不到）。 */
 			const controls = (0, react.useRef)(null);
-			/**
-			* 导出视频：在浏览器里逐帧编码成视频文件（与卡片同一个渲染引擎）。
-			*
-			* 就绪与否直接读环境状态里那一项能力（含订阅），不再问 Host——导出跑在**这个页面**里，
-			* Host 那边看不到 WebCodecs / MediaRecorder 有没有。
-			*/
-			const envStatus = useEnvironmentStatus();
+			useEnvironmentStatus();
 			const [exporting, setExporting] = (0, react.useState)(false);
 			/** 导出进展（核心包给的原话：「逐帧编码（WebCodecs）…」「导出中 42%」）。 */
 			const [exportProgress, setExportProgress] = (0, react.useState)(null);
@@ -242355,15 +242420,19 @@ XID_Start XIDS`.split(/\s/).map((p) => [w(p), p]));
 			}, [loadingActive]);
 			/**
 			* 能不能导出，两个条件：
-			* - 浏览器有逐帧编码能力（WebCodecs 或 MediaRecorder）——缺了它没有别的导出路可走；
-			* - 这张卡**已经画出一幅画**（`rendered`）——导出要在一块活画布上把代码收集成带时间轴的场景。
+			* - 这一页的浏览器能录画布（`MediaRecorder` + 至少一种可用格式）——缺了没有别的导出路；
+			* - 这张卡**已经画出一幅画**（`rendered`）——导出要在一块活画布上把代码收集成时间轴。
 			*   正在播、还没跑完、或已被调度器淘汰时都不满足，此时按钮灰着。
+			*
+			* 注意这里问的是 `canRecordVideo()`（本插件自己的判据）而**不是**环境状态里的
+			* `capabilities.videoExport`：那个说的是 WebCodecs，而 WebCodecs 那条路喂给编码器的帧是坏的
+			* （上游 `seek` 不推进 updater，见 ../export.ts 的文件头），早就不用了。
 			*/
-			const canEncode = envStatus.capabilities.videoExport;
-			const surfaceExportable = canEncode && rendered;
+			const canRecord = canRecordVideo().ok;
+			const surfaceExportable = canRecord && rendered;
 			/**
-			* 导出视频。**要有一块活着的画布**：导出走的是「在这块画布上把代码收集成带时间轴的场景」，
-			* 再逐帧 seek 出图——所以没渲染完（或被调度器淘汰）时按钮是灰的。
+			* 导出视频。**要有一块活着的画布**：导出是在这块画布上把代码收集成时间轴、真播一遍同时录下来，
+			* 所以没渲染完（或被调度器淘汰）时按钮是灰的。
 			*
 			* 成功后直接落盘到「下载」：浏览器导出出来的是内存里的 Blob，没有磁盘路径可给，
 			* 也就没有「在文件夹里显示」这一步。
@@ -242596,7 +242665,7 @@ XID_Start XIDS`.split(/\s/).map((p) => [w(p), p]));
 			});
 			const loadingNames = loading === null ? null : loading.join("、");
 			const takingPackages = slowLoading && loadingNames !== null;
-			const exportTip = !canEncode ? t("exportMissingHint", { missing: t("rtRecorder") }) : surfaceExportable ? t("exportReadyHint") : t("exportPendingHint");
+			const exportTip = !canRecord ? t("exportMissingHint", { missing: t("rtRecorder") }) : surfaceExportable ? t("exportReadyHint") : t("exportPendingHint");
 			const exportButton = /* @__PURE__ */ (0, react_jsx_runtime.jsx)(Tip, {
 				label: exportTip,
 				align: "end",
@@ -242922,13 +242991,12 @@ XID_Start XIDS`.split(/\s/).map((p) => [w(p), p]));
 			interrupted: "这次工具调用被中断了",
 			interruptedHint: "这次 manim_card 没跑完就被宿主收尾了（常见于回合被停止），所以卡片不替你自动渲染——代码本身是完整的，想看就点播放。",
 			exportVideo: "导出视频",
-			exportReadyHint: "在浏览器里逐帧导出成一个视频文件——与卡片同一个渲染引擎，看到什么就导出什么；存到「下载」文件夹。",
+			exportReadyHint: "把这段动画在浏览器里完整录一遍，存到「下载」文件夹。与卡片同一个渲染引擎，看到什么就导出什么；导出耗时约等于动画时长，期间请勿切走页面。",
 			exportMissingHint: "当前浏览器不能导出视频：缺 {missing}。渲染不受影响。",
 			exportPendingHint: "等这一张画出来就能导出。",
-			exportBusy: "正在逐帧导出…",
+			exportBusy: "正在导出…",
 			exportDone: "已导出 {name}，存在「下载」文件夹。",
 			exportFailed: "导出失败：{error}",
-			exportBroken: "这个版本里没有可用的导出器",
 			envGroup: "环境",
 			rtTitle: "浏览器运行时",
 			rtRuntime: "Python 运行时",

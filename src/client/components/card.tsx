@@ -16,7 +16,7 @@ import type { Surface } from 'manim-live'
 import type { ManimCardData } from '../definition'
 import type { Translate } from '../i18n'
 import { manimRenderer } from '../renderer'
-import { exportVideoInBrowser, saveBlob, type BrowserExportOutcome } from '../export'
+import { exportVideoInBrowser, canRecordVideo, saveBlob, type BrowserExportOutcome } from '../export'
 import { renderBlockHints, useEnvironmentStatus } from '../runtime-status'
 import { renderQueue } from '../render-queue'
 import { CodeView } from './code-view'
@@ -103,17 +103,15 @@ export function decidePlay(input: {
 }
 
 /**
- * 导出失败说哪句话——三类分开，因为**用户能做的事不一样**：
- * - 浏览器没能力 → 说清缺哪一项（换浏览器是能自己解决的）；缺项名由核心包给，不自造。
- * - 逐帧编码中途失败 → 原样摆核心包给的原因（多半与这段动画本身有关）。
- * - 接入者没接上 → 说清是插件这一侧的事，别让人去查自己的机器。
+ * 导出失败说哪句话——两类分开，因为**用户能做的事不一样**：
+ * - 浏览器不能录 → 说清缺哪一项（换浏览器是能自己解决的）；缺项名由本插件给，不自造。
+ * - 录制中途失败 → 原样摆原因（多半与这段动画本身有关）。
  */
 export function exportFailureText(outcome: ExportFailure, t: Translate): string {
   if (outcome.code === 'unsupported') {
     const missing = (outcome.missing ?? []).filter((label) => label.length > 0).join('、')
     return t('exportMissingHint', { missing: missing.length > 0 ? missing : t('rtRecorder') })
   }
-  if (outcome.code === 'broken') return t('exportFailed', { error: t('exportBroken') })
   return t('exportFailed', { error: outcome.detail ?? t('fail') })
 }
 
@@ -208,16 +206,20 @@ export function ManimCard({ data, t, label, onResult, autoStart, fast }: {
 
   /**
    * 能不能导出，两个条件：
-   * - 浏览器有逐帧编码能力（WebCodecs 或 MediaRecorder）——缺了它没有别的导出路可走；
-   * - 这张卡**已经画出一幅画**（`rendered`）——导出要在一块活画布上把代码收集成带时间轴的场景。
+   * - 这一页的浏览器能录画布（`MediaRecorder` + 至少一种可用格式）——缺了没有别的导出路；
+   * - 这张卡**已经画出一幅画**（`rendered`）——导出要在一块活画布上把代码收集成时间轴。
    *   正在播、还没跑完、或已被调度器淘汰时都不满足，此时按钮灰着。
+   *
+   * 注意这里问的是 `canRecordVideo()`（本插件自己的判据）而**不是**环境状态里的
+   * `capabilities.videoExport`：那个说的是 WebCodecs，而 WebCodecs 那条路喂给编码器的帧是坏的
+   * （上游 `seek` 不推进 updater，见 ../export.ts 的文件头），早就不用了。
    */
-  const canEncode = envStatus.capabilities.videoExport
-  const surfaceExportable = canEncode && rendered
+  const canRecord = canRecordVideo().ok
+  const surfaceExportable = canRecord && rendered
 
   /**
-   * 导出视频。**要有一块活着的画布**：导出走的是「在这块画布上把代码收集成带时间轴的场景」，
-   * 再逐帧 seek 出图——所以没渲染完（或被调度器淘汰）时按钮是灰的。
+   * 导出视频。**要有一块活着的画布**：导出是在这块画布上把代码收集成时间轴、真播一遍同时录下来，
+   * 所以没渲染完（或被调度器淘汰）时按钮是灰的。
    *
    * 成功后直接落盘到「下载」：浏览器导出出来的是内存里的 Blob，没有磁盘路径可给，
    * 也就没有「在文件夹里显示」这一步。
@@ -441,8 +443,8 @@ export function ManimCard({ data, t, label, onResult, autoStart, fast }: {
   const loadingNames = loading === null ? null : loading.join('、')
   const takingPackages = slowLoading && loadingNames !== null
 
-  // 导出按钮：灰着也要「说得出为什么」——悬停提示分三种：浏览器没能力 / 这张还没画完 / 可以导。
-  const exportTip = !canEncode
+  // 导出按钮：灰着也要「说得出为什么」——悬停提示分三种：浏览器不能录 / 这张还没画完 / 可以导。
+  const exportTip = !canRecord
     ? t('exportMissingHint', { missing: t('rtRecorder') })
     : surfaceExportable
       ? t('exportReadyHint')
