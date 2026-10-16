@@ -30,7 +30,7 @@ features:
 
 ## 一张卡片长什么样
 
-在会话中向 AI 提出「用 Manim 绘制一个定积分」，AI 通过 `manim_render` 工具提交一段 Python 代码，卡片随即出现在聊天流里：
+在会话中向 AI 提出「用 Manim 绘制一个定积分」，AI 通过 `manim_card` 工具提交一段 Python 代码，卡片随即出现在聊天流里：
 
 ![聊天流中的 Manim 动画卡片：标题行、1280×720 画布，右侧三个按钮](./shots/card-preview.png)
 

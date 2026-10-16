@@ -1,10 +1,10 @@
 # Usage in Chat
 
-This page covers every behaviour of animation cards in the chat stream: how cards appear, when they auto-play, manual playback, viewing code, mp4 export, and how a card reports an unmet environment condition. For installation see [Installation](/en/guide/installation).
+This page covers every behaviour of animation cards in the chat stream: how cards appear, when they auto-play, manual playback, viewing code, video export, and how a card reports an unmet environment condition. For installation see [Installation](/en/guide/installation).
 
 ## How cards come into being
 
-Ask the AI in a session to "draw … with Manim"; the AI submits a piece of Python through the `manim_render` tool. Before the tool returns, the code is dry-run once in a real interpreter on the Node side:
+Ask the AI in a session to "draw … with Manim"; the AI submits a piece of Python through the `manim_card` tool. Before the tool returns, the code is dry-run once in a real interpreter on the Node side:
 
 - Syntax errors, undefined names and constructs manim-web is measured not to support come back immediately as `error`; the model corrects by line number **within the same turn**, so no blank or truncated card is ever left in the chat;
 - Only code that passes the precheck is written to the session, and the card then appears in the chat stream.
@@ -40,14 +40,15 @@ Interrupted cards (the turn was stopped) do not render automatically by default;
 
 The Python source can be viewed directly on the card and copied to the AI for further adjustment.
 
-## mp4 export
+## Video export
 
-The download button in the card header hands the source to the **locally installed manim CLI** for real rendering, and the result is saved to the "Downloads" folder. This is the only path in the plugin that uses the local environment; it has nothing to do with the browser runtime that renders the card.
+The download button in the card header **encodes this animation frame by frame in the browser** into a video file, saved to the "Downloads" folder. It uses the **very same rendering engine** as the card — what you see is what gets exported — and it never touches the local machine: no manim, ffmpeg or LaTeX to install.
 
-- **Button availability depends on the local environment**: it needs `python3` / `manim` / the manim library / `ffmpeg`; missing items are listed one by one in the hover tooltip. `latex` and `dvisvgm` are needed only for formula constructs and are not required.
-- After a successful export, a "show in folder" action appears on hover; clicking it locates the file in the system file manager.
-- Export records persist: after a page refresh the card still shows "last exported file", and it reports honestly even if the file has been deleted.
-- For what to install locally and how to check it, see [Settings Panel](/en/guide/settings#local-environment).
+- **Button availability depends on two things**: whether this page's browser can encode frame by frame (WebCodecs or MediaRecorder — without one of them there is no other export route), and whether this particular card **has already drawn a picture** (export collects the code into a timeline-backed scene on a live canvas). If either is missing the button is greyed out, and the hover tip says which one it is.
+- While exporting, the button shows the core package's own progress wording ("正在把动画排进时间轴…", "逐帧编码（WebCodecs）…", "导出中 42%" and the like).
+- The artefact has no on-disk path to hand back: a browser export produces a file in memory, so the receipt gives only the file name and there is no "show in folder" step; after a page refresh the card no longer shows a "last exported file".
+- The format follows the encoding route actually taken (WebCodecs gives mp4, falling back to MediaRecorder gives webm), and the file name comes from the core package.
+- For what to do when this page lacks frame-by-frame encoding, see [Settings Panel](/en/guide/settings#browser-runtime).
 
 ## When the environment falls short
 

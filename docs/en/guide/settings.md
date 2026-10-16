@@ -1,12 +1,13 @@
 # Settings Panel
 
-The "Manim 渲染" section of the host settings answers two questions — **what rendering needs** and **what export needs** — plus a third block for the **package cache** (offline availability depends on which packages are already local). The page is organised as an "Environment" group plus a standalone package cache card:
+The "Manim Card" section of the host settings answers two questions — **what rendering needs** and **what export needs** — plus a **Python libraries** block (offline availability depends on which packages are already local). The page is organised as an "Environment" group plus a standalone library list card:
 
 | Group / card | Question answered | Data source |
 | --- | --- | --- |
-| Environment → Browser runtime | Can the browser side produce a picture | The current page (the core package's environment status) |
-| Environment → Local environment | Can this machine export mp4 | Live probing by Host routes |
-| Package cache | Which third-party libraries are already local | Host routes + the local cache directory |
+| Environment → Browser runtime | Can this page produce a picture, can it export video in the browser | The current page (the core package's environment status) |
+| Python libraries | Which third-party libraries are already local | Host routes + the local cache directory |
+
+Both read the current page or the local cache; **neither has anything to do with a local Manim installation** — rendering and export both happen in the browser, and nothing has to be installed on the machine.
 
 ## Browser runtime
 
@@ -18,25 +19,17 @@ The runtime itself and four browser conditions live in one card. It reads from *
 | Formula styles | unconfigured / loading / loaded / failed | "Unconfigured" means no `katexBaseURL` was passed when creating the renderer; `MathTex` / `Tex` still render, but as bare un-styled typesetting. This plugin always passes one, so only "loaded" or "failed" appears here |
 | WebGL | yes / no | The exit for the picture itself; without it the card renders nothing at all |
 | WebAssembly | yes / no | The foundation the Python interpreter runs on; without it nothing renders at all |
-| Browser export | yes / no | Needed to export video frame by frame in the browser (WebCodecs or MediaRecorder); missing it affects only this one export route, neither rendering nor local mp4 export |
+| Browser export | yes / no | Needed to export a card as a video file (WebCodecs or MediaRecorder); missing it affects export only, never rendering |
 
 The card header states a count of pending items (or "all ready" when nothing is outstanding); when anything is unsatisfied, the card footer lists **actionable remedies** one by one, for instance "the current browser has no usable WebGL: manim-web cannot produce a picture" or "the Pyodide runtime failed to start: … first confirm the fetch address really opens and its files are complete". Those sentences come from the core package under one shared wording.
 
 Value semantics and type definitions of each field are in [Data Types](/en/api/types#environmentstatus).
 
-## Local environment
+::: info Export needs no local environment
+Export encodes frame by frame in the browser, using the very same engine as the card — which is why there is no "is manim / ffmpeg / LaTeX installed locally" column here: none of that concerns this plugin. The verdict is described in the ⓘ of the "Browser export" row above, and the card's export button reads the same verdict.
+:::
 
-Each of `python3` / `manim` / the manim module / `ffmpeg` / `latex` / `dvisvgm` is probed in turn, each with three states: **ok / missing / error**. Each row shows "name + ⓘ + status dot and version"; what the item is for, where it is probed and the actual command executed are tucked into the ⓘ (shown on hover or keyboard focus). A "re-detect" action sits at the top.
-
-Three behaviours worth knowing:
-
-- Probing **runs only when the panel is opened**: serially, item by item, each with its own timeout — the machine is not scanned when the plugin loads.
-- Probing fills in PATH itself: the PATH the desktop host receives is trimmed and paths like `/usr/local/bin` are often absent; without filling in, "installed but not detected" false positives occur.
-- The "manim library" item follows the manim command to locate the interpreter: if the command is a symlink into some venv, judging by the first `python3` on PATH would inevitably give a false report, so it is not judged that way.
-
-Among these six, `latex` and `dvisvgm` are needed only for formula constructs and are not required for mp4 export; the necessity verdict uses exactly the same rule as the card's export button.
-
-## Package cache
+## Python libraries
 
 Lists the eleven commonly used libraries (numpy / sympy / mpmath / matplotlib / pandas / scipy / scikit-learn / statsmodels / networkx / pillow / opencv-python), each row being "status dot + name + local size + one action key":
 

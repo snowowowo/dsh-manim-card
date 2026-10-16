@@ -7,6 +7,7 @@
 | `EnvironmentStatus` | 核心包 | 环境状态快照 | 本页 |
 | `EnvironmentCapabilities` | 核心包 | 快照里的浏览器能力 | 本页 |
 | `RuntimePhase` / `KatexPhase` | 核心包 | 两个生命周期阶段 | 本页 |
+| `CheckResult` | 核心包 | 一次预检的结论 | 本页 |
 | `Surface` | 核心包 | 一块画布 | [核心包画布](https://snowowowo.github.io/manim-live/api/surface) |
 | `RunResult` | 核心包 | 一次渲染的结论 | [核心包画布](https://snowowowo.github.io/manim-live/api/surface) |
 
@@ -50,7 +51,7 @@ interface EnvironmentCapabilities {
 | --- | --- |
 | `wasm` | Python 解释器起不来，**所有**渲染不可用 |
 | `webgl` | manim-web 出不了画面，**所有**渲染不可用 |
-| `videoExport` | 只影响「浏览器逐帧导出」这一种导出方式，不影响渲染与本插件的 mp4 导出 |
+| `videoExport` | 缺了就不能在浏览器里导出视频（卡片上导出按钮置灰），渲染不受影响 |
 
 ### runtime
 
@@ -114,6 +115,21 @@ Pyodide 运行时的生命周期。
 const status = environmentStatus()
 if (status.hints.length > 0) showBanner(status.hints)
 ```
+
+## CheckResult
+
+渲染器 `check()` 的返回：一次预检的结论。
+
+```ts
+interface CheckResult {
+  ok: boolean
+  error?: string
+  /** 不阻断渲染的提醒（如「代码含公式但 KaTeX 未配置」）；没有提醒时缺席 */
+  warnings?: string[]
+}
+```
+
+**本插件不消费这个类型**：工具那侧的预检走的是 `runPython(python, createDryRunBridge())`，只把 `ok` 与 `error` 交给模型，`warnings` 既不经工具转交也不在界面上显示（见[宿主工具](/api/tool)）。它列在这里是因为形状容易与本插件那条预检路径混起来。
 
 ## Surface 与 RunResult
 

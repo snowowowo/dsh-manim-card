@@ -9,14 +9,12 @@ This page covers prerequisites, install methods, bundled assets and network beha
 | DeepSeek Harness desktop | The plugin integrates through the host's slot and service systems; it is meaningless outside the host |
 | **WebGL** | The canvas renders with three.js; without it no picture can be produced |
 | **WebAssembly** | The basis for Pyodide running real CPython; without it no rendering starts at all |
-| Local Python | **Not required.** Execution happens in Pyodide inside the browser |
+| Local Python | **Not required.** Execution and export both happen inside the browser |
+| WebCodecs or MediaRecorder | **Not required for rendering.** Needed only to export video in the browser; without it the button is greyed out and says what is missing, while the picture still draws |
 
 The WebView bundled with the host desktop app satisfies both WebGL and WebAssembly; both probe results are visible directly in the "Browser runtime" card of the Settings panel, see [Settings Panel](/en/guide/settings#browser-runtime).
 
-Only two things touch the local machine, and neither is about rendering:
-
-- **mp4 export**: requires the locally installed `manim` CLI and `ffmpeg`. Whatever is missing is stated plainly by the Settings panel and the export button, see [Usage in Chat](/en/guide/usage#mp4-export).
-- **On-demand fetching of third-party Python libraries** (things like `import pandas`): fetched once online on first use, then served offline from cache — see below.
+Rendering and export both happen in the browser, so **nothing has to be installed on the local machine**. The only thing that touches the network is **on-demand fetching of third-party Python libraries** (things like `import pandas`): fetched once online on first use, then served offline from cache — see below.
 
 ## Install
 
@@ -32,7 +30,7 @@ Pick one in the host's CLI / plugin management:
 The repository is public and the online docs site is live; but the **npm publishing** and **GitHub direct-install** paths have not been verified end to end, and this page will be updated once they land. The development-time setup is a symlink inside the profile plus a patch entry, see [Development & Debugging](/en/dev/).
 :::
 
-After installing, refresh the host page: a "manim-card" section appears in the **host settings**.
+After installing, refresh the host page: a "Manim Card" section appears in the **host settings**.
 
 ## Bundled assets
 
@@ -57,7 +55,7 @@ Before the first render, the Pyodide core (about 13 MB) and the bundled numpy (a
 
 **Third-party libraries not bundled with the package**, such as `import pandas`: fetched over the network on first use, verified by sha256, and stored in `~/.dsh/cache/manim-live/pyodide/`; afterwards served offline from cache. While fetching, the card shows a "正在加载 X…" hint; on failure the reason becomes one of the actionable sentences at the foot of the "Browser runtime" card.
 
-To prefetch or clear these, go to the "Package cache" block of the Settings panel, see [Settings Panel](/en/guide/settings#package-cache). In an offline environment an uncached library cannot be fetched; rendering then fails with a fetch error whose reason is the same sentence as `packages.lastError` in the environment status.
+To prefetch or clear these, go to the "Python libraries" block of the Settings panel, see [Settings Panel](/en/guide/settings#python-libraries). In an offline environment an uncached library cannot be fetched; rendering then fails with a fetch error whose reason is the same sentence as `packages.lastError` in the environment status.
 
 ## Uninstall
 
@@ -69,4 +67,4 @@ The cache directory `~/.dsh/cache/manim-live/pyodide/` lives outside the plugin 
 ## Next steps
 
 - Get a first card in a session → [Usage in Chat](/en/guide/usage)
-- Check this machine's conditions → [Settings Panel](/en/guide/settings)
+- Check this page's browser conditions → [Settings Panel](/en/guide/settings)

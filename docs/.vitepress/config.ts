@@ -10,7 +10,7 @@ const BASE = '/dsh-manim-card/'
 export default defineConfig({
   base: BASE,
   title: 'dsh-manim-card',
-  description: 'DeepSeek Harness 插件：在会话中让 AI 用 Manim 画动画——聊天流中出现可播放、可查看代码、可导出 mp4 的动画卡片；代码在浏览器内执行，基础功能离线可用。',
+  description: 'DeepSeek Harness 插件：在会话中让 AI 用 Manim 画动画——聊天流中出现可播放、可查看代码、可导出视频的动画卡片；代码在浏览器内执行，基础功能离线可用。',
   // 图标放在 public/ 下。head 里的 href **不会**被自动加 base（它不走 markdown 链接改写），
   // 所以这里手动拼上——顺手把它绑到上面那个 BASE，免得两处各改一次。
   head: [['link', { rel: 'icon', type: 'image/svg+xml', href: `${BASE}favicon.svg` }]],
@@ -94,7 +94,7 @@ export default defineConfig({
       lang: 'en-US',
       link: '/en/',
       title: 'dsh-manim-card',
-      description: 'A DeepSeek Harness plugin: let AI draw Manim animations right in the session — playable, code-inspectable, mp4-exportable animation cards appear in the chat stream; code runs in the browser, and basic features work offline.',
+      description: 'A DeepSeek Harness plugin: let AI draw Manim animations right in the session — playable, code-inspectable, video-exportable animation cards appear in the chat stream; code runs in the browser, and basic features work offline.',
 
       themeConfig: {
         nav: [

@@ -10,7 +10,7 @@
 
 | 使用者 | 接口 | 形态 | 文档 |
 | --- | --- | --- | --- |
-| 宿主里的模型 | `manim_render` 工具 | Host 工具，入参一段 Python 源码 | [宿主工具](/api/tool) |
+| 宿主里的模型 | `manim_card` 工具 | Host 工具，入参一段 Python 源码 | [宿主工具](/api/tool) |
 | 聊天界面的使用者 | 卡片、设置面板 | 界面，无需编程 | [在聊天里用](/guide/usage)、[设置面板](/guide/settings) |
 | 本插件与核心包的开发者 | `pnpm` 脚本、`src/` 分层 | 源码 | [开发与调试](/dev/) |
 
@@ -30,6 +30,6 @@
 
 ## 从哪开始
 
-- 模型调用 `manim_render` 的入参与返回 → [宿主工具](/api/tool)
+- 模型调用 `manim_card` 的入参与返回 → [宿主工具](/api/tool)
 - 环境状态等类型的字段 → [数据类型](/api/types)
 - 在自己的项目里用画布（脱离宿主） → 核心包 [manim-live 文档](https://snowowowo.github.io/manim-live/)

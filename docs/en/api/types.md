@@ -7,6 +7,7 @@ Every type on this page comes from the core package [manim-live](https://snowowo
 | `EnvironmentStatus` | Core package | Environment status snapshot | This page |
 | `EnvironmentCapabilities` | Core package | Browser capabilities inside the snapshot | This page |
 | `RuntimePhase` / `KatexPhase` | Core package | Two lifecycle phases | This page |
+| `CheckResult` | Core package | Outcome of one precheck | This page |
 | `Surface` | Core package | One canvas | [Core package: Canvas](https://snowowowo.github.io/manim-live/en/api/surface) |
 | `RunResult` | Core package | Outcome of one render | [Core package: Canvas](https://snowowowo.github.io/manim-live/en/api/surface) |
 
@@ -50,7 +51,7 @@ interface EnvironmentCapabilities {
 | --- | --- |
 | `wasm` | The Python interpreter cannot start; **no** rendering is available |
 | `webgl` | manim-web cannot produce a picture; **no** rendering is available |
-| `videoExport` | Affects only the "browser frame-by-frame export" path. Rendering and this plugin's mp4 export are unaffected |
+| `videoExport` | Without it video cannot be exported in the browser (the card's export button is greyed out); rendering is unaffected |
 
 ### runtime
 
@@ -114,6 +115,21 @@ Progress of on-demand fetches of third-party Python packages (packages not bundl
 const status = environmentStatus()
 if (status.hints.length > 0) showBanner(status.hints)
 ```
+
+## CheckResult
+
+The return of the renderer's `check()`: the outcome of one precheck.
+
+```ts
+interface CheckResult {
+  ok: boolean
+  error?: string
+  /** Non-blocking reminders (e.g. "the code contains formulas but KaTeX is not configured"); absent when there are none */
+  warnings?: string[]
+}
+```
+
+**This plugin does not consume this type**: the precheck on the tool side goes through `runPython(python, createDryRunBridge())` and hands only `ok` and `error` to the model — `warnings` is neither passed through the tool nor shown in the UI (see [Host Tool](/en/api/tool)). It is listed here because its shape is easy to confuse with this plugin's precheck path.
 
 ## Surface and RunResult
 

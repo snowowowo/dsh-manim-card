@@ -10,7 +10,7 @@ The plugin has three kinds of consumers; interfaces are split by consumer and do
 
 | Consumer | Interface | Form | Docs |
 | --- | --- | --- | --- |
-| Model inside the host | `manim_render` tool | Host tool taking a piece of Python source | [Host Tool](/en/api/tool) |
+| Model inside the host | `manim_card` tool | Host tool taking a piece of Python source | [Host Tool](/en/api/tool) |
 | Users of the chat UI | Cards, Settings | UI, no programming | [Usage in Chat](/en/guide/usage), [Settings Panel](/en/guide/settings) |
 | Developers of this plugin and the core package | `pnpm` scripts, the `src/` layering | Source | [Development & Debugging](/en/dev/) |
 
@@ -30,6 +30,6 @@ This plugin's card canvases come from the core package. A few behaviours worth k
 
 ## Where to start
 
-- Arguments and return of the model-facing `manim_render` → [Host Tool](/en/api/tool)
+- Arguments and return of the model-facing `manim_card` → [Host Tool](/en/api/tool)
 - Fields of `EnvironmentStatus` and friends → [Data Types](/en/api/types)
 - To use a canvas in your own project (outside the host) → the core package's [manim-live docs](https://snowowowo.github.io/manim-live/)

@@ -30,7 +30,7 @@ features:
 
 ## What a card looks like
 
-Say "draw a definite integral with Manim" in a session: the AI submits Python through the `manim_render` tool, and a card appears in the chat stream:
+Say "draw a definite integral with Manim" in a session: the AI submits Python through the `manim_card` tool, and a card appears in the chat stream:
 
 ![A Manim animation card in the chat stream: a title line, a 1280×720 canvas, three buttons on the right](../shots/card-preview.png)
 

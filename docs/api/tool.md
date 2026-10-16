@@ -1,11 +1,11 @@
 # API 参考：宿主工具
 
-本插件向宿主注册一个工具 `manim_render`，由模型调用，把一段 Manim Python 变成聊天流里的动画卡片。它不属于 JavaScript API（本插件不导出可 `import` 的模块，也不对外提供 Cordis 服务），但它是本插件对外的第一条面，入参与返回都是稳定契约，故收在 API 参考里。
+本插件向宿主注册一个工具 `manim_card`，由模型调用，把一段 Manim Python 变成聊天流里的动画卡片。它不属于 JavaScript API（本插件不导出可 `import` 的模块，也不对外提供 Cordis 服务），但它是本插件对外的第一条面，入参与返回都是稳定契约，故收在 API 参考里。
 
-## manim_render
+## manim_card
 
 ```yaml
-name: manim_render
+name: manim_card
 parameters:
   python: string        # 必填
 returns:
@@ -34,21 +34,21 @@ returns:
 
 这条预检跑在**宿主的 Node 侧**，是一份与本机环境无关的 Python 运行时（核心包 `manim-live/node` 的 `runPython` 与 `createDryRunBridge`）。因此：
 
-- 预检不要求用户装 Python，也不受本机 `manim` 命令行是否存在影响——那是导出才需要的；
+- 预检不要求用户装 Python——执行与导出都在浏览器里，本机不需要装任何东西；
 - 预检与浏览器里的渲染是**两份运行时**：它证明代码在 Python 层面成立，不等于浏览器里一定画出画面。
 
 工具本身**不产出画面**。渲染发生在浏览器里、由聊天卡片承担；渲染期的错误（真实绘制、布局、WebGL）由卡片回显，不回到工具返回里。因此 `ok: true` 的含义是「代码已受理」而不是「已经画出来了」。
 
-另外，`ok` 与 `error` 是工具返回的全部字段：`check()` 里那份 `warnings` 不经过工具，它只服务界面提示，见[数据类型](/api/types#checkresult)。
+另外，`ok` 与 `error` 是工具返回的全部字段。预检走的是 `runPython(python, createDryRunBridge())`，**不是**渲染器的 `check()`——后者另有一份 `warnings`（不阻断渲染的提醒，如「代码含公式但 KaTeX 未配置」）；本插件既不经工具转交它、也不在界面上显示它（卡片与设置面板读的都是核心包的环境状态）。这条字段的定义见[数据类型](/api/types#checkresult)。
 
 ## 配套注册的另外两件
 
 工具要能用，除了工具本身还需要两处上下文，都由本插件在加载时一并注册：
 
-**领域技能 `manim-card`**。一份 Markdown（`skills/manim-card/SKILL.md`），讲清 manim_render 的写法边界、可用的 Manim API、manim-web 实测缺失项与替代写法。它整份以内存字符串注册进宿主的 `skills` 服务，模型一次调用即拿到全部，不需要再去读文件；`skills` 服务缺席时打一条 `console.error` 并跳过，工具仍可用，只是模型只能依赖工具描述。
+**领域技能 `manim-card`**。一份 Markdown（`skills/manim-card/SKILL.md`），讲清 manim_card 的写法边界、可用的 Manim API、manim-web 实测缺失项与替代写法。它整份以内存字符串注册进宿主的 `skills` 服务，模型一次调用即拿到全部，不需要再去读文件；`skills` 服务缺席时打一条 `console.error` 并跳过，工具仍可用，只是模型只能依赖工具描述。
 
 **常驻小指引**。一段安装进系统提示的短文本（`manim-card:guide`），讲「何时调用」与「代码口径」五条：先加载技能再写代码、优先写完整文件、`ok: false` 时按行号改好再调一次、不要用文字复述画面、渲染成功后提醒用户卡片会被折叠。
 
 ## 使用者的可见结果
 
-一次成功的 `manim_render` 在聊天流里留下一张卡片，行为（自动播放规则、手动播放、查看代码、导出视频）见[在聊天里用](/guide/usage)。同一回合内模型并行调用多次，会产生多张卡片，其中只有最后一张完整播放，见[在聊天里用](/guide/usage#自动播放规则)。
+一次成功的 `manim_card` 在聊天流里留下一张卡片，行为（自动播放规则、手动播放、查看代码、导出视频）见[在聊天里用](/guide/usage)。同一回合内模型并行调用多次，会产生多张卡片，其中只有最后一张完整播放，见[在聊天里用](/guide/usage#自动播放规则)。

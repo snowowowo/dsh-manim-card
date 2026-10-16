@@ -28,20 +28,21 @@ src/
 │   ├── renderer.ts     The one Manim renderer per page: the core package's factory is wired to this plugin's routes here
 │   ├── settings.tsx    Settings panel
 │   ├── components/     UI pieces: card, code view, status dot, hover tip
-│   ├── definition.ts   Session folding definition: one manim_render call = one render card
+│   ├── definition.ts   Session folding definition: one manim_card call = one render card
 │   ├── render-queue.ts Render scheduling: which card runs now, how many canvases stay alive
 │   ├── runtime-status.ts  Environment status → display wording (pure selectors)
 │   ├── storage.ts      Export records on disk (localStorage read as untrusted input)
 │   ├── clipboard.ts    Copying source: clipboard API first, execCommand as fallback
 │   ├── code-highlight.ts  Python highlighting via shiki
-│   ├── environment.ts / export.ts / packages.ts
-│   │                   Three fetch layers: the core package's environment-probe / export / package-manager clients bound to this plugin's routes
+│   ├── export.ts       Export wiring: the core package's built-in browser frame-by-frame exporter hooked to the card
+│   ├── environment.ts / packages.ts
+│   │                   Two fetch layers: the core package's environment-probe / package-manager clients bound to this plugin's routes
 │   ├── i18n.ts         Copy dictionary
 │   └── styles.css      Skin
 ├── host/           Host half — plain JS, no build step, published as-is
 │   ├── index.js        apply assembly: tool registration, asset routes, the skill
-│   ├── environment.js  Local environment probing
-│   ├── export.js       mp4 export
+│   ├── environment.js  Local environment probing (route still registered, UI no longer calls it — see below)
+│   ├── export.js       Local CLI export (same)
 │   └── pyodide.js / assets.js / http.js   Asset and on-demand package-fetch routes
 └── routes.js       Single source of truth for every HTTP route, shared by both halves
 assets/             Bundled assets: pyodide / katex
@@ -54,7 +55,11 @@ docs/               The docs site (VitePress, its own dependency, unrelated to t
 
 This repository has only **two halves, client and host** — there is no third shared area. Constants both halves need live in `src/routes.js`; heavy shared machinery (the Python runtime, rendering) belongs to the core package.
 
-`src/routes.js` is the single source of truth for **every** HTTP route of this plugin: six constants (KaTeX and Pyodide as two prefix-style file routes, plus four interface routes — packages / cache / environment / export, which together expose eight countable endpoints). The paths the Host registers, the fetch roots the client half passes to the core package, and the fetch addresses of the three fetch layers all read from it. Changing one and forgetting the other shows up as "Pyodide stuck loading" or "formulas turned into tofu", and only on a real machine — which is why `src/client/renderer.test.ts` asserts against the constants instead of copying the literals a second time.
+`src/routes.js` is the single source of truth for **every** HTTP route of this plugin: six constants (KaTeX and Pyodide as two prefix-style file routes, plus four interface routes — packages / cache / environment / export, which together expose eight countable endpoints). The paths the Host registers, the fetch roots the client half passes to the core package, and the fetch addresses of the fetch layers all read from it. Changing one and forgetting the other shows up as "Pyodide stuck loading" or "formulas turned into tofu", and only on a real machine — which is why `src/client/renderer.test.ts` asserts against the constants instead of copying the literals a second time.
+
+::: info Why the two local-machine routes are still there
+Export goes through the browser only (`src/client/export.ts` hooks up the core package's built-in `browserVideo`), and the local `environment` / `export` routes plus `src/host/environment.js` / `export.js` have been **withdrawn from the UI** while their code stays in place. The reasoning is in the file headers of `src/client/export.ts` and `src/client/settings.tsx`: swapping engines for export runs into a semantic split between the two implementations for the same code (measured: `TracedPath` takes the object itself on one side and a point-provider function on the other), so the rule is "what you see is what gets exported". To restore it, wire the settings card and `src/client/environment.ts` back up — deleting code is not a prerequisite. The routes and the probing remain covered by `src/host/routes.test.ts`.
+:::
 
 What ships is decided by `files` in `package.json`: `index.js` / `client.js` / `src` / `assets` / `skills` / `cordis.patch.yml`. `docs/` is not part of the package.
 
@@ -93,11 +98,12 @@ A typical change goes through these steps:
 
 ## Tests
 
-Unit tests sit next to their source files (`*.test.ts`); `pnpm test` runs the offline tier. Four divisions of labour worth knowing:
+Unit tests sit next to their source files (`*.test.ts`); `pnpm test` runs the offline tier. Five divisions of labour worth knowing:
 
 - `src/host/routes.test.ts` runs `apply()` for real against a fake ctx: the tool, the skill, the standing guide, and the registration and behavioural boundary of every asset and interface route all live in this one file;
 - `src/client/renderer.test.ts` pins the **renderer wiring** (the two asset addresses come from `src/routes.js`, and exactly one renderer exists per page);
 - `src/client/runtime-status.test.ts` pins the **pure selectors** (status → tone, pending hints, actionability), driven by a fake translate function and touching neither the DOM nor render output;
+- `src/client/export.test.ts` pins the **export wiring**: the adapter is found by id rather than by index, the three `RenderController` members are forwarded verbatim, `run` is **not called** when the capability is missing, and each of the three failure kinds maps to its own code — driven by a stand-in adapter, never touching real encoding;
 - `src/client/i18n.test.ts` is a **missing-copy regression net**: a misspelled key or a mismatched placeholder is reported on the spot, naming the source file that uses it.
 
 Real runtime behaviour (Pyodide, the manim adaptation layer, the supported surface) is covered by the core package's own suite, not by this repository.
@@ -117,7 +123,7 @@ If `pnpm link` was ever used to point at a local core-package checkout, `node_mo
 
 - **Artifact load failure / `duplicate factory registration`**: first check that the client bundle's registration id equals the package name. It is derived from `package.json` by `tsdown.preset.ts`, never handwritten.
 - **Nothing renders**: the real rendering and execution machinery lives in the core package [manim-live](https://github.com/snowowowo/manim-live) ([docs site](https://snowowowo.github.io/manim-live/)), whose troubleshooting and development pages are more detailed than this one. Environment causes are all listed in the Settings panel's "Browser runtime" card.
-- **Environment status empty or permanently "not loaded"**: check whether a second copy of the core package has been pulled in. Status must come through the service surface, or from this plugin's own copy of `manim-live`, see [API Reference](/en/api/#why-status-must-go-through-the-service).
+- **Environment status empty or permanently "not loaded"**: check whether a second copy of the core package has been pulled in. Status must come from this plugin's own copy of `manim-live` — this plugin provides no Cordis service, so there is no service surface to go through, see [API Reference](/en/api/#no-cordis-service-is-provided).
 - **Formulas turned into tofu**: check the KaTeX route in `src/routes.js` and whether `assets/katex/` is complete.
 
 ## Boundaries and conventions
