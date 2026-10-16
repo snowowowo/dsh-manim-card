@@ -5,7 +5,6 @@ import {
   capabilityTone,
   katexTone,
   missingCapabilities,
-  missingLabels,
   runtimeTone,
 } from './runtime-status'
 import type { Translate } from './i18n'
@@ -72,10 +71,3 @@ describe('有没有挡住渲染的硬伤', () => {
   })
 })
 
-describe('缺项的可读名', () => {
-  it('认识的 id 走文案，不认识的 id 原样显示（比空着强）', () => {
-    expect(missingLabels([{ id: 'ffmpeg', detail: '' }], t)).toBe('envFfmpeg')
-    expect(missingLabels([{ id: '新加的项', detail: '' }], t)).toBe('新加的项')
-    expect(missingLabels([{ id: 'latex', detail: '' }, { id: 'dvisvgm', detail: '' }], t)).toBe('envLatex、envDvisvgm')
-  })
-})

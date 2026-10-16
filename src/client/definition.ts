@@ -1,4 +1,4 @@
-// 会话折叠定义：一次 manim_render 调用 = 一张渲染卡片，锚定在调用处（id 含 callId）。
+// 会话折叠定义：一次 manim_card 调用 = 一张渲染卡片，锚定在调用处（id 含 callId）。
 // start 取调用参数（python 源码）；随后同 callId 的 tool/result 作为 update 折进来——
 // Host 已先预检过一遍，ok:false 时卡片直接显示错误、不再起画布重跑。
 // fork / 重放按日志天然重建。
@@ -13,7 +13,7 @@ export interface ManimCardData {
   /**
    * 这一批（同一个 step）的标识，形如 `1:2`；认不出 step 时是 `call:${callId}`（自成一批）。
    *
-   * 为什么需要：模型会在**同一个 step 里并行发好几个** `manim_render`（真实轨迹里见过 3 个，
+   * 为什么需要：模型会在**同一个 step 里并行发好几个** `manim_card`（真实轨迹里见过 3 个，
    * 形如 `call_00_` / `call_01_` / `call_02_`）。一个 step 只真播一张——用户等的其实是结果，
    * 不是 2~3 段动画接连演完（那要 6~9 秒，后几张全程骨架屏）。判定见 render-queue 的
    * `isBatchTail`。
@@ -162,7 +162,7 @@ export const definition = {
   target: 'chat',
   match: (event: FoldEvent): { id: string; role: 'start' | 'update' } | null => {
     if (event.type === 'tool/call') {
-      if (event.data?.name !== 'manim_render') return null
+      if (event.data?.name !== 'manim_card') return null
       return { id: `manim-${event.data?.callId ?? ''}`, role: 'start' }
     }
     // 只认同位落盘的 tool/result（append）；替换副本留给模型面，不进人工转写。

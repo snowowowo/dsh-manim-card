@@ -62,7 +62,7 @@
       "immediately": true
     },
     "meta": {
-      "title": "Manim 卡片",
+      "title": "Manim Card",
       "description": "AI 写的 Python Manim 代码在聊天流卡片里当场渲染"
     }
   }

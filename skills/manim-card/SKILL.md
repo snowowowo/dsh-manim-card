@@ -1,11 +1,11 @@
 ---
 name: manim-card
-description: 用 manim_render 生成 Manim 动画卡片前必读。首选写法（完整 Python 文件）、可用的 Manim API、manim-web 实测缺失项都在这里；标准 Manim 语法照写即可。
+description: 用 manim_card 生成 Manim 动画卡片前必读。首选写法（完整 Python 文件）、可用的 Manim API、manim-web 实测缺失项都在这里；标准 Manim 语法照写即可。
 ---
 
-# Manim 动画卡片（manim_render）
+# Manim 动画卡片（manim_card）
 
-调用 `manim_render({ python })` 会在聊天流里生成一张动画卡片：进入视口自动渲染并播放。
+调用 `manim_card({ python })` 会在聊天流里生成一张动画卡片：进入视口自动渲染并播放。
 
 **一段程序 = 一张卡**。要画几个画面就多调用几次，不要在一段代码里塞多个场景。
 

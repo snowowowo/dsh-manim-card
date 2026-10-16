@@ -6,13 +6,14 @@
  *    不是等画布立起来才记——否则同一张卡会因为「进视口后多快滚出去」而有两种待遇）；
  * 3. **同一个 step 里并行发的几张只由最后那张真播**（`batchTail` 由调度器判，见 render-queue）；
  * 4. 用户按下的那两个键**压过上面全部自动规则**：手动播放一定真播、⏩ 一定不演；
- * 5. 被中断的调用不自动渲染（`interrupted` 的判定在 definition.ts，用法在 card.tsx）。
+ * 5. 被中断的调用不自动渲染（`interrupted` 的判定在 definition.ts，用法在 card.tsx）；
+ * 6. 导出失败分三类说（浏览器没能力 / 编码失败 / 接入者没接上）——用户能做的事不一样，混成一句就白说了。
  *
  * 为什么值得单独测：这几条的错法都很安静——多播一次只是"烦"，不播一次则像"坏了"，
  * 而且界面上一眼看不出来是哪一条错了。规则收成一个纯函数（decidePlay）就是为了能这样钉。
  */
 import { describe, expect, it } from 'vitest'
-import { decidePlay } from './card'
+import { decidePlay, exportFailureText } from './card'
 
 /** 默认一格：刚出炉的卡、这一页还没用掉这张卡的自动播机会、本批由它当代表、也没人按按钮。 */
 const input = (over: Partial<Parameters<typeof decidePlay>[0]> = {}) => ({
@@ -75,5 +76,36 @@ describe('decidePlay：同一批只由代表真播', () => {
     // 于是在非代表那张上按「手动播放」只会跳到终态 —— 按了个寂寞。
     expect(decidePlay(input({ batchTail: false, manual: true }))).toBe(true)
     expect(decidePlay(input({ batchTail: false, skip: true }))).toBe(false)
+  })
+})
+
+describe('exportFailureText：导出失败说哪句话', () => {
+  /** 取词替身：把键与参数原样写出来，断言就不必抄一遍中文。 */
+  const t = (key: string, params?: Record<string, string | number>): string =>
+    params === undefined ? key : `${key}(${Object.entries(params).map(([k, v]) => `${k}=${v}`).join(',')})`
+
+  it('浏览器没能力 —— 说清缺哪一项，名字用核心包给的', () => {
+    expect(exportFailureText({ ok: false, code: 'unsupported', missing: ['WebCodecs 或 MediaRecorder'] }, t))
+      .toBe('exportMissingHint(missing=WebCodecs 或 MediaRecorder)')
+  })
+
+  it('缺项名是空串时退回本插件自己那一项的名字，不摆一句「缺 」', () => {
+    expect(exportFailureText({ ok: false, code: 'unsupported', missing: [''] }, t))
+      .toBe('exportMissingHint(missing=rtRecorder)')
+    expect(exportFailureText({ ok: false, code: 'unsupported' }, t))
+      .toBe('exportMissingHint(missing=rtRecorder)')
+  })
+
+  it('编码失败 —— 原样摆核心包给的原因', () => {
+    expect(exportFailureText({ ok: false, code: 'failed', detail: '逐帧编码炸了' }, t))
+      .toBe('exportFailed(error=逐帧编码炸了)')
+  })
+
+  it('编码失败但没给原因 —— 退回通用那句，不留空', () => {
+    expect(exportFailureText({ ok: false, code: 'failed' }, t)).toBe('exportFailed(error=fail)')
+  })
+
+  it('接入者没接上 —— 说清是插件这一侧的事，别让人去查自己的机器', () => {
+    expect(exportFailureText({ ok: false, code: 'broken' }, t)).toBe('exportFailed(error=exportBroken)')
   })
 })

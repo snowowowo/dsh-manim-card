@@ -31,53 +31,26 @@ export const DICT = {
     rejected: '代码未通过预检，未渲染',
     interrupted: '这次工具调用被中断了',
     interruptedHint:
-      '这次 manim_render 没跑完就被宿主收尾了（常见于回合被停止），所以卡片不替你自动渲染——代码本身是完整的，想看就点播放。',
+      '这次 manim_card 没跑完就被宿主收尾了（常见于回合被停止），所以卡片不替你自动渲染——代码本身是完整的，想看就点播放。',
 
-    // ---- 卡片：导出视频（本机 manim CLI 真渲染成 mp4，存「下载」文件夹）----
-    // 按钮亮不亮由环境必要条件决定（Python / manim / manim 库 / FFmpeg）；灰着的时候悬停要说清缺什么。
+    // ---- 卡片：导出视频（在浏览器里逐帧编码，与卡片同一个渲染引擎，产物落「下载」）----
+    // 灰着有两种原因，分开说：浏览器没这个能力（并说清缺哪一项）、或这一张还没画出来。
     exportVideo: '导出视频',
-    exportReadyHint: '用本机安装的 Manim 渲染成 mp4（1080p），存到「下载」文件夹。',
-    exportChecking: '正在检查本机环境，稍等…',
-    exportMissingHint: '暂时不能导出，本机还缺：{missing}。到 设置 → manim-card 里查看详情。',
-    exportUnknownHint: '本机环境暂时检查不了，不能导出。',
-    exportBusy: '正在用本机 Manim 渲染并导出…要真跑一遍，可能得等一会儿',
-    exportDone: '已导出到 {path}',
+    exportReadyHint: '在浏览器里逐帧导出成一个视频文件——与卡片同一个渲染引擎，看到什么就导出什么；存到「下载」文件夹。',
+    exportMissingHint: '当前浏览器不能导出视频：缺 {missing}。渲染不受影响。',
+    exportPendingHint: '等这一张画出来就能导出。',
+    exportBusy: '正在逐帧导出…',
+    exportDone: '已导出 {name}，存在「下载」文件夹。',
     exportFailed: '导出失败：{error}',
-    revealHint: '在文件夹中显示',
-    revealFailed: '打不开文件夹：{error}',
-    exportGone: '上次导出的文件已经不在了（可能被移走或删掉）：{path}',
+    exportBroken: '这个版本里没有可用的导出器',
 
-    // ---- 设置页：本机环境 ----
-    // 探测项的标题与「为什么看它」按 id 查（见 settings.tsx 的 ENV_COPY）；
-    // 这些命令都读本机 —— 桥里的 Pyodide 是 WebAssembly，跟本机的 Manim 完全是两套东西。
-    // 分组标签（只在卡片外面用来分组）与卡片标题分开：外面是「环境」，卡片里才是「本机环境」
+    // ---- 设置页：分组标签 ----
+    // 分组标签只在卡片外面用来分组（卡片里各有自己的标题）。
     envGroup: '环境',
-    envTitle: '本机环境',
-    envReady: '{ready} / {total} 就绪',
-    envRerun: '重新检测',
-    envRerunHint: '再检查一遍。其中 Manim 那一项比较慢（要把它本身跑起来），可能要十几秒。',
-    envProbing: '正在检测…',
-    envPlanFailed: '拿不到检测计划：{message}',
-    envMissing: '未安装',
-    envError: '出错',
-    envFoundAt: '找到的位置：{path}',
-    envRan: '实际跑的命令：{command}',
-    envPython3: 'Python 3',
-    envPython3Why: 'Manim 是 Python 写的；导出时要拿你电脑上的 Python 去跑它。',
-    envManim: 'Manim CLI',
-    envManimWhy: 'manim 这个命令本身能不能跑 —— 本机渲染与导出的入口。',
-    envManimModule: 'manim 库',
-    envManimModuleWhy: 'manim 命令所用的那个 Python 里，到底装没装 manim 库。命令能用、库里没有——这种情况真的存在（比如命令是软链到某个 venv 的），所以跟上面一项分开看；探测会跟着 manim 命令找到它真正的解释器。',
-    envFfmpeg: 'FFmpeg',
-    envFfmpegWhy: 'Manim 出视频（mp4 / gif）要靠它；缺了只能出一张张静态图片。',
-    envLatex: 'LaTeX',
-    envLatexWhy: 'MathTex / Tex 用它排版公式；缺了这些写法会直接报错。',
-    envDvisvgm: 'dvisvgm',
-    envDvisvgmWhy: 'LaTeX 转 SVG 的那一步 —— Manim 渲染公式的第二半。',
 
     // ---- 设置页：浏览器运行时 / 卡片的环境提示 ----
-    // 这一侧说的是**渲染**的条件（浏览器里的事，Host 问不到），与上面「本机环境」（导出那一侧）
-    // 合起来才是完整的一台机器。词一律用日常说法：不出现 Pyodide、WASM 这类底层名词。
+    // 这一侧说的是**渲染**的条件，全在浏览器里发生，Host 问不到，所以数据取自当前页面。
+    // 词一律用日常说法：不出现 Pyodide、WASM 这类底层名词。
     rtTitle: '浏览器运行时',
     rtRuntime: 'Python 运行时',
     rtKatex: '公式样式',
@@ -100,7 +73,7 @@ export const DICT = {
     rtKatexAt: '取数地址：{url}',
     rtWebglWhy: 'WebGL 是画面本身的出口；没有它，卡片渲染不出任何东西。',
     rtWasmWhy: 'WebAssembly 是 Python 解释器的运行基础；没有它，所有渲染都起不来。',
-    rtRecorderWhy: '有它才能在浏览器里逐帧导出视频（WebCodecs 或 MediaRecorder）；缺它只影响这一种导出方式，渲染与本机 mp4 导出都不受影响。',
+    rtRecorderWhy: '有它才能在浏览器里逐帧导出视频（WebCodecs 或 MediaRecorder）；缺它只影响导出，渲染不受影响。',
 
     // 卡片底部：渲染失败、且环境里确有挡住渲染的硬伤时，补一句解释
     renderEnvBlocked: '这台机器上还有条件没满足，可能正是它渲染不出来的原因：',

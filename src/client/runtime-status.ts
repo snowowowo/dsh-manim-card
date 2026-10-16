@@ -12,8 +12,6 @@
  */
 import { useEffect, useState } from 'react'
 import { environmentStatus, onEnvironmentStatus, type EnvironmentCapabilities, type EnvironmentStatus, type KatexPhase, type RuntimePhase } from 'manim-live'
-import type { ExportMissing } from './export'
-import type { Translate } from './i18n'
 
 /** 与设置页状态点同一套语义：绿=好、黄=要注意、红=错、灰=中性、空环=没有、转圈=进行中。 */
 export type StatusTone = 'ok' | 'warn' | 'error' | 'idle' | 'empty' | 'busy'
@@ -64,8 +62,7 @@ export function missingCapabilities(caps: EnvironmentCapabilities): Array<'wasm'
 /**
  * 环境里有没有**会挡住渲染**的硬伤：解释器起不来 / WebAssembly 与 WebGL 缺席 / 取包失败。
  *
- * 缺 MediaRecorder **不算**——它只影响「浏览器直接录屏」那一种导出方式，
- * 渲染与导出 mp4 都不走它（核心包的 hint 里也写明了这一点）。
+ * 缺 MediaRecorder **不算**——它只影响导出那一条路，渲染不走它（核心包的 hint 里也写明了）。
  */
 export function blocksRender(status: EnvironmentStatus): boolean {
   return !status.capabilities.wasm
@@ -81,25 +78,5 @@ export function blocksRender(status: EnvironmentStatus): boolean {
 export function renderBlockHints(): string[] {
   const status = environmentStatus()
   return blocksRender(status) ? status.hints : []
-}
-
-/** 探测项 id → 设置页同款可读名。卡片用这一张表（Host 加一项探测时补这里即可）。 */
-const MISSING_NAMES: Record<string, string> = {
-  python3: 'envPython3',
-  manim: 'envManim',
-  manimModule: 'envManimModule',
-  ffmpeg: 'envFfmpeg',
-  latex: 'envLatex',
-  dvisvgm: 'envDvisvgm',
-}
-
-/** 缺的那几项拼成一句话里的一段（表里没有的 id 原样显示，比空着强）。 */
-export function missingLabels(missing: ExportMissing[], t: Translate): string {
-  return missing
-    .map((item) => {
-      const key = MISSING_NAMES[item.id]
-      return key === undefined ? item.id : t(key)
-    })
-    .join('、')
 }
 

@@ -1,19 +1,23 @@
-// 设置页：本机环境 + Python 库（第三方库按需下载）。
+// 设置页：浏览器运行时 + Python 库（第三方库按需缓存）。
 //
-// 两件事放一页，因为它们回答的是同一个问题——「要真的用起来，这台机器还缺什么」：
-// 上面一块是本机装的 Manim / FFmpeg / LaTeX（**导出**要走它们，桥里的运行时没有这些），
-// 下面一块是渲染时要用到的第三方库。
+// 两块都在回答同一个问题——「要真的用起来，这台机器还缺什么」：上面一块是**渲染**的浏览器侧条件
+// （运行时、公式样式、WebGL、WebAssembly、逐帧导出），下面一块是渲染时要用到的第三方库。
 //
-// **页面只留数据与控件，解释一律收进 ⓘ**（悬浮/键盘聚焦才出现）：环境那几项是重要项，
-// 每行是「名字 + ⓘ + 状态点与版本」；库清单每行是「状态点 + 名字 + 大小 + 一个文字键」
-// （缓存 / 删除 / 内置）——图标要人猜，文字不用。状态点在最前面，眼睛先看到「在不在」。
+// **本机那一侧（Manim / FFmpeg / LaTeX 探测）已从界面上撤掉**：它服务的是「用本机 manim CLI
+// 渲 mp4」那条导出路，而那条路与卡片不同引擎、语义有实测分歧（见 ../export.ts 的文件头），
+// 所以本插件只在浏览器里导出。本机的 Host 路由（`/environment`、`/export`）与探测代码都还在，
+// 要恢复就把这张卡接回来。
+//
+// **页面只留数据与控件，解释一律收进 ⓘ**（悬浮/键盘聚焦才出现）：每行是「名字 + ⓘ + 状态点与取值」；
+// 库清单每行是「状态点 + 名字 + 大小 + 一个文字键」（缓存 / 删除 / 内置）——图标要人猜，文字不用。
+// 状态点在最前面，眼睛先看到「在不在」。
 //
 // 版式是「外面一个小分组标签 + 若干张自带头部的卡片」：标题、一行说明与动作键都在卡片头部里
 // （照宿主「存储」「审计中心」页），间距由卡片内边距撑起来。要往清单里补别的库，走底下那张
 // 「下载其他库」卡片——头部标题 + 一行短说明，输入框与按钮在卡片身体里。
 //
-// 取数一律**逐项来**（环境一项一个请求、下载一个库一个请求），所以界面是逐行亮起来的，
-// 中途失败只影响那一行；同时只允许一个下载任务在跑（下载是重活，别叠着来）。
+// 取数一律**逐项来**（下载一个库一个请求），所以界面是逐行亮起来的，中途失败只影响那一行；
+// 同时只允许一个下载任务在跑（下载是重活，别叠着来）。
 //
 // 样式只用宿主 `--dsw-alias-*` token（明暗双主题自动成立），类名统一 `mr-` 前缀。
 import { useCallback, useEffect, useId, useMemo, useRef, useState, type KeyboardEvent } from 'react'
@@ -21,7 +25,6 @@ import { useCallback, useEffect, useId, useMemo, useRef, useState, type Keyboard
 import { Info as InfoIcon, RefreshCw } from 'lucide-react'
 import { Dot } from './components/dot'
 import { Tip } from './components/tip'
-import { loadEnvPlan, probeEnv, type EnvCheck, type EnvPlan, type EnvResult, type EnvStatus } from './environment'
 // 状态点的语义、色调映射与取词表都在 ./runtime-status。
 import { capabilityTone, KATEX_PHRASE, katexTone, RUNTIME_PHRASE, runtimeTone, useEnvironmentStatus, type StatusTone as Tone } from './runtime-status'
 import {
@@ -37,11 +40,9 @@ const pkgTone = (state: PackageState): Tone => (state === 'cached' ? 'ok' : stat
 const pkgStateKey = (state: PackageState): string =>
   (state === 'cached' ? 'pkgStateCached' : state === 'bundled' ? 'pkgBundled' : 'pkgStateAbsent')
 
-const envTone = (status: EnvStatus): Tone => (status === 'ok' ? 'ok' : status === 'missing' ? 'warn' : 'error')
-
 /**
  * 浏览器运行时卡片：数据全在核心包的环境状态里（订阅 `onEnvironmentStatus`），不走 Host 路由——
- * 这些事发生在浏览器里，Host 问不到。与「本机环境」同属「环境」组：一个管渲染、一个管导出。
+ * 这些事发生在浏览器里，Host 问不到。
  */
 function RuntimeCard({ t }: { t: Translate }) {
   const status = useEnvironmentStatus()
@@ -95,150 +96,6 @@ function RuntimeCard({ t }: { t: Translate }) {
   )
 }
 
-/**
- * 探测项 id → 文案键。**写死这张表**是为了不去拼键名（拼出来的键查不到就成了空白文案）。
- * Host 加了新探测项而这张表还没跟上时，退化成直接显示 id —— 比空着强，也一眼看得出要补文案。
- */
-const ENV_COPY: Record<string, { title: string; why: string }> = {
-  python3: { title: 'envPython3', why: 'envPython3Why' },
-  manim: { title: 'envManim', why: 'envManimWhy' },
-  manimModule: { title: 'envManimModule', why: 'envManimModuleWhy' },
-  ffmpeg: { title: 'envFfmpeg', why: 'envFfmpegWhy' },
-  latex: { title: 'envLatex', why: 'envLatexWhy' },
-  dvisvgm: { title: 'envDvisvgm', why: 'envDvisvgmWhy' },
-}
-
-const envTitleKey = (id: string): string => ENV_COPY[id]?.title ?? id
-const envWhyKey = (id: string): string => ENV_COPY[id]?.why ?? id
-
-/** 环境行的右侧数值：就绪给版本，没装/出错给状态词（版本行可能很长，界面上要留得住）。 */
-function envValue(t: Translate, result: EnvResult): string {
-  if (result.status === 'ok') return result.version
-  return result.status === 'missing' ? t('envMissing') : t('envError')
-}
-
-// ---------------------------------------------------------------- 本机环境
-
-/**
- * 本机环境卡片：逐项探测，逐行亮起来。
- *
- * 头部左侧报「几项就绪」（正在检测 / 拿不到计划时换成当时的状态），右上是「重新检测」。
- * 探测顺序就是 Host 给的顺序（python3 → manim → manim 包 → ffmpeg → latex → dvisvgm），
- * 一项失败标记那一行、继续下一项——一项超时不该让整块卡住。
- */
-function EnvCard({ t }: { t: Translate }) {
-  const [plan, setPlan] = useState<EnvPlan | null>(null)
-  const [failure, setFailure] = useState<string | null>(null)
-  const [results, setResults] = useState<Record<string, EnvResult>>({})
-  const [running, setRunning] = useState(false)
-  const alive = useRef(true)
-
-  useEffect(() => () => { alive.current = false }, [])
-
-  const run = useCallback(async (target: EnvPlan): Promise<void> => {
-    setResults({})
-    setRunning(true)
-    for (const check of target.checks) {
-      let result: EnvResult
-      try {
-        result = await probeEnv(check.id)
-      } catch (error) {
-        console.error(`[manim-card] 探测 ${check.id} 失败：`, error)
-        result = { id: check.id, status: 'error', path: null, version: '', detail: error instanceof Error ? error.message : String(error) }
-      }
-      if (!alive.current) return
-      setResults((previous) => ({ ...previous, [check.id]: result }))
-    }
-    if (alive.current) setRunning(false)
-  }, [])
-
-  const load = useCallback(async (): Promise<void> => {
-    setFailure(null)
-    setPlan(null)
-    try {
-      const next = await loadEnvPlan()
-      if (!alive.current) return
-      setPlan(next)
-      void run(next)
-    } catch (error) {
-      console.error('[manim-card] 取环境探测计划失败：', error)
-      if (alive.current) setFailure(error instanceof Error ? error.message : String(error))
-    }
-  }, [run])
-
-  useEffect(() => { void load() }, [load])
-
-  const ready = Object.values(results).filter((result) => result.status === 'ok').length
-  const total = plan?.checks.length ?? 0
-  // 头部那一行说明：常态报「几项就绪」，正在检测 / 拿不到计划时换成当时的状态——
-  // 位置固定，所以卡片不会因为这句来去而忽高忽低。
-  const subline = failure !== null
-    ? t('envPlanFailed', { message: failure })
-    : plan === null ? t('envProbing') : t('envReady', { ready, total })
-
-  return (
-    <section className="mr-set-group" aria-label={t('envTitle')}>
-      <h2 className="mr-set-groupname">{t('envGroup')}</h2>
-      <div className="mr-set-stack">
-        <section className="mr-set-card">
-          <header className="mr-set-cardhead">
-            <div className="mr-set-cardheadtext">
-              <h3 className="mr-set-cardtitle">{t('envTitle')}</h3>
-              <p className={failure !== null ? 'mr-set-cardsub is-error' : 'mr-set-cardsub'}
-                title={failure !== null ? subline : undefined} role="status">
-                {subline}
-              </p>
-            </div>
-            <div className="mr-set-cardacts">
-              <Tip label={t('envRerunHint')} align="end">
-                <button type="button" className="mr-set-act" disabled={running} onClick={() => { void load() }}>
-                  <RefreshCw size={14} />
-                  {t('envRerun')}
-                </button>
-              </Tip>
-            </div>
-          </header>
-
-          {plan !== null && (
-            <div className="mr-set-rows">
-              {plan.checks.map((check) => {
-                const result = results[check.id]
-                const tone: Tone = result === undefined ? 'busy' : envTone(result.status)
-                return (
-                  <div key={check.id} className="mr-set-row">
-                    <span className="mr-set-cell is-check">
-                      {/* 名字单独包一层：截断的 overflow 只加在它身上，
-                          ⓘ 留在裁切框外——否则悬浮气泡会被一起剪掉 */}
-                      <span className="mr-set-name">{t(envTitleKey(check.id))}</span>
-                      <Info name={t(envTitleKey(check.id))} text={envInfo(t, check, result)} />
-                    </span>
-                    <span className="mr-set-cell is-status">
-                      <Dot tone={tone} />
-                      {result !== undefined && <span>{envValue(t, result)}</span>}
-                    </span>
-                  </div>
-                )
-              })}
-            </div>
-          )}
-        </section>
-      </div>
-    </section>
-  )
-}
-
-/**
- * 环境项的 ⓘ：为什么看这项、找到了哪儿、实际跑的什么——页面上只留「名字 + 状态」，
- * 这些解释性内容全部收在这里，悬浮/键盘聚焦才出现。
- */
-function envInfo(t: Translate, check: EnvCheck, result: EnvResult | undefined): string {
-  const lines = [t(envWhyKey(check.id))]
-  if (result === undefined) lines.push(t('envProbing'))
-  else if (result.status === 'ok') lines.push(t('envFoundAt', { path: result.path ?? '' }))
-  else lines.push(result.detail.length > 0 ? result.detail : t('envMissing'))
-  lines.push(t('envRan', { command: check.command }))
-  return lines.join('\n')
-}
 
 /** ⓘ 图标：说明的收口。可聚焦（聚焦即出说明），点了没有动作——它只是个「看解释」的入口。 */
 function Info({ name, text }: { name: string; text: string }) {
@@ -529,15 +386,14 @@ function PackagesCard({ t }: { t: Translate }) {
   )
 }
 
-/** 设置页正文：环境组两张卡（浏览器运行时 + 本机环境），库组一张卡加一张补库卡。 */
+/** 设置页正文：环境组一张卡（浏览器运行时），库组一张卡加一张补库卡。 */
 export function ManimSettingsPage({ t }: { t: Translate }) {
   return (
-    <section className="mr-set" aria-label="manim-card">
+    <section className="mr-set" aria-label="Manim Card">
       <section className="mr-set-group" aria-label={t('envGroup')}>
         <h2 className="mr-set-groupname">{t('envGroup')}</h2>
         <div className="mr-set-stack">
           <RuntimeCard t={t} />
-          <EnvCard t={t} />
         </div>
       </section>
       <PackagesCard t={t} />

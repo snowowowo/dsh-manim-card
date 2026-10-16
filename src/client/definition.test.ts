@@ -1,5 +1,5 @@
 /**
- * 会话折叠定义：一次 manim_render 调用怎么折成聊天流里那张卡片。
+ * 会话折叠定义：一次 manim_card 调用怎么折成聊天流里那张卡片。
  *
  * 为什么值得单独测：这里错了的症状是「卡片凭空消失」或「挂到别的调用上」——两种都很难倒查，
  * 而且 fork / 重放是照着会话日志重建卡片的，折错一次就一路错下去。
@@ -8,11 +8,11 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { definition, type ManimCardData } from './definition'
 
-/** tool/call：AI 发起一次 manim_render。 */
+/** tool/call：AI 发起一次 manim_card。 */
 const callEvent = (over: Record<string, unknown> = {}) => ({
   type: 'tool/call',
   seq: 7,
-  data: { name: 'manim_render', arguments: JSON.stringify({ python: 'print(1)' }), callId: 'c1' },
+  data: { name: 'manim_card', arguments: JSON.stringify({ python: 'print(1)' }), callId: 'c1' },
   ...over,
 })
 
@@ -31,7 +31,7 @@ afterEach(() => {
 })
 
 describe('match：认领哪些事件', () => {
-  it('tool/call 里 name 是 manim_render 才认领，id 带 callId', () => {
+  it('tool/call 里 name 是 manim_card 才认领，id 带 callId', () => {
     expect(definition.match(callEvent())).toEqual({ id: 'manim-c1', role: 'start' })
   })
 
@@ -40,7 +40,7 @@ describe('match：认领哪些事件', () => {
   })
 
   it('缺 callId 时 id 退化成 manim-，仍认领（否则卡片会整张丢掉）', () => {
-    expect(definition.match(callEvent({ data: { name: 'manim_render' } }))).toEqual({
+    expect(definition.match(callEvent({ data: { name: 'manim_card' } }))).toEqual({
       id: 'manim-',
       role: 'start',
     })
@@ -85,7 +85,7 @@ describe('start：从调用参数里取源码', () => {
   })
 
   it('arguments 是坏 JSON 时退回空源码（卡片落到「数据不完整」占位，不炸）', () => {
-    const event = callEvent({ data: { name: 'manim_render', arguments: '{不是 JSON', callId: 'c1' } })
+    const event = callEvent({ data: { name: 'manim_card', arguments: '{不是 JSON', callId: 'c1' } })
     expect(definition.start({} as never, match(event))).toEqual({
       python: '',
       callId: 'c1',
@@ -96,14 +96,14 @@ describe('start：从调用参数里取源码', () => {
 
   it('arguments 解析出来不是对象时也退回空源码', () => {
     for (const raw of ['"x"', '42', 'null', 'true']) {
-      const event = callEvent({ data: { name: 'manim_render', arguments: raw, callId: 'c1' } })
+      const event = callEvent({ data: { name: 'manim_card', arguments: raw, callId: 'c1' } })
       expect(definition.start({} as never, match(event)).python, raw).toBe('')
     }
   })
 
   it('缺 arguments / python 不是字符串都退回空源码', () => {
-    expect(definition.start({} as never, match(callEvent({ data: { name: 'manim_render' } }))).python).toBe('')
-    const wrong = callEvent({ data: { name: 'manim_render', arguments: '{"python":42}', callId: 'c1' } })
+    expect(definition.start({} as never, match(callEvent({ data: { name: 'manim_card' } }))).python).toBe('')
+    const wrong = callEvent({ data: { name: 'manim_card', arguments: '{"python":42}', callId: 'c1' } })
     expect(definition.start({} as never, match(wrong)).python).toBe('')
   })
 })
@@ -112,7 +112,7 @@ describe('start：这批卡怎么分批（同一个 step 只真播一张）', ()
   /** 真事件的 location 长这样：turn 那一层还带序号，step 那一层带 step 号。 */
   const where = (turn: unknown, step: unknown) => ({ kind: 'step', turn: { status: 'open', turn }, step: { step } })
   const start = (location: unknown, callId: string, seq: number) => definition.start({} as never, {
-    event: callEvent({ seq, data: { name: 'manim_render', arguments: '{}', callId } }),
+    event: callEvent({ seq, data: { name: 'manim_card', arguments: '{}', callId } }),
     role: 'start',
     location,
   } as never)
@@ -155,7 +155,7 @@ describe('start：这批卡怎么分批（同一个 step 只真播一张）', ()
 
   it('seq 缺席或不是安全整数 → 落 0（不让 NaN 混进排序）', () => {
     for (const raw of [undefined, null, '9', 1.5, Number.NaN, Number.MAX_SAFE_INTEGER + 2]) {
-      const event = callEvent({ seq: undefined, data: { name: 'manim_render', arguments: '{}', callId: 'c1' } })
+      const event = callEvent({ seq: undefined, data: { name: 'manim_card', arguments: '{}', callId: 'c1' } })
       if (raw !== undefined) (event as { seq: unknown }).seq = raw
       expect(definition.start({} as never, { event, role: 'start' } as never).seq, String(raw)).toBe(0)
     }
@@ -238,7 +238,7 @@ describe('live：这张卡是不是刚生成出来的', () => {
   // 共用一个 id 会让「先看过 open」从上一个用例漏到下一个用例里。
   let n = 0
   const at = (location: unknown, callId = `live-${++n}`) => ({
-    event: callEvent({ data: { name: 'manim_render', arguments: '{}', callId } }),
+    event: callEvent({ data: { name: 'manim_card', arguments: '{}', callId } }),
     role: 'start',
     location,
   }) as never

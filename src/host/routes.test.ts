@@ -6,7 +6,7 @@
  * 所以这里用假 ctx 走一遍 `apply()`，拿真实注册出来的 handler 真跑，并且真的在临时目录里读写。
  *
  * 范围（按 handler 的职责边界）：
- *  - manim_render 工具：空源码当场拒、干跑通过/失败的回执形状；
+ *  - manim_card 工具：空源码当场拒、干跑通过/失败的回执形状；
  *  - 技能注册：SKILL.md 的 frontmatter 被剥掉、正文原样交出去；服务缺席要优雅降级；
  *  - 常驻指引：注册到 systemPrompt；
  *  - KaTeX / Pyodide 两条静态资源路由：只放行 GET、越界拒绝、缓存优先于回源、回源失败给 502；
@@ -242,7 +242,7 @@ describe('apply 接线', () => {
   })
 })
 
-describe('manim_render 工具', () => {
+describe('manim_card 工具', () => {
   async function run(args: unknown): Promise<unknown> {
     apply(fakeCtx())
     return captured.tools[0]!.execute(args)
@@ -251,7 +251,7 @@ describe('manim_render 工具', () => {
   it('名字与入参形状', () => {
     apply(fakeCtx())
     const tool = captured.tools[0]!
-    expect(tool.name).toBe('manim_render')
+    expect(tool.name).toBe('manim_card')
     expect(tool.parameters).toMatchObject({ required: ['python'] })
   })
 
@@ -320,7 +320,7 @@ describe('常驻指引', () => {
     expect(typeof section.text).toBe('string')
     expect(section.text!.length).toBeGreaterThan(0)
     // 指引必须点到工具名，否则模型不知道要调哪个（这是标识符，不是措辞）
-    expect(section.text).toContain('manim_render')
+    expect(section.text).toContain('manim_card')
   })
 })
 
