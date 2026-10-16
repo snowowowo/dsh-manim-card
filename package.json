@@ -5,6 +5,12 @@
   "type": "module",
   "description": "Manim 卡片：AI 在聊天里写 Python Manim 代码，当场在聊天流卡片里渲染（专注聊天流卡片的小插件，可独立运行）",
   "license": "MIT",
+  "homepage": "https://snowowowo.github.io/dsh-manim-card/",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/snowowowo/dsh-manim-card.git"
+  },
+  "bugs": "https://github.com/snowowowo/dsh-manim-card/issues",
   "exports": {
     ".": "./index.js",
     "./client": "./client.js"
