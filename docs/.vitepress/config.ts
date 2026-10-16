@@ -35,7 +35,7 @@ export default defineConfig({
 
         sidebar: [
           // 信息梯度：开始 = 认识插件并装好就能用；功能 = 各功能的细节；
-          // 接入 = 给要在自己插件里用画布的开发者；API 参考 = 查阅；开发 = 改代码的人才需要。
+          // API 参考 = 查阅；开发 = 改代码的人才需要。
           {
             text: '开始',
             items: [
@@ -51,14 +51,9 @@ export default defineConfig({
             ],
           },
           {
-            text: '接入',
-            items: [{ text: '第三方插件接入', link: '/guide/integrating' }],
-          },
-          {
             text: 'API 参考',
             items: [
               { text: '总览与入口', link: '/api/' },
-              { text: 'manim-card 服务', link: '/api/service' },
               { text: '数据类型', link: '/api/types' },
               { text: '宿主工具', link: '/api/tool' },
             ],
@@ -123,14 +118,9 @@ export default defineConfig({
             ],
           },
           {
-            text: 'Integration',
-            items: [{ text: 'Third-party Plugin Integration', link: '/en/guide/integrating' }],
-          },
-          {
             text: 'API Reference',
             items: [
               { text: 'Overview and Entry Points', link: '/en/api/' },
-              { text: 'The manim-card Service', link: '/en/api/service' },
               { text: 'Data Types', link: '/en/api/types' },
               { text: 'Host Tool', link: '/en/api/tool' },
             ],

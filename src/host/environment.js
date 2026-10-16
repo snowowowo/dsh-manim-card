@@ -1,5 +1,5 @@
 // 本机环境探测的**路由层**：探测本事（查 PATH、跑命令、判三态）在核心包
-// `manim-live/node` 的 machine/probe——黑板等任何消费者都能用，不必依赖本插件。
+// `manim-live/node` 的 machine/probe——任何消费者都能用，不必依赖本插件。
 //
 // 本文件只剩插件自己的事：HTTP 接线（`GET /environment` 拿计划、`GET /environment/<id>` 跑一项）。
 // 为什么探测项**分开问**：`manim --version` 要 import 整个 Manim，本机上可能十几秒；

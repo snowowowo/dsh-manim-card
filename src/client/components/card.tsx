@@ -15,7 +15,7 @@ import { CircleCheck, CircleX, CodeXml, Download, FastForward, Play, TriangleAle
 import type { Surface } from 'manim-live'
 import type { ManimCardData } from '../definition'
 import type { Translate } from '../i18n'
-import { manimRenderer } from '../service'
+import { manimRenderer } from '../renderer'
 import { loadExportReadiness, requestExport, revealExport, type ExportReadiness } from '../export'
 import { missingLabels, renderBlockHints } from '../runtime-status'
 import { loadExports, rememberExport } from '../storage'

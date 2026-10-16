@@ -56,4 +56,4 @@
 - 卡片底部的错误行下方多一行提示（仅在确有硬性未满足项时出现，正常环境看不到）；
 - 设置面板的「浏览器运行时」卡逐项列出状态与处置，见[设置面板](/guide/settings#浏览器运行时)。
 
-两处读的是同一份判定结果，由核心包给出，措辞不会互相打架。要在自己的插件里读这份状态，用 [manim-card 服务的 environmentStatus()](/api/service#manim-environmentstatus)。
+两处读的是同一份判定结果，由核心包给出，措辞不会互相打架。要在自己的项目里读这份状态，直接用核心包 [manim-live](https://snowowowo.github.io/manim-live/) 导出的 `environmentStatus()`。

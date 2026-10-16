@@ -1,6 +1,6 @@
 // 本机环境探测的取数：绑定核心包的探测客户端到本插件的路由。
 // 解析与请求形状（含「逐项独立、HTTP 失败抛错」的口径）都在核心包 `manim-live`——
-// 黑板等任何消费者都能用，不必依赖本插件。
+// 任何消费者都能用，不必依赖本插件。
 import { createMachineClient, type EnvCheck, type EnvPlan, type EnvResult, type EnvStatus } from 'manim-live'
 import { ENVIRONMENT_ROUTE } from '../routes.js'
 

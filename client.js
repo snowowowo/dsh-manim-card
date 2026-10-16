@@ -221890,6 +221890,7 @@ async def _run_segment(code, ns):
 
 
 _SESSIONS = {}
+_KINDS = {}
 
 
 def _fresh_namespace():
@@ -221898,12 +221899,28 @@ def _fresh_namespace():
     return ns
 
 
-def _session_begin(sid):
-    """开一场会话：持久命名空间 + 常驻场景（self 绑定到当前画布场景，句柄恒为 0）。"""
+def _scene_class(kind):
+    """场景族名 → 适配层里那个类（sceneAliases 生成的 Scene 真子类）。
+
+    认不得的（含 manim-web 没有的 GraphScene）退回 2D 的 Scene——解析处（resolveSceneKind）
+    已经大声 warn 过一次，这里不再重复吵。
+    """
+    if kind in _SCENE_KINDS and kind != "Scene":
+        return globals().get(kind, Scene)
+    return Scene
+
+
+def _session_begin(sid, kind):
+    """开一场会话：持久命名空间 + 常驻场景（self 绑定到当前画布场景，句柄恒为 0）。
+
+    **种类必须在这里给定**：常驻 self 要早于第一段代码存在，代码里没地方问种类；而「换种类」
+    在桥那边是 dispose + 新建（画布只有一块），落笔之后补不了——只能当会话参数从外面带进来。
+    """
     _session_end(sid)
     ns = _fresh_namespace()
-    ns["self"] = Scene()
+    ns["self"] = _scene_class(kind)()
     _SESSIONS[sid] = ns
+    _KINDS[sid] = kind
 
 
 async def _session_exec(sid, source):
@@ -221914,10 +221931,13 @@ async def _session_exec(sid, source):
 async def _session_check(sid, source):
     """干跑预检一段：在**临时命名空间**里执行。已提交名字按种类造存根——函数可调用、
     数值存原值（算术不误伤）、物体在**当前桥**上现造（真会话的句柄在这张干跑桥上无效）。
+
+    预检的 self 与 live 会话**同种类**：不同的话，3D 场景里的相机方法会被误拒
+    （「当前是 Scene」），而模型看到的是一个语法完全正确的写法。
     """
     live = _SESSIONS[sid]
     ns = _fresh_namespace()
-    ns["self"] = Scene()
+    ns["self"] = _scene_class(_KINDS.get(sid, "Scene"))()
     for name, value in list(live.items()):
         if name.startswith("_") or name in ns:
             continue
@@ -221933,17 +221953,23 @@ async def _session_check(sid, source):
 
 
 def _session_reset(sid):
-    """回滚的前半段：换新命名空间并清场（桥与画布不动；重演由后续 _session_exec 完成）。"""
+    """回滚的前半段：换新命名空间并清场（桥与画布不动；重演由后续 _session_exec 完成）。
+
+    种类要**留着**——重置不是「换一种场景」，只是把这一段没提交的残迹抹掉。
+    """
+    kind = _KINDS.get(sid, "Scene")
     _session_end(sid)
     ns = _fresh_namespace()
-    scene = Scene()
+    scene = _scene_class(kind)()
     scene.clear()
     ns["self"] = scene
     _SESSIONS[sid] = ns
+    _KINDS[sid] = kind
 
 
 def _session_end(sid):
     _SESSIONS.pop(sid, None)
+    _KINDS.pop(sid, None)
 
 
 # ===== 以下由 api-map.generated.ts（探针实测）生成，勿手改：重跑探针即更新 =====
@@ -222087,7 +222113,7 @@ if _dsh_extras_src:
 		const RUN_SNIPPET = "import manim as _dsh_manim\nawait _dsh_manim._run_source(_dsh_src)\n";
 		const EXEC_SNIPPET = "import manim as _dsh_manim\n_dsh_manim._exec_source(_dsh_src)\n";
 		const SESSION_SNIPPETS = {
-			begin: "import manim as _dsh_manim\n_dsh_manim._session_begin(_dsh_sid)\n",
+			begin: "import manim as _dsh_manim\n_dsh_manim._session_begin(_dsh_sid, _dsh_kind)\n",
 			exec: "import manim as _dsh_manim\nawait _dsh_manim._session_exec(_dsh_sid, _dsh_src)\n",
 			check: "import manim as _dsh_manim\nawait _dsh_manim._session_check(_dsh_sid, _dsh_src)\n",
 			reset: "import manim as _dsh_manim\n_dsh_manim._session_reset(_dsh_sid)\n",
@@ -222208,6 +222234,7 @@ if _dsh_extras_src:
 				outputSink = options.output ?? (() => {});
 				runtime.globals.set("_dsh_bridge", bridge);
 				runtime.globals.set("_dsh_sid", sid);
+				runtime.globals.set("_dsh_kind", options.kind ?? "Scene");
 				if (source !== void 0) runtime.globals.set("_dsh_src", source);
 				try {
 					await runtime.runPythonAsync(SESSION_SNIPPETS[op]);
@@ -223123,10 +223150,19 @@ if _dsh_extras_src:
 			}
 			return scene;
 		}
-		/** 造一块场景槽。`container` 为 null = 无头（Node 单测）。 */
+		/**
+		* 造一块场景槽。`container` 为 null = 无头（Node 单测）。
+		*
+		* `options.kind` = **开局就是这种类**。会话（黑板步进）必须走这条：它的常驻 `self` 在第一段
+		* 代码之前就得存在，种类只能由调用方带进来；若先建 2D 再靠 `sceneFor` 换，那一次换就是
+		* `dispose()` + 新建（白建一块），而且换完画布元素也换了。
+		*/
 		function createSceneSlot(container, manim, width, height, options = {}) {
-			let kind = "Scene";
-			let scene = createScene(container, manim, width, height, options);
+			let kind = resolveSceneKind(options.kind ?? "Scene");
+			let scene = createScene(container, manim, width, height, {
+				...options,
+				kind: options.kind ?? "Scene"
+			});
 			const replace = (wanted) => {
 				try {
 					scene.dispose();
@@ -223253,6 +223289,8 @@ if _dsh_extras_src:
 		*   失败自动回滚——新命名空间 + 清场 + **同一块桥上极速重演**已提交段
 		*   （句柄的连续性要求桥不能换，所以极速档做成运行期可切换的 `setFast`）；
 		* - 会话全程复用一块桥、一块画布（不闪、不换 canvas 元素）。
+		* - **场景种类由调用方给定**（`kind`）：常驻 `self` 早于第一段代码存在，代码里没地方问种类；
+		*   而「换种类」在桥那边是拆了重建（见 canvas.ts 的 sceneFor）——落笔之后补不了。
 		*
 		* 机制的边界（什么不在这儿）：旁白、节奏、文稿 manifest、步截图——那些归壳
 		* （判据见核心包页「边界判据」）。
@@ -223273,9 +223311,11 @@ if _dsh_extras_src:
 			const output = options.onOutput ?? (() => {});
 			let disposed = false;
 			const active = () => !disposed;
+			const kind = options.kind ?? "Scene";
 			const runOp = (op, source, use = bridge) => runSessionOp(op, sid, source, use, {
 				active,
-				output
+				output,
+				kind
 			});
 			await runOp("begin");
 			const rollback = async () => {
@@ -223360,7 +223400,7 @@ if _dsh_extras_src:
 		/** 在给定容器里造一块画布。契约：容器由调用方给、由调用方管生命周期。 */
 		async function createSurface(container, options = {}) {
 			const manim = await loadManim();
-			const slot = createSceneSlot(container, manim, WIDTH, HEIGHT);
+			const slot = createSceneSlot(container, manim, WIDTH, HEIGHT, { kind: options.kind });
 			let tail = Promise.resolve();
 			let disposed = false;
 			let lastCode = null;
@@ -223458,7 +223498,7 @@ if _dsh_extras_src:
 					tail = job.catch(() => {});
 					return job;
 				},
-				async createSession() {
+				async createSession(sessionOptions = {}) {
 					if (disposed) throw new Error("manim-live：画布已销毁，不能再开会话");
 					endPlayback?.();
 					endPlayback = null;
@@ -223467,6 +223507,7 @@ if _dsh_extras_src:
 						manim,
 						scene: slot.scene(),
 						sceneFor: slot.sceneFor,
+						kind: sessionOptions.kind,
 						fast: options.fast === true,
 						enqueueOnSurface: (job) => {
 							const next = tail.then(job, job);
@@ -225149,18 +225190,7 @@ if _dsh_extras_src:
 			});
 		}
 		//#endregion
-		//#region src/client/service.ts
-		/**
-		* 本插件全页唯一的渲染器实例。
-		*
-		* 为什么是**模块级单例**，而不是每次 `createManimService()` 新建一个：卡片
-		* （`components/card.tsx`）与对外服务必须共用同一份——核心包的 WASM 运行时与串行执行队列
-		* 本来就是**页面级单例**（见 `manim-live` 的 `py/runtime.ts`），造两个渲染器只会多插一份
-		* KaTeX `<link>`、多记一份「谁造的画布」的账，没有半点好处。
-		*
-		* 懒建：本模块被 import 时不碰 DOM（核心包的工厂会注入 KaTeX 样式、登记 Pyodide 加载器），
-		* 第一次真要渲染 / 真要 provide 服务时才建。
-		*/
+		//#region src/client/renderer.ts
 		let renderer = null;
 		function manimRenderer() {
 			renderer ??= createManimRenderer({
@@ -225173,29 +225203,11 @@ if _dsh_extras_src:
 		* 释放渲染器（插件卸载时调，之后 `manimRenderer()` 会重新建一个）。
 		*
 		* 核心包的 `dispose()` 会真释放 WASM / WebGL、拆掉本实例造过的所有画布、摘掉注入的 KaTeX 样式。
-		* 这一步必须做——宿主不管这件事，漏一次就是一次内存泄漏（见顶层设计 §5 的「销毁契约」）。
+		* 这一步必须做——宿主不管这件事，漏一次就是一次内存泄漏。
 		*/
 		function disposeManimRenderer() {
 			renderer?.dispose();
 			renderer = null;
-		}
-		function createManimService() {
-			const instance = manimRenderer();
-			return {
-				/** 干跑预检。**失败回 ok:false，不抛**——抛出去会把调用方一起带崩。 */
-				check(python) {
-					return instance.check(python);
-				},
-				createSurface(container) {
-					return instance.createSurface(container);
-				},
-				environmentStatus() {
-					return environmentStatus();
-				},
-				onEnvironmentStatus(cb) {
-					return onEnvironmentStatus(cb);
-				}
-			};
 		}
 		//#endregion
 		//#region src/client/export.ts
@@ -237039,12 +237051,9 @@ XID_Start XIDS`.split(/\s/).map((p) => [w(p), p]));
 				ctx.effect(() => ctx.locale.register(NS, DICT), "manim-card: dictionaries");
 				const t = ctx.locale.bind(NS);
 				ctx.effect(() => {
-					const release = ctx.provide("manim-card", createManimService());
-					return () => {
-						release();
-						disposeManimRenderer();
-					};
-				}, "manim-card: provide service");
+					manimRenderer();
+					return () => disposeManimRenderer();
+				}, "manim-card: renderer lifecycle");
 				ctx.slots.inject("settings.section", () => ctx.slots.register({
 					name: "settings.section",
 					id: "manim-card",

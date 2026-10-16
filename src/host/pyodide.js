@@ -1,7 +1,7 @@
 // Pyodide：本体的静态路由、按需取包，以及给设置页用的「清单 + 预缓存」两条接口。
 //
 // 供给线的**本事**（lock 目录化、下载校验、缓存盘点、Node 装载）在核心包
-// `manim-live/node` 的 `createPyodideSupply`——黑板等其它消费者同样能用，不必依赖本插件。
+// `manim-live/node` 的 `createPyodideSupply`——任何消费者同样能用，不必依赖本插件。
 // 本文件只剩插件自己的两件事：dsh 缓存目录的落位（resolveCacheDir）、把供给线接到
 // 本插件的三条 HTTP 路由上（`/pyodide` / `/cache` / `/packages`）。
 

@@ -56,4 +56,4 @@ When nothing can be drawn, the cause is usually the machine's conditions rather 
 - one extra line below the card's error row (only when there really is a hard unmet condition; invisible in a healthy environment);
 - the "Browser runtime" card in the Settings panel lists each item's state and remedy, see [Settings Panel](/en/guide/settings#browser-runtime).
 
-Both read the same verdict, produced by the core package, so the wording never contradicts itself. To read that status from your own plugin, use [the manim-card service's environmentStatus()](/en/api/service#manim-environmentstatus).
+Both read the same verdict, produced by the core package, so the wording never contradicts itself. To read that status in your own project, use `environmentStatus()` exported by the core package [manim-live](https://snowowowo.github.io/manim-live/).

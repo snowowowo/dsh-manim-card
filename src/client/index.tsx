@@ -3,13 +3,12 @@ import React, { type ReactNode } from 'react'
 import { ManimSettingsPage } from './settings'
 import { ManimCard } from './components/card'
 import { definition, type ManimCardData } from './definition'
-import { createManimService, disposeManimRenderer } from './service'
+import { disposeManimRenderer, manimRenderer } from './renderer'
 import { DICT, NS, type Translate } from './i18n'
 import './styles.css'
 
 interface HostContext {
   effect(fn: () => (() => void) | void, label?: string): void
-  provide(name: string, value: unknown): () => void
   locale: { register(ns: string, dict: unknown): void; bind(ns: string): (key: string) => string }
   uiConversation: { events: { register(definition: unknown): () => void } }
   slots: {
@@ -49,28 +48,17 @@ export default {
     ctx.effect(() => ctx.locale.register(NS, DICT), 'manim-card: dictionaries')
     const t = ctx.locale.bind(NS)
 
-    // 对外服务：给别的插件「运行时 + 一块画布」——插件间禁止 import，只此一条路。
-    // 不含卡片 UI / Host 工具 / 分步播放：那些是本插件的入口或调用方自己的事（顶层设计 §5、§6）。
-    // 定位（2026-10-15 收窄）：本插件专注聊天流卡片显示，其他插件想用 Manim 能力直接依赖
-    // 核心包 `manim-live`（npm），不必依赖本插件——这条服务只是顺带保留的薄面。
+    // 本插件**不对外提供 Cordis 服务**（2026-10-16 定）：没有下游依赖它；谁要用 Manim 能力，
+    // 直接依赖核心包 `manim-live`（npm）——共享的是那个包，不是插件。
     //
-    // 服务名是 `manim-card` 而不是裸 `manim`：服务名是**跨插件共享的命名空间**，取泛词等于把
-    // `manim` 这个词占住，后来者（别的插件要暴露 manim 相关能力）只能绕开或撞名。与入口 id、
-    // 路由前缀、技能名、槽位 id 同一套。**改名代价**：消费方 `ctx.get('manim-card')` 要跟着改。
-    //
-    // 这一句同时把渲染器建起来（核心包 `manim-live` 的工厂）：**KaTeX 样式与 Pyodide 取数根**
-    // 都由它按配置一并登记（见 ./service.ts），所以这里不再单独挂那份 `<link>` ——
-    // 以前那一段是「插件自己拼地址、自己注入」，现在地址仍是插件的（src/routes.js），
-    // 只是把「怎么用」交给了核心包。
-    // 卸载时连渲染器一起释放：它持有 WASM / WebGL 与注入的样式，漏一次就是一次内存泄漏
-    //（顶层设计 §5 的「销毁契约」）。
+    // 这一句把渲染器建起来（核心包 `manim-live` 的工厂）：**KaTeX 样式与 Pyodide 取数根**
+    // 都由它按配置一并登记（见 ./renderer.ts）——设置页的运行时读数就来自这份登记，
+    // 所以插件一加载就建，不必等第一张卡。卸载时连渲染器一起释放：它持有 WASM / WebGL
+    // 与注入的样式，漏一次就是一次内存泄漏。
     ctx.effect(() => {
-      const release = ctx.provide('manim-card', createManimService())
-      return () => {
-        release()
-        disposeManimRenderer()
-      }
-    }, 'manim-card: provide service')
+      manimRenderer()
+      return () => disposeManimRenderer()
+    }, 'manim-card: renderer lifecycle')
 
     // 设置分区：设置面板里的一个整页（本机环境 + 包缓存）。这是**真功能**（用户要用的），
     // 照常注册槽位、常显；label 用插件英文名。

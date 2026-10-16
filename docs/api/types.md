@@ -1,11 +1,9 @@
 # API 参考：数据类型
 
-服务面涉及的类型分两半：本插件自己定义的只有 `ManimService` 与 `CheckResult`，其余（`Surface`、`RunResult`、`EnvironmentStatus` 及其子结构）由核心包 [manim-live](https://snowowowo.github.io/manim-live/) 定义并导出。本页给出每个类型的完整字段与取值语义；更细的行为说明在对应的方法页。
+本页的类型全部来自核心包 [manim-live](https://snowowowo.github.io/manim-live/)（`EnvironmentStatus`、`Surface`、`RunResult` 等）——本插件自己不定义对外类型。本页给出每个类型的完整字段与取值语义；更细的行为说明在核心包的文档里。
 
 | 类型 | 定义方 | 用途 | 详解 |
 | --- | --- | --- | --- |
-| `ManimService` | 本插件 | 服务本身 | [manim-card 服务](/api/service) |
-| `CheckResult` | 本插件 | `check()` 的返回 | [manim.check()](/api/service#manim-check-python) |
 | `EnvironmentStatus` | 核心包 | 环境状态快照 | 本页 |
 | `EnvironmentCapabilities` | 核心包 | 快照里的浏览器能力 | 本页 |
 | `RuntimePhase` / `KatexPhase` | 核心包 | 两个生命周期阶段 | 本页 |
@@ -14,33 +12,13 @@
 
 ## 类型从哪来
 
-跨插件协作时，类型用**纯类型导入**取，运行时依赖一律走服务：
+类型由核心包导出，照常写值导入即可——核心包是本插件**唯一**的运行时依赖：
 
 ```ts
-import type { CheckResult, EnvironmentStatus, Surface } from 'manim-live'
+import { environmentStatus, type EnvironmentStatus, type Surface } from 'manim-live'
 ```
 
-`import type` 编译后完全消失，不会打进第二份核心包，因此是安全的：它只用来给你自己那侧的代码做类型检查。**不要**在这个位置写值导入（`import { environmentStatus } from 'manim-live'`）——那会引入第二份运行时，读数与真实运行的那份脱节，见[总览](/api/#为什么状态必须走服务面)。
-
-要用到这些类型，把 `manim-live` 加进自己插件的开发依赖（`devDependencies`）即可，它与本插件的运行时依赖是同一个包。
-
-## CheckResult
-
-`check()` 的返回。失败以数据表达，不以异常表达。
-
-```ts
-interface CheckResult {
-  ok: boolean
-  error?: string       // ok 为 false 时给出原因，带行号
-  warnings?: string[]  // 不阻断渲染的提醒；没有提醒时缺席
-}
-```
-
-| 字段 | 出现条件 | 含义 |
-| --- | --- | --- |
-| `ok` | 恒有 | 预检是否通过 |
-| `error` | `ok` 为 `false` 时 | 可直接展示或回给模型的失败原文，带行号 |
-| `warnings` | 有提醒时 | 不阻断渲染的问题，逐条一句话。改了写法或配置后消失 |
+本插件自己的代码就是这么读它的（见 `src/client/runtime-status.ts`）：环境状态的快照与订阅都直接来自这个包。
 
 ## EnvironmentStatus
 
@@ -133,7 +111,7 @@ Pyodide 运行时的生命周期。
 「公式样式未配置」不在其中——那是配置选择而非故障，只在 `check()` 的 `warnings` 里出声。`hints` 里的句子可以直接展示给用户，本插件的设置面板用的就是这几句。
 
 ```ts
-const status = manim.environmentStatus()
+const status = environmentStatus()
 if (status.hints.length > 0) showBanner(status.hints)
 ```
 

@@ -1,11 +1,9 @@
 # API Reference: Data Types
 
-The types involved in the service surface come in two halves: this plugin defines only `ManimService` and `CheckResult` itself, while the rest (`Surface`, `RunResult`, `EnvironmentStatus` and its substructures) are defined and exported by the core package [manim-live](https://snowowowo.github.io/manim-live/). This page gives every type's full fields and value semantics; finer behavioural detail lives on the corresponding method pages.
+Every type on this page comes from the core package [manim-live](https://snowowowo.github.io/manim-live/) (`EnvironmentStatus`, `Surface`, `RunResult` and friends) — this plugin defines no outward types of its own. The page gives each type's full fields and value semantics; finer behavioural detail lives in the core package's docs.
 
 | Type | Defined by | Purpose | Detail |
 | --- | --- | --- | --- |
-| `ManimService` | This plugin | The service itself | [The manim-card Service](/en/api/service) |
-| `CheckResult` | This plugin | Return of `check()` | [manim.check()](/en/api/service#manim-check-python) |
 | `EnvironmentStatus` | Core package | Environment status snapshot | This page |
 | `EnvironmentCapabilities` | Core package | Browser capabilities inside the snapshot | This page |
 | `RuntimePhase` / `KatexPhase` | Core package | Two lifecycle phases | This page |
@@ -14,33 +12,13 @@ The types involved in the service surface come in two halves: this plugin define
 
 ## Where types come from
 
-For cross-plugin cooperation, take types with a **type-only import** and keep every runtime dependency on the service:
+The core package exports the types, so a normal value import is the right move — it is this plugin's **only** runtime dependency:
 
 ```ts
-import type { CheckResult, EnvironmentStatus, Surface } from 'manim-live'
+import { environmentStatus, type EnvironmentStatus, type Surface } from 'manim-live'
 ```
 
-`import type` disappears entirely at compile time and does not pull in a second copy of the core package, so it is safe: it exists purely to type-check your own code. **Do not** write a value import in this position (`import { environmentStatus } from 'manim-live'`) — that brings in a second runtime whose reading is out of step with the one actually running, see [Overview](/en/api/#why-status-must-go-through-the-service).
-
-To use these types, add `manim-live` to your own plugin's development dependencies (`devDependencies`); it is the same package this plugin depends on at runtime.
-
-## CheckResult
-
-The return of `check()`. Failure is expressed as data, not as an exception.
-
-```ts
-interface CheckResult {
-  ok: boolean
-  error?: string       // reason when ok is false, with line numbers
-  warnings?: string[]  // non-blocking notices; absent when there are none
-}
-```
-
-| Field | Present when | Meaning |
-| --- | --- | --- |
-| `ok` | Always | Whether the precheck passed |
-| `error` | `ok` is `false` | Failure text that can be shown as-is or handed back to the model, with line numbers |
-| `warnings` | There are notices | Non-blocking issues, one sentence each. They disappear once the code or the configuration changes |
+This plugin's own code reads it exactly that way (see `src/client/runtime-status.ts`): both the snapshot and the subscription of environment status come straight from that package.
 
 ## EnvironmentStatus
 
@@ -133,7 +111,7 @@ Progress of on-demand fetches of third-party Python packages (packages not bundl
 "Formula stylesheet not configured" is not among them — that is a configuration choice rather than a fault, and it speaks only through the `warnings` of `check()`. The sentences in `hints` can be shown to users as-is; this plugin's Settings panel uses exactly these.
 
 ```ts
-const status = manim.environmentStatus()
+const status = environmentStatus()
 if (status.hints.length > 0) showBanner(status.hints)
 ```
 
