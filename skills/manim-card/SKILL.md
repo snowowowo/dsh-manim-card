@@ -90,6 +90,8 @@ class StatsScene(Scene):
 
 **K 线注意**：`CandlestickChart` / `WaterfallChart` 的默认色是**欧美的涨绿跌红**（`bullish_color` 默认 GREEN、`bearish_color` 默认 RED）——按中国习惯要显式传 `bullish_color=RED, bearish_color=GREEN`。
 
+**构图基准注意**：带坐标轴的图表（`WaterfallChart` / `StackedBarChart` / `GanttChart` / `CalendarHeatmap`）默认**左下角贴 `ORIGIN` 往右上构图**——直接入镜会偏到右上、`WaterfallChart` 这种 8×5 的还会出画被裁；`NeuralNetwork` 是**第一层贴原点、往右排**，同理偏右。这类「整体图形」一律先 `chart.move_to(ORIGIN)` 再 `self.play(Create(chart))`。
+
 当前可用的扩展名（由探针表生成，勿手改）：
 
 <!-- gen:extras-list -->
