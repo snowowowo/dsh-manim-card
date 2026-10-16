@@ -51,7 +51,6 @@ interface EnvironmentCapabilities {
 | --- | --- |
 | `wasm` | Python 解释器起不来，**所有**渲染不可用 |
 | `webgl` | manim-web 出不了画面，**所有**渲染不可用 |
-| `videoExport` | 缺了就不能在浏览器里导出视频（卡片上导出按钮置灰），渲染不受影响 |
 
 ### runtime
 

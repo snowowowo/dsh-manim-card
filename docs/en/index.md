@@ -4,7 +4,7 @@ layout: home
 hero:
   name: dsh-manim-card
   text: Manim animations in chat
-  tagline: "Say \"draw a unit circle with Manim\" and an animation card appears in the chat — play it, read the code, export a video. Nothing to install on your machine."
+  tagline: "Say \"draw a unit circle with Manim\" and an animation card appears in the chat — play it, read the code. Nothing to install on your machine."
   actions:
     - theme: brand
       text: Installation
@@ -23,7 +23,7 @@ Say "draw a definite integral with Manim" in a session, and the card appears in 
 
 ![A Manim animation card in the chat stream: a title line, a canvas, three buttons on the right](../shots/card-preview.png)
 
-The top bar holds the title and three buttons — play, view code, export video. Once playback finishes the card rests on the final frame and never replays by itself.
+The top bar holds the title and two buttons — play and view code. Once playback finishes the card rests on the final frame and never replays by itself.
 
 ## Install
 

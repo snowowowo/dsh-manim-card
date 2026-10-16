@@ -4,7 +4,7 @@ The "Manim Card" section of the Settings panel has two blocks: the browser runti
 
 | Group / card | Question answered |
 | --- | --- |
-| Environment → Browser runtime | Can this page produce a picture, can it export video |
+| Environment → Browser runtime | Can this page produce a picture |
 | Python libraries | Which third-party libraries are already cached locally |
 
 ## Browser runtime
@@ -17,7 +17,6 @@ The runtime itself and four browser conditions live in one card, read from the c
 | Formula styles | unconfigured / loading / loaded / failed | The stylesheet needed to typeset formulas |
 | WebGL | yes / no | The exit for the picture itself; without it the card renders nothing at all |
 | WebAssembly | yes / no | The foundation the Python interpreter runs on |
-| Browser export | yes / no | Needed to export video (WebCodecs or MediaRecorder); missing it affects export only |
 
 The card header states a count of pending items; when anything is unsatisfied, the card footer lists actionable remedies one by one.
 

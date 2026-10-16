@@ -31,10 +31,9 @@ src/
 │   ├── definition.ts   会话折叠定义：一次 manim_card 调用 = 一张渲染卡片
 │   ├── render-queue.ts 渲染调度：轮到哪张卡跑、同时活几张画布
 │   ├── runtime-status.ts  环境状态 → 展示口径（纯选择器）
-│   ├── storage.ts      导出记录落盘（localStorage 当不可信输入读）
 │   ├── clipboard.ts    复制源码：clipboard API 优先，execCommand 兜底
 │   ├── code-highlight.ts  shiki 的 Python 高亮
-│   ├── export.ts       导出接线：把核心包自带的浏览器逐帧导出器接到卡片上
+│   ├── export.ts       导出实现（界面已撤出，无调用者——见文件头）
 │   ├── environment.ts / packages.ts
 │   │                   两个取数层：把核心包的环境探测 / 包管理客户端绑到本插件的路由上
 │   ├── i18n.ts         文案字典
@@ -58,7 +57,7 @@ docs/               文档站（VitePress，独立依赖，与插件的依赖图
 `src/routes.js` 是本插件**全部** HTTP 路由的唯一真源：六条常量（KaTeX、Pyodide 两条前缀式文件路由，加上 packages / cache / environment / export 四条接口路由，后四条共八个可数端点）。Host 注册的路径、Client 侧传给核心包的取数根、以及取数层的 fetch 地址全部读它。改一处忘另一处的表现是「Pyodide 卡在加载」或「公式变豆腐块」，且只在真机出现——所以 `src/client/renderer.test.ts` 里对着常量断言，不抄第二遍字面量。
 
 ::: info 本机那两条路由为什么还在
-导出只走浏览器（`src/client/export.ts` 接核心包自带的 `browserVideo`），本机的 `environment` / `export` 两条路由与 `src/host/environment.js` / `export.js` 已**从界面上撤出**、代码原地保留——理由写在 `src/client/export.ts` 与 `src/client/settings.tsx` 的文件头：换引擎导出会碰上两种实现对同一段代码的语义分歧（已实测 `TracedPath` 一边收物体、一边收取点函数），所以口径是「看到什么，导出什么」。要恢复就把设置页那张卡与 `src/client/environment.ts` 接回来，删代码不是恢复的前提。路由与探测本身仍在 `src/host/routes.test.ts` 的覆盖里。
+**导出整体从界面上撤出了**（2026-10-17 用户定）：卡片上的按钮、文案、回执都已移除，`src/client/export.ts`（实时录制画布流，真浏览器里验过能录到会动的画面）与 `src/client/environment.ts` 都**原地保留、当前无调用者**；本机的 `environment` / `export` 两条 Host 路由同理（比导出入口更早撤出）。要恢复就把 `card.tsx` 的接线加回来，并把 i18n 里那几个 `export*` 键补上（键名清单写在 `src/client/export.ts` 的文件头）。路由与探测本身仍在 `src/host/routes.test.ts` 的覆盖里，删代码不是恢复的前提。
 :::
 
 进包的内容由 `package.json` 的 `files` 决定：`index.js` / `client.js` / `src` / `assets` / `skills` / `cordis.patch.yml`。`docs/` 不进包。
@@ -103,7 +102,7 @@ pnpm docs       # 本地起文档站
 - `src/host/routes.test.ts` 用假 ctx 真跑一遍 `apply()`：工具、技能、常驻指引，以及每一条资源与接口路由的注册与行为边界都在这一份里；
 - `src/client/renderer.test.ts` 钉的是**渲染器接线**（两条资源地址来自 `src/routes.js`、全页只建一个渲染器）；
 - `src/client/runtime-status.test.ts` 钉的是**纯选择器**（状态 → 色调、待处理项、可点性），拿假取词函数驱动，不碰 DOM 与渲染结果；
-- `src/client/export.test.ts` 钉的是**导出接线**：按 id 认接入者（不看下标）、`RenderController` 三个成员原样转发、没能力时**不调 run**，以及三种失败各自归到哪个码——拿替身接入者驱动，不碰真实编码；
+- `src/client/export.test.ts` 钉的是**录制导出**（界面虽已撤出，实现仍受测）：能力判据只看 `MediaRecorder` + 可用 MIME、不碰上游导出器、起止成对（成败都 dispose 时间轴并停录制器）、时长为 0 如实报错——全用替身，不碰真实编码；
 - `src/client/i18n.test.ts` 是**文案缺口回归网**：键名打错或占位符对不上，当场报出是哪个源文件在用。
 
 真运行时的行为（Pyodide、manim 适配、支持面）在核心包自己的套件里，不在本仓。
@@ -133,8 +132,8 @@ pnpm build                    # 重新内联进 client.js
 | 参与方 | 负责 | 不负责 |
 | --- | --- | --- |
 | 宿主 | 会话与聊天流、槽位与服务体系、`manim_card` 的调用与日志 | 渲染、Manim 语法、导出 |
-| 核心包 [manim-live](https://snowowowo.github.io/manim-live/) | 浏览器内的 Python 执行、manim 适配层、WebGL 画布、环境状态判定、逐帧导出 | 宿主接入、卡片界面、资源路由 |
-| 本插件 | 宿主接入（路由、工具、槽位）、卡片与播放调度、设置面板、导出接线 | 渲染与执行本身 |
+| 核心包 [manim-live](https://snowowowo.github.io/manim-live/) | 浏览器内的 Python 执行、manim 适配层、WebGL 画布、环境状态判定 | 宿主接入、卡片界面、资源路由 |
+| 本插件 | 宿主接入（路由、工具、槽位）、卡片与播放调度、设置面板 | 渲染与执行本身 |
 
 与原生 Manim 的差别只有一处需要记住：代码是同一份标准 Manim Python，执行发生在浏览器内的 Pyodide，渲染引擎是 manim-web（不是 CE 的 Cairo 管线），可用面是 Manim CE 的常用子集，覆盖范围与缺失项以核心包[支持面](https://snowowowo.github.io/manim-live/guide/support)为准。
 

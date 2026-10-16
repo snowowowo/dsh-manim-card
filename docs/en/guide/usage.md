@@ -31,13 +31,6 @@ Interrupted cards (the turn was stopped) do not render by default; press ▶ to 
 
 The Python source can be read on the card and copied out to the AI for further adjustment.
 
-## Video export
-
-The download button in the card's top bar encodes this animation frame by frame in the browser into a video file, saved to the "Downloads" folder. It uses the same rendering engine as the card — what you see is what gets exported — and no manim, ffmpeg or LaTeX is required locally.
-
-- Two conditions make the button available: the browser can encode frame by frame (WebCodecs or MediaRecorder), and this card has already drawn a picture. If either is missing the button is greyed out and the hover tip explains why.
-- While exporting, progress appears next to the button; when it finishes, the file name is shown. The file name and format follow the encoding route actually taken (usually mp4; webm when falling back to MediaRecorder).
-
 ## When nothing can be drawn
 
 On a render failure the card shows manim's original error message at the bottom. If a hard environment condition really is unmet, the card adds one actionable line — the same verdict the "Browser runtime" card in the Settings panel reads. Per-item states are in the [Settings Panel](/en/guide/settings#browser-runtime).

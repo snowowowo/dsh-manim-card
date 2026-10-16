@@ -31,10 +31,9 @@ src/
 │   ├── definition.ts   Session folding definition: one manim_card call = one render card
 │   ├── render-queue.ts Render scheduling: which card runs now, how many canvases stay alive
 │   ├── runtime-status.ts  Environment status → display wording (pure selectors)
-│   ├── storage.ts      Export records on disk (localStorage read as untrusted input)
 │   ├── clipboard.ts    Copying source: clipboard API first, execCommand as fallback
 │   ├── code-highlight.ts  Python highlighting via shiki
-│   ├── export.ts       Export wiring: the core package's built-in browser frame-by-frame exporter hooked to the card
+│   ├── export.ts       Export implementation (withdrawn from the UI, currently uncalled — see its file header)
 │   ├── environment.ts / packages.ts
 │   │                   Two fetch layers: the core package's environment-probe / package-manager clients bound to this plugin's routes
 │   ├── i18n.ts         Copy dictionary
@@ -58,7 +57,7 @@ This repository has only **two halves, client and host** — there is no third s
 `src/routes.js` is the single source of truth for **every** HTTP route of this plugin: six constants (KaTeX and Pyodide as two prefix-style file routes, plus four interface routes — packages / cache / environment / export, which together expose eight countable endpoints). The paths the Host registers, the fetch roots the client half passes to the core package, and the fetch addresses of the fetch layers all read from it. Changing one and forgetting the other shows up as "Pyodide stuck loading" or "formulas turned into tofu", and only on a real machine — which is why `src/client/renderer.test.ts` asserts against the constants instead of copying the literals a second time.
 
 ::: info Why the two local-machine routes are still there
-Export goes through the browser only (`src/client/export.ts` hooks up the core package's built-in `browserVideo`), and the local `environment` / `export` routes plus `src/host/environment.js` / `export.js` have been **withdrawn from the UI** while their code stays in place. The reasoning is in the file headers of `src/client/export.ts` and `src/client/settings.tsx`: swapping engines for export runs into a semantic split between the two implementations for the same code (measured: `TracedPath` takes the object itself on one side and a point-provider function on the other), so the rule is "what you see is what gets exported". To restore it, wire the settings card and `src/client/environment.ts` back up — deleting code is not a prerequisite. The routes and the probing remain covered by `src/host/routes.test.ts`.
+**Export has been withdrawn from the UI entirely** (user decision, 2026-10-17): the card's button, its copy and its receipt rows are gone. `src/client/export.ts` (real-time canvas recording — verified in a real browser to capture animation that actually moves) and `src/client/environment.ts` both **stay in place with no caller**; the local `environment` / `export` Host routes likewise (withdrawn even earlier). To restore it, wire `card.tsx` back up and re-add the `export*` i18n keys (the key list is in `src/client/export.ts`'s file header). The routes and the probing remain covered by `src/host/routes.test.ts` — deleting code is not a prerequisite.
 :::
 
 What ships is decided by `files` in `package.json`: `index.js` / `client.js` / `src` / `assets` / `skills` / `cordis.patch.yml`. `docs/` is not part of the package.
@@ -103,7 +102,7 @@ Unit tests sit next to their source files (`*.test.ts`); `pnpm test` runs the of
 - `src/host/routes.test.ts` runs `apply()` for real against a fake ctx: the tool, the skill, the standing guide, and the registration and behavioural boundary of every asset and interface route all live in this one file;
 - `src/client/renderer.test.ts` pins the **renderer wiring** (the two asset addresses come from `src/routes.js`, and exactly one renderer exists per page);
 - `src/client/runtime-status.test.ts` pins the **pure selectors** (status → tone, pending hints, actionability), driven by a fake translate function and touching neither the DOM nor render output;
-- `src/client/export.test.ts` pins the **export wiring**: the adapter is found by id rather than by index, the three `RenderController` members are forwarded verbatim, `run` is **not called** when the capability is missing, and each of the three failure kinds maps to its own code — driven by a stand-in adapter, never touching real encoding;
+- `src/client/export.test.ts` pins **recording export** (withdrawn from the UI, but the implementation stays under test): the capability verdict looks only at `MediaRecorder` plus a usable MIME, the upstream exporter is never touched, start and stop come in pairs (the timeline is disposed and the recorder stopped on either outcome), and a zero duration is reported honestly — all with stand-ins, never real encoding;
 - `src/client/i18n.test.ts` is a **missing-copy regression net**: a misspelled key or a mismatched placeholder is reported on the spot, naming the source file that uses it.
 
 Real runtime behaviour (Pyodide, the manim adaptation layer, the supported surface) is covered by the core package's own suite, not by this repository.
@@ -132,9 +131,9 @@ From "AI writes code" to "an animation in the chat", three parties each own one 
 
 | Party | Owns | Does not own |
 | --- | --- | --- |
-| The host | The conversation and chat stream, the slot and service systems, invocation and logging of `manim_card` | Rendering, Manim syntax, export |
-| Core package [manim-live](https://snowowowo.github.io/manim-live/) | Python execution in the browser, the manim adaptation layer, the WebGL canvas, environment status verdicts, frame-by-frame export | Host integration, card UI, asset routes |
-| This plugin | Host integration (routes, tool, slots), cards and playback scheduling, the Settings panel, wiring up export | Rendering and execution themselves |
+| The host | The conversation and chat stream, the slot and service systems, invocation and logging of `manim_card` | Rendering, Manim syntax |
+| Core package [manim-live](https://snowowowo.github.io/manim-live/) | Python execution in the browser, the manim adaptation layer, the WebGL canvas, environment status verdicts | Host integration, card UI, asset routes |
+| This plugin | Host integration (routes, tool, slots), cards and playback scheduling, the Settings panel | Rendering and execution themselves |
 
 One difference from native Manim is worth remembering: the code is the same standard Manim Python, but execution happens in Pyodide inside the browser and the rendering engine is manim-web (not CE's Cairo pipeline). The usable surface is the common subset of Manim CE; coverage and gaps follow the core package's [Support Surface](https://snowowowo.github.io/manim-live/en/guide/support).
 

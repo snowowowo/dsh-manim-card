@@ -51,7 +51,6 @@ interface EnvironmentCapabilities {
 | --- | --- |
 | `wasm` | The Python interpreter cannot start; **no** rendering is available |
 | `webgl` | manim-web cannot produce a picture; **no** rendering is available |
-| `videoExport` | Without it video cannot be exported in the browser (the card's export button is greyed out); rendering is unaffected |
 
 ### runtime
 

@@ -5,13 +5,11 @@
  * 为什么单独一个文件：设置卡与聊天卡片都要看同一份状态（订阅只能写一处），
  * 而映射与选择器是纯函数——能被测试按住，不碰 DOM 也不碰 React 渲染结果。
  *
- * 两套环境在这里合流，因为它们回答的是同一个问题「这台机器还缺什么」：
- * - **浏览器侧**（核心包）：WebAssembly / WebGL / 录屏能力、Python 运行时、公式样式、按需取包 —— 管**渲染**；
- * - **本机侧**（Host 路由）：本机的 Manim / Python / FFmpeg / LaTeX —— 管**导出 mp4**。
- * 前者的事发生在浏览器里，Host 问不到；后者发生在操作系统里，浏览器探测不了。所以两条取数路径，一个界面出口。
+ * 读数来自**浏览器侧**（核心包的环境状态）：WebAssembly / WebGL、Python 运行时、公式样式、按需取包
+ * —— 都是**渲染**的条件，全发生在浏览器里，Host 问不到。
  */
 import { useEffect, useState } from 'react'
-import { environmentStatus, onEnvironmentStatus, type EnvironmentCapabilities, type EnvironmentStatus, type KatexPhase, type RuntimePhase } from 'manim-live'
+import { environmentStatus, onEnvironmentStatus, type EnvironmentStatus, type KatexPhase, type RuntimePhase } from 'manim-live'
 
 /** 与设置页状态点同一套语义：绿=好、黄=要注意、红=错、灰=中性、空环=没有、转圈=进行中。 */
 export type StatusTone = 'ok' | 'warn' | 'error' | 'idle' | 'empty' | 'busy'
@@ -50,19 +48,8 @@ export function useEnvironmentStatus(): EnvironmentStatus {
 
 // ---- 纯选择器：状态 → 界面上要说的那几句话 ----
 
-/** 缺哪几项浏览器能力。顺序固定，便于对照测试与界面稳定。 */
-export function missingCapabilities(caps: EnvironmentCapabilities): Array<'wasm' | 'webgl' | 'recorder'> {
-  const out: Array<'wasm' | 'webgl' | 'recorder'> = []
-  if (!caps.wasm) out.push('wasm')
-  if (!caps.webgl) out.push('webgl')
-  if (!caps.videoExport) out.push('recorder')
-  return out
-}
-
 /**
  * 环境里有没有**会挡住渲染**的硬伤：解释器起不来 / WebAssembly 与 WebGL 缺席 / 取包失败。
- *
- * 缺 MediaRecorder **不算**——它只影响导出那一条路，渲染不走它（核心包的 hint 里也写明了）。
  */
 export function blocksRender(status: EnvironmentStatus): boolean {
   return !status.capabilities.wasm

@@ -128,11 +128,11 @@ window.__ModuleLoader__.load({
 		* This source code is licensed under the ISC license.
 		* See the LICENSE file in the root directory of this source tree.
 		*/
-		const __iconNode$10 = [["path", {
+		const __iconNode$9 = [["path", {
 			d: "M20 6 9 17l-5-5",
 			key: "1gmf2c"
 		}]];
-		const Check = createLucideIcon("check", __iconNode$10);
+		const Check = createLucideIcon("check", __iconNode$9);
 		//#endregion
 		//#region node_modules/.pnpm/lucide-react@0.548.0_react@18.3.1/node_modules/lucide-react/dist/esm/icons/circle-check.js
 		/**
@@ -141,7 +141,7 @@ window.__ModuleLoader__.load({
 		* This source code is licensed under the ISC license.
 		* See the LICENSE file in the root directory of this source tree.
 		*/
-		const __iconNode$9 = [["circle", {
+		const __iconNode$8 = [["circle", {
 			cx: "12",
 			cy: "12",
 			r: "10",
@@ -150,7 +150,7 @@ window.__ModuleLoader__.load({
 			d: "m9 12 2 2 4-4",
 			key: "dzmm74"
 		}]];
-		const CircleCheck = createLucideIcon("circle-check", __iconNode$9);
+		const CircleCheck = createLucideIcon("circle-check", __iconNode$8);
 		//#endregion
 		//#region node_modules/.pnpm/lucide-react@0.548.0_react@18.3.1/node_modules/lucide-react/dist/esm/icons/circle-x.js
 		/**
@@ -159,7 +159,7 @@ window.__ModuleLoader__.load({
 		* This source code is licensed under the ISC license.
 		* See the LICENSE file in the root directory of this source tree.
 		*/
-		const __iconNode$8 = [
+		const __iconNode$7 = [
 			["circle", {
 				cx: "12",
 				cy: "12",
@@ -175,7 +175,7 @@ window.__ModuleLoader__.load({
 				key: "z0biqf"
 			}]
 		];
-		const CircleX = createLucideIcon("circle-x", __iconNode$8);
+		const CircleX = createLucideIcon("circle-x", __iconNode$7);
 		//#endregion
 		//#region node_modules/.pnpm/lucide-react@0.548.0_react@18.3.1/node_modules/lucide-react/dist/esm/icons/code-xml.js
 		/**
@@ -184,7 +184,7 @@ window.__ModuleLoader__.load({
 		* This source code is licensed under the ISC license.
 		* See the LICENSE file in the root directory of this source tree.
 		*/
-		const __iconNode$7 = [
+		const __iconNode$6 = [
 			["path", {
 				d: "m18 16 4-4-4-4",
 				key: "1inbqp"
@@ -198,7 +198,7 @@ window.__ModuleLoader__.load({
 				key: "e7oirm"
 			}]
 		];
-		const CodeXml = createLucideIcon("code-xml", __iconNode$7);
+		const CodeXml = createLucideIcon("code-xml", __iconNode$6);
 		//#endregion
 		//#region node_modules/.pnpm/lucide-react@0.548.0_react@18.3.1/node_modules/lucide-react/dist/esm/icons/copy.js
 		/**
@@ -207,7 +207,7 @@ window.__ModuleLoader__.load({
 		* This source code is licensed under the ISC license.
 		* See the LICENSE file in the root directory of this source tree.
 		*/
-		const __iconNode$6 = [["rect", {
+		const __iconNode$5 = [["rect", {
 			width: "14",
 			height: "14",
 			x: "8",
@@ -219,30 +219,7 @@ window.__ModuleLoader__.load({
 			d: "M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2",
 			key: "zix9uf"
 		}]];
-		const Copy = createLucideIcon("copy", __iconNode$6);
-		//#endregion
-		//#region node_modules/.pnpm/lucide-react@0.548.0_react@18.3.1/node_modules/lucide-react/dist/esm/icons/download.js
-		/**
-		* @license lucide-react v0.548.0 - ISC
-		*
-		* This source code is licensed under the ISC license.
-		* See the LICENSE file in the root directory of this source tree.
-		*/
-		const __iconNode$5 = [
-			["path", {
-				d: "M12 15V3",
-				key: "m9g1x1"
-			}],
-			["path", {
-				d: "M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4",
-				key: "ih7n3h"
-			}],
-			["path", {
-				d: "m7 10 5 5 5-5",
-				key: "brsn70"
-			}]
-		];
-		const Download = createLucideIcon("download", __iconNode$5);
+		const Copy = createLucideIcon("copy", __iconNode$5);
 		//#endregion
 		//#region node_modules/.pnpm/lucide-react@0.548.0_react@18.3.1/node_modules/lucide-react/dist/esm/icons/fast-forward.js
 		/**
@@ -230147,7 +230124,7 @@ if _dsh_extras_src:
 		setRuntimePhaseListener((phase, error) => noteRuntimePhase(phase, error));
 		setPackageStatusListener((names, lastError) => notePackages(names, lastError));
 		/** 逐帧导出的帧率。30 对教学动画足够（上游默认 60，产物翻倍）。 */
-		const FPS$1 = 30;
+		const FPS = 30;
 		/** 上游的 `mime`：WebCodecs 那条给 mp4，MediaRecorder 那条给 webm——由实际编码结果定，不猜。 */
 		function extensionOf(blob) {
 			const mime = blob.type !== "" ? blob.type : "video/webm";
@@ -230218,7 +230195,7 @@ if _dsh_extras_src:
 					error: "manim-web 的导出器载入失败"
 				};
 				const options = {
-					fps: FPS$1,
+					fps: FPS,
 					onProgress: (progress) => onProgress?.(`导出中 ${Math.round(progress * 100)}%`)
 				};
 				try {
@@ -230587,10 +230564,8 @@ if _dsh_extras_src:
 		* 为什么单独一个文件：设置卡与聊天卡片都要看同一份状态（订阅只能写一处），
 		* 而映射与选择器是纯函数——能被测试按住，不碰 DOM 也不碰 React 渲染结果。
 		*
-		* 两套环境在这里合流，因为它们回答的是同一个问题「这台机器还缺什么」：
-		* - **浏览器侧**（核心包）：WebAssembly / WebGL / 录屏能力、Python 运行时、公式样式、按需取包 —— 管**渲染**；
-		* - **本机侧**（Host 路由）：本机的 Manim / Python / FFmpeg / LaTeX —— 管**导出 mp4**。
-		* 前者的事发生在浏览器里，Host 问不到；后者发生在操作系统里，浏览器探测不了。所以两条取数路径，一个界面出口。
+		* 读数来自**浏览器侧**（核心包的环境状态）：WebAssembly / WebGL、Python 运行时、公式样式、按需取包
+		* —— 都是**渲染**的条件，全发生在浏览器里，Host 问不到。
 		*/
 		/** 运行时阶段 → 色调：没加载是「还没有」（空环），不是错。 */
 		function runtimeTone(phase) {
@@ -230631,8 +230606,6 @@ if _dsh_extras_src:
 		}
 		/**
 		* 环境里有没有**会挡住渲染**的硬伤：解释器起不来 / WebAssembly 与 WebGL 缺席 / 取包失败。
-		*
-		* 缺 MediaRecorder **不算**——它只影响导出那一条路，渲染不走它（核心包的 hint 里也写明了）。
 		*/
 		function blocksRender(status) {
 			return !status.capabilities.wasm || !status.capabilities.webgl || status.runtime.phase === "error" || status.packages.lastError !== void 0;
@@ -230734,13 +230707,6 @@ if _dsh_extras_src:
 					label: t("rtWasm"),
 					value: t(status.capabilities.wasm ? "rtYes" : "rtNo"),
 					info: t("rtWasmWhy")
-				},
-				{
-					id: "recorder",
-					tone: capabilityTone(status.capabilities.videoExport),
-					label: t("rtRecorder"),
-					value: t(status.capabilities.videoExport ? "rtYes" : "rtNo"),
-					info: t("rtRecorderWhy")
 				}
 			];
 			const subline = status.hints.length > 0 ? t("rtHints", { count: status.hints.length }) : t("rtAllReady");
@@ -231201,166 +231167,6 @@ if _dsh_extras_src:
 		function disposeManimRenderer() {
 			renderer?.dispose();
 			renderer = null;
-		}
-		//#endregion
-		//#region src/client/export.ts
-		/** 录制帧率。30 对教学动画足够，也是本插件一直用的值。 */
-		const FPS = 30;
-		/**
-		* 候选 MIME，按优先级排。
-		*
-		* 先 mp4 后 webm：mp4 兼容性更好（剪辑软件、部分播放器），但**不是每个浏览器都支持录 mp4**
-		* （Chrome/Electron 多数只给 webm），所以逐个探测，用第一个能用的。
-		*/
-		const MIME_CANDIDATES = [
-			"video/mp4;codecs=avc1.42E01E",
-			"video/mp4",
-			"video/webm;codecs=vp9",
-			"video/webm"
-		];
-		/** 挑一个当前环境真的支持的录制格式；都不支持时给 null（调用方报「不支持」）。 */
-		function pickMime() {
-			if (typeof MediaRecorder === "undefined") return null;
-			for (const mime of MIME_CANDIDATES) if (MediaRecorder.isTypeSupported(mime)) return mime;
-			return null;
-		}
-		/** 由 MIME 定扩展名——不写死 `.mp4`，编码结果说了算。 */
-		function extensionFor(mime) {
-			return mime.includes("mp4") ? "mp4" : "webm";
-		}
-		/**
-		* 画布能不能被录。
-		*
-		* 只有一条硬性条件：`MediaRecorder` 且至少一个 MIME 可用。
-		* （不再问 WebCodecs——那条路虽然能编码，但喂给它的帧是坏的，见文件头。）
-		*/
-		function canRecordVideo() {
-			const mime = pickMime();
-			if (mime === null) return {
-				ok: false,
-				missing: ["MediaRecorder"]
-			};
-			return {
-				ok: true,
-				mime
-			};
-		}
-		/** 等一段真实时间。 */
-		const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
-		/**
-		* 让动画真实播一遍，同时录下画布。
-		*
-		* 步骤：回到起点 → 起录 → 播 → 等播完 → 停录。
-		*
-		* **必须等播放真的结束再停录**：停早了尾部会被截断。判据用 `playback.state() === 'ended'`
-		* （上游在播到末尾时会把它置成 `ended`），同时挂一个 `duration + 余量` 的兜底超时——
-		* 万一中途出意外卡住，也不能把整个导出吊死。
-		*/
-		async function exportVideoInBrowser(python, surface, onProgress) {
-			const ready = canRecordVideo();
-			if (!ready.ok) return {
-				ok: false,
-				code: "unsupported",
-				missing: ready.missing
-			};
-			const canvas = surface.canvas();
-			if (canvas === null) return {
-				ok: false,
-				code: "failed",
-				detail: "画布还没准备好"
-			};
-			onProgress("正在把动画排进时间轴…");
-			let playback;
-			try {
-				playback = await surface.createPlayback(python);
-			} catch (error) {
-				console.error("[manim-card] export: playback failed:", error);
-				return {
-					ok: false,
-					code: "failed",
-					detail: error instanceof Error ? error.message : String(error)
-				};
-			}
-			let recorder = null;
-			try {
-				const duration = playback.duration();
-				if (!Number.isFinite(duration) || duration <= 0) {
-					playback.dispose();
-					return {
-						ok: false,
-						code: "failed",
-						detail: "这段动画没有可导出的时长"
-					};
-				}
-				playback.seek(0);
-				playback.pause();
-				const stream = canvas.captureStream(FPS);
-				recorder = new MediaRecorder(stream, { mimeType: ready.mime });
-				const chunks = [];
-				recorder.ondataavailable = (event) => {
-					if (event.data.size > 0) chunks.push(event.data);
-				};
-				const stopped = new Promise((resolve) => {
-					recorder.onstop = () => resolve();
-				});
-				recorder.start();
-				await wait(Math.ceil(1e3 / FPS));
-				onProgress(`正在录制 ${duration.toFixed(1)} 秒…`);
-				playback.play();
-				const startedAt = Date.now();
-				const budget = duration * 1e3 + 1e3;
-				while (Date.now() - startedAt < budget) {
-					if (playback.state() === "ended") break;
-					const elapsed = (Date.now() - startedAt) / 1e3;
-					const percent = Math.min(99, Math.round(elapsed / duration * 100));
-					onProgress(`正在录制 ${duration.toFixed(1)} 秒… ${percent}%`);
-					await wait(200);
-				}
-				await wait(Math.ceil(1e3 / FPS));
-				onProgress("正在收尾…");
-				recorder.stop();
-				await stopped;
-				stream.getTracks().forEach((track) => track.stop());
-				const blob = new Blob(chunks, { type: ready.mime.split(";")[0] });
-				if (blob.size === 0) return {
-					ok: false,
-					code: "failed",
-					detail: "录出来的内容是空的"
-				};
-				onProgress(`导出完成 ${(blob.size / 1024).toFixed(0)} KB`);
-				return {
-					ok: true,
-					blob,
-					name: `manim-${Date.now()}.${extensionFor(ready.mime)}`
-				};
-			} catch (error) {
-				console.error("[manim-card] browser export failed:", error);
-				return {
-					ok: false,
-					code: "failed",
-					detail: error instanceof Error ? error.message : String(error)
-				};
-			} finally {
-				playback.dispose();
-				if (recorder !== null && recorder.state !== "inactive") recorder.stop();
-			}
-		}
-		/**
-		* 把产物存进用户的「下载」文件夹。
-		*
-		* 用一次性 object URL + `<a download>`——浏览器导出出来的是内存里的 Blob，没有磁盘路径可给。
-		* URL 撤销**推迟一拍**再做：立刻撤销会让还没读完的下载中断（大文件尤其明显），
-		* 而它本来也只是个内存引用，多留十秒没有任何代价。
-		*/
-		function saveBlob(blob, name) {
-			const url = URL.createObjectURL(blob);
-			const anchor = document.createElement("a");
-			anchor.href = url;
-			anchor.download = name;
-			document.body.append(anchor);
-			anchor.click();
-			anchor.remove();
-			setTimeout(() => URL.revokeObjectURL(url), 1e4);
 		}
 		//#endregion
 		//#region src/client/render-queue.ts
@@ -242281,7 +242087,7 @@ XID_Start XIDS`.split(/\s/).map((p) => [w(p), p]));
 		* 为什么状态都收在底部：顶栏是「这张卡是什么」——标签与动作键，高度要稳；
 		* 而「现在怎么样了」是随时在变的一层，长在顶栏会把标签挤掉、还让视线往上跑。
 		* 于是**顶栏只留标签与按钮**，渲染成功不吭声（画面本身就是回执），
-		* 只有出错、以及导出这条用户主动发起的事，才在底部出一条。
+		* 只有出错（渲染失败、调用被中断）才在底部出一条。
 		*
 		* warn 是给「这次调用被中断」那类：不是代码错，但也不该当作什么都没发生。
 		*/
@@ -242344,19 +242150,7 @@ XID_Start XIDS`.split(/\s/).map((p) => [w(p), p]));
 			return input.live && input.batchTail;
 		}
 		/**
-		* 导出失败说哪句话——两类分开，因为**用户能做的事不一样**：
-		* - 浏览器不能录 → 说清缺哪一项（换浏览器是能自己解决的）；缺项名由本插件给，不自造。
-		* - 录制中途失败 → 原样摆原因（多半与这段动画本身有关）。
-		*/
-		function exportFailureText(outcome, t) {
-			if (outcome.code === "unsupported") {
-				const missing = (outcome.missing ?? []).filter((label) => label.length > 0).join("、");
-				return t("exportMissingHint", { missing: missing.length > 0 ? missing : t("rtRecorder") });
-			}
-			return t("exportFailed", { error: outcome.detail ?? t("fail") });
-		}
-		/**
-		* 渲染卡片：聊天流里的一张 Manim 卡（画布 + 手动播放 + 查看代码 + 导出）——
+		* 渲染卡片：聊天流里的一张 Manim 卡（画布 + 手动播放 + 查看代码）——
 		* 「重播 / 查看代码 / 复制」这些能力都在同一处，不会再各改各的。
 		*
 		* - `label`  顶栏标签，缺省「Manim 动画」。
@@ -242392,13 +242186,8 @@ XID_Start XIDS`.split(/\s/).map((p) => [w(p), p]));
 			const [attempts, setAttempts] = (0, react.useState)(0);
 			/** 按钮下一次触发的模式（手动播放 / ⏩ 跳过）。effect 读一次就清回 auto。 */
 			const modeRef = (0, react.useRef)("auto");
-			/** 渲染 effect 把「原地重跑」与「当前那块画布」递出来给按钮用（闭包变量 JSX 够不到）。 */
+			/** 渲染 effect 把「原地重跑」递出来给按钮用（闭包变量 JSX 够不到）。 */
 			const controls = (0, react.useRef)(null);
-			useEnvironmentStatus();
-			const [exporting, setExporting] = (0, react.useState)(false);
-			/** 导出进展（核心包给的原话：「逐帧编码（WebCodecs）…」「导出中 42%」）。 */
-			const [exportProgress, setExportProgress] = (0, react.useState)(null);
-			const [exportNote, setExportNote] = (0, react.useState)(null);
 			const empty = data.python.trim().length === 0;
 			const rejected = data.feedback !== void 0 && !data.feedback.ok;
 			const interrupted = data.interrupted === true;
@@ -242419,54 +242208,12 @@ XID_Start XIDS`.split(/\s/).map((p) => [w(p), p]));
 				return () => clearTimeout(timer);
 			}, [loadingActive]);
 			/**
-			* 能不能导出，两个条件：
-			* - 这一页的浏览器能录画布（`MediaRecorder` + 至少一种可用格式）——缺了没有别的导出路；
-			* - 这张卡**已经画出一幅画**（`rendered`）——导出要在一块活画布上把代码收集成时间轴。
-			*   正在播、还没跑完、或已被调度器淘汰时都不满足，此时按钮灰着。
+			* 导出视频：**已从界面撤出**（2026-10-17 用户定）。
 			*
-			* 注意这里问的是 `canRecordVideo()`（本插件自己的判据）而**不是**环境状态里的
-			* `capabilities.videoExport`：那个说的是 WebCodecs，而 WebCodecs 那条路喂给编码器的帧是坏的
-			* （上游 `seek` 不推进 updater，见 ../export.ts 的文件头），早就不用了。
+			* 实现（实时录制画布流，见 ../export.ts）在真浏览器里验过是能动的，
+			* 但按用户要求先把入口藏起来——文案、按钮、回执全撤，代码留在 ../export.ts 不删。
+			* 要恢复：把 export.ts 的两个函数接回这里，并把 i18n 里的 export* 键加回来。
 			*/
-			const canRecord = canRecordVideo().ok;
-			const surfaceExportable = canRecord && rendered;
-			/**
-			* 导出视频。**要有一块活着的画布**：导出是在这块画布上把代码收集成时间轴、真播一遍同时录下来，
-			* 所以没渲染完（或被调度器淘汰）时按钮是灰的。
-			*
-			* 成功后直接落盘到「下载」：浏览器导出出来的是内存里的 Blob，没有磁盘路径可给，
-			* 也就没有「在文件夹里显示」这一步。
-			*/
-			const doExport = () => {
-				const surface = controls.current?.surface() ?? null;
-				if (exporting || !surfaceExportable || surface === null) return;
-				setExporting(true);
-				setExportNote(null);
-				setExportProgress(null);
-				exportVideoInBrowser(data.python, surface, (note) => setExportProgress(note)).then((outcome) => {
-					if (outcome.ok) {
-						saveBlob(outcome.blob, outcome.name);
-						setExportNote({
-							ok: true,
-							text: t("exportDone", { name: outcome.name })
-						});
-						return;
-					}
-					setExportNote({
-						ok: false,
-						text: exportFailureText(outcome, t)
-					});
-				}).catch((error) => {
-					console.error("[manim-card] export failed:", error);
-					setExportNote({
-						ok: false,
-						text: t("exportFailed", { error: error instanceof Error ? error.message : String(error) })
-					});
-				}).finally(() => {
-					setExporting(false);
-					setExportProgress(null);
-				});
-			};
 			(0, react.useEffect)(() => {
 				const stage = stageRef.current;
 				if (stage === null || empty || rejected) return;
@@ -242580,10 +242327,7 @@ XID_Start XIDS`.split(/\s/).map((p) => [w(p), p]));
 					dropSurface();
 					renderQueue.update(data.callId, { hasCanvas: false });
 				};
-				controls.current = {
-					rerun,
-					surface: () => surface
-				};
+				controls.current = { rerun };
 				const observer = new IntersectionObserver((entries) => {
 					renderQueue.update(data.callId, { visible: entries.some((entry) => entry.isIntersecting) });
 				}, { rootMargin: "240px" });
@@ -242665,28 +242409,8 @@ XID_Start XIDS`.split(/\s/).map((p) => [w(p), p]));
 			});
 			const loadingNames = loading === null ? null : loading.join("、");
 			const takingPackages = slowLoading && loadingNames !== null;
-			const exportTip = !canRecord ? t("exportMissingHint", { missing: t("rtRecorder") }) : surfaceExportable ? t("exportReadyHint") : t("exportPendingHint");
-			const exportButton = /* @__PURE__ */ (0, react_jsx_runtime.jsx)(Tip, {
-				label: exportTip,
-				align: "end",
-				children: /* @__PURE__ */ (0, react_jsx_runtime.jsx)("button", {
-					className: "mr-iconbtn",
-					type: "button",
-					disabled: exporting || !surfaceExportable,
-					"aria-label": t("exportVideo"),
-					title: t("exportVideo"),
-					onClick: doExport,
-					children: exporting ? /* @__PURE__ */ (0, react_jsx_runtime.jsx)("span", {
-						className: "mr-spinner",
-						"aria-hidden": "true"
-					}) : /* @__PURE__ */ (0, react_jsx_runtime.jsx)(Download, {
-						size: 15,
-						strokeWidth: 1.6
-					})
-				})
-			});
 			const renderFailed = status !== null && !status.ok;
-			const hasFoot = renderFailed || interrupted || exporting || exportNote !== null;
+			const hasFoot = renderFailed || interrupted;
 			const showStage = !interrupted || attempts > 0;
 			const skeleton = showStage && !rendered && !playing;
 			/**
@@ -242728,8 +242452,7 @@ XID_Start XIDS`.split(/\s/).map((p) => [w(p), p]));
 									strokeWidth: 1.6
 								})
 							}),
-							toggleCode,
-							exportButton
+							toggleCode
 						]
 					}),
 					/* @__PURE__ */ (0, react_jsx_runtime.jsxs)("div", {
@@ -242801,21 +242524,7 @@ XID_Start XIDS`.split(/\s/).map((p) => [w(p), p]));
 									wide: true,
 									children: t("interrupted")
 								})
-							}),
-							exporting && /* @__PURE__ */ (0, react_jsx_runtime.jsx)(FootRow, {
-								tone: "busy",
-								role: "status",
-								children: exportProgress ?? t("exportBusy")
-							}),
-							!exporting && exportNote !== null && (exportNote.ok ? /* @__PURE__ */ (0, react_jsx_runtime.jsx)(FootRow, {
-								tone: "ok",
-								role: "status",
-								children: exportNote.text
-							}) : /* @__PURE__ */ (0, react_jsx_runtime.jsx)(FootRow, {
-								tone: "error",
-								role: "alert",
-								children: exportNote.text
-							}))
+							})
 						]
 					})
 				]
@@ -242990,20 +242699,12 @@ XID_Start XIDS`.split(/\s/).map((p) => [w(p), p]));
 			rejected: "代码未通过预检，未渲染",
 			interrupted: "这次工具调用被中断了",
 			interruptedHint: "这次 manim_card 没跑完就被宿主收尾了（常见于回合被停止），所以卡片不替你自动渲染——代码本身是完整的，想看就点播放。",
-			exportVideo: "导出视频",
-			exportReadyHint: "把这段动画在浏览器里完整录一遍，存到「下载」文件夹。与卡片同一个渲染引擎，看到什么就导出什么；导出耗时约等于动画时长，期间请勿切走页面。",
-			exportMissingHint: "当前浏览器不能导出视频：缺 {missing}。渲染不受影响。",
-			exportPendingHint: "等这一张画出来就能导出。",
-			exportBusy: "正在导出…",
-			exportDone: "已导出 {name}，存在「下载」文件夹。",
-			exportFailed: "导出失败：{error}",
 			envGroup: "环境",
 			rtTitle: "浏览器运行时",
 			rtRuntime: "Python 运行时",
 			rtKatex: "公式样式",
 			rtWebgl: "WebGL",
 			rtWasm: "WebAssembly",
-			rtRecorder: "浏览器导出",
 			rtYes: "可用",
 			rtNo: "不可用",
 			rtReady: "就绪",
@@ -243020,7 +242721,6 @@ XID_Start XIDS`.split(/\s/).map((p) => [w(p), p]));
 			rtKatexAt: "取数地址：{url}",
 			rtWebglWhy: "WebGL 是画面本身的出口；没有它，卡片渲染不出任何东西。",
 			rtWasmWhy: "WebAssembly 是 Python 解释器的运行基础；没有它，所有渲染都起不来。",
-			rtRecorderWhy: "有它才能在浏览器里逐帧导出视频（WebCodecs 或 MediaRecorder）；缺它只影响导出，渲染不受影响。",
 			renderEnvBlocked: "这台机器上还有条件没满足，可能正是它渲染不出来的原因：",
 			pkgTitle: "Python 库",
 			pkgCardTitle: "已缓存的库",

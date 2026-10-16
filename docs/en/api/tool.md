@@ -34,7 +34,7 @@ Before returning, the tool **dry-runs the code in a real interpreter**: it parse
 
 This precheck runs on the **host's Node side**, in a Python runtime unrelated to the local machine (the core package's `manim-live/node` `runPython` and `createDryRunBridge`). Consequently:
 
-- The precheck does not require the user to have Python installed — execution and export both happen in the browser, so nothing has to be installed on the machine;
+- The precheck does not require the user to have Python installed — execution happens in the browser, so nothing has to be installed on the machine;
 - The precheck and browser rendering are **two runtimes**: it proves the code holds up at the Python level, which is not the same as the browser drawing a picture.
 
 The tool itself **produces no picture**. Rendering happens in the browser and is carried by the chat card; render-time errors (real drawing, layout, WebGL) are reported by the card and never come back in the tool's return value. So `ok: true` means "the code was accepted", not "it has been drawn".
@@ -51,4 +51,4 @@ For the tool to be usable, two pieces of context are needed besides the tool its
 
 ## What the user sees
 
-A successful `manim_card` leaves one card in the chat stream. Its behaviour (automatic playback rules, manual play, code viewing, video export) is in [Usage in Chat](/en/guide/usage). When the model calls it several times in parallel within one turn, several cards are produced, and only the last one plays in full — see [Usage in Chat](/en/guide/usage#playback-rules).
+A successful `manim_card` leaves one card in the chat stream. Its behaviour (automatic playback rules, manual play, code viewing) is in [Usage in Chat](/en/guide/usage). When the model calls it several times in parallel within one turn, several cards are produced, and only the last one plays in full — see [Usage in Chat](/en/guide/usage#playback-rules).

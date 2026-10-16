@@ -36,17 +36,6 @@ export const DICT = {
     interruptedHint:
       '这次 manim_card 没跑完就被宿主收尾了（常见于回合被停止），所以卡片不替你自动渲染——代码本身是完整的，想看就点播放。',
 
-    // ---- 卡片：导出视频（让动画在浏览器里真播一遍、同步录下画布，产物落「下载」）----
-    // 灰着有两种原因，分开说：浏览器不能录（并说清缺哪一项）、或这一张还没画出来。
-    // 措辞用「录制」而不是「编码」：这条路是实时的，导出耗时≈动画时长，用户要能预期要等。
-    exportVideo: '导出视频',
-    exportReadyHint: '把这段动画在浏览器里完整录一遍，存到「下载」文件夹。与卡片同一个渲染引擎，看到什么就导出什么；导出耗时约等于动画时长，期间请勿切走页面。',
-    exportMissingHint: '当前浏览器不能导出视频：缺 {missing}。渲染不受影响。',
-    exportPendingHint: '等这一张画出来就能导出。',
-    exportBusy: '正在导出…',
-    exportDone: '已导出 {name}，存在「下载」文件夹。',
-    exportFailed: '导出失败：{error}',
-
     // ---- 设置页：分组标签 ----
     // 分组标签只在卡片外面用来分组（卡片里各有自己的标题）。
     envGroup: '环境',
@@ -59,7 +48,6 @@ export const DICT = {
     rtKatex: '公式样式',
     rtWebgl: 'WebGL',
     rtWasm: 'WebAssembly',
-    rtRecorder: '浏览器导出',
     rtYes: '可用',
     rtNo: '不可用',
     rtReady: '就绪',
@@ -76,7 +64,6 @@ export const DICT = {
     rtKatexAt: '取数地址：{url}',
     rtWebglWhy: 'WebGL 是画面本身的出口；没有它，卡片渲染不出任何东西。',
     rtWasmWhy: 'WebAssembly 是 Python 解释器的运行基础；没有它，所有渲染都起不来。',
-    rtRecorderWhy: '有它才能在浏览器里逐帧导出视频（WebCodecs 或 MediaRecorder）；缺它只影响导出，渲染不受影响。',
 
     // 卡片底部：渲染失败、且环境里确有挡住渲染的硬伤时，补一句解释
     renderEnvBlocked: '这台机器上还有条件没满足，可能正是它渲染不出来的原因：',

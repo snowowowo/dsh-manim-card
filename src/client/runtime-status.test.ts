@@ -4,7 +4,6 @@ import {
   blocksRender,
   capabilityTone,
   katexTone,
-  missingCapabilities,
   runtimeTone,
 } from './runtime-status'
 import type { Translate } from './i18n'
@@ -44,16 +43,6 @@ describe('状态 → 色调', () => {
   })
 })
 
-describe('缺哪几项能力', () => {
-  it('顺序固定：WebAssembly → WebGL → 录屏', () => {
-    expect(missingCapabilities({ wasm: false, webgl: false, videoExport: false })).toEqual(['wasm', 'webgl', 'recorder'])
-  })
-
-  it('都在时是空数组', () => {
-    expect(missingCapabilities({ wasm: true, webgl: true, videoExport: true })).toEqual([])
-  })
-})
-
 describe('有没有挡住渲染的硬伤', () => {
   it('都好的时候没有', () => {
     expect(blocksRender(healthy)).toBe(false)
@@ -64,10 +53,6 @@ describe('有没有挡住渲染的硬伤', () => {
     expect(blocksRender(status({ capabilities: { wasm: false, webgl: true, videoExport: true } }))).toBe(true)
     expect(blocksRender(status({ runtime: { phase: 'error', indexURL: null } }))).toBe(true)
     expect(blocksRender(status({ packages: { fetching: [], lastError: '取包失败' } }))).toBe(true)
-  })
-
-  it('只缺录屏能力不算：它只影响浏览器录屏那一种导出', () => {
-    expect(blocksRender(status({ capabilities: { wasm: true, webgl: true, videoExport: false } }))).toBe(false)
   })
 })
 

@@ -3,8 +3,8 @@
 // ② 技能注册——把写法边界与 API 清单讲给模型听（不动手写代码，模型不知道边界在哪）；
 // ③ KaTeX 静态资源路由——MathTex 在浏览器里渲染成 KaTeX HTML；
 // ④ Pyodide 本体、按需取包、包缓存清单与预缓存——整块在 ./pyodide.js；静态资源那层在 ./assets.js；
-// ⑤ 本机环境探测（见 ./environment.js）、导出视频路由（见 ./export.js）与清包缓存——
-//   导出走本机 CLI 真渲染出 mp4，落「下载」文件夹。
+// ⑤ 清包缓存；另加两条**界面上不再调用**的路由（本机环境探测 ./environment.js、
+//   本机 CLI 导出 ./export.js）——与客户端的导出入口一起撤出，代码原地保留。
 // 工具返回前先干跑一遍（核心包 `manim-live/node`，与浏览器侧是同一个 Python 运行时）：
 // 语法错 / 未定义名 / manim-web 实测缺失项当场回给模型，同一回合自我修正；
 // 渲染期错误仍由卡片回显。
@@ -134,13 +134,13 @@ export function apply(ctx) {
     'manim-card: packages route',
   );
 
-  // 本机环境探测：本机的 Manim / FFmpeg / LaTeX 装了没有——导出要走它们，不走 Pyodide。
+  // 本机环境探测：**界面上已不调用**（导出入口撤出），路由与实现在原地保留。
   ctx.effect(
     () => ctx.webServer.register(environmentRoute()),
     'manim-card: environment route',
   );
 
-  // 导出视频：本机 manim CLI 真渲染出 mp4。就绪结论（GET /ready）与真渲染（POST）都在这条路由里。
+  // 本机 CLI 导出：**界面上已不调用**（2026-10-17 导出入口撤出）。代码原地保留，随时可恢复。
   ctx.effect(
     () => ctx.webServer.register(exportRoute()),
     'manim-card: export route',

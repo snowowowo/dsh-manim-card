@@ -11,13 +11,12 @@
 //      再重画——用户看到的就是「一滚动它就又播一遍」。现在**滚出视口不拆**，
 //      画布只在两种情况下没：卡片真卸载，或调度器按上限淘汰（超编时收离阅读位置最远的）。
 import { useEffect, useRef, useState, type ReactNode } from 'react'
-import { CircleCheck, CircleX, CodeXml, Download, FastForward, Play, TriangleAlert } from 'lucide-react'
+import { CircleCheck, CircleX, CodeXml, FastForward, Play, TriangleAlert } from 'lucide-react'
 import type { Surface } from 'manim-live'
 import type { ManimCardData } from '../definition'
 import type { Translate } from '../i18n'
 import { manimRenderer } from '../renderer'
-import { exportVideoInBrowser, canRecordVideo, saveBlob, type BrowserExportOutcome } from '../export'
-import { renderBlockHints, useEnvironmentStatus } from '../runtime-status'
+import { renderBlockHints } from '../runtime-status'
 import { renderQueue } from '../render-queue'
 import { CodeView } from './code-view'
 import { Tip } from './tip'
@@ -27,16 +26,13 @@ export interface CardResult {
   text: string
 }
 
-/** 导出失败那一支（成功那一支有 blob / name，措辞不需要）。 */
-type ExportFailure = Extract<BrowserExportOutcome, { ok: false }>
-
 /**
  * 底部状态栏的一行：图标 + 内容。
  *
  * 为什么状态都收在底部：顶栏是「这张卡是什么」——标签与动作键，高度要稳；
  * 而「现在怎么样了」是随时在变的一层，长在顶栏会把标签挤掉、还让视线往上跑。
  * 于是**顶栏只留标签与按钮**，渲染成功不吭声（画面本身就是回执），
- * 只有出错、以及导出这条用户主动发起的事，才在底部出一条。
+ * 只有出错（渲染失败、调用被中断）才在底部出一条。
  *
  * warn 是给「这次调用被中断」那类：不是代码错，但也不该当作什么都没发生。
  */
@@ -103,20 +99,7 @@ export function decidePlay(input: {
 }
 
 /**
- * 导出失败说哪句话——两类分开，因为**用户能做的事不一样**：
- * - 浏览器不能录 → 说清缺哪一项（换浏览器是能自己解决的）；缺项名由本插件给，不自造。
- * - 录制中途失败 → 原样摆原因（多半与这段动画本身有关）。
- */
-export function exportFailureText(outcome: ExportFailure, t: Translate): string {
-  if (outcome.code === 'unsupported') {
-    const missing = (outcome.missing ?? []).filter((label) => label.length > 0).join('、')
-    return t('exportMissingHint', { missing: missing.length > 0 ? missing : t('rtRecorder') })
-  }
-  return t('exportFailed', { error: outcome.detail ?? t('fail') })
-}
-
-/**
- * 渲染卡片：聊天流里的一张 Manim 卡（画布 + 手动播放 + 查看代码 + 导出）——
+ * 渲染卡片：聊天流里的一张 Manim 卡（画布 + 手动播放 + 查看代码）——
  * 「重播 / 查看代码 / 复制」这些能力都在同一处，不会再各改各的。
  *
  * - `label`  顶栏标签，缺省「Manim 动画」。
@@ -161,19 +144,8 @@ export function ManimCard({ data, t, label, onResult, autoStart, fast }: {
   const [attempts, setAttempts] = useState(0)
   /** 按钮下一次触发的模式（手动播放 / ⏩ 跳过）。effect 读一次就清回 auto。 */
   const modeRef = useRef<'auto' | 'manual' | 'skip'>('auto')
-  /** 渲染 effect 把「原地重跑」与「当前那块画布」递出来给按钮用（闭包变量 JSX 够不到）。 */
-  const controls = useRef<{ rerun: (mode: 'manual' | 'skip') => void; surface: () => Surface | null } | null>(null)
-  /**
-   * 导出视频：在浏览器里逐帧编码成视频文件（与卡片同一个渲染引擎）。
-   *
-   * 就绪与否直接读环境状态里那一项能力（含订阅），不再问 Host——导出跑在**这个页面**里，
-   * Host 那边看不到 WebCodecs / MediaRecorder 有没有。
-   */
-  const envStatus = useEnvironmentStatus()
-  const [exporting, setExporting] = useState(false)
-  /** 导出进展（核心包给的原话：「逐帧编码（WebCodecs）…」「导出中 42%」）。 */
-  const [exportProgress, setExportProgress] = useState<string | null>(null)
-  const [exportNote, setExportNote] = useState<{ ok: boolean; text: string } | null>(null)
+  /** 渲染 effect 把「原地重跑」递出来给按钮用（闭包变量 JSX 够不到）。 */
+  const controls = useRef<{ rerun: (mode: 'manual' | 'skip') => void } | null>(null)
   const empty = data.python.trim().length === 0
   // Host 已先预检过一遍：ok:false 表示代码没过预检，卡片只显示错误、不再起画布重跑。
   const rejected = data.feedback !== undefined && !data.feedback.ok
@@ -204,51 +176,13 @@ export function ManimCard({ data, t, label, onResult, autoStart, fast }: {
     return () => clearTimeout(timer)
   }, [loadingActive])
 
-  /**
-   * 能不能导出，两个条件：
-   * - 这一页的浏览器能录画布（`MediaRecorder` + 至少一种可用格式）——缺了没有别的导出路；
-   * - 这张卡**已经画出一幅画**（`rendered`）——导出要在一块活画布上把代码收集成时间轴。
-   *   正在播、还没跑完、或已被调度器淘汰时都不满足，此时按钮灰着。
-   *
-   * 注意这里问的是 `canRecordVideo()`（本插件自己的判据）而**不是**环境状态里的
-   * `capabilities.videoExport`：那个说的是 WebCodecs，而 WebCodecs 那条路喂给编码器的帧是坏的
-   * （上游 `seek` 不推进 updater，见 ../export.ts 的文件头），早就不用了。
-   */
-  const canRecord = canRecordVideo().ok
-  const surfaceExportable = canRecord && rendered
-
-  /**
-   * 导出视频。**要有一块活着的画布**：导出是在这块画布上把代码收集成时间轴、真播一遍同时录下来，
-   * 所以没渲染完（或被调度器淘汰）时按钮是灰的。
-   *
-   * 成功后直接落盘到「下载」：浏览器导出出来的是内存里的 Blob，没有磁盘路径可给，
-   * 也就没有「在文件夹里显示」这一步。
-   */
-  const doExport = (): void => {
-    const surface = controls.current?.surface() ?? null
-    if (exporting || !surfaceExportable || surface === null) return
-    setExporting(true)
-    setExportNote(null)
-    setExportProgress(null)
-    exportVideoInBrowser(data.python, surface, (note) => setExportProgress(note))
-      .then((outcome) => {
-        if (outcome.ok) {
-          saveBlob(outcome.blob, outcome.name)
-          setExportNote({ ok: true, text: t('exportDone', { name: outcome.name }) })
-          return
-        }
-        setExportNote({ ok: false, text: exportFailureText(outcome, t) })
-      })
-      .catch((error) => {
-        console.error('[manim-card] export failed:', error)
-        setExportNote({ ok: false, text: t('exportFailed', { error: error instanceof Error ? error.message : String(error) }) })
-      })
-      .finally(() => {
-        setExporting(false)
-        setExportProgress(null)
-      })
-  }
-
+/**
+ * 导出视频：**已从界面撤出**（2026-10-17 用户定）。
+ *
+ * 实现（实时录制画布流，见 ../export.ts）在真浏览器里验过是能动的，
+ * 但按用户要求先把入口藏起来——文案、按钮、回执全撤，代码留在 ../export.ts 不删。
+ * 要恢复：把 export.ts 的两个函数接回这里，并把 i18n 里的 export* 键加回来。
+ */
   useEffect(() => {
     const stage = stageRef.current
     if (stage === null || empty || rejected) return
@@ -374,9 +308,7 @@ export function ManimCard({ data, t, label, onResult, autoStart, fast }: {
       renderQueue.update(data.callId, { hasCanvas: false })
     }
     // 按钮长在 JSX 里，够不到上面的闭包，从这里递出去。
-    // `surface` 走取值函数而不是直接存那块画布：它会被 `dropSurface` 换掉（按 ⏩ / 被淘汰），
-    // 存一个快照就会在那些时刻拿到一块已经 dispose 的旧画布。
-    controls.current = { rerun, surface: () => surface }
+    controls.current = { rerun }
 
     const observer = new IntersectionObserver(
       (entries) => {
@@ -443,34 +375,10 @@ export function ManimCard({ data, t, label, onResult, autoStart, fast }: {
   const loadingNames = loading === null ? null : loading.join('、')
   const takingPackages = slowLoading && loadingNames !== null
 
-  // 导出按钮：灰着也要「说得出为什么」——悬停提示分三种：浏览器不能录 / 这张还没画完 / 可以导。
-  const exportTip = !canRecord
-    ? t('exportMissingHint', { missing: t('rtRecorder') })
-    : surfaceExportable
-      ? t('exportReadyHint')
-      : t('exportPendingHint')
-  const exportButton = (
-    <Tip label={exportTip} align="end">
-      <button
-        className="mr-iconbtn"
-        type="button"
-        disabled={exporting || !surfaceExportable}
-        aria-label={t('exportVideo')}
-        title={t('exportVideo')}
-        onClick={doExport}
-      >
-        {exporting
-          ? <span className="mr-spinner" aria-hidden="true" />
-          : <Download size={15} strokeWidth={1.6} />}
-      </button>
-    </Tip>
-  )
-
   // 底部状态栏的内容：渲染只在**失败**时出一条（成功不必吭声，画面本身就是回执）；
-  // 导出是用户主动发起的长活儿，从进行中到成功/失败全程有回执；被中断的调用常驻一条说明。
-  // 三者都在时上下几行。
+  // 被中断的调用常驻一条说明。两者都在时上下两行。
   const renderFailed = status !== null && !status.ok
-  const hasFoot = renderFailed || interrupted || exporting || exportNote !== null
+  const hasFoot = renderFailed || interrupted
 
   // 被中断的卡在「还没手动播过」之前连画布都不摆——一块空边框看着像渲染坏了，
   // 跟未通过预检那张卡一个形状（头 + 说明）反而更清楚。
@@ -513,7 +421,6 @@ export function ManimCard({ data, t, label, onResult, autoStart, fast }: {
             : <Play size={15} strokeWidth={1.6} />}
         </button>
         {toggleCode}
-        {exportButton}
       </div>
       {/* 画布与代码同一块位置：切的是视图，不是把代码挤进内容里。画布保持挂载，
           切回来接着看，不必重跑一遍 Pyodide。
@@ -541,7 +448,7 @@ export function ManimCard({ data, t, label, onResult, autoStart, fast }: {
           </div>
         )}
       </div>
-      {/* 底部状态栏：渲染失败、被中断的调用、导出进行中/成功/失败，都长在这一条上 */}
+      {/* 底部状态栏：渲染失败、被中断的调用，都长在这一条上 */}
       {hasFoot && (
         <div className="mr-chatcard-foot">
           {renderFailed && <FootRow tone="error" role="alert">{status.text}</FootRow>}
@@ -562,13 +469,6 @@ export function ManimCard({ data, t, label, onResult, autoStart, fast }: {
               <Tip label={t('interruptedHint')} align="start" wide>{t('interrupted')}</Tip>
             </FootRow>
           )}
-          {exporting && <FootRow tone="busy" role="status">{exportProgress ?? t('exportBusy')}</FootRow>}
-          {!exporting && exportNote !== null && (exportNote.ok ? (
-            // 产物直接落「下载」，没有磁盘路径可点——成功这一条只说文件名，不再造一个假入口。
-            <FootRow tone="ok" role="status">{exportNote.text}</FootRow>
-          ) : (
-            <FootRow tone="error" role="alert">{exportNote.text}</FootRow>
-          ))}
         </div>
       )}
     </div>

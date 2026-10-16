@@ -13,7 +13,7 @@
  * 而且界面上一眼看不出来是哪一条错了。规则收成一个纯函数（decidePlay）就是为了能这样钉。
  */
 import { describe, expect, it } from 'vitest'
-import { decidePlay, exportFailureText } from './card'
+import { decidePlay } from './card'
 
 /** 默认一格：刚出炉的卡、这一页还没用掉这张卡的自动播机会、本批由它当代表、也没人按按钮。 */
 const input = (over: Partial<Parameters<typeof decidePlay>[0]> = {}) => ({
@@ -76,32 +76,5 @@ describe('decidePlay：同一批只由代表真播', () => {
     // 于是在非代表那张上按「手动播放」只会跳到终态 —— 按了个寂寞。
     expect(decidePlay(input({ batchTail: false, manual: true }))).toBe(true)
     expect(decidePlay(input({ batchTail: false, skip: true }))).toBe(false)
-  })
-})
-
-describe('exportFailureText：导出失败说哪句话', () => {
-  /** 取词替身：把键与参数原样写出来，断言就不必抄一遍中文。 */
-  const t = (key: string, params?: Record<string, string | number>): string =>
-    params === undefined ? key : `${key}(${Object.entries(params).map(([k, v]) => `${k}=${v}`).join(',')})`
-
-  it('浏览器不能录 —— 说清缺哪一项，名字由本插件给', () => {
-    expect(exportFailureText({ ok: false, code: 'unsupported', missing: ['MediaRecorder'] }, t))
-      .toBe('exportMissingHint(missing=MediaRecorder)')
-  })
-
-  it('缺项名是空串时退回本插件自己那一项的名字，不摆一句「缺 」', () => {
-    expect(exportFailureText({ ok: false, code: 'unsupported', missing: [''] }, t))
-      .toBe('exportMissingHint(missing=rtRecorder)')
-    expect(exportFailureText({ ok: false, code: 'unsupported' }, t))
-      .toBe('exportMissingHint(missing=rtRecorder)')
-  })
-
-  it('录制失败 —— 原样摆原因', () => {
-    expect(exportFailureText({ ok: false, code: 'failed', detail: '录制炸了' }, t))
-      .toBe('exportFailed(error=录制炸了)')
-  })
-
-  it('录制失败但没给原因 —— 退回通用那句，不留空', () => {
-    expect(exportFailureText({ ok: false, code: 'failed' }, t)).toBe('exportFailed(error=fail)')
   })
 })
