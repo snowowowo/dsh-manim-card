@@ -12,6 +12,9 @@ export type Translate = (key: string, params?: Record<string, string | number>) 
 
 export const DICT = {
   zh: {
+    // 设置面板里本插件那一节的标题（槽位 label 用这个键取词，中文与英文名各随其语言）。
+    sectionTitle: 'Manim卡片',
+
     ok: '渲染完成',
     fail: '渲染失败',
     loadingPackages: '正在加载 {names}…',

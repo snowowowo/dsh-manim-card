@@ -51,4 +51,4 @@ For the tool to be usable, two pieces of context are needed besides the tool its
 
 ## What the user sees
 
-A successful `manim_card` leaves one card in the chat stream. Its behaviour (automatic playback rules, manual play, code viewing, video export) is in [Usage in Chat](/en/guide/usage). When the model calls it several times in parallel within one turn, several cards are produced, and only the last one plays in full — see [Usage in Chat](/en/guide/usage#auto-playback-rules).
+A successful `manim_card` leaves one card in the chat stream. Its behaviour (automatic playback rules, manual play, code viewing, video export) is in [Usage in Chat](/en/guide/usage). When the model calls it several times in parallel within one turn, several cards are produced, and only the last one plays in full — see [Usage in Chat](/en/guide/usage#playback-rules).

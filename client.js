@@ -231168,7 +231168,7 @@ if _dsh_extras_src:
 		function ManimSettingsPage({ t }) {
 			return /* @__PURE__ */ (0, react_jsx_runtime.jsxs)("section", {
 				className: "mr-set",
-				"aria-label": "Manim Card",
+				"aria-label": t("sectionTitle"),
 				children: [/* @__PURE__ */ (0, react_jsx_runtime.jsxs)("section", {
 					className: "mr-set-group",
 					"aria-label": t("envGroup"),
@@ -242905,6 +242905,7 @@ XID_Start XIDS`.split(/\s/).map((p) => [w(p), p]));
 		*/
 		const NS = "manimCard";
 		const DICT = { zh: {
+			sectionTitle: "Manim卡片",
 			ok: "渲染完成",
 			fail: "渲染失败",
 			loadingPackages: "正在加载 {names}…",
@@ -243029,7 +243030,7 @@ XID_Start XIDS`.split(/\s/).map((p) => [w(p), p]));
 					name: "settings.section",
 					id: "manim-card",
 					order: 60,
-					label: "Manim Card",
+					label: t("sectionTitle"),
 					locale: NS
 				}, (props) => /* @__PURE__ */ (0, react_jsx_runtime.jsx)(SlotErrorBoundary, { children: /* @__PURE__ */ (0, react_jsx_runtime.jsx)(ManimSettingsPage, { t: props.t ?? t }) })));
 				ctx.effect(() => ctx.uiConversation.events.register(definition), "manim-card: conversation definition");

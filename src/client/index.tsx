@@ -64,14 +64,14 @@ export default {
     // 照常注册槽位、常显。
     //
     // `id` / `key` 是机器标识（沿用包名风格，改它要连会话日志一起改）；**`label` 是给人看的**，
-    // 与插件在宿主里显示的名字一致：Manim Card。
+    // 走本插件的取词（`sectionTitle`）：中文「Manim卡片」、英文下是 "Manim Card"。
     //
     // 落座点**只在这一行**，面板本体（./settings.tsx）只收一个取词函数——不接 close、
     // 不假设容器宽高、不读设置面板的 store。所以「这块面板摆在哪」是这里一行的事：
     // 想搬到别处（比如以后那个把各插件摆到一起的工作台）只改这一行，面板一行都不用动。
     // 取词命名空间沿用本插件的 NS。
     ctx.slots.inject('settings.section', () => ctx.slots.register({
-      name: 'settings.section', id: 'manim-card', order: 60, label: 'Manim Card', locale: NS,
+      name: 'settings.section', id: 'manim-card', order: 60, label: t('sectionTitle'), locale: NS,
     }, (props: { t?: Translate }) => <SlotErrorBoundary><ManimSettingsPage t={props.t ?? t} /></SlotErrorBoundary>))
 
     // 聊天卡片：manim_card 的 tool/call 折叠成一张卡（定义见 ./definition.ts）。

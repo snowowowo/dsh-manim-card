@@ -126,6 +126,18 @@ pnpm build                    # 重新内联进 client.js
 - **环境状态读数为空或永远未加载**：检查是否有第二份核心包被引入。状态必须来自本插件这一份的 `manim-live`——本插件不对外提供 Cordis 服务，没有服务面可走，见[API 参考](/api/#本插件不对外提供-cordis-服务)。
 - **公式变豆腐块**：核对 `src/routes.js` 的 KaTeX 路由与 `assets/katex/` 是否齐全。
 
+## 三方分工
+
+从「AI 写代码」到「聊天里看到动画」，链路上有三方，各管一段：
+
+| 参与方 | 负责 | 不负责 |
+| --- | --- | --- |
+| 宿主 | 会话与聊天流、槽位与服务体系、`manim_card` 的调用与日志 | 渲染、Manim 语法、导出 |
+| 核心包 [manim-live](https://snowowowo.github.io/manim-live/) | 浏览器内的 Python 执行、manim 适配层、WebGL 画布、环境状态判定、逐帧导出 | 宿主接入、卡片界面、资源路由 |
+| 本插件 | 宿主接入（路由、工具、槽位）、卡片与播放调度、设置面板、导出接线 | 渲染与执行本身 |
+
+与原生 Manim 的差别只有一处需要记住：代码是同一份标准 Manim Python，执行发生在浏览器内的 Pyodide，渲染引擎是 manim-web（不是 CE 的 Cairo 管线），可用面是 Manim CE 的常用子集，覆盖范围与缺失项以核心包[支持面](https://snowowowo.github.io/manim-live/guide/support)为准。
+
 ## 边界与约定
 
 - 语料回归由核心包仓承担（`corpus/`）；要挑或加样例，去核心包仓那边。

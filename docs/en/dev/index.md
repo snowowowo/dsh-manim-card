@@ -126,6 +126,18 @@ If `pnpm link` was ever used to point at a local core-package checkout, `node_mo
 - **Environment status empty or permanently "not loaded"**: check whether a second copy of the core package has been pulled in. Status must come from this plugin's own copy of `manim-live` — this plugin provides no Cordis service, so there is no service surface to go through, see [API Reference](/en/api/#no-cordis-service-is-provided).
 - **Formulas turned into tofu**: check the KaTeX route in `src/routes.js` and whether `assets/katex/` is complete.
 
+## Three parties, three jobs
+
+From "AI writes code" to "an animation in the chat", three parties each own one stretch:
+
+| Party | Owns | Does not own |
+| --- | --- | --- |
+| The host | The conversation and chat stream, the slot and service systems, invocation and logging of `manim_card` | Rendering, Manim syntax, export |
+| Core package [manim-live](https://snowowowo.github.io/manim-live/) | Python execution in the browser, the manim adaptation layer, the WebGL canvas, environment status verdicts, frame-by-frame export | Host integration, card UI, asset routes |
+| This plugin | Host integration (routes, tool, slots), cards and playback scheduling, the Settings panel, wiring up export | Rendering and execution themselves |
+
+One difference from native Manim is worth remembering: the code is the same standard Manim Python, but execution happens in Pyodide inside the browser and the rendering engine is manim-web (not CE's Cairo pipeline). The usable surface is the common subset of Manim CE; coverage and gaps follow the core package's [Support Surface](https://snowowowo.github.io/manim-live/en/guide/support).
+
 ## Boundaries and conventions
 
 - Corpus regression belongs to the core package repository (`corpus/`); to pick or add samples, go over there.

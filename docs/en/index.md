@@ -4,7 +4,7 @@ layout: home
 hero:
   name: dsh-manim-card
   text: Manim animations in chat
-  tagline: "A DeepSeek Harness plugin: the AI writes standard Manim (Python) code in the session and a playable animation card appears right in the chat stream — manually playable, code-inspectable, exportable as video. The code runs in the browser, so no local Python is required; the runtime and the formula fonts ship with the plugin (about 13 MB on first load), so basic figures work offline."
+  tagline: "Say \"draw a unit circle with Manim\" and an animation card appears in the chat stream — playable, code-inspectable, exportable as video. Runtime assets ship with the plugin, so no local Python is needed."
   actions:
     - theme: brand
       text: Installation
@@ -19,13 +19,13 @@ hero:
 features:
   - icon: 💬
     title: Animation cards
-    details: After the AI submits code, a card appears in the chat stream — one title line, a WebGL canvas, and three buttons on the right (manual play / view code / export video).
+    details: After the AI submits code, a card appears in the chat stream — one title line, a 1280×720 canvas, and three buttons on the right (play / view code / export video).
   - icon: 🩺
-    title: Pre-check before presenting
-    details: The code is dry-run in a real interpreter on the Node side first, so syntax errors and unsupported constructs are reported immediately; no blank or broken card is left in the chat.
+    title: Precheck first
+    details: The code is dry-run in a real interpreter first; syntax errors and unsupported constructs come back to the model and are fixed in the same turn, so no broken card is left behind.
   - icon: 🚦
-    title: Environment status
-    details: '"Can it render, can it export" collapsed into one reading, shared by the Settings panel and chat cards, with an actionable remedy for every unmet item.'
+    title: One verdict everywhere
+    details: Can it render, can it export — one shared reading, consistent between the Settings panel and the chat card.
 ---
 
 ## What a card looks like
@@ -34,9 +34,8 @@ Say "draw a definite integral with Manim" in a session: the AI submits Python th
 
 ![A Manim animation card in the chat stream: a title line, a 1280×720 canvas, three buttons on the right](../shots/card-preview.png)
 
-- The top bar holds the title and three buttons (manual play / view code / export video); below it is the 1280×720 WebGL canvas, which rests on the final frame once playback finishes.
-- Before rendering, the code is dry-run in a real interpreter on the Node side; syntax errors come back to the model as `error` and are corrected in the same turn, instead of turning into a blank card.
-- When the picture cannot be produced, one actionable line is added at the bottom of the card, see [Usage in Chat](/en/guide/usage#when-the-environment-falls-short).
+- The top bar holds the title and three buttons (play / view code / export video); below it is the 1280×720 canvas, which rests on the final frame once playback finishes.
+- Before rendering, the code is dry-run in a real interpreter; syntax errors come back to the model and are corrected in the same turn instead of turning into a blank card.
 
 ## Install
 

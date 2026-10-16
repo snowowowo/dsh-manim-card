@@ -71,7 +71,7 @@ class StatsScene(Scene):
         self.play(Create(hist))
 ```
 
-**代价（用之前必须掂量）**：带了这行 import 的代码**只能在浏览器里渲染**——本机 manim CLI 导出会被前置门拒绝（标准 Manim 没有这些图形），也不能拿去别的 Manim 环境跑。文件里没有这行 import，就与扩展毫无关系、随处可用。用户明确要本机 mp4 导出时，别用扩展。
+**代价（用之前必须掂量）**：带了这行 import 的代码只能在这个浏览器渲染环境里跑——标准 Manim 环境（含命令行）没有这些图形，也不能拿去别处跑。文件里没有这行 import，就与扩展毫无关系、随处可用。
 
 写错地方也没关系：`from manim import *` 之后直接拿扩展名用，会当场报错并告诉你正确 import 是什么。
 
@@ -260,7 +260,7 @@ def pos(row, col):
 
 ### `Graph` 的标签看不见
 
-`Graph(..., showLabels=True)` 的标签被顶点圆盘整个盖住，`vertexConfig={"radius": …}` 也改不动（manim-web 0.3.24）。关系图、自动机、哈斯图这类**手工搭**：`Circle` 当顶点、`Text` 贴标签、`Line` 手算坐标连线。
+`Graph(..., showLabels=True)` 的标签被顶点圆盘整个盖住，`vertexConfig={"radius": …}` 也改不动。关系图、自动机、哈斯图这类**手工搭**：`Circle` 当顶点、`Text` 贴标签、`Line` 手算坐标连线。
 
 ### numpy 与环境
 
